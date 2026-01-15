@@ -332,7 +332,7 @@ export default function SchedulePage() {
           </Button>
 
           <Button
-            onClick={loadSchedule}
+            onClick={() => refetchShifts()}
             variant="primary"
             className="shadow-lg shadow-primary-500/20"
           >
