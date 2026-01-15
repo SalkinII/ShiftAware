@@ -328,7 +328,7 @@ const CalendarView = ({
                 {shift.type.replace("_", " ")}
               </span>
               <span className="timeline-row__time">
-                {format(start, "EEE, MMM d HH:mm")} — {format(end, "HH:mm")}
+                {format(start, "HH:mm")} — {format(end, "HH:mm")}
               </span>
             </div>
             <div className={`timeline-row__pill ${status}`}>

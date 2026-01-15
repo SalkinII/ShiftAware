@@ -176,17 +176,35 @@ export default function ShiftsPage() {
         });
       } else {
         const errorData = await res.json();
-        // Extract validation error details if available
         let errorMessage = errorData.error || "Failed to create shift";
-        if (errorData.details?.issues) {
-          const issues = errorData.details.issues
-            .map(
-              (issue: { path: string[]; message: string }) =>
-                `${issue.path.join(".")}: ${issue.message}`,
-            )
+
+        // Parse Zod validation errors
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const issues = errorData.details
+            .map((issue: { path?: string | string[]; message?: string }) => {
+              const path = Array.isArray(issue.path)
+                ? issue.path.join(".")
+                : issue.path || "unknown";
+              // Map common field names to user-friendly labels
+              const fieldMap: Record<string, string> = {
+                eventId: "Event",
+                startTime: "Start Time",
+                endTime: "End Time",
+                durationMinutes: "Duration",
+                type: "Shift Type",
+                priority: "Priority",
+                capacity: "Capacity",
+                requiredRoles: "Required Roles",
+              };
+              const friendlyPath = fieldMap[path] || path;
+              return `${friendlyPath}: ${issue.message || "Invalid value"}`;
+            })
             .join(", ");
           errorMessage = `Validation error: ${issues}`;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
         }
+
         toast.error(errorMessage);
       }
     } catch (error) {

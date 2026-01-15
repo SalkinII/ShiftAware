@@ -168,6 +168,12 @@ export default function SchedulePage() {
 
   const filteredShifts = useMemo(() => {
     return shifts.filter((shift) => {
+      // Filter by date in Day view
+      if (viewType === "Day" && currentEventDate) {
+        const shiftDate = shift.startTime.split("T")[0];
+        if (shiftDate !== currentEventDate) return false;
+      }
+
       const state = coverageState(shift);
       if (coverageFilter !== "all" && state !== coverageFilter) return false;
       if (roleFilter !== "all") {
@@ -184,7 +190,14 @@ export default function SchedulePage() {
       }
       return true;
     });
-  }, [shifts, coverageFilter, roleFilter, memberFilter]);
+  }, [
+    shifts,
+    coverageFilter,
+    roleFilter,
+    memberFilter,
+    viewType,
+    currentEventDate,
+  ]);
 
   const metrics = useMemo(() => {
     const totalCapacity = filteredShifts.reduce(

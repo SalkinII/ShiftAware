@@ -121,8 +121,23 @@ export default function PreferencesPage() {
         toast.success("Preferences submitted successfully!");
         setSelectedShifts(new Map());
       } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to submit preferences");
+        const errorData = await res.json();
+        let errorMessage = errorData.error || "Failed to submit preferences";
+
+        // Parse Zod validation errors
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const issues = errorData.details
+            .map((issue: { path?: string; message?: string }) => {
+              const path = issue.path || "unknown";
+              return `${path}: ${issue.message || "Invalid value"}`;
+            })
+            .join(", ");
+          errorMessage = `Validation error: ${issues}`;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Failed to submit preferences:", error);
