@@ -3,9 +3,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConflictWizard } from "@/components/features/ConflictWizard/ConflictWizard";
 import { useCache } from "@/lib/cache/useCache";
 import { format } from "date-fns";
-import { RefreshCw, Users, Lightbulb } from "lucide-react";
+import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CoverageGap {
@@ -29,6 +30,8 @@ interface TeamMember {
 }
 
 export default function CoverageDashboard() {
+  const [showConflictWizard, setShowConflictWizard] = useState(false);
+
   // Use cache for shifts and members
   const {
     data: cachedShifts,
@@ -169,15 +172,30 @@ export default function CoverageDashboard() {
             Identify and fill staffing gaps
           </p>
         </div>
-        <Button
-          variant="primary"
-          onClick={loadData}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setShowConflictWizard(true)}
+            className="flex items-center gap-2"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            Resolve Conflicts
+          </Button>
+          <Button
+            variant="primary"
+            onClick={loadData}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      <ConflictWizard
+        isOpen={showConflictWizard}
+        onClose={() => setShowConflictWizard(false)}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 rounded-2xl border border-red-100 bg-red-50">
