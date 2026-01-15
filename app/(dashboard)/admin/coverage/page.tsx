@@ -78,22 +78,35 @@ export default function CoverageDashboard() {
 
   // Listen for cache invalidation events
   useEffect(() => {
-    const handleCacheInvalidate = () => {
-      refetchShifts();
-      refetchMembers();
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if our cache keys are affected
+      if (
+        keys.some(
+          (k: string) =>
+            k === "shifts" ||
+            k.startsWith("shifts") ||
+            k === "members" ||
+            k.startsWith("members"),
+        )
+      ) {
+        refetchShifts();
+        refetchMembers();
+      }
     };
 
     window.addEventListener(
       "shiftaware:cache-invalidate",
-      handleCacheInvalidate,
+      handleCacheInvalidate as EventListener,
     );
     return () => {
       window.removeEventListener(
         "shiftaware:cache-invalidate",
-        handleCacheInvalidate,
+        handleCacheInvalidate as EventListener,
       );
     };
-  }, [refetchShifts, refetchMembers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function loadData() {
     await Promise.all([refetchShifts(), refetchMembers()]);
@@ -132,7 +145,7 @@ export default function CoverageDashboard() {
           recommendedMembers: availableMembers.slice(0, needed),
         };
       });
-  }, [gaps, members]);
+  }, [gaps, cachedMembers]);
 
   if (loading) {
     return (

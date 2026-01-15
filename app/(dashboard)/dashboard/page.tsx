@@ -107,23 +107,38 @@ export default function DashboardPage() {
 
   // Listen for cache invalidation events
   useEffect(() => {
-    const handleCacheInvalidate = () => {
-      refetchEvents();
-      refetchMembers();
-      refetchShifts();
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if our cache keys are affected
+      if (
+        keys.some(
+          (k: string) =>
+            k === "events" ||
+            k.startsWith("events") ||
+            k === "members" ||
+            k.startsWith("members") ||
+            k === "shifts" ||
+            k.startsWith("shifts"),
+        )
+      ) {
+        refetchEvents();
+        refetchMembers();
+        refetchShifts();
+      }
     };
 
     window.addEventListener(
       "shiftaware:cache-invalidate",
-      handleCacheInvalidate,
+      handleCacheInvalidate as EventListener,
     );
     return () => {
       window.removeEventListener(
         "shiftaware:cache-invalidate",
-        handleCacheInvalidate,
+        handleCacheInvalidate as EventListener,
       );
     };
-  }, [refetchEvents, refetchMembers, refetchShifts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function loadData() {
     await Promise.all([refetchEvents(), refetchMembers(), refetchShifts()]);

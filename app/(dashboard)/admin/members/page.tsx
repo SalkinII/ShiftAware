@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { useCache } from "@/lib/cache/useCache";
 import { ExperienceLevel, Role } from "@prisma/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -29,8 +30,6 @@ interface TeamMember {
 
 export default function MembersPage() {
   const toast = useToast();
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,9 +42,44 @@ export default function MembersPage() {
     capabilities: [] as Role[],
   });
 
+  // Use cache for members
+  const {
+    data: members,
+    loading,
+    refetch: refetchMembers,
+  } = useCache<TeamMember[]>({
+    key: "members",
+    fetchFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+  });
+
+  // Listen for cache invalidation events
   useEffect(() => {
-    loadMembers();
-  }, []);
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if members cache is affected
+      if (
+        keys.some((k: string) => k === "members" || k.startsWith("members"))
+      ) {
+        refetchMembers();
+      }
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch function is stable from useCache
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -61,17 +95,7 @@ export default function MembersPage() {
   ]);
 
   async function loadMembers() {
-    try {
-      const res = await fetch("/api/members");
-      if (res.ok) {
-        const data = await res.json();
-        setMembers(data);
-      }
-    } catch (error) {
-      console.error("Failed to load members:", error);
-    } finally {
-      setLoading(false);
-    }
+    await refetchMembers();
   }
 
   function handleExportMapping() {
@@ -86,7 +110,7 @@ export default function MembersPage() {
       doc.text("CONFIDENTIAL - FOR INTERNAL USE ONLY", 14, 28);
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
 
-      const tableData = members.map((m) => [
+      const tableData = (members || []).map((m) => [
         m.avatarId,
         m.alias,
         "____________________",
@@ -145,6 +169,12 @@ export default function MembersPage() {
 
       if (res.ok) {
         toast.success("Member created successfully");
+        // Invalidate cache for members
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["members", "members*"] },
+          }),
+        );
         await loadMembers();
         setShowForm(false);
         setFormErrors({});
@@ -174,7 +204,7 @@ export default function MembersPage() {
     );
   }
 
-  const filteredMembers = members.filter((m) =>
+  const filteredMembers = (members || []).filter((m) =>
     m.alias.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -206,7 +236,7 @@ export default function MembersPage() {
           <Button
             variant="secondary"
             onClick={handleExportMapping}
-            disabled={isExporting || members.length === 0}
+            disabled={isExporting || !members || members.length === 0}
             className="flex items-center gap-2 bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"
           >
             <Download className="w-4 h-4" />
@@ -456,7 +486,7 @@ export default function MembersPage() {
                       Total Records
                     </span>
                     <span className="text-sm font-black text-gray-900">
-                      {members.length}
+                      {members?.length || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -464,7 +494,7 @@ export default function MembersPage() {
                       Active Duty
                     </span>
                     <span className="text-sm font-black text-success-600">
-                      {members.filter((m) => m.isActive).length}
+                      {(members || []).filter((m) => m.isActive).length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -473,8 +503,9 @@ export default function MembersPage() {
                     </span>
                     <span className="text-sm font-black text-primary-600">
                       {
-                        members.filter((m) => m.experienceLevel === "SENIOR")
-                          .length
+                        (members || []).filter(
+                          (m) => m.experienceLevel === "SENIOR",
+                        ).length
                       }
                     </span>
                   </div>
