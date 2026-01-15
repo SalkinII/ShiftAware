@@ -139,20 +139,20 @@ export function TimePicker({
 
         {isOpen && (
           <div
-            className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-w-[200px]"
+            className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-2 min-w-[160px]"
             role="dialog"
             aria-label="Time picker"
           >
-            <div className="flex items-center gap-2 justify-center">
+            <div className="flex items-center gap-1 justify-center">
               {/* Hour selector */}
               <div className="flex flex-col items-center">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                   Hour
                 </label>
                 <select
                   value={hour}
                   onChange={(e) => handleHourChange(Number(e.target.value))}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none"
+                  className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
                   aria-label="Select hour"
                 >
                   {Array.from({ length: use24Hour ? 24 : 12 }, (_, i) =>
@@ -165,17 +165,17 @@ export function TimePicker({
                 </select>
               </div>
 
-              <span className="text-2xl font-bold text-gray-400 mt-6">:</span>
+              <span className="text-lg font-bold text-gray-400 mt-4">:</span>
 
               {/* Minute selector */}
               <div className="flex flex-col items-center">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                   Minute
                 </label>
                 <select
                   value={minute}
                   onChange={(e) => handleMinuteChange(Number(e.target.value))}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none"
+                  className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
                   aria-label="Select minute"
                 >
                   {Array.from({ length: 60 }, (_, i) => i).map((m) => (
@@ -189,11 +189,11 @@ export function TimePicker({
               {/* AM/PM selector (12-hour only) */}
               {!use24Hour && (
                 <>
-                  <span className="text-2xl font-bold text-gray-400 mt-6 mx-1">
+                  <span className="text-lg font-bold text-gray-400 mt-4 mx-0.5">
                     {" "}
                   </span>
                   <div className="flex flex-col items-center">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                       Period
                     </label>
                     <select
@@ -201,7 +201,7 @@ export function TimePicker({
                       onChange={(e) =>
                         handlePeriodChange(e.target.value as "AM" | "PM")
                       }
-                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none"
+                      className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
                       aria-label="Select AM or PM"
                     >
                       <option value="AM">AM</option>
