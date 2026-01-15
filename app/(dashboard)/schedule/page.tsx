@@ -153,49 +153,9 @@ export default function SchedulePage() {
     }
   }, [cachedShifts, cacheLoading]);
 
-  // Use cache for shifts data
-  const {
-    data: cachedShifts,
-    loading: cacheLoading,
-    refetch: refetchShifts,
-  } = useCache<Shift[]>({
-    key: "shifts",
-    fetchFn: async () => {
-      const res = await fetch("/api/shifts");
-      if (!res.ok) throw new Error("Failed to fetch shifts");
-      const data = await res.json();
-      return data;
-    },
-  });
-
   useEffect(() => {
     localStorage.setItem("shiftaware:schedule:view", viewType);
   }, [viewType]);
-
-  // Update shifts when cache data changes
-  useEffect(() => {
-    if (cachedShifts) {
-      setShifts(cachedShifts);
-      if (cachedShifts.length > 0) {
-        const earliest = cachedShifts.reduce(
-          (earliestDate: string | undefined, shift: Shift) => {
-            const start = shift.startTime.split("T")[0];
-            if (!earliestDate) return start;
-            return new Date(start) < new Date(earliestDate)
-              ? start
-              : earliestDate;
-          },
-          undefined as string | undefined,
-        );
-        setCurrentEventDate(earliest);
-      }
-      setLoading(false);
-    } else if (!cacheLoading) {
-      setLoading(false);
-    } else {
-      setLoading(true);
-    }
-  }, [cachedShifts, cacheLoading]);
 
   function coverageState(shift: Shift): CoverageState {
     const filled = shift.assignments?.length || 0;
