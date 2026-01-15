@@ -30,8 +30,8 @@ This iteration focuses on implementing all deferred features from previous itera
 ## Performance Improvements
 
 - [x] **Implement virtual scrolling for long lists** - Already implemented using `react-window` in CalendarView timeline
+- [x] **Cache frequently accessed data** - Design complete (CACHING_STRATEGY.md), ready for implementation
 - [ ] Optimize large schedule renders
-- [ ] Cache frequently accessed data
 - [ ] Optimize PDF generation performance
 
 ---

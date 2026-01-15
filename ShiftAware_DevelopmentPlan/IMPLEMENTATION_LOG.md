@@ -259,3 +259,7 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: added date picker input field to navigation controls for quick date jumping
 - v0.3.0: date picker respects min/max date boundaries and works for both Day and Week views
 - v0.3.0: improved empty state messaging with contextual messages for Day/Week views
+- v0.3.0: fixed week view horizontal scrolling by ensuring timeline-scroll container allows overflow
+- v0.3.0: fixed multi-day shift display clipping (partial fix - some edge cases remain for future improvement)
+- v0.3.0: documented remaining timeline view issues (day view multi-day shifts, week view vertical scrolling, grid view improvements)
+- v0.3.0: designed caching strategy for frequently accessed data (client-side in-memory cache with React Context)
