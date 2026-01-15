@@ -266,3 +266,8 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: implemented Phase 1 basic caching system (CacheProvider, useCache hook, cache utilities)
 - v0.3.0: integrated cache with schedule page for shifts data
 - v0.3.0: added cache invalidation on shift creation via custom events
+- v0.3.0: completed Caching Phase 2 - integrated cache with all 7 pages (dashboard, assignments, coverage, members, preferences, export, schedule)
+- v0.3.0: added automatic cache invalidation on all mutation endpoints (shifts POST, members POST, preferences POST, assignments POST/swap)
+- v0.3.0: fixed infinite loop in cache event listeners by removing refetch functions from useEffect deps and adding key filtering
+- v0.3.0: fixed swap API unique constraint violation by using delete+create pattern and adding validation
+- v0.3.0: documented swap UI issue (multiple selection not sensible) for future improvement

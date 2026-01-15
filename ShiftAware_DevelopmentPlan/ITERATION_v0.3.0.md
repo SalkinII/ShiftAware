@@ -30,7 +30,7 @@ This iteration focuses on implementing all deferred features from previous itera
 ## Performance Improvements
 
 - [x] **Implement virtual scrolling for long lists** - Already implemented using `react-window` in CalendarView timeline
-- [x] **Cache frequently accessed data** - Phase 1 complete (CacheProvider, useCache hook, manual invalidation), Phase 2 pending (automatic invalidation, integrate with all pages)
+- [x] **Cache frequently accessed data** - Phase 1 & 2 complete (CacheProvider, useCache hook, automatic invalidation via client-side events, integrated with all 7 pages)
 - [ ] Optimize large schedule renders
 - [ ] Optimize PDF generation performance
 
@@ -87,6 +87,11 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Implemented Phase 1 caching system (CacheProvider, useCache hook, cache utilities)
 - ✅ Integrated cache with schedule page for shifts data
 - ✅ Added cache invalidation on shift creation via custom events
+- ✅ Integrated cache with all data-fetching pages (dashboard, assignments, coverage, members, preferences, export, schedule)
+- ✅ Added automatic cache invalidation on all mutation endpoints (shifts POST, members POST, preferences POST, assignments POST/swap)
+- ✅ Fixed infinite loop issues in cache event listeners
+- ✅ Fixed swap API unique constraint violation handling
+- ✅ Documented swap UI issue for future improvement
 
 ---
 
