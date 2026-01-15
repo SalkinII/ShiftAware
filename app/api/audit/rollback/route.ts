@@ -144,7 +144,12 @@ async function rollbackTeamMember(
         where: { id: auditLog.entityId },
       });
       if (!createdMember) {
-        throw new Error("Member not found for rollback");
+        // Member already deleted (possibly already rolled back) - idempotent operation
+        return {
+          success: true,
+          message: "Member already deleted (rollback already applied)",
+          action: AuditAction.DELETE,
+        };
       }
       await tx.teamMember.update({
         where: { id: auditLog.entityId },
@@ -227,7 +232,12 @@ async function rollbackShift(
         include: { requiredRoles: true },
       });
       if (!createdShift) {
-        throw new Error("Shift not found for rollback");
+        // Shift already deleted (possibly already rolled back) - idempotent operation
+        return {
+          success: true,
+          message: "Shift already deleted (rollback already applied)",
+          action: AuditAction.DELETE,
+        };
       }
 
       // Check if shift has assignments
@@ -410,7 +420,12 @@ async function rollbackAssignment(
         where: { id: auditLog.entityId },
       });
       if (!createdAssignment) {
-        throw new Error("Assignment not found for rollback");
+        // Assignment already deleted (possibly already rolled back) - idempotent operation
+        return {
+          success: true,
+          message: "Assignment already deleted (rollback already applied)",
+          action: AuditAction.DELETE,
+        };
       }
       await tx.assignment.delete({
         where: { id: auditLog.entityId },
