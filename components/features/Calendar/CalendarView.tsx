@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useCallback, memo } from "react";
 import {
   format,
   addDays,
@@ -179,6 +179,9 @@ const CalendarView = ({
     [shifts],
   );
 
+  // Memoize sorted shifts for grid view to avoid re-sorting multiple times
+  const sortedShiftsForGrid = useMemo(() => sortedShifts, [sortedShifts]);
+
   const scaleSegments = viewType === "Day" ? dayStarts.length * 24 : 7;
   const minCellPx = viewType === "Day" ? 88 : 120;
   const scaleMinWidth = scaleSegments * minCellPx;
@@ -219,12 +222,12 @@ const CalendarView = ({
     );
   }, [shifts]);
 
-  const getCoverage = (shift: any): CoverageState => {
+  const getCoverage = useCallback((shift: any): CoverageState => {
     const filled = shift.assignments?.length || 0;
     if (filled >= shift.capacity) return "full";
     if (filled > 0) return "partial";
     return "empty";
-  };
+  }, []);
 
   const renderGridView = () => {
     return (
@@ -235,29 +238,23 @@ const CalendarView = ({
               <th className="p-4 text-left text-xs font-black uppercase tracking-widest text-gray-500 border-b border-r sticky left-0 bg-gray-50 z-30">
                 Team Member
               </th>
-              {shifts
-                .sort(
-                  (a, b) =>
-                    new Date(a.startTime).getTime() -
-                    new Date(b.startTime).getTime(),
-                )
-                .map((shift) => (
-                  <th
-                    key={shift.id}
-                    className="p-4 text-center border-b border-r min-w-[140px]"
-                  >
-                    <div className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">
-                      {format(new Date(shift.startTime), "MMM d")}
-                    </div>
-                    <div className="text-xs font-bold text-gray-700 whitespace-nowrap">
-                      {format(new Date(shift.startTime), "HH:mm")} -{" "}
-                      {format(new Date(shift.endTime), "HH:mm")}
-                    </div>
-                    <div className="text-[9px] font-bold text-primary-500 mt-1">
-                      {shift.type.replace("_", " ")}
-                    </div>
-                  </th>
-                ))}
+              {sortedShiftsForGrid.map((shift) => (
+                <th
+                  key={shift.id}
+                  className="p-4 text-center border-b border-r min-w-[140px]"
+                >
+                  <div className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">
+                    {format(new Date(shift.startTime), "MMM d")}
+                  </div>
+                  <div className="text-xs font-bold text-gray-700 whitespace-nowrap">
+                    {format(new Date(shift.startTime), "HH:mm")} -{" "}
+                    {format(new Date(shift.endTime), "HH:mm")}
+                  </div>
+                  <div className="text-[9px] font-bold text-primary-500 mt-1">
+                    {shift.type.replace("_", " ")}
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -272,39 +269,33 @@ const CalendarView = ({
                     <span>{member.alias}</span>
                   </div>
                 </td>
-                {shifts
-                  .sort(
-                    (a, b) =>
-                      new Date(a.startTime).getTime() -
-                      new Date(b.startTime).getTime(),
-                  )
-                  .map((shift) => {
-                    const isAssigned = shift.assignments?.some(
-                      (a: any) => a.teamMember.id === member.id,
-                    );
-                    const status = getCoverage(shift);
-                    const style = coverageStyles[status];
+                {sortedShiftsForGrid.map((shift) => {
+                  const isAssigned = shift.assignments?.some(
+                    (a: any) => a.teamMember.id === member.id,
+                  );
+                  const status = getCoverage(shift);
+                  const style = coverageStyles[status];
 
-                    return (
-                      <td
-                        key={`${member.id}-${shift.id}`}
-                        className="p-2 border-b border-r text-center"
-                      >
-                        {isAssigned ? (
-                          <div
-                            onClick={() => onAssignmentClick?.(shift)}
-                            className={`mx-auto w-10 h-10 rounded-xl ${style.bg} ${style.border} border flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm`}
-                          >
-                            <span className="text-lg">✓</span>
-                          </div>
-                        ) : (
-                          <div className="text-gray-100 text-xs font-black select-none">
-                            ···
-                          </div>
-                        )}
-                      </td>
-                    );
-                  })}
+                  return (
+                    <td
+                      key={`${member.id}-${shift.id}`}
+                      className="p-2 border-b border-r text-center"
+                    >
+                      {isAssigned ? (
+                        <div
+                          onClick={() => onAssignmentClick?.(shift)}
+                          className={`mx-auto w-10 h-10 rounded-xl ${style.bg} ${style.border} border flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-sm`}
+                        >
+                          <span className="text-lg">✓</span>
+                        </div>
+                      ) : (
+                        <div className="text-gray-100 text-xs font-black select-none">
+                          ···
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -313,17 +304,145 @@ const CalendarView = ({
     );
   };
 
-  const renderTimeline = () => {
-    // Don't show empty state here - navigation should always be visible
-    // Empty state will be handled by the timeline list itself
+  // Memoize callbacks for ShiftCardActions to prevent re-renders
+  const handleViewDetails = useCallback(
+    (shift: any) => {
+      if (showAssignments) {
+        onAssignmentClick?.(shift);
+      } else {
+        onShiftClick?.(shift.id);
+      }
+    },
+    [showAssignments, onAssignmentClick, onShiftClick],
+  );
 
-    type TimelineRowProps = { shifts: any[] };
+  const handleShiftEdit = useCallback(
+    (shiftId: string) => {
+      onShiftEdit?.(shiftId);
+    },
+    [onShiftEdit],
+  );
 
-    const Row = ({
+  const handleShiftAssign = useCallback(
+    (shiftId: string) => {
+      onShiftAssign?.(shiftId);
+    },
+    [onShiftAssign],
+  );
+
+  const handleShiftSwap = useCallback(
+    (shiftId: string) => {
+      onShiftSwap?.(shiftId);
+    },
+    [onShiftSwap],
+  );
+
+  const handleShiftDelete = useCallback(
+    (shiftId: string) => {
+      onShiftDelete?.(shiftId);
+    },
+    [onShiftDelete],
+  );
+
+  const handleTrackClick = useCallback(
+    (shift: any) => {
+      if (showAssignments) {
+        onAssignmentClick?.(shift);
+      } else {
+        onShiftClick?.(shift.id);
+      }
+    },
+    [showAssignments, onAssignmentClick, onShiftClick],
+  );
+
+  // Memoize date navigation callbacks
+  const handlePreviousDate = useCallback(() => {
+    if (!onDateChange) return;
+    const current = startDate ? new Date(startDate) : baseDate;
+    const change = viewType === "Day" ? -1 : -7;
+    const newDate = addDays(current, change);
+    const newDateKey = format(newDate, "yyyy-MM-dd");
+
+    const minAllowed = format(addDays(minDate, -365), "yyyy-MM-dd");
+    const maxAllowed = format(addDays(maxDate, 365), "yyyy-MM-dd");
+
+    if (newDateKey >= minAllowed && newDateKey <= maxAllowed) {
+      onDateChange(newDateKey);
+    }
+  }, [onDateChange, startDate, baseDate, viewType, minDate, maxDate]);
+
+  const handleNextDate = useCallback(() => {
+    if (!onDateChange) return;
+    const current = startDate ? new Date(startDate) : baseDate;
+    const change = viewType === "Day" ? 1 : 7;
+    const newDate = addDays(current, change);
+    const newDateKey = format(newDate, "yyyy-MM-dd");
+
+    const minAllowed = format(addDays(minDate, -365), "yyyy-MM-dd");
+    const maxAllowed = format(addDays(maxDate, 365), "yyyy-MM-dd");
+
+    if (newDateKey >= minAllowed && newDateKey <= maxAllowed) {
+      onDateChange(newDateKey);
+    }
+  }, [onDateChange, startDate, baseDate, viewType, minDate, maxDate]);
+
+  const handleTodayClick = useCallback(() => {
+    if (!onDateChange) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    onDateChange(today);
+  }, [onDateChange]);
+
+  const handleDatePickerChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!onDateChange) return;
+      const selectedDate = e.target.value;
+      if (selectedDate) {
+        const minAllowed = format(addDays(minDate, -365), "yyyy-MM-dd");
+        const maxAllowed = format(addDays(maxDate, 365), "yyyy-MM-dd");
+
+        if (selectedDate >= minAllowed && selectedDate <= maxAllowed) {
+          onDateChange(selectedDate);
+        }
+      }
+    },
+    [onDateChange, minDate, maxDate],
+  );
+
+  // Memoized TimelineRow component
+  type TimelineRowProps = {
+    shifts: any[];
+    index: number;
+    style: React.CSSProperties;
+    startBound: Date;
+    totalMinutes: number;
+    selectedShiftIds: Set<string>;
+    showAssignments: boolean;
+    getCoverage: (shift: any) => CoverageState;
+    onTrackClick: (shift: any) => void;
+    onViewDetails: (shift: any) => void;
+    onShiftEdit?: (shiftId: string) => void;
+    onShiftAssign?: (shiftId: string) => void;
+    onShiftSwap?: (shiftId: string) => void;
+    onShiftDelete?: (shiftId: string) => void;
+  };
+
+  const TimelineRow = memo(
+    ({
+      shifts,
       index,
       style,
-      shifts,
-    }: RowComponentProps<TimelineRowProps>) => {
+      startBound,
+      totalMinutes,
+      selectedShiftIds,
+      showAssignments,
+      getCoverage,
+      onTrackClick,
+      onViewDetails,
+      onShiftEdit,
+      onShiftAssign,
+      onShiftSwap,
+      onShiftDelete,
+    }: TimelineRowProps) => {
       const shift = shifts[index];
       const start = new Date(shift.startTime);
       const end = new Date(shift.endTime);
@@ -347,11 +466,11 @@ const CalendarView = ({
         0,
         visibleEndMinutes - visibleStartMinutes,
       );
-      let width = Math.max(12, (visibleDuration / totalMinutes) * 100); // ensure enough space for labels
+      let width = Math.max(12, (visibleDuration / totalMinutes) * 100);
 
       // Ensure shift doesn't extend beyond 100%
       if (left + width > 100) {
-        width = Math.max(8, 100 - left); // keep inside track even near the right edge
+        width = Math.max(8, 100 - left);
       }
 
       // If shift is completely outside visible range, render empty row
@@ -366,6 +485,22 @@ const CalendarView = ({
           </div>
         );
       }
+
+      // Create stable callbacks for ShiftCardActions
+      const handleViewDetailsClick = () => onViewDetails(shift);
+      const handleEditClick = onShiftEdit
+        ? () => onShiftEdit(shift.id)
+        : undefined;
+      const handleAssignClick = onShiftAssign
+        ? () => onShiftAssign(shift.id)
+        : undefined;
+      const handleSwapClick = onShiftSwap
+        ? () => onShiftSwap(shift.id)
+        : undefined;
+      const handleDeleteClick = onShiftDelete
+        ? () => onShiftDelete(shift.id)
+        : undefined;
+      const handleTrackClickLocal = () => onTrackClick(shift);
 
       return (
         <div style={style} className="timeline-row">
@@ -387,14 +522,7 @@ const CalendarView = ({
                   : "Open"}
             </div>
           </div>
-          <div
-            className="timeline-track"
-            onClick={() =>
-              showAssignments
-                ? onAssignmentClick?.(shift)
-                : onShiftClick?.(shift.id)
-            }
-          >
+          <div className="timeline-track" onClick={handleTrackClickLocal}>
             <div
               className={`timeline-bar ${status} ${selectedShiftIds.has(shift.id) ? "is-selected" : ""}`}
               style={{
@@ -403,30 +531,67 @@ const CalendarView = ({
               }}
             >
               <div className="timeline-bar__label">
-                <span>{shift.assignments?.length || 0} assigned</span>
+                <span>{filled} assigned</span>
                 <span className="timeline-bar__capacity">cap {capacity}</span>
               </div>
               <div className="timeline-bar__actions">
                 <ShiftCardActions
                   shiftId={shift.id}
-                  onViewDetails={() =>
-                    showAssignments
-                      ? onAssignmentClick?.(shift)
-                      : onShiftClick?.(shift.id)
-                  }
-                  onEdit={onShiftEdit ? () => onShiftEdit(shift.id) : undefined}
-                  onAssignMember={
-                    onShiftAssign ? () => onShiftAssign(shift.id) : undefined
-                  }
-                  onSwap={onShiftSwap ? () => onShiftSwap(shift.id) : undefined}
-                  onDelete={
-                    onShiftDelete ? () => onShiftDelete(shift.id) : undefined
-                  }
+                  onViewDetails={handleViewDetailsClick}
+                  onEdit={handleEditClick}
+                  onAssignMember={handleAssignClick}
+                  onSwap={handleSwapClick}
+                  onDelete={handleDeleteClick}
                 />
               </div>
             </div>
           </div>
         </div>
+      );
+    },
+    (prevProps, nextProps) => {
+      // Custom comparison for React.memo
+      return (
+        prevProps.index === nextProps.index &&
+        prevProps.shifts[nextProps.index]?.id ===
+          nextProps.shifts[nextProps.index]?.id &&
+        prevProps.selectedShiftIds.has(
+          nextProps.shifts[nextProps.index]?.id,
+        ) ===
+          nextProps.selectedShiftIds.has(
+            nextProps.shifts[nextProps.index]?.id,
+          ) &&
+        prevProps.showAssignments === nextProps.showAssignments &&
+        prevProps.startBound.getTime() === nextProps.startBound.getTime() &&
+        prevProps.totalMinutes === nextProps.totalMinutes
+      );
+    },
+  );
+
+  TimelineRow.displayName = "TimelineRow";
+
+  const renderTimeline = () => {
+    // Don't show empty state here - navigation should always be visible
+    // Empty state will be handled by the timeline list itself
+
+    const Row = ({ index, style }: RowComponentProps<{ shifts: any[] }>) => {
+      return (
+        <TimelineRow
+          shifts={sortedShifts}
+          index={index}
+          style={style}
+          startBound={startBound}
+          totalMinutes={totalMinutes}
+          selectedShiftIds={selectedShiftIds}
+          showAssignments={showAssignments}
+          getCoverage={getCoverage}
+          onTrackClick={handleTrackClick}
+          onViewDetails={handleViewDetails}
+          onShiftEdit={onShiftEdit}
+          onShiftAssign={onShiftAssign}
+          onShiftSwap={onShiftSwap}
+          onShiftDelete={onShiftDelete}
+        />
       );
     };
 
@@ -462,31 +627,7 @@ const CalendarView = ({
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
                   {/* Previous button */}
                   <button
-                    onClick={() => {
-                      const current = startDate
-                        ? new Date(startDate)
-                        : baseDate;
-                      const change = viewType === "Day" ? -1 : -7;
-                      const newDate = addDays(current, change);
-                      const newDateKey = format(newDate, "yyyy-MM-dd");
-
-                      // Allow navigation within reasonable range (1 year back/forward from min/max)
-                      const minAllowed = format(
-                        addDays(minDate, -365),
-                        "yyyy-MM-dd",
-                      );
-                      const maxAllowed = format(
-                        addDays(maxDate, 365),
-                        "yyyy-MM-dd",
-                      );
-
-                      if (
-                        newDateKey >= minAllowed &&
-                        newDateKey <= maxAllowed
-                      ) {
-                        onDateChange(newDateKey);
-                      }
-                    }}
+                    onClick={handlePreviousDate}
                     className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={`Previous ${viewType === "Day" ? "day" : "week"}`}
                   >
@@ -516,27 +657,7 @@ const CalendarView = ({
                         ? format(new Date(startDate || baseDate), "yyyy-MM-dd")
                         : format(startBound, "yyyy-MM-dd")
                     }
-                    onChange={(e) => {
-                      const selectedDate = e.target.value;
-                      if (selectedDate) {
-                        // Validate date is within allowed range
-                        const minAllowed = format(
-                          addDays(minDate, -365),
-                          "yyyy-MM-dd",
-                        );
-                        const maxAllowed = format(
-                          addDays(maxDate, 365),
-                          "yyyy-MM-dd",
-                        );
-
-                        if (
-                          selectedDate >= minAllowed &&
-                          selectedDate <= maxAllowed
-                        ) {
-                          onDateChange(selectedDate);
-                        }
-                      }
-                    }}
+                    onChange={handleDatePickerChange}
                     min={format(addDays(minDate, -365), "yyyy-MM-dd")}
                     max={format(addDays(maxDate, 365), "yyyy-MM-dd")}
                     className="px-2 py-1 text-xs rounded-lg border border-gray-300 text-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none bg-white"
@@ -546,31 +667,7 @@ const CalendarView = ({
 
                   {/* Next button */}
                   <button
-                    onClick={() => {
-                      const current = startDate
-                        ? new Date(startDate)
-                        : baseDate;
-                      const change = viewType === "Day" ? 1 : 7;
-                      const newDate = addDays(current, change);
-                      const newDateKey = format(newDate, "yyyy-MM-dd");
-
-                      // Allow navigation within reasonable range
-                      const minAllowed = format(
-                        addDays(minDate, -365),
-                        "yyyy-MM-dd",
-                      );
-                      const maxAllowed = format(
-                        addDays(maxDate, 365),
-                        "yyyy-MM-dd",
-                      );
-
-                      if (
-                        newDateKey >= minAllowed &&
-                        newDateKey <= maxAllowed
-                      ) {
-                        onDateChange(newDateKey);
-                      }
-                    }}
+                    onClick={handleNextDate}
                     className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={`Next ${viewType === "Day" ? "day" : "week"}`}
                   >
@@ -579,10 +676,7 @@ const CalendarView = ({
 
                   {/* Today button */}
                   <button
-                    onClick={() => {
-                      const today = format(new Date(), "yyyy-MM-dd");
-                      onDateChange(today);
-                    }}
+                    onClick={handleTodayClick}
                     className="px-3 py-1 text-xs font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition"
                     aria-label="Jump to today"
                   >
@@ -694,7 +788,7 @@ const CalendarView = ({
                 rowCount={sortedShifts.length}
                 rowHeight={132}
                 rowComponent={Row}
-                rowProps={{ shifts: sortedShifts }}
+                rowProps={{}}
                 className="timeline-list"
                 style={{ height: "100%", width: "100%" }}
               >
