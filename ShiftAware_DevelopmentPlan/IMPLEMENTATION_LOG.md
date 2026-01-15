@@ -162,3 +162,14 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: all API routes properly handle conflicts with createConflictResponse utility
 - v0.2.0: verified all navigation links work correctly (Sidebar.tsx contains all valid routes)
 - v0.2.0: build completes successfully with all standardized error responses
+
+## 2026-01-15T19:00:00Z
+- v0.2.0: created comprehensive robustness test suite (tests/robustness.test.ts)
+- v0.2.0: created API error response integration tests (tests/api-errors.test.ts)
+- v0.2.0: robustness tests verify standardized error response utilities (16 tests)
+- v0.2.0: API error tests verify shift validation schema and date conversion (9 tests)
+- v0.2.0: updated integration test script (scripts/run-tests.js) to test standardized error responses
+- v0.2.0: added tests for 404, 401, and 400 error response formats
+- v0.2.0: added new routes to UI navigation tests (/admin/assignments, /admin/audit, /export)
+- v0.2.0: all 37 unit tests passing (smoke, api, robustness, api-errors, export)
+- v0.2.0: test coverage includes error response standardization, shift validation, and date handling

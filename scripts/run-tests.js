@@ -331,6 +331,9 @@ async function runTests() {
     "/admin/members",
     "/admin/shifts",
     "/admin/coverage",
+    "/admin/assignments",
+    "/admin/audit",
+    "/export",
   ];
 
   for (const page of uiPages) {
