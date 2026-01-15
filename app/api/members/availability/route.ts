@@ -142,9 +142,9 @@ function calculateAvailabilityStatus(
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const authResult = await checkAuth(request);
-    if (!authResult.authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
+      return createUnauthorizedResponse();
     }
 
     // Parse query parameters

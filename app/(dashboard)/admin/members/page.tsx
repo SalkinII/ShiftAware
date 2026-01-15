@@ -25,6 +25,7 @@ import { ExperienceLevel, Role } from "@prisma/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { cn } from "@/lib/utils";
+import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 
 interface TeamMember {
   id: string;
@@ -41,6 +42,7 @@ export default function MembersPage() {
   const [showForm, setShowForm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "heatmap">("list");
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     memberId: string | null;

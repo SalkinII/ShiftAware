@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConflictWizard } from "@/components/features/ConflictWizard/ConflictWizard";
+import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 import { useCache } from "@/lib/cache/useCache";
 import { format } from "date-fns";
 import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
@@ -31,6 +32,7 @@ interface TeamMember {
 
 export default function CoverageDashboard() {
   const [showConflictWizard, setShowConflictWizard] = useState(false);
+  const [showAvailabilityHeatmap, setShowAvailabilityHeatmap] = useState(false);
 
   // Use cache for shifts and members
   const {
@@ -175,6 +177,14 @@ export default function CoverageDashboard() {
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
+            onClick={() => setShowAvailabilityHeatmap(true)}
+            className="flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            View Availability
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => setShowConflictWizard(true)}
             className="flex items-center gap-2"
           >
@@ -196,6 +206,30 @@ export default function CoverageDashboard() {
         isOpen={showConflictWizard}
         onClose={() => setShowConflictWizard(false)}
       />
+
+      {showAvailabilityHeatmap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <Card className="relative z-10 max-w-[95vw] max-h-[95vh] overflow-auto">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b">
+              <h2 className="text-2xl font-bold">
+                Member Availability Heatmap
+              </h2>
+              <button
+                onClick={() => setShowAvailabilityHeatmap(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <AvailabilityHeatmap
+              shiftIds={gaps.map((g) => g.id)}
+              onCellClick={(memberId, shiftId, status) => {
+                console.log("Cell clicked:", { memberId, shiftId, status });
+              }}
+            />
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 rounded-2xl border border-red-100 bg-red-50">
