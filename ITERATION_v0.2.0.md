@@ -19,8 +19,8 @@ This iteration focuses on:
 ## Bug Fixes & 404 Resolution
 
 ### Route Issues
-- [ ] Audit all routes for 404 errors
-- [ ] Fix missing route handlers
+- [x] Audit all routes for 404 errors
+- [x] Fix missing route handlers (`/admin/assignments`, `/export`)
 - [ ] Ensure all navigation links work correctly
 - [ ] Add proper error pages (404, 500)
 
@@ -98,9 +98,19 @@ This iteration focuses on:
 
 ---
 
+## Progress Log
+
+### 2026-01-15
+- ✅ Fixed `/admin/assignments` 404 - Created comprehensive assignment control page
+- ✅ Fixed `/export` 404 - Created dedicated export page with full options
+- ✅ Enhanced seed data - Now generates ~50+ shifts covering full event period (June 11 - July 8)
+- ✅ Added seedPreferences function - Creates realistic preferences for all members
+- ✅ Fixed date calculations for shifts spanning midnight
+- ✅ All routes build successfully
+
 ## Notes
 
-- Prioritize bug fixes and 404 resolution first
+- Prioritize bug fixes and 404 resolution first ✅
 - Deferred features can be implemented incrementally
 - Focus on stability and user experience
 - Maintain backward compatibility with v0.1.0
