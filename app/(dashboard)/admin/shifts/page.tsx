@@ -55,6 +55,7 @@ export default function ShiftsPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadData() {
@@ -85,24 +86,86 @@ export default function ShiftsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Validate required fields before submission
+    if (!formData.eventId) {
+      alert("Please select an event");
+      return;
+    }
+
+    if (!formData.startTime || !formData.endTime) {
+      alert("Please provide both start and end times");
+      return;
+    }
+
+    // Convert datetime-local format to ISO datetime strings
+    const startDate = new Date(formData.startTime);
+    const endDate = new Date(formData.endTime);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      alert("Invalid date format");
+      return;
+    }
+
+    // Calculate duration from actual times to ensure it matches
+    const calculatedDuration = Math.round(
+      (endDate.getTime() - startDate.getTime()) / 60000,
+    );
+
+    if (calculatedDuration <= 0) {
+      alert("End time must be after start time");
+      return;
+    }
+
+    // Prepare payload with ISO datetime strings and matching duration
+    const payload = {
+      ...formData,
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      durationMinutes: calculatedDuration, // Use calculated duration to match validation
+    };
+
     try {
       const res = await fetch("/api/shifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         await loadData();
         setShowForm(false);
+        // Reset form
+        setFormData({
+          eventId: events.length > 0 ? events[0].id : "",
+          type: "MOBILE_TEAM_1" as ShiftType,
+          startTime: "",
+          endTime: "",
+          durationMinutes: 360,
+          priority: "CORE" as ShiftPriority,
+          desirabilityScore: 3,
+          capacity: 2,
+          requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
+        });
         alert("Shift created successfully");
       } else {
-        const error = await res.json();
-        alert(error.error || "Failed to create shift");
+        const errorData = await res.json();
+        // Extract validation error details if available
+        let errorMessage = errorData.error || "Failed to create shift";
+        if (errorData.details?.issues) {
+          const issues = errorData.details.issues
+            .map(
+              (issue: { path: string[]; message: string }) =>
+                `${issue.path.join(".")}: ${issue.message}`,
+            )
+            .join("\n");
+          errorMessage = `Validation error:\n${issues}`;
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error("Failed to create shift:", error);
-      alert("Failed to create shift");
+      alert("Failed to create shift. Please check the console for details.");
     }
   }
 

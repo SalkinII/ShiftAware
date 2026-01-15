@@ -98,6 +98,13 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - phase2: added comprehensive print media queries to CalendarView.css and globals.css
 - phase2: print styles hide navigation, buttons, filters, and export controls
 - phase2: optimized timeline bars, grid cells, and scale cells for black/white printing
+
+## 2026-01-15T14:00:00Z
+- v0.2.0: fixed date validation errors in shift form (NaN and invalid date handling)
+- v0.2.0: improved form input validation for startTime, endTime, desirabilityScore, and capacity fields
+- v0.2.0: added explicit NaN checks before rendering numeric values in form inputs
+- v0.2.0: added date validation before formatting dates in shift display to prevent crashes
+- v0.2.0: fixed Next.js build cache corruption issue (missing module 638.js) by clearing .next cache
 - phase2: removed shadows, animations, and rounded corners in print mode
 - phase2: added page-break controls to prevent content splitting across pages
 - phase2: ensured timeline and grid views print cleanly without clipping

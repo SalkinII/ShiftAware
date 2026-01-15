@@ -107,6 +107,8 @@ This iteration focuses on:
 - ✅ Added seedPreferences function - Creates realistic preferences for all members
 - ✅ Fixed date calculations for shifts spanning midnight
 - ✅ All routes build successfully
+- ✅ Fixed date validation errors in shift form (NaN and invalid date handling)
+- ✅ Fixed Next.js build cache corruption (missing module 638.js) - cleared .next cache and rebuilt
 
 ## Notes
 
