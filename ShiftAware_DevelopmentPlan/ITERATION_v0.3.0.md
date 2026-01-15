@@ -20,7 +20,7 @@ This iteration focuses on implementing all deferred features from previous itera
 - [x] **move date display to calendar window** - currently sits at the top of the page, should be in or near the calendar window (Date display moved to CalendarView component, above timeline scale)
 
 ### Phase 3: Admin Features & Polish
-- [ ] **Drag-and-drop swap interface** - Visual swap tool
+- [x] **Drag-and-drop swap interface** - Visual swap tool (SwapInterface component created, integrated into assignments page with view toggle)
 - [ ] **Conflict resolution wizard** - Guided conflict resolution
 - [ ] **Action rollback** - Undo recent changes
 - [ ] **Member availability heatmap** - Visual availability overview
@@ -72,6 +72,10 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Integrated actions menu into shift cards (View, Edit, Assign, Swap, Delete)
 - ✅ Actions menu appears on hover with smooth transitions
 - ✅ Installed @dnd-kit packages for drag-and-drop functionality
+- ✅ Created SwapInterface component with drag-and-drop functionality
+- ✅ Integrated SwapInterface into assignments page with List/Swap view toggle
+- ✅ Drag-and-drop allows selecting 2 assignments to swap
+- ✅ Visual feedback during drag operations
 
 ---
 

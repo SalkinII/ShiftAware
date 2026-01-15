@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { SwapInterface } from "@/components/features/SwapInterface/SwapInterface";
 import { format } from "date-fns";
 import {
   RefreshCw,
@@ -13,6 +14,8 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle2,
+  ArrowLeftRight,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +57,7 @@ export default function AssignmentsPage() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "swap">("list");
 
   useEffect(() => {
     loadData();
@@ -162,6 +166,29 @@ export default function AssignmentsPage() {
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
   );
 
+  async function handleSwap(
+    assignment1Id: string,
+    assignment2Id: string,
+    reason?: string,
+  ) {
+    const res = await fetch("/api/assignments/swap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assignment1Id,
+        assignment2Id,
+        reason,
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to swap assignments");
+    }
+
+    await loadAssignments(selectedEventId);
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -182,6 +209,32 @@ export default function AssignmentsPage() {
             <p className="text-gray-500 font-medium mt-1">
               Manage shift assignments and run the assignment algorithm
             </p>
+          </div>
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2",
+                viewMode === "list"
+                  ? "bg-primary-500 text-white"
+                  : "text-gray-600 hover:bg-gray-50",
+              )}
+            >
+              <List className="w-4 h-4" />
+              List View
+            </button>
+            <button
+              onClick={() => setViewMode("swap")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2",
+                viewMode === "swap"
+                  ? "bg-primary-500 text-white"
+                  : "text-gray-600 hover:bg-gray-50",
+              )}
+            >
+              <ArrowLeftRight className="w-4 h-4" />
+              Swap View
+            </button>
           </div>
         </div>
 
@@ -269,8 +322,16 @@ export default function AssignmentsPage() {
           </Card>
         </div>
 
-        {/* Assignments List */}
-        {uniqueShifts.length === 0 ? (
+        {/* Swap Interface or Assignments List */}
+        {viewMode === "swap" && assignments.length > 0 ? (
+          <Card className="p-6">
+            <SwapInterface
+              assignments={assignments}
+              onSwap={handleSwap}
+              onRefresh={() => loadAssignments(selectedEventId)}
+            />
+          </Card>
+        ) : uniqueShifts.length === 0 ? (
           <Card className="p-12 text-center">
             <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-900 mb-2">
