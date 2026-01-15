@@ -1,8 +1,9 @@
 # Project Status Summary
 
 **Last Updated:** 2026-01-16  
-**Current Iteration:** v0.3.0  
-**Branch:** `iteration/v0.3.0`
+**Current Iteration:** v0.4.0  
+**Branch:** `iteration/v0.4.0`  
+**Latest Release:** v0.3.0 (tagged and merged to main)
 
 ---
 
@@ -12,12 +13,16 @@
 - **Phase 0: Project Setup** - Complete (Infrastructure, Database, Auth)
 - **Phase 1: Core Functionality** - Complete (Team Members, Shifts, Preferences, Algorithm)
 - **Phase 2: Visualization & Export** - Complete (Day/Week/Grid views, PDF export, filters)
-- **Phase 3: Admin Features** - Complete (Manual swaps, Audit trail, Coverage dashboard)
+- **Phase 3: Admin Features** - Complete (Manual swaps, Audit trail, Coverage dashboard, Conflict resolution, Rollback, Availability heatmap)
 - **Phase 4: Testing & Deployment** - Complete (Production setup, Docker, Documentation)
 
-### 🚧 Current Work: Iteration v0.3.0
-**Status:** In Progress  
-**Focus:** Deferred features, performance improvements, UX enhancements
+### ✅ Completed: Iteration v0.3.0
+**Status:** Complete (merged to main, tagged v0.3.0)  
+**Completed:** All deferred features, performance improvements, UX enhancements
+
+### 🚧 Current Work: Iteration v0.4.0
+**Status:** Planning/In Progress  
+**Focus:** Cleanup, documentation consolidation, production readiness for v1.0.0
 
 ---
 
@@ -64,48 +69,48 @@
 
 ---
 
-## In Progress / Recently Completed (v0.3.0)
+## Completed: Iteration v0.3.0
 
-### ✅ Completed This Iteration
+### ✅ All Features Complete
 - ✅ TimePicker and DateTimePicker components
 - ✅ Date display moved to calendar window
 - ✅ Advanced shift card interactions (quick actions)
 - ✅ Drag-and-drop swap interface
 - ✅ Timeline navigation fixes (day/week navigation, date picker)
 - ✅ Week view horizontal scrolling fix
-- ✅ Multi-day shift display improvements (partial)
-- ✅ Caching Phase 1 implementation (basic cache with manual invalidation)
+- ✅ Caching system (CacheProvider, useCache hook, automatic invalidation, integrated with all pages)
+- ✅ Conflict resolution wizard (API endpoints + ConflictWizard UI component)
+- ✅ Action rollback (Rollback API endpoint + UI integration in audit log)
+- ✅ Member availability heatmap (API endpoint + AvailabilityHeatmap component, integrated into Members page and Coverage dashboard)
+- ✅ Performance optimizations (CalendarView rendering, PDF generation)
+- ✅ Integration tests (critical flows: member management, shift management, assignments, conflicts, availability, rollback)
 
-### 🚧 Remaining Work (v0.3.0)
+### Current Work: Iteration v0.4.0
 
-**Phase 3: Admin Features & Polish**
-- [x] Conflict resolution wizard ✅ (API endpoints + ConflictWizard UI component)
-- [x] Action rollback ✅ (Rollback API endpoint + UI integration in audit log)
-- [ ] Member availability heatmap
+**Phase 1: Documentation Cleanup** ✅
+- ✅ Radical documentation cleanup (deleted 19 obsolete files)
+- ✅ Kept only essential docs: SYSTEM_ARCHITECTURE.md, DATABASE_SCHEMA.md, TECHNOLOGY_STACK.md, PROJECT_STATUS.md, IMPLEMENTATION_LOG.md
 
-**Performance Improvements**
-- [x] Virtual scrolling ✅
-- [x] Basic caching ✅ (Caching Phase 1 complete: CacheProvider, useCache hook, manual invalidation; Caching Phase 2 pending: automatic invalidation, integrate with all pages)
-- [ ] Optimize large schedule renders
-- [ ] Optimize PDF generation performance
+**Phase 2: Code Cleanup** (Pending)
+- Remove dead code and trailing code
+- Refactor technical debt
+- Organize file structure
+- Clean dependencies
 
-**Testing & Quality**
-- [ ] Integration tests for critical flows
-- [ ] E2E tests for critical user flows
-- [ ] Algorithm validation tests
-- [ ] Performance testing
-- [ ] Security audit
-- [ ] Browser compatibility testing
+**Phase 3: Production Readiness** (Pending)
+- Final polish and testing
+- Security audit
+- Browser compatibility
+- Performance optimization
 
-**Documentation**
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] User manual
-- [ ] Developer guide
-- [ ] Troubleshooting guide expansion
+**Phase 4: v1.0 Release Preparation** (Pending)
+- Release checklist
+- Documentation finalization
+- Deployment preparation
 
 ---
 
-## Known Issues (Deferred)
+## Known Issues (Deferred to Post-v1.0)
 
 ### Timeline View
 1. Day view multi-day shift display (shifts running over still show empty rows)
@@ -113,43 +118,43 @@
 3. Grid view compactness (cells could be smaller)
 4. Grid view for swap interface (two-column layout enhancement)
 
-**Status:** Documented in `TIMELINE_VIEW_ANALYSIS.md`, deferred to v0.4.0+
+### Swap Interface UI
+- Multiple selection possible but not sensible (needs 2-selection limit or better feedback)
+
+**Status:** Documented, deferred to post-v1.0
 
 ---
 
 ## Next Steps
 
-### Immediate (Continue v0.3.0)
-1. Complete Caching Phase 2 (automatic invalidation on mutations, integrate cache with all data-fetching pages)
-2. Address remaining timeline view issues (if prioritized)
-3. Add integration tests for critical flows
-4. Performance optimizations (large schedule renders, PDF generation)
+### Immediate (Iteration v0.4.0)
+1. ✅ Documentation cleanup (complete)
+2. Code cleanup (remove dead code, refactor technical debt)
+3. Production readiness (final polish, testing, security audit)
+4. v1.0.0 release preparation
 
-### Future Iterations
-- v0.4.0: UI Design Adaptation (reactive patterns, Design System v2) - See `UI_DESIGN_ADAPTATION_PLAN.md`
-- v0.5.0: Timeline view improvements, two-column swap interface
-- v1.0: Conflict resolution wizard, action rollback, availability heatmap
-- v1.1+: Advanced features, notifications, multi-event support
+### Post-v1.0
+- UI Design Adaptation (reactive patterns, Design System v2)
+- Timeline view improvements
+- Advanced features, notifications, multi-event support
 
 ---
 
 ## Metrics
 
-**Test Coverage:** 46 tests passing (smoke, API, algorithm, robustness, export, api-errors)  
+**Test Coverage:** 46+ tests passing (smoke, API, algorithm, robustness, export, api-errors, integration)  
 **Build Status:** ✅ Passing  
-**Documentation:** 13 files (consolidated from 16)  
-**Code Quality:** TypeScript strict mode, standardized error handling, error boundaries
+**Documentation:** 6 essential files (radically cleaned up from 25+)  
+**Code Quality:** TypeScript strict mode, standardized error handling, error boundaries  
+**Latest Release:** v0.3.0 (tagged and merged to main)
 
 ---
 
 ## Notes
 
-- MVP functionality is complete and production-ready
-- Current focus is on UX enhancements and performance improvements
-- Documentation has been consolidated and streamlined
-- Caching system implemented (Caching Phase 1: basic cache with manual invalidation) and ready for expansion (Caching Phase 2: automatic invalidation)
-- Timeline view has some known issues but core functionality works
-
-**Note:** "Phase" terminology refers to two different systems:
-- **Project Phases (0-4):** From ROADMAP.md - overall project development phases
-- **Caching Phases (1-2):** From CACHING_STRATEGY.md - caching implementation phases
+- All MVP functionality complete and production-ready
+- Iteration v0.3.0 complete: all deferred features, performance improvements, admin features implemented
+- Documentation radically cleaned: kept only essential technical docs (architecture, schema, tech stack, status, implementation log)
+- Current focus: cleanup and production readiness for v1.0.0 release
+- Caching system fully implemented and integrated across all pages
+- Integration tests added for critical user flows
