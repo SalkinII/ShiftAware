@@ -79,8 +79,8 @@
 ### 🚧 Remaining Work (v0.3.0)
 
 **Phase 3: Admin Features & Polish**
-- [ ] Conflict resolution wizard
-- [ ] Action rollback (Undo recent changes)
+- [x] Conflict resolution wizard ✅ (API endpoints + ConflictWizard UI component)
+- [x] Action rollback ✅ (Rollback API endpoint + UI integration in audit log)
 - [ ] Member availability heatmap
 
 **Performance Improvements**

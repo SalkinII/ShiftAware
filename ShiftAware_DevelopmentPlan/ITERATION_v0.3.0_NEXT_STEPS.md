@@ -18,15 +18,15 @@ Delete functionality has been successfully implemented and tested. We need to co
 - Drag-and-drop swap interface
 - Caching Phase 1 & 2 (complete)
 - Delete functionality for shifts and members (complete)
+- **Conflict resolution wizard** ✅ (API endpoints + ConflictWizard UI component)
+- **Action rollback** ✅ (Rollback API endpoint + UI integration in audit log)
 
 ---
 
 ## Remaining Tasks
 
 ### Phase 3: Admin Features & Polish
-1. **Conflict resolution wizard** - Guided conflict resolution
-2. **Action rollback** - Undo recent changes  
-3. **Member availability heatmap** - Visual availability overview
+1. **Member availability heatmap** - Visual availability overview
 
 ### Performance Improvements
 1. **Optimize large schedule renders** - Improve performance for many shifts
@@ -62,46 +62,50 @@ Delete functionality has been successfully implemented and tested. We need to co
 ## Priority Assessment
 
 ### High Priority (Core Functionality)
-- **Action rollback** - Users need undo capability for mistakes
-- **Optimize large schedule renders** - Performance impacts UX directly
+- ✅ **Action rollback** - COMPLETE
+- ✅ **Conflict resolution wizard** - COMPLETE
+- ✅ **Optimize large schedule renders** - COMPLETE (component memoization, callback optimization)
+- ✅ **Optimize PDF generation** - COMPLETE (single-pass processing, optimized calculations)
 
 ### Medium Priority (Polish & Quality)
-- **Conflict resolution wizard** - Improves admin workflow
 - **Member availability heatmap** - Nice-to-have visualization
-- **Optimize PDF generation** - Performance improvement
 - **Integration tests** - Quality assurance
+- **E2E tests** - Quality assurance
 
 ### Lower Priority (Documentation)
-- API documentation
+- API documentation (OpenAPI/Swagger)
 - User manual
 - Developer guide
-- Troubleshooting guide
+- Troubleshooting guide expansion
 
 ---
 
 ## Recommended Next Steps
 
-**Option A: Performance First**
-1. Optimize large schedule renders (@planner → @implementer)
-2. Optimize PDF generation (@planner → @implementer)
-3. Then tackle Phase 3 features
+**Option A: Complete Remaining Feature**
+1. Member availability heatmap (@planner → @implementer)
 
-**Option B: Features First**
-1. Action rollback (@planner → @implementer)
-2. Conflict resolution wizard (@planner → @implementer)
-3. Then performance improvements
+**Option B: Quality & Testing**
+1. Integration tests for critical flows (@planner → @implementer)
+2. E2E tests for critical user flows (@planner → @implementer)
+3. Algorithm validation tests (@planner → @implementer)
 
-**Option C: Balanced**
-1. Action rollback (quick win, high value)
-2. Optimize large schedule renders (performance)
-3. Conflict resolution wizard (feature)
-4. Member availability heatmap (visualization)
+**Option C: Documentation**
+1. API documentation (OpenAPI/Swagger) (@planner → @documenter)
+2. User manual (@documenter)
+3. Developer guide (@documenter)
+
+**Option D: Iteration Completion**
+1. Complete remaining feature (Member availability heatmap)
+2. Add basic integration tests
+3. Prepare iteration summary
+4. Merge to main and start v0.4.0
 
 ---
 
 ## Recommendation
 
-**Option C (Balanced)** - Start with action rollback as it's a high-value feature that users will appreciate, then alternate between performance and features.
+**Option D (Iteration Completion)** - v0.3.0 is nearly complete. Finish the last feature (Member availability heatmap), add basic integration tests, then wrap up the iteration.
 
 ---
 
