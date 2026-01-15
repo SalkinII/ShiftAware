@@ -23,7 +23,7 @@ This iteration focuses on implementing all deferred features from previous itera
 - [x] **Drag-and-drop swap interface** - Visual swap tool (SwapInterface component created, integrated into assignments page with view toggle)
 - [x] **Conflict resolution wizard** - Guided conflict resolution (API endpoints + ConflictWizard UI component)
 - [x] **Action rollback** - Undo recent changes (rollback API endpoint, UI integration in audit log page)
-- [ ] **Member availability heatmap** - Visual availability overview
+- [x] **Member availability heatmap** - Visual availability overview (API endpoint + AvailabilityHeatmap component, integrated into Members page and Coverage dashboard)
 
 ---
 
@@ -107,6 +107,9 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Created conflict resolution API endpoint (POST /api/conflicts/resolve) supporting UNASSIGN, ASSIGN, REASSIGN, SWAP actions
 - ✅ Implemented ConflictWizard component with guided workflow, progress indicator, and resolution suggestions
 - ✅ Integrated conflict wizard into coverage dashboard with "Resolve Conflicts" button
+- ✅ Created availability heatmap API endpoint (GET /api/members/availability) calculating member × shift availability matrix
+- ✅ Implemented AvailabilityHeatmap component with color-coded cells, tooltips, and summary statistics
+- ✅ Integrated heatmap into Members page (view toggle) and Coverage dashboard (modal overlay)
 
 ---
 
