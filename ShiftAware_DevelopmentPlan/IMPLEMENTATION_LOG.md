@@ -235,3 +235,10 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: added date navigation (prev/next buttons) to CalendarView, positioned above timeline scale
 - v0.3.0: removed date display and navigation from schedule page header
 - v0.3.0: date display now appears in/near calendar window as requested
+
+## 2026-01-15T23:45:00Z
+- v0.3.0: created ShiftCardActions component (components/ui/ShiftCardActions.tsx) with quick actions menu
+- v0.3.0: added quick actions to shift cards: View Details, Edit, Assign Member, Swap, Delete
+- v0.3.0: integrated actions menu into CalendarView timeline bars with hover visibility
+- v0.3.0: installed @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities for drag-and-drop functionality
+- v0.3.0: actions menu appears on hover with smooth opacity transitions
