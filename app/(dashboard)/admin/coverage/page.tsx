@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useCache } from "@/lib/cache/useCache";
 import { format } from "date-fns";
 import { RefreshCw, Users, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,58 +29,84 @@ interface TeamMember {
 }
 
 export default function CoverageDashboard() {
-  const [gaps, setGaps] = useState<CoverageGap[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use cache for shifts and members
+  const {
+    data: cachedShifts,
+    loading: shiftsLoading,
+    refetch: refetchShifts,
+  } = useCache<any[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      return res.json();
+    },
+  });
 
+  const {
+    data: cachedMembers,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useCache<TeamMember[]>({
+    key: "members",
+    fetchFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+  });
+
+  const loading = shiftsLoading || membersLoading;
+
+  // Calculate gaps from cached shifts
+  const gaps = useMemo(() => {
+    if (!cachedShifts) return [];
+    return cachedShifts
+      .map((s: any) => ({
+        id: s.id,
+        type: s.type,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        priority: s.priority,
+        capacity: s.capacity,
+        currentCount: s.assignments?.length || 0,
+        event: s.event,
+        requiredRoles: s.requiredRoles,
+      }))
+      .filter((s: any) => s.currentCount < s.capacity);
+  }, [cachedShifts]);
+
+  // Listen for cache invalidation events
   useEffect(() => {
-    loadData();
-  }, []);
+    const handleCacheInvalidate = () => {
+      refetchShifts();
+      refetchMembers();
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate,
+      );
+    };
+  }, [refetchShifts, refetchMembers]);
 
   async function loadData() {
-    setLoading(true);
-    try {
-      const [shiftsRes, membersRes] = await Promise.all([
-        fetch("/api/shifts"),
-        fetch("/api/members"),
-      ]);
-
-      if (shiftsRes.ok) {
-        const shifts = await shiftsRes.json();
-        const gapList = shifts
-          .map((s: any) => ({
-            id: s.id,
-            type: s.type,
-            startTime: s.startTime,
-            endTime: s.endTime,
-            priority: s.priority,
-            capacity: s.capacity,
-            currentCount: s.assignments?.length || 0,
-            event: s.event,
-            requiredRoles: s.requiredRoles,
-          }))
-          .filter((s: any) => s.currentCount < s.capacity);
-        setGaps(gapList);
-      }
-
-      if (membersRes.ok) {
-        const membersData = await membersRes.json();
-        setMembers(membersData);
-      }
-    } catch (error) {
-      console.error("Failed to load data:", error);
-    } finally {
-      setLoading(false);
-    }
+    await Promise.all([refetchShifts(), refetchMembers()]);
   }
 
   const quickFillRecommendations = useMemo(() => {
+    if (!cachedMembers) return [];
     return gaps
       .filter((gap) => gap.currentCount === 0)
       .slice(0, 5)
       .map((gap) => {
         const needed = gap.capacity - gap.currentCount;
-        const availableMembers = members.filter((member) => {
+        const availableMembers = cachedMembers.filter((member) => {
           // Check if member has preferences for this shift
           const hasPreference = member.preferences?.some(
             (p: any) => p.shiftId === gap.id,

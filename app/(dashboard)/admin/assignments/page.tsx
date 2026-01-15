@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { useCache } from "@/lib/cache/useCache";
 import { SwapInterface } from "@/components/features/SwapInterface/SwapInterface";
 import { format } from "date-fns";
 import {
@@ -32,7 +33,7 @@ interface Assignment {
     startTime: string;
     endTime: string;
     priority: string;
-    event: { name: string };
+    event: { id: string; name: string };
   };
   teamMember: {
     id: string;
@@ -52,65 +53,75 @@ interface Event {
 
 export default function AssignmentsPage() {
   const toast = useToast();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "swap">("list");
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Use cache for events
+  const {
+    data: cachedEvents,
+    loading: eventsLoading,
+    refetch: refetchEvents,
+  } = useCache<Event[]>({
+    key: "events",
+    fetchFn: async () => {
+      const res = await fetch("/api/events");
+      if (!res.ok) throw new Error("Failed to fetch events");
+      return res.json();
+    },
+  });
 
+  // Use cache for assignments (all assignments, filtered client-side)
+  const {
+    data: allAssignments,
+    loading: assignmentsLoading,
+    refetch: refetchAssignments,
+  } = useCache<Assignment[]>({
+    key: "assignments",
+    fetchFn: async () => {
+      const res = await fetch("/api/assignments");
+      if (!res.ok) throw new Error("Failed to fetch assignments");
+      return res.json();
+    },
+  });
+
+  const loading = eventsLoading || assignmentsLoading;
+
+  // Filter assignments by selected event
+  const assignments = useMemo(() => {
+    if (!allAssignments) return [];
+    if (!selectedEventId) return allAssignments;
+    return allAssignments.filter((a) => a.shift.event.id === selectedEventId);
+  }, [allAssignments, selectedEventId]);
+
+  // Set default event on first load
   useEffect(() => {
-    if (selectedEventId) {
-      loadAssignments(selectedEventId);
-    } else {
-      loadAssignments();
+    if (cachedEvents && cachedEvents.length > 0 && !selectedEventId) {
+      setSelectedEventId(cachedEvents[0].id);
     }
-  }, [selectedEventId]);
+  }, [cachedEvents, selectedEventId]);
+
+  // Listen for cache invalidation events
+  useEffect(() => {
+    const handleCacheInvalidate = () => {
+      refetchEvents();
+      refetchAssignments();
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate,
+      );
+    };
+  }, [refetchEvents, refetchAssignments]);
 
   async function loadData() {
-    setLoading(true);
-    try {
-      const [eventsRes, assignmentsRes] = await Promise.all([
-        fetch("/api/events"),
-        fetch("/api/assignments"),
-      ]);
-
-      if (eventsRes.ok) {
-        const eventsData = await eventsRes.json();
-        setEvents(eventsData);
-        if (eventsData.length > 0 && !selectedEventId) {
-          setSelectedEventId(eventsData[0].id);
-        }
-      }
-
-      if (assignmentsRes.ok) {
-        const assignmentsData = await assignmentsRes.json();
-        setAssignments(assignmentsData);
-      }
-    } catch (error) {
-      console.error("Load data error:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadAssignments(eventId?: string) {
-    try {
-      const url = eventId
-        ? `/api/assignments?eventId=${eventId}`
-        : "/api/assignments";
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setAssignments(data);
-      }
-    } catch (error) {
-      console.error("Load assignments error:", error);
-    }
+    await Promise.all([refetchEvents(), refetchAssignments()]);
   }
 
   async function runAlgorithm(eventId: string) {
@@ -136,7 +147,15 @@ export default function AssignmentsPage() {
         toast.success(
           `Algorithm completed! Created ${result.assignmentsCount} assignments.`,
         );
-        await loadAssignments(eventId);
+        // Invalidate cache for assignments and shifts
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: {
+              keys: ["assignments", "assignments*", "shifts", "shifts*"],
+            },
+          }),
+        );
+        await refetchAssignments();
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to run algorithm");
@@ -186,7 +205,13 @@ export default function AssignmentsPage() {
       throw new Error(error.error || "Failed to swap assignments");
     }
 
-    await loadAssignments(selectedEventId);
+    // Invalidate cache for assignments and shifts
+    window.dispatchEvent(
+      new CustomEvent("shiftaware:cache-invalidate", {
+        detail: { keys: ["assignments", "assignments*", "shifts", "shifts*"] },
+      }),
+    );
+    await refetchAssignments();
   }
 
   if (loading) {
@@ -251,7 +276,7 @@ export default function AssignmentsPage() {
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
               >
                 <option value="">All Events</option>
-                {events.map((event) => (
+                {cachedEvents?.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.name} ({format(new Date(event.startDate), "MMM d")} -{" "}
                     {format(new Date(event.endDate), "MMM d")})
