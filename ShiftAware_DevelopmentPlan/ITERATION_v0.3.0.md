@@ -92,6 +92,12 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Fixed infinite loop issues in cache event listeners
 - ✅ Fixed swap API unique constraint violation handling
 - ✅ Documented swap UI issue for future improvement
+- ✅ Created ConfirmDialog component with accessibility features (keyboard navigation, focus trap, ARIA labels)
+- ✅ Implemented shift delete functionality in admin/shifts page with confirmation dialog
+- ✅ Implemented shift delete functionality in schedule page (via CalendarView)
+- ✅ Implemented member delete functionality in admin/members page with confirmation dialog
+- ✅ Added cache invalidation after successful delete operations
+- ✅ All delete operations require authentication (API endpoints already check auth)
 
 ---
 

@@ -271,3 +271,8 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: fixed infinite loop in cache event listeners by removing refetch functions from useEffect deps and adding key filtering
 - v0.3.0: fixed swap API unique constraint violation by using delete+create pattern and adding validation
 - v0.3.0: documented swap UI issue (multiple selection not sensible) for future improvement
+- v0.3.0: created ConfirmDialog component (components/ui/ConfirmDialog.tsx) with accessibility features (keyboard navigation, focus trap, ARIA labels, loading states)
+- v0.3.0: implemented shift delete functionality in admin/shifts page with confirmation dialog and cache invalidation
+- v0.3.0: implemented shift delete functionality in schedule page (via CalendarView onShiftDelete prop)
+- v0.3.0: implemented member delete functionality in admin/members page with confirmation dialog and cache invalidation
+- v0.3.0: all delete operations require authentication (API endpoints already check auth via isAuthenticated())

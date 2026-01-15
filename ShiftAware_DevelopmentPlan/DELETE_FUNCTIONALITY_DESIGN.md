@@ -34,6 +34,7 @@ Need to implement delete functionality for shifts and members with state-of-the-
 - Must use existing Toast system
 - Must integrate with cache invalidation system
 - Must follow existing error handling patterns
+- **Security:** API endpoints already check authentication (`isAuthenticated()`), but UI should only show delete actions to authenticated users (middleware protects routes, but client-side check improves UX)
 
 ---
 
