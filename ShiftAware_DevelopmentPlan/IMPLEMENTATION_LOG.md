@@ -285,3 +285,9 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: created conflict resolution API endpoint (app/api/conflicts/resolve/route.ts) supporting UNASSIGN, ASSIGN, REASSIGN, SWAP actions with transaction-based atomicity and audit logging
 - v0.3.0: implemented ConflictWizard component (components/features/ConflictWizard/ConflictWizard.tsx) with guided workflow, progress indicator, conflict navigation, and resolution suggestions
 - v0.3.0: integrated conflict wizard into coverage dashboard (app/(dashboard)/admin/coverage/page.tsx) with "Resolve Conflicts" button
+- v0.3.0: created availability heatmap API endpoint (app/api/members/availability/route.ts) calculating member × shift availability matrix with status types (available/partial/unavailable/neutral)
+- v0.3.0: implemented AvailabilityHeatmap component (components/features/AvailabilityHeatmap/AvailabilityHeatmap.tsx) with color-coded cells, tooltips, summary statistics, and keyboard navigation
+- v0.3.0: integrated heatmap into Members page (view toggle) and Coverage dashboard (modal overlay)
+- v0.3.0: added integration tests (tests/integration.test.ts) for critical flows: member management, shift management, assignments, conflicts, availability, rollback
+- v0.3.0: iteration complete - merged to main, tagged v0.3.0
+- v0.4.0: radical documentation cleanup - deleted 19 obsolete files, kept only essential technical docs (SYSTEM_ARCHITECTURE.md, DATABASE_SCHEMA.md, TECHNOLOGY_STACK.md, PROJECT_STATUS.md, IMPLEMENTATION_LOG.md)
