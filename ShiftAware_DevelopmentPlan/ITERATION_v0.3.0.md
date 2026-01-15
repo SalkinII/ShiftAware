@@ -87,6 +87,40 @@ This iteration focuses on implementing all deferred features from previous itera
 
 ---
 
+---
+
+## Design Specifications
+
+### Time Picker Component
+- Visual time selection (hour/minute dropdowns)
+- Support 12/24 hour format
+- Integrated with DateTimePicker component
+- Accessible (keyboard navigation, ARIA labels)
+
+### Date Display Relocation
+- Moved from schedule page header to CalendarView component
+- Positioned above timeline scale
+- Maintains navigation (prev/next day/week)
+
+### Advanced Shift Card Interactions
+- Quick actions menu (ShiftCardActions component)
+- Actions: View Details, Edit, Assign Member, Swap, Delete
+- Appears on hover with smooth transitions
+
+### Drag-and-Drop Swap Interface
+- Visual drag-and-drop using @dnd-kit/core
+- Select 2 assignments to swap
+- Visual feedback during drag operations
+- Integrated with swap API endpoint
+
+### Caching Strategy
+- Client-side in-memory cache with React Context
+- CacheProvider and useCache hook
+- Manual invalidation via custom events
+- See `CACHING_STRATEGY.md` for detailed design
+
+---
+
 ## Notes
 
 - Prioritize features based on user feedback

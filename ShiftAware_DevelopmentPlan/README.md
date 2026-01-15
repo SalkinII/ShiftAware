@@ -11,9 +11,16 @@ Single source of truth for planning and execution context. Keep this folder alig
 - `ROADMAP.md` — phases, current focus, priorities
 - `TESTING_PLAN.md` — verification suites and checklists
 
+## Active Iteration
+- `ITERATION_v0.3.0.md` — current iteration plan, progress, and design specs
+
 ## Logs (Append-Only)
-- `IMPLEMENTATION_LOG.md` — change log of delivered work
+- `IMPLEMENTATION_LOG.md` — change log of delivered work (includes bug fixes and debugging notes)
 - `COMPLIANCE_REVIEW.md` — plan vs repo adherence reviews
+
+## Design & Analysis Documents
+- `CACHING_STRATEGY.md` — caching system design and implementation plan
+- `TIMELINE_VIEW_ANALYSIS.md` — timeline view issues, fixes, and future improvements
 
 ## Conventions
 - Auth model is plain `ADMIN_PASSWORD` (no hash) with `authenticated=true` cookie.
@@ -23,3 +30,4 @@ Single source of truth for planning and execution context. Keep this folder alig
 ## Update Rules
 - If behavior changes, update the relevant doc in the Canonical list.
 - Keep logs chronological and append new entries at the bottom.
+- Consolidate redundant documentation — bugs and debugging notes go into `IMPLEMENTATION_LOG.md`.
