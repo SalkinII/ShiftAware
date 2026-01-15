@@ -323,7 +323,7 @@ export default function AssignmentsPage() {
         </div>
 
         {/* Swap Interface or Assignments List */}
-        {viewMode === "swap" && assignments.length > 0 ? (
+        {viewMode === "swap" ? (
           <Card className="p-6">
             <SwapInterface
               assignments={assignments}

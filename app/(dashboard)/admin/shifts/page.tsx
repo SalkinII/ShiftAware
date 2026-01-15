@@ -162,6 +162,8 @@ export default function ShiftsPage() {
         await loadData();
         setShowForm(false);
         setFormErrors({});
+        // Notify schedule page to refresh
+        window.dispatchEvent(new CustomEvent("shiftaware:refresh-schedule"));
         // Reset form
         setFormData({
           eventId: events.length > 0 ? events[0].id : "",

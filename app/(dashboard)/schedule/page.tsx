@@ -102,6 +102,15 @@ export default function SchedulePage() {
       setViewType(savedView);
     }
     loadSchedule();
+
+    // Listen for custom event to refresh schedule
+    const handleRefresh = () => {
+      loadSchedule();
+    };
+    window.addEventListener("shiftaware:refresh-schedule", handleRefresh);
+    return () => {
+      window.removeEventListener("shiftaware:refresh-schedule", handleRefresh);
+    };
   }, []);
 
   useEffect(() => {
