@@ -71,3 +71,18 @@
 - Schedule page loads ALL shifts (no event filtering) - this is correct for global view
 - Swap view now shows even with 0 assignments (SwapInterface handles empty state)
 - Custom event system allows cross-page communication for refresh
+
+## Testing Requirements
+
+To test the swap interface:
+1. Create shifts (Admin > Shifts) - shifts should appear in Schedule view automatically
+2. Create team members (Admin > Members) if not already created
+3. Run assignment algorithm (Admin > Assignments > Run Algorithm) to create assignments
+4. Switch to Swap View in Assignments page
+5. Drag assignments to select 2, then click "Swap Selected"
+
+**Data Flow Verification:**
+- Shift creation → Custom event → Schedule refresh ✅
+- Assignments page loads assignments for selected event ✅
+- Swap interface shows all assignments (handles empty state) ✅
+- Swap API endpoint accepts assignment1Id, assignment2Id ✅
