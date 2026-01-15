@@ -1,4 +1,4 @@
-import { Shift, Assignment } from "@prisma/client";
+import { Shift, Assignment, Role } from "@prisma/client";
 import {
   AssignmentState,
   AlgorithmResult,
@@ -72,7 +72,7 @@ export async function runAssignmentAlgorithm(
   const membersMap = new Map(members.map((m) => [m.id, m]));
   const violations: string[] = [];
   const explanations = new Map<string, string>();
-  const scores = new Map<string, any>();
+  const scores = new Map<string, AssignmentScore>();
 
   // Initialize state
   shifts.forEach((shift) => {
@@ -124,7 +124,7 @@ export async function runAssignmentAlgorithm(
       const assignment: Partial<Assignment> = {
         shiftId: shift.id,
         teamMemberId: member.id,
-        role: requiredRole as any,
+        role: requiredRole as Role,
         isLead,
         assignmentType: "ALGORITHM",
       };
@@ -216,7 +216,7 @@ export async function runAssignmentAlgorithm(
       const assignment: Partial<Assignment> = {
         shiftId: shift.id,
         teamMemberId: best.member.id,
-        role: requiredRole as any,
+        role: requiredRole as Role,
         isLead,
         assignmentType: "ALGORITHM",
       };
