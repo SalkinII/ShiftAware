@@ -190,10 +190,21 @@ export default function AuditLogPage() {
         body: JSON.stringify({ auditLogId: rollbackDialog.auditLogId }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        // Response is not valid JSON
+        throw new Error(
+          `Failed to rollback action: ${res.status} ${res.statusText}`,
+        );
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to rollback action");
+        // API error responses use either 'error' or 'message' field
+        const errorMessage =
+          data.message || data.error || "Failed to rollback action";
+        throw new Error(errorMessage);
       }
 
       toast.success(data.message || "Action rolled back successfully");
@@ -217,8 +228,12 @@ export default function AuditLogPage() {
       });
     } catch (error) {
       console.error("Rollback error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to rollback action";
+      let errorMessage = "Failed to rollback action";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
       toast.error(errorMessage);
       setRollbackDialog((prev) => ({ ...prev, isLoading: false }));
     }
