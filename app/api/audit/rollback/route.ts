@@ -38,6 +38,13 @@ export async function POST(request: Request) {
       return createNotFoundResponse("Audit log entry");
     }
 
+    // Prevent rolling back rollback entries (entries with reason containing "Rollback of")
+    if (auditLog.reason && auditLog.reason.includes("Rollback of")) {
+      return createConflictResponse(
+        "Cannot rollback a rollback action. Please rollback the original action instead.",
+      );
+    }
+
     // Check if rollback is possible
     const rollbackableActions: AuditAction[] = [
       AuditAction.CREATE,
@@ -251,15 +258,60 @@ async function rollbackShift(
 
     case AuditAction.UPDATE:
       // Restore shift fields from before
+      // Note: This could be rolling back a rollback of a CREATE (which deleted the shift)
+      // In that case, we need to recreate the shift instead of updating it
       if (!before) {
         throw new Error("Cannot rollback: missing 'before' data");
       }
+
       const existingShift = await tx.shift.findUnique({
         where: { id: auditLog.entityId },
         include: { requiredRoles: true },
       });
+
+      // If shift doesn't exist, this might be a rollback of a CREATE rollback
+      // Check if 'before' has all the data needed to recreate
       if (!existingShift) {
-        throw new Error("Shift not found for rollback");
+        // Try to recreate the shift from 'before' data
+        const { requiredRoles: beforeRoles, ...beforeShiftData } = before;
+
+        // Validate we have the required fields
+        if (!beforeShiftData.eventId || !beforeShiftData.type) {
+          throw new Error(
+            "Cannot rollback: shift was deleted and missing data to recreate it",
+          );
+        }
+
+        // Recreate the shift
+        const recreatedShift = await tx.shift.create({
+          data: {
+            eventId: beforeShiftData.eventId,
+            type: beforeShiftData.type,
+            startTime: new Date(beforeShiftData.startTime),
+            endTime: new Date(beforeShiftData.endTime),
+            durationMinutes: beforeShiftData.durationMinutes,
+            priority: beforeShiftData.priority,
+            desirabilityScore: beforeShiftData.desirabilityScore,
+            capacity: beforeShiftData.capacity,
+          },
+        });
+
+        // Recreate required roles
+        if (beforeRoles && Array.isArray(beforeRoles)) {
+          await tx.shiftRole.createMany({
+            data: beforeRoles.map((role: any) => ({
+              shiftId: recreatedShift.id,
+              role: role.role,
+              count: role.count || 1,
+            })),
+          });
+        }
+
+        return {
+          success: true,
+          message: `Rolled back shift deletion: ${recreatedShift.type}`,
+          action: AuditAction.CREATE,
+        };
       }
 
       // Update shift fields

@@ -158,14 +158,19 @@ export default function AuditLogPage() {
   }, [logs, searchQuery]);
 
   // Check if an action is rollbackable
-  function isRollbackable(action: AuditAction): boolean {
+  function isRollbackable(log: AuditLog): boolean {
+    // Don't allow rolling back rollback entries
+    if (log.reason && log.reason.includes("Rollback of")) {
+      return false;
+    }
+
     const rollbackableActions: AuditAction[] = [
       AuditAction.CREATE,
       AuditAction.UPDATE,
       AuditAction.DELETE,
       AuditAction.MANUAL_SWAP,
     ];
-    return rollbackableActions.includes(action);
+    return rollbackableActions.includes(log.action);
   }
 
   function handleRollbackClick(log: AuditLog) {
@@ -210,11 +215,28 @@ export default function AuditLogPage() {
       toast.success(data.message || "Action rolled back successfully");
 
       // Invalidate cache for the affected entity type
-      window.dispatchEvent(
-        new CustomEvent("shiftaware:cache-invalidate", {
-          detail: { entityType: rollbackDialog.entityType },
-        }),
-      );
+      const cacheKeys: string[] = [];
+      switch (rollbackDialog.entityType) {
+        case EntityType.SHIFT:
+          cacheKeys.push("shifts", "shifts*", "assignments", "assignments*");
+          break;
+        case EntityType.TEAM_MEMBER:
+          cacheKeys.push("members", "assignments", "assignments*");
+          break;
+        case EntityType.ASSIGNMENT:
+          cacheKeys.push("assignments", "assignments*");
+          break;
+        case EntityType.PREFERENCE:
+          cacheKeys.push("shifts", "shifts*"); // Preferences affect shift display
+          break;
+      }
+      if (cacheKeys.length > 0) {
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: cacheKeys },
+          }),
+        );
+      }
 
       // Reload audit logs to show the rollback entry
       await loadLogs(true);
@@ -455,7 +477,7 @@ export default function AuditLogPage() {
                       <p className="mt-1 text-[10px]">IP: {log.ipAddress}</p>
                     )}
                   </div>
-                  {isRollbackable(log.action) && (
+                  {isRollbackable(log) && (
                     <Button
                       variant="secondary"
                       size="sm"
