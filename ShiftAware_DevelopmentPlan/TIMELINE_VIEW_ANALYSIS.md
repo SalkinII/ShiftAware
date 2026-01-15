@@ -130,6 +130,34 @@
 
 ---
 
+## Fixes Applied
+
+### 2026-01-16: Week View Scrolling & Multi-Day Shift Display
+**Issues Fixed:**
+1. Week view had no horizontal scrolling
+2. Shifts running over to the next day were not displayed properly
+
+**Root Causes:**
+1. `timeline-scale-container--infinite` had `overflow: hidden` which prevented scrolling on larger screens
+2. Shift positioning calculations didn't properly handle shifts that extend beyond `startBound` or `endBound`
+3. Shifts spanning multiple days weren't clipped correctly at boundaries
+
+**Fixes Applied:**
+1. Added `overflow: visible` to `timeline-scale-container--infinite` on larger screens (>=1024px)
+2. Ensured `timeline-scroll` container has `overflow-x: auto` for horizontal scrolling
+3. Improved shift boundary calculations:
+   - Calculate `visibleStartMinutes` and `visibleEndMinutes` by clipping to `[0, totalMinutes]`
+   - Properly calculate `left` and `width` percentages based on visible portion only
+   - Render empty rows for shifts completely outside visible range (instead of null)
+4. Added `flex-shrink: 0` to `timeline-canvas` to ensure proper width for scrolling
+
+**Result:**
+- Week view now scrolls horizontally when content exceeds container width
+- Multi-day shifts are properly positioned and clipped at day/week boundaries
+- Shifts that span past midnight are displayed correctly
+
+---
+
 ## Notes
 
 - Current timeline uses `react-window` for virtualization
