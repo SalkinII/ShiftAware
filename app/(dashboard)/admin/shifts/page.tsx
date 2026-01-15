@@ -330,13 +330,27 @@ export default function ShiftsPage() {
                     type="datetime-local"
                     value={formData.startTime}
                     onChange={(e) => {
-                      const start = new Date(e.target.value);
-                      const end = new Date(
-                        start.getTime() + formData.durationMinutes * 60000,
-                      );
+                      const startValue = e.target.value;
+                      if (!startValue) {
+                        setFormData({
+                          ...formData,
+                          startTime: "",
+                          endTime: "",
+                        });
+                        return;
+                      }
+                      const start = new Date(startValue);
+                      if (isNaN(start.getTime())) {
+                        return; // Invalid date, don't update
+                      }
+                      const duration = formData.durationMinutes || 360;
+                      const end = new Date(start.getTime() + duration * 60000);
+                      if (isNaN(end.getTime())) {
+                        return; // Invalid end date, don't update
+                      }
                       setFormData({
                         ...formData,
-                        startTime: e.target.value,
+                        startTime: startValue,
                         endTime: end.toISOString().slice(0, 16),
                       });
                     }}
@@ -348,14 +362,43 @@ export default function ShiftsPage() {
                     type="datetime-local"
                     value={formData.endTime}
                     onChange={(e) => {
+                      const endValue = e.target.value;
+                      if (!endValue) {
+                        setFormData({
+                          ...formData,
+                          endTime: "",
+                        });
+                        return;
+                      }
+                      if (!formData.startTime) {
+                        setFormData({
+                          ...formData,
+                          endTime: endValue,
+                        });
+                        return;
+                      }
                       const start = new Date(formData.startTime);
-                      const end = new Date(e.target.value);
+                      const end = new Date(endValue);
+                      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                        setFormData({
+                          ...formData,
+                          endTime: endValue,
+                        });
+                        return;
+                      }
                       const minutes = Math.round(
                         (end.getTime() - start.getTime()) / 60000,
                       );
+                      if (isNaN(minutes) || minutes < 0) {
+                        setFormData({
+                          ...formData,
+                          endTime: endValue,
+                        });
+                        return;
+                      }
                       setFormData({
                         ...formData,
-                        endTime: e.target.value,
+                        endTime: endValue,
                         durationMinutes: minutes,
                       });
                     }}
@@ -384,13 +427,16 @@ export default function ShiftsPage() {
                     type="number"
                     min="1"
                     max="5"
-                    value={formData.desirabilityScore}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        desirabilityScore: parseInt(e.target.value),
-                      })
-                    }
+                    value={formData.desirabilityScore || ""}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 1 && value <= 5) {
+                        setFormData({
+                          ...formData,
+                          desirabilityScore: value,
+                        });
+                      }
+                    }}
                     required
                     className="bg-gray-50 border-gray-100 font-medium"
                   />
@@ -400,13 +446,16 @@ export default function ShiftsPage() {
                   label="Staff Capacity"
                   type="number"
                   min="1"
-                  value={formData.capacity}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      capacity: parseInt(e.target.value),
-                    })
-                  }
+                  value={formData.capacity || ""}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1) {
+                      setFormData({
+                        ...formData,
+                        capacity: value,
+                      });
+                    }
+                  }}
                   required
                   className="bg-gray-50 border-gray-100 font-medium"
                 />
