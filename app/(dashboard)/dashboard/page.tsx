@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -32,6 +34,7 @@ interface Stats {
 }
 
 export default function DashboardPage() {
+  const toast = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalMembers: 0,
@@ -101,16 +104,17 @@ export default function DashboardPage() {
 
       if (res.ok) {
         const result = await res.json();
-        alert(
+        toast.success(
           `Algorithm completed! Created ${result.assignments.length} assignments.`,
         );
         await loadData();
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to run algorithm");
+        toast.error(error.error || "Failed to run algorithm");
       }
     } catch (error) {
       console.error("Failed to run algorithm:", error);
+      toast.error("Failed to run algorithm. Please try again.");
     } finally {
       setRunningAlgorithm(false);
     }
@@ -118,8 +122,16 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-64" variant="text" />
+          <Skeleton className="h-4 w-96" variant="text" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }

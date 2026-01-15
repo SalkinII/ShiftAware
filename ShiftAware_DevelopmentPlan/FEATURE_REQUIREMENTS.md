@@ -478,8 +478,6 @@ As an administrator, I want to quickly identify unfilled or understaffed shifts.
 - Real-time collaboration
 
 ### Phase 3
-- AI-powered suggestions
 - Integration with calendar systems
 - Advanced analytics
 - Multi-language support
-- API for external tools

@@ -13,122 +13,379 @@ const EVENT_ID = "event_starlight_2026";
 const EVENT_NAME = "Starlight Meadow Festival 2026";
 
 const teamMembers = [
-  { alias: "Bunny", avatarId: "🐰", experienceLevel: "JUNIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Otter", avatarId: "🦦", experienceLevel: "JUNIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Chipmunk", avatarId: "🐿️", experienceLevel: "JUNIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Hedgehog", avatarId: "🦔", experienceLevel: "JUNIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Squirrel", avatarId: "🐿️", experienceLevel: "JUNIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Robin", avatarId: "🐦", experienceLevel: "JUNIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Finch", avatarId: "🐦", experienceLevel: "JUNIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Duckling", avatarId: "🦆", experienceLevel: "JUNIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Fawn", avatarId: "🦌", experienceLevel: "JUNIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Kitten", avatarId: "🐱", experienceLevel: "JUNIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
+  {
+    alias: "Bunny",
+    avatarId: "🐰",
+    experienceLevel: "JUNIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Otter",
+    avatarId: "🦦",
+    experienceLevel: "JUNIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Chipmunk",
+    avatarId: "🐿️",
+    experienceLevel: "JUNIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Hedgehog",
+    avatarId: "🦔",
+    experienceLevel: "JUNIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Squirrel",
+    avatarId: "🐿️",
+    experienceLevel: "JUNIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Robin",
+    avatarId: "🐦",
+    experienceLevel: "JUNIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Finch",
+    avatarId: "🐦",
+    experienceLevel: "JUNIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Duckling",
+    avatarId: "🦆",
+    experienceLevel: "JUNIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Fawn",
+    avatarId: "🦌",
+    experienceLevel: "JUNIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Kitten",
+    avatarId: "🐱",
+    experienceLevel: "JUNIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
 
-  { alias: "Fox", avatarId: "🦊", experienceLevel: "INTERMEDIATE", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Badger", avatarId: "🦡", experienceLevel: "INTERMEDIATE", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Raccoon", avatarId: "🦝", experienceLevel: "INTERMEDIATE", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Panda", avatarId: "🐼", experienceLevel: "INTERMEDIATE", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Koala", avatarId: "🐨", experienceLevel: "INTERMEDIATE", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Owl", avatarId: "🦉", experienceLevel: "INTERMEDIATE", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Peacock", avatarId: "🦚", experienceLevel: "INTERMEDIATE", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Swan", avatarId: "🦢", experienceLevel: "INTERMEDIATE", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Deer", avatarId: "🦌", experienceLevel: "INTERMEDIATE", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Lynx", avatarId: "🐆", experienceLevel: "INTERMEDIATE", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER] },
+  {
+    alias: "Fox",
+    avatarId: "🦊",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Badger",
+    avatarId: "🦡",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Raccoon",
+    avatarId: "🦝",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Panda",
+    avatarId: "🐼",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Koala",
+    avatarId: "🐨",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Owl",
+    avatarId: "🦉",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Peacock",
+    avatarId: "🦚",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Swan",
+    avatarId: "🦢",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Deer",
+    avatarId: "🦌",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Lynx",
+    avatarId: "🐆",
+    experienceLevel: "INTERMEDIATE",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER],
+  },
 
-  { alias: "Wolf", avatarId: "🐺", experienceLevel: "SENIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE] },
-  { alias: "Bear", avatarId: "🐻", experienceLevel: "SENIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD] },
-  { alias: "Eagle", avatarId: "🦅", experienceLevel: "SENIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE] },
-  { alias: "Hawk", avatarId: "🦅", experienceLevel: "SENIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD] },
-  { alias: "Lion", avatarId: "🦁", experienceLevel: "SENIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE] },
-  { alias: "Tiger", avatarId: "🐯", experienceLevel: "SENIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE] },
-  { alias: "Falcon", avatarId: "🦅", experienceLevel: "SENIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD] },
-  { alias: "Leopard", avatarId: "🐆", experienceLevel: "SENIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD] },
-  { alias: "Panther", avatarId: "🐆", experienceLevel: "SENIOR", genderRole: "M_NB", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE] },
-  { alias: "Jaguar", avatarId: "🐆", experienceLevel: "SENIOR", genderRole: "FLINTA", capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE] },
+  {
+    alias: "Wolf",
+    avatarId: "🐺",
+    experienceLevel: "SENIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+  },
+  {
+    alias: "Bear",
+    avatarId: "🐻",
+    experienceLevel: "SENIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
+  },
+  {
+    alias: "Eagle",
+    avatarId: "🦅",
+    experienceLevel: "SENIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+  },
+  {
+    alias: "Hawk",
+    avatarId: "🦅",
+    experienceLevel: "SENIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
+  },
+  {
+    alias: "Lion",
+    avatarId: "🦁",
+    experienceLevel: "SENIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+  },
+  {
+    alias: "Tiger",
+    avatarId: "🐯",
+    experienceLevel: "SENIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+  },
+  {
+    alias: "Falcon",
+    avatarId: "🦅",
+    experienceLevel: "SENIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
+  },
+  {
+    alias: "Leopard",
+    avatarId: "🐆",
+    experienceLevel: "SENIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
+  },
+  {
+    alias: "Panther",
+    avatarId: "🐆",
+    experienceLevel: "SENIOR",
+    genderRole: "M_NB",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+  },
+  {
+    alias: "Jaguar",
+    avatarId: "🐆",
+    experienceLevel: "SENIOR",
+    genderRole: "FLINTA",
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+  },
 ];
 
-const shifts = [
-  {
-    id: "shift_buffer_jun11_mobile1",
-    type: ShiftType.MOBILE_TEAM_1,
-    startTime: "2026-06-11T18:00:00.000Z",
-    endTime: "2026-06-12T00:00:00.000Z",
-    durationMinutes: 360,
-    priority: ShiftPriority.BUFFER,
-    desirabilityScore: 3,
-    capacity: 2,
-    requiredRoles: [
-      { role: Role.TEAM_MEMBER, count: 2 },
-    ],
-  },
-  {
-    id: "shift_core_jun26_stationary_morning",
-    type: ShiftType.STATIONARY,
-    startTime: "2026-06-26T08:00:00.000Z",
-    endTime: "2026-06-26T14:00:00.000Z",
-    durationMinutes: 360,
-    priority: ShiftPriority.CORE,
-    desirabilityScore: 4,
-    capacity: 2,
-    requiredRoles: [
-      { role: Role.SHIFT_LEAD, count: 1 },
-      { role: Role.TEAM_MEMBER, count: 1 },
-    ],
-  },
-  {
-    id: "shift_core_jun27_night_mobile2",
-    type: ShiftType.MOBILE_TEAM_2,
-    startTime: "2026-06-27T22:00:00.000Z",
-    endTime: "2026-06-28T04:00:00.000Z",
-    durationMinutes: 360,
-    priority: ShiftPriority.CORE,
-    desirabilityScore: 1,
-    capacity: 2,
-    requiredRoles: [
-      { role: Role.TEAM_MEMBER, count: 2 },
-    ],
-  },
-  {
-    id: "shift_core_jun28_day_mobile1",
-    type: ShiftType.MOBILE_TEAM_1,
-    startTime: "2026-06-28T14:00:00.000Z",
-    endTime: "2026-06-28T20:00:00.000Z",
-    durationMinutes: 360,
-    priority: ShiftPriority.CORE,
-    desirabilityScore: 2,
-    capacity: 2,
-    requiredRoles: [
-      { role: Role.TEAM_MEMBER, count: 2 },
-    ],
-  },
-  {
-    id: "shift_core_jun29_morning_stationary",
-    type: ShiftType.STATIONARY,
-    startTime: "2026-06-29T06:00:00.000Z",
-    endTime: "2026-06-29T12:00:00.000Z",
-    durationMinutes: 360,
-    priority: ShiftPriority.CORE,
-    desirabilityScore: 1,
-    capacity: 2,
-    requiredRoles: [
-      { role: Role.SHIFT_LEAD, count: 1 },
-      { role: Role.TEAM_MEMBER, count: 1 },
-    ],
-  },
-  {
-    id: "shift_core_jun27_executive",
-    type: ShiftType.EXECUTIVE,
-    startTime: "2026-06-27T08:00:00.000Z",
-    endTime: "2026-06-27T20:00:00.000Z",
-    durationMinutes: 720,
-    priority: ShiftPriority.CORE,
-    desirabilityScore: 3,
-    capacity: 1,
-    requiredRoles: [
-      { role: Role.EXECUTIVE, count: 1 },
-    ],
-  },
-];
+// Generate comprehensive shift data for the full event period
+function generateShifts() {
+  const shifts: Array<{
+    id: string;
+    type: ShiftType;
+    startTime: string;
+    endTime: string;
+    durationMinutes: number;
+    priority: ShiftPriority;
+    desirabilityScore: number;
+    capacity: number;
+    requiredRoles: Array<{ role: Role; count: number }>;
+  }> = [];
+
+  // Core event dates: June 26-29, 2026
+  const coreDates = [
+    { date: "2026-06-26", day: "Thursday" },
+    { date: "2026-06-27", day: "Friday" },
+    { date: "2026-06-28", day: "Saturday" },
+    { date: "2026-06-29", day: "Sunday" },
+  ];
+
+  // Buffer dates: June 11-25 and June 30 - July 8
+  const bufferDates: string[] = [];
+  for (let i = 11; i <= 25; i++) {
+    bufferDates.push(`2026-06-${i.toString().padStart(2, "0")}`);
+  }
+  for (let i = 30; i <= 30; i++) {
+    bufferDates.push(`2026-06-${i.toString().padStart(2, "0")}`);
+  }
+  for (let i = 1; i <= 8; i++) {
+    bufferDates.push(`2026-07-${i.toString().padStart(2, "0")}`);
+  }
+
+  let shiftCounter = 1;
+
+  // Core event shifts - more intensive coverage
+  coreDates.forEach(({ date }) => {
+    // Morning stationary (6am-12pm)
+    shifts.push({
+      id: `shift_core_${date}_stationary_morning`,
+      type: ShiftType.STATIONARY,
+      startTime: `${date}T06:00:00.000Z`,
+      endTime: `${date}T12:00:00.000Z`,
+      durationMinutes: 360,
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 3,
+      capacity: 3,
+      requiredRoles: [
+        { role: Role.SHIFT_LEAD, count: 1 },
+        { role: Role.TEAM_MEMBER, count: 2 },
+      ],
+    });
+
+    // Afternoon mobile team 1 (12pm-6pm)
+    shifts.push({
+      id: `shift_core_${date}_mobile1_afternoon`,
+      type: ShiftType.MOBILE_TEAM_1,
+      startTime: `${date}T12:00:00.000Z`,
+      endTime: `${date}T18:00:00.000Z`,
+      durationMinutes: 360,
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 4,
+      capacity: 2,
+      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+    });
+
+    // Evening mobile team 2 (6pm-12am, ends next day)
+    const eveningStart = new Date(`${date}T18:00:00.000Z`);
+    const eveningEnd = new Date(eveningStart);
+    eveningEnd.setDate(eveningEnd.getDate() + 1);
+    eveningEnd.setHours(0, 0, 0, 0);
+    const eveningEndDateStr = eveningEnd.toISOString().split("T")[0];
+    shifts.push({
+      id: `shift_core_${date}_mobile2_evening`,
+      type: ShiftType.MOBILE_TEAM_2,
+      startTime: `${date}T18:00:00.000Z`,
+      endTime: `${eveningEndDateStr}T00:00:00.000Z`,
+      durationMinutes: 360,
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 4,
+      capacity: 2,
+      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+    });
+
+    // Night shift (12am-6am next day)
+    const nightStart = new Date(`${date}T00:00:00.000Z`);
+    const nightEnd = new Date(nightStart);
+    nightEnd.setHours(6, 0, 0, 0);
+    const nextDateStr = nightEnd.toISOString().split("T")[0];
+    shifts.push({
+      id: `shift_core_${date}_night`,
+      type: ShiftType.MOBILE_TEAM_1,
+      startTime: `${date}T00:00:00.000Z`,
+      endTime: `${nextDateStr}T06:00:00.000Z`,
+      durationMinutes: 360,
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 1,
+      capacity: 2,
+      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+    });
+  });
+
+  // Executive shifts for core days
+  coreDates.forEach(({ date }) => {
+    shifts.push({
+      id: `shift_core_${date}_executive`,
+      type: ShiftType.EXECUTIVE,
+      startTime: `${date}T08:00:00.000Z`,
+      endTime: `${date}T20:00:00.000Z`,
+      durationMinutes: 720,
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 3,
+      capacity: 1,
+      requiredRoles: [{ role: Role.EXECUTIVE, count: 1 }],
+    });
+  });
+
+  // Buffer shifts - lighter coverage
+  bufferDates.forEach((date, index) => {
+    // Every other day for buffer period
+    if (index % 2 === 0) {
+      // Morning shift
+      shifts.push({
+        id: `shift_buffer_${date}_morning`,
+        type: ShiftType.STATIONARY,
+        startTime: `${date}T08:00:00.000Z`,
+        endTime: `${date}T14:00:00.000Z`,
+        durationMinutes: 360,
+        priority: ShiftPriority.BUFFER,
+        desirabilityScore: 2,
+        capacity: 2,
+        requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+      });
+
+      // Evening shift (6pm-12am, ends next day)
+      const eveningStart = new Date(`${date}T18:00:00.000Z`);
+      const eveningEnd = new Date(eveningStart);
+      eveningEnd.setDate(eveningEnd.getDate() + 1);
+      eveningEnd.setHours(0, 0, 0, 0);
+      const eveningEndDateStr = eveningEnd.toISOString().split("T")[0];
+      shifts.push({
+        id: `shift_buffer_${date}_evening`,
+        type: ShiftType.MOBILE_TEAM_1,
+        startTime: `${date}T18:00:00.000Z`,
+        endTime: `${eveningEndDateStr}T00:00:00.000Z`,
+        durationMinutes: 360,
+        priority: ShiftPriority.BUFFER,
+        desirabilityScore: 2,
+        capacity: 2,
+        requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+      });
+    }
+  });
+
+  return shifts;
+}
+
+const shifts = generateShifts();
 
 async function seedTeam() {
   for (const member of teamMembers) {
@@ -256,6 +513,60 @@ async function seedShifts() {
   }
 }
 
+async function seedPreferences() {
+  // Get all members and shifts
+  const members = await prisma.teamMember.findMany();
+  const allShifts = await prisma.shift.findMany({
+    where: { eventId: EVENT_ID },
+    orderBy: { startTime: "asc" },
+  });
+
+  // Create preferences for each member
+  // Each member prefers 3-5 shifts, prioritizing core shifts
+  for (const member of members) {
+    const coreShifts = allShifts.filter(
+      (s) => s.priority === ShiftPriority.CORE,
+    );
+    const bufferShifts = allShifts.filter(
+      (s) => s.priority === ShiftPriority.BUFFER,
+    );
+
+    // Each member prefers 2-3 core shifts and 1-2 buffer shifts
+    const preferredCoreShifts = coreShifts
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.floor(Math.random() * 2) + 2); // 2-3 core shifts
+
+    const preferredBufferShifts = bufferShifts
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.floor(Math.random() * 2) + 1); // 1-2 buffer shifts
+
+    const allPreferred = [
+      ...preferredCoreShifts,
+      ...preferredBufferShifts,
+    ].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+
+    // Create preferences with priorities (1 = highest priority)
+    for (let i = 0; i < allPreferred.length; i++) {
+      await prisma.shiftPreference.upsert({
+        where: {
+          teamMemberId_shiftId: {
+            teamMemberId: member.id,
+            shiftId: allPreferred[i].id,
+          },
+        },
+        update: {
+          priority: i + 1,
+        },
+        create: {
+          teamMemberId: member.id,
+          shiftId: allPreferred[i].id,
+          priority: i + 1,
+        },
+      });
+    }
+  }
+}
+
 async function seedSystemConfig() {
   await prisma.systemConfig.upsert({
     where: { key: "session_timeout_minutes" },
@@ -266,7 +577,10 @@ async function seedSystemConfig() {
   await prisma.systemConfig.upsert({
     where: { key: "default_avatar_set" },
     update: { value: teamMembers.map((t) => t.avatarId) },
-    create: { key: "default_avatar_set", value: teamMembers.map((t) => t.avatarId) },
+    create: {
+      key: "default_avatar_set",
+      value: teamMembers.map((t) => t.avatarId),
+    },
   });
 }
 
@@ -285,7 +599,12 @@ async function main() {
   await seedTeam();
   await seedEvent();
   await seedShifts();
+  await seedPreferences();
   await seedSystemConfig();
+  console.log(`✓ Seeded ${teamMembers.length} team members`);
+  console.log(`✓ Seeded ${shifts.length} shifts`);
+  const preferenceCount = await prisma.shiftPreference.count();
+  console.log(`✓ Seeded ${preferenceCount} preferences`);
 }
 
 main()
@@ -298,4 +617,3 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
-

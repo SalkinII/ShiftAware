@@ -4,12 +4,18 @@ import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+  createConflictResponse,
+} from "@/lib/api-errors";
 
 export async function GET() {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const members = await prisma.teamMember.findMany({
@@ -24,13 +30,10 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(members);
+    return createSuccessResponse(members);
   } catch (error) {
     console.error("Get members error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to fetch members");
   }
 }
 
@@ -38,7 +41,7 @@ export async function POST(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const body = await request.json();
@@ -50,10 +53,7 @@ export async function POST(request: Request) {
     });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "Alias already exists" },
-        { status: 409 }
-      );
+      return createConflictResponse("Alias already exists");
     }
 
     const member = await prisma.teamMember.create({
@@ -68,19 +68,9 @@ export async function POST(request: Request) {
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json(member, { status: 201 });
+    return createSuccessResponse(member, 201);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json(
-        { error: "Validation error", details: error },
-        { status: 400 }
-      );
-    }
     console.error("Create member error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to create member");
   }
 }
-

@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+} from "@/lib/api-errors";
 
 export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -52,7 +57,7 @@ export async function GET(request: Request) {
       prisma.auditLog.count({ where }),
     ]);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       logs,
       total,
       limit,
@@ -61,9 +66,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Get audit logs error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to fetch audit logs");
   }
 }

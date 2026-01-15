@@ -3,32 +3,45 @@ import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+  createNotFoundResponse,
+} from "@/lib/api-errors";
 
 export async function POST(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const body = await request.json();
     const { assignment1Id, assignment2Id, reason } = body;
 
     if (!assignment1Id || !assignment2Id) {
-      return NextResponse.json(
-        { error: "Two assignments are required for a swap" },
-        { status: 400 }
+      return createErrorResponse(
+        new Error("Two assignments are required for a swap"),
+        "Two assignments are required for a swap",
+        400,
       );
     }
 
     // Get both assignments
     const [a1, a2] = await Promise.all([
-      prisma.assignment.findUnique({ where: { id: assignment1Id }, include: { shift: true } }),
-      prisma.assignment.findUnique({ where: { id: assignment2Id }, include: { shift: true } }),
+      prisma.assignment.findUnique({
+        where: { id: assignment1Id },
+        include: { shift: true },
+      }),
+      prisma.assignment.findUnique({
+        where: { id: assignment2Id },
+        include: { shift: true },
+      }),
     ]);
 
     if (!a1 || !a2) {
-      return NextResponse.json({ error: "One or both assignments not found" }, { status: 404 });
+      return createNotFoundResponse("Assignment");
     }
 
     // Perform swap in transaction
@@ -53,13 +66,9 @@ export async function POST(request: Request) {
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json({ success: true, a1: newA1, a2: newA2 });
+    return createSuccessResponse({ success: true, a1: newA1, a2: newA2 });
   } catch (error) {
     console.error("Swap assignments error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to swap assignments");
   }
 }
-

@@ -4,12 +4,18 @@ import { prisma } from "@/lib/db";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import { runAssignmentAlgorithm } from "@/lib/algorithm/optimizer";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+  createNotFoundResponse,
+} from "@/lib/api-errors";
 
 export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -38,13 +44,10 @@ export async function GET(request: Request) {
       ],
     });
 
-    return NextResponse.json(assignments);
+    return createSuccessResponse(assignments);
   } catch (error) {
     console.error("Get assignments error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to fetch assignments");
   }
 }
 
@@ -52,16 +55,17 @@ export async function POST(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const body = await request.json();
     const { eventId } = body;
 
     if (!eventId) {
-      return NextResponse.json(
-        { error: "eventId is required" },
-        { status: 400 },
+      return createErrorResponse(
+        new Error("eventId is required"),
+        "eventId is required",
+        400,
       );
     }
 
@@ -72,7 +76,7 @@ export async function POST(request: Request) {
     });
 
     if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      return createNotFoundResponse("Event");
     }
 
     // Get all active members
@@ -183,7 +187,7 @@ export async function POST(request: Request) {
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json({
+    return createSuccessResponse({
       assignments: savedAssignments,
       violations: result.violations,
       scores: Object.fromEntries(result.scores),
@@ -191,11 +195,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Run assignment algorithm error:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to run assignment algorithm");
   }
 }

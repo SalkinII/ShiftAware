@@ -10,6 +10,6 @@ __pycache__/
 node_modules/
 coverage/
 .pytest_cache/
-CLAUDE.md
 .context/
-agents/
+#CLAUDE.md
+#agents/

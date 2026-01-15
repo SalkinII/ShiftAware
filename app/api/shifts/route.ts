@@ -4,12 +4,17 @@ import { prisma } from "@/lib/db";
 import { shiftSchema } from "@/lib/validations/shift";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+} from "@/lib/api-errors";
 
 export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -35,13 +40,10 @@ export async function GET(request: Request) {
       orderBy: { startTime: "asc" },
     });
 
-    return NextResponse.json(shifts);
+    return createSuccessResponse(shifts);
   } catch (error) {
     console.error("Get shifts error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to fetch shifts");
   }
 }
 
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const body = await request.json();
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
 
     // Create shift with required roles
     const { requiredRoles, ...shiftData } = validated;
-    
+
     const shift = await prisma.shift.create({
       data: {
         ...shiftData,
@@ -81,19 +83,9 @@ export async function POST(request: Request) {
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json(shift, { status: 201 });
+    return createSuccessResponse(shift, 201);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json(
-        { error: "Validation error", details: error },
-        { status: 400 }
-      );
-    }
     console.error("Create shift error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to create shift");
   }
 }
-

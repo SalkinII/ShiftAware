@@ -1,4 +1,4 @@
-import { Shift, Assignment } from "@prisma/client";
+import { Shift, Assignment, Role } from "@prisma/client";
 import {
   AssignmentState,
   AlgorithmResult,
@@ -22,6 +22,36 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
   coreShiftCoverage: 0.05,
 };
 
+/**
+ * Runs the assignment algorithm to assign team members to shifts.
+ *
+ * The algorithm operates in three phases:
+ * 1. **Preference Matching**: Assigns members to their preferred shifts (sorted by priority)
+ * 2. **Score-Based Filling**: Fills remaining shifts using a scoring system that considers:
+ *    - Preference match (35% weight)
+ *    - Experience balance (25% weight)
+ *    - Workload fairness (15% weight)
+ *    - Core shift coverage (5% weight)
+ * 3. **Validation**: Checks constraints (minimum shifts, gender balance, capacity)
+ *
+ * @param members - Array of team members with their preferences and existing assignments
+ * @param shifts - Array of shifts with their requirements and capacity
+ * @param eventConfig - Event configuration including minimum shifts per person, core shifts, and optional algorithm weights
+ * @returns Promise resolving to algorithm result with assignments, scores, violations, and explanations
+ *
+ * @example
+ * ```typescript
+ * const result = await runAssignmentAlgorithm(
+ *   members,
+ *   shifts,
+ *   {
+ *     minShiftsPerPerson: 2,
+ *     coreShifts: coreShiftsArray,
+ *     weights: { preferenceMatch: 0.4, experienceBalance: 0.3, ... }
+ *   }
+ * );
+ * ```
+ */
 export async function runAssignmentAlgorithm(
   members: TeamMemberWithRelations[],
   shifts: ShiftWithRelations[],
@@ -42,7 +72,7 @@ export async function runAssignmentAlgorithm(
   const membersMap = new Map(members.map((m) => [m.id, m]));
   const violations: string[] = [];
   const explanations = new Map<string, string>();
-  const scores = new Map<string, any>();
+  const scores = new Map<string, AssignmentScore>();
 
   // Initialize state
   shifts.forEach((shift) => {
@@ -94,7 +124,7 @@ export async function runAssignmentAlgorithm(
       const assignment: Partial<Assignment> = {
         shiftId: shift.id,
         teamMemberId: member.id,
-        role: requiredRole as any,
+        role: requiredRole as Role,
         isLead,
         assignmentType: "ALGORITHM",
       };
@@ -186,7 +216,7 @@ export async function runAssignmentAlgorithm(
       const assignment: Partial<Assignment> = {
         shiftId: shift.id,
         teamMemberId: best.member.id,
-        role: requiredRole as any,
+        role: requiredRole as Role,
         isLead,
         assignmentType: "ALGORITHM",
       };

@@ -1,6 +1,10 @@
+"use client";
+
 import React from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export default function DashboardLayout({
   children,
@@ -8,15 +12,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <Header />
-      <Sidebar />
-      <main className="lg:pl-64 pt-16 min-h-screen">
-        <div className="p-6 md:p-8 max-w-7xl mx-auto">
-          {children}
+    <ErrorBoundary>
+      <ToastProvider>
+        <div className="min-h-screen bg-gray-50 text-gray-900">
+          <Header />
+          <Sidebar />
+          <main className="lg:pl-64 pt-16 min-h-screen">
+            <div className="p-6 md:p-8 max-w-7xl mx-auto">{children}</div>
+          </main>
         </div>
-      </main>
-    </div>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
-
