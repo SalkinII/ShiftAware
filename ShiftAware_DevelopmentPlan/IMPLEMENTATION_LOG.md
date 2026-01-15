@@ -128,3 +128,14 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - phase4: updated README.md with production deployment instructions and feature overview
 - phase4: production Dockerfile already configured with standalone output and migration deployment
 - phase4: health check now verifies environment variables and database connectivity for production monitoring
+
+## 2026-01-15T16:00:00Z
+- v0.2.0: fixed shift creation validation error - form now converts datetime-local format to ISO datetime strings
+- v0.2.0: improved shift form validation with client-side checks before API submission
+- v0.2.0: form now calculates duration from actual times to ensure it matches server-side validation
+- v0.2.0: enhanced error messages in shift creation form with detailed validation feedback
+- v0.2.0: created 404 (not-found.tsx) and 500 (error.tsx) error pages with proper UI and navigation
+- v0.2.0: created standardized API error response utilities (lib/api-errors.ts) with consistent format
+- v0.2.0: error utilities handle Zod validation errors, Error instances, and unknown errors
+- v0.2.0: updated shifts API route to use standardized error responses (GET and POST)
+- v0.2.0: error responses now include error code, message, and structured details for better debugging
