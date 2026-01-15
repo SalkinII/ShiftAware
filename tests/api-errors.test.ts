@@ -23,7 +23,7 @@ describe("API Error Response Integration", () => {
 
     it("should reject invalid eventId format", () => {
       const invalidShift = {
-        eventId: "invalid-id",
+        eventId: "short", // Too short (< 10 chars)
         type: "MOBILE_TEAM_1",
         startTime: "2026-06-26T10:00:00.000Z",
         endTime: "2026-06-26T16:00:00.000Z",

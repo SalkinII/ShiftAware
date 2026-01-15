@@ -98,7 +98,7 @@ Note: status checkboxes are historical; confirm current state in `IMPLEMENTATION
 ### Schedule Visualization (Days 1-3)
 - [x] Replace DayPilot with custom React-window timeline (Day/Week) + Grid
 - [x] Enhanced Calendar component (day/week/grid views) — note: Grid required, Month removed
-- [ ] Advanced shift card interactions
+- [x] Advanced shift card interactions (quick actions menu implemented in v0.3.0)
 - [x] Dynamic coverage indicators
 - [x] Real-time balance metrics
 - [x] Advanced filtering (by role, member, status)
@@ -113,7 +113,7 @@ Note: status checkboxes are historical; confirm current state in `IMPLEMENTATION
 - [x] Print-optimized CSS for schedule view
 
 **Week 4 Deliverable:** Enhanced schedule visualization and production-ready PDF export  
-**Current status:** Calendar (Day/Week/Grid) complete with custom timeline; coverage badges, filters, metrics, persistent view in place; member-scope PDF with pseudonym map and toggle UI delivered; infinite scroll mobile polish and print-optimized CSS added. Remaining: batch export (optional), advanced card interactions (optional).
+**Current status:** Calendar (Day/Week/Grid) complete with custom timeline; coverage badges, filters, metrics, persistent view in place; member-scope PDF with pseudonym map and toggle UI delivered; infinite scroll mobile polish and print-optimized CSS added; advanced card interactions (quick actions menu) completed in v0.3.0. Remaining: batch export (optional).
 
 ---
 
@@ -123,7 +123,7 @@ Note: status checkboxes are historical; confirm current state in `IMPLEMENTATION
 - [x] Basic Swap interface UI (completed in Phase 1)
 - [x] Swap validation logic (completed in Phase 1)
 - [x] API: Manual swap endpoint (completed in Phase 1)
-- [ ] Drag-and-drop swap interface (outstanding - deferred to future enhancement)
+- [x] Drag-and-drop swap interface (completed in v0.3.0)
 - [ ] Mass reassignment tool (outstanding - deferred to future enhancement)
 - [ ] Conflict resolution wizard (outstanding - deferred to future enhancement)
 
@@ -202,6 +202,7 @@ Note: status checkboxes are historical; confirm current state in `IMPLEMENTATION
 2. Configuration UI
 3. Audit log export
 4. Performance optimizations
+5. UI Design Adaptation (v0.4.0) - See `UI_DESIGN_ADAPTATION_PLAN.md`
 
 ### P3 - Low (Future Enhancements)
 1. Email notifications
@@ -344,6 +345,7 @@ test('user can submit preferences', async ({ page }) => {
 - Documentation improvements
 
 ### Future Iterations
+- **v0.4.0:** UI Design Adaptation (reactive patterns, Design System v2) - See `UI_DESIGN_ADAPTATION_PLAN.md`
 - **v1.1:** Advanced features (P2 items)
 - **v1.2:** User experience improvements
 - **v2.0:** Multi-event support, notifications

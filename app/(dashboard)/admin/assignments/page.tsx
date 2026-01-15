@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { useCache } from "@/lib/cache/useCache";
+import { SwapInterface } from "@/components/features/SwapInterface/SwapInterface";
 import { format } from "date-fns";
 import {
   RefreshCw,
@@ -13,6 +15,8 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle2,
+  ArrowLeftRight,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +33,7 @@ interface Assignment {
     startTime: string;
     endTime: string;
     priority: string;
-    event: { name: string };
+    event: { id: string; name: string };
   };
   teamMember: {
     id: string;
@@ -49,64 +53,88 @@ interface Event {
 
 export default function AssignmentsPage() {
   const toast = useToast();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "swap">("list");
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Use cache for events
+  const {
+    data: cachedEvents,
+    loading: eventsLoading,
+    refetch: refetchEvents,
+  } = useCache<Event[]>({
+    key: "events",
+    fetchFn: async () => {
+      const res = await fetch("/api/events");
+      if (!res.ok) throw new Error("Failed to fetch events");
+      return res.json();
+    },
+  });
 
+  // Use cache for assignments (all assignments, filtered client-side)
+  const {
+    data: allAssignments,
+    loading: assignmentsLoading,
+    refetch: refetchAssignments,
+  } = useCache<Assignment[]>({
+    key: "assignments",
+    fetchFn: async () => {
+      const res = await fetch("/api/assignments");
+      if (!res.ok) throw new Error("Failed to fetch assignments");
+      return res.json();
+    },
+  });
+
+  const loading = eventsLoading || assignmentsLoading;
+
+  // Filter assignments by selected event
+  const assignments = useMemo(() => {
+    if (!allAssignments) return [];
+    if (!selectedEventId) return allAssignments;
+    return allAssignments.filter((a) => a.shift.event.id === selectedEventId);
+  }, [allAssignments, selectedEventId]);
+
+  // Set default event on first load
   useEffect(() => {
-    if (selectedEventId) {
-      loadAssignments(selectedEventId);
-    } else {
-      loadAssignments();
+    if (cachedEvents && cachedEvents.length > 0 && !selectedEventId) {
+      setSelectedEventId(cachedEvents[0].id);
     }
-  }, [selectedEventId]);
+  }, [cachedEvents, selectedEventId]);
+
+  // Listen for cache invalidation events
+  useEffect(() => {
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if our cache keys are affected
+      if (
+        keys.some(
+          (k: string) =>
+            k === "events" ||
+            k.startsWith("events") ||
+            k === "assignments" ||
+            k.startsWith("assignments"),
+        )
+      ) {
+        refetchEvents();
+        refetchAssignments();
+      }
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function loadData() {
-    setLoading(true);
-    try {
-      const [eventsRes, assignmentsRes] = await Promise.all([
-        fetch("/api/events"),
-        fetch("/api/assignments"),
-      ]);
-
-      if (eventsRes.ok) {
-        const eventsData = await eventsRes.json();
-        setEvents(eventsData);
-        if (eventsData.length > 0 && !selectedEventId) {
-          setSelectedEventId(eventsData[0].id);
-        }
-      }
-
-      if (assignmentsRes.ok) {
-        const assignmentsData = await assignmentsRes.json();
-        setAssignments(assignmentsData);
-      }
-    } catch (error) {
-      console.error("Load data error:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadAssignments(eventId?: string) {
-    try {
-      const url = eventId
-        ? `/api/assignments?eventId=${eventId}`
-        : "/api/assignments";
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setAssignments(data);
-      }
-    } catch (error) {
-      console.error("Load assignments error:", error);
-    }
+    await Promise.all([refetchEvents(), refetchAssignments()]);
   }
 
   async function runAlgorithm(eventId: string) {
@@ -132,7 +160,15 @@ export default function AssignmentsPage() {
         toast.success(
           `Algorithm completed! Created ${result.assignmentsCount} assignments.`,
         );
-        await loadAssignments(eventId);
+        // Invalidate cache for assignments and shifts
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: {
+              keys: ["assignments", "assignments*", "shifts", "shifts*"],
+            },
+          }),
+        );
+        await refetchAssignments();
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to run algorithm");
@@ -162,6 +198,35 @@ export default function AssignmentsPage() {
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
   );
 
+  async function handleSwap(
+    assignment1Id: string,
+    assignment2Id: string,
+    reason?: string,
+  ) {
+    const res = await fetch("/api/assignments/swap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assignment1Id,
+        assignment2Id,
+        reason,
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Failed to swap assignments");
+    }
+
+    // Invalidate cache for assignments and shifts
+    window.dispatchEvent(
+      new CustomEvent("shiftaware:cache-invalidate", {
+        detail: { keys: ["assignments", "assignments*", "shifts", "shifts*"] },
+      }),
+    );
+    await refetchAssignments();
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -183,6 +248,32 @@ export default function AssignmentsPage() {
               Manage shift assignments and run the assignment algorithm
             </p>
           </div>
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2",
+                viewMode === "list"
+                  ? "bg-primary-500 text-white"
+                  : "text-gray-600 hover:bg-gray-50",
+              )}
+            >
+              <List className="w-4 h-4" />
+              List View
+            </button>
+            <button
+              onClick={() => setViewMode("swap")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2",
+                viewMode === "swap"
+                  ? "bg-primary-500 text-white"
+                  : "text-gray-600 hover:bg-gray-50",
+              )}
+            >
+              <ArrowLeftRight className="w-4 h-4" />
+              Swap View
+            </button>
+          </div>
         </div>
 
         {/* Event Selector */}
@@ -198,7 +289,7 @@ export default function AssignmentsPage() {
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
               >
                 <option value="">All Events</option>
-                {events.map((event) => (
+                {cachedEvents?.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.name} ({format(new Date(event.startDate), "MMM d")} -{" "}
                     {format(new Date(event.endDate), "MMM d")})
@@ -269,8 +360,16 @@ export default function AssignmentsPage() {
           </Card>
         </div>
 
-        {/* Assignments List */}
-        {uniqueShifts.length === 0 ? (
+        {/* Swap Interface or Assignments List */}
+        {viewMode === "swap" ? (
+          <Card className="p-6">
+            <SwapInterface
+              assignments={assignments}
+              onSwap={handleSwap}
+              onRefresh={() => loadAssignments(selectedEventId)}
+            />
+          </Card>
+        ) : uniqueShifts.length === 0 ? (
           <Card className="p-12 text-center">
             <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-900 mb-2">

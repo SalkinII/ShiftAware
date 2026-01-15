@@ -1,16 +1,30 @@
 import { z } from "zod";
 
+// More lenient ID validation: accepts CUID format or any non-empty string
+// This handles cases where IDs might not be strict CUIDs but are valid database IDs
+const idSchema = z
+  .string()
+  .min(1, "ID is required")
+  .refine(
+    (val) => {
+      // Accept CUID format (starts with 'c' and is 25 chars) or any reasonable ID format
+      return z.string().cuid().safeParse(val).success || val.length >= 10;
+    },
+    { message: "Invalid ID format" },
+  );
+
 export const preferenceSchema = z.object({
-  shiftId: z.string().cuid(),
+  shiftId: idSchema,
   priority: z.number().int().min(1).max(5).default(1),
   notes: z.string().optional(),
 });
 
 export const preferencesSubmissionSchema = z.object({
-  teamMemberId: z.string().cuid(),
+  teamMemberId: idSchema,
   preferences: z.array(preferenceSchema).min(2, "Minimum 2 shifts required"),
 });
 
 export type PreferenceInput = z.infer<typeof preferenceSchema>;
-export type PreferencesSubmissionInput = z.infer<typeof preferencesSubmissionSchema>;
-
+export type PreferencesSubmissionInput = z.infer<
+  typeof preferencesSubmissionSchema
+>;

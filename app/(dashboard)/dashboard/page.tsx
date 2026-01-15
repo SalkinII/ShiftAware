@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { useCache } from "@/lib/cache/useCache";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -35,54 +36,112 @@ interface Stats {
 
 export default function DashboardPage() {
   const toast = useToast();
-  const [events, setEvents] = useState<Event[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalMembers: 0,
     totalShifts: 0,
     coveredShifts: 0,
     unstaffedShifts: 0,
   });
-  const [loading, setLoading] = useState(true);
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
 
+  // Use cache for events, members, and shifts
+  const {
+    data: cachedEvents,
+    loading: eventsLoading,
+    refetch: refetchEvents,
+  } = useCache<Event[]>({
+    key: "events",
+    fetchFn: async () => {
+      const res = await fetch("/api/events");
+      if (!res.ok) throw new Error("Failed to fetch events");
+      return res.json();
+    },
+  });
+
+  const {
+    data: cachedMembers,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useCache<any[]>({
+    key: "members",
+    fetchFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+  });
+
+  const {
+    data: cachedShifts,
+    loading: shiftsLoading,
+    refetch: refetchShifts,
+  } = useCache<any[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      return res.json();
+    },
+  });
+
+  const loading = eventsLoading || membersLoading || shiftsLoading;
+
+  // Calculate stats when data changes
   useEffect(() => {
-    loadData();
-  }, []);
+    if (cachedEvents && cachedMembers && cachedShifts) {
+      const covered = cachedShifts.filter(
+        (s: any) => s.assignments?.length >= s.capacity,
+      ).length;
+      const unstaffed = cachedShifts.filter(
+        (s: any) => s.assignments?.length === 0,
+      ).length;
+
+      setStats({
+        totalMembers: cachedMembers.length,
+        totalShifts: cachedShifts.length,
+        coveredShifts: covered,
+        unstaffedShifts: unstaffed,
+      });
+    }
+  }, [cachedEvents, cachedMembers, cachedShifts]);
+
+  // Listen for cache invalidation events
+  useEffect(() => {
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if our cache keys are affected
+      if (
+        keys.some(
+          (k: string) =>
+            k === "events" ||
+            k.startsWith("events") ||
+            k === "members" ||
+            k.startsWith("members") ||
+            k === "shifts" ||
+            k.startsWith("shifts"),
+        )
+      ) {
+        refetchEvents();
+        refetchMembers();
+        refetchShifts();
+      }
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function loadData() {
-    try {
-      const [eventsRes, membersRes, shiftsRes] = await Promise.all([
-        fetch("/api/events"),
-        fetch("/api/members"),
-        fetch("/api/shifts"),
-      ]);
-
-      if (eventsRes.ok && membersRes.ok && shiftsRes.ok) {
-        const eventsData = await eventsRes.json();
-        const membersData = await membersRes.json();
-        const shiftsData = await shiftsRes.json();
-
-        setEvents(eventsData);
-
-        const covered = shiftsData.filter(
-          (s: any) => s.assignments?.length >= s.capacity,
-        ).length;
-        const unstaffed = shiftsData.filter(
-          (s: any) => s.assignments?.length === 0,
-        ).length;
-
-        setStats({
-          totalMembers: membersData.length,
-          totalShifts: shiftsData.length,
-          coveredShifts: covered,
-          unstaffedShifts: unstaffed,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to load dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
+    await Promise.all([refetchEvents(), refetchMembers(), refetchShifts()]);
   }
 
   async function runAlgorithm(eventId: string) {
@@ -106,6 +165,14 @@ export default function DashboardPage() {
         const result = await res.json();
         toast.success(
           `Algorithm completed! Created ${result.assignments.length} assignments.`,
+        );
+        // Invalidate cache for assignments and shifts
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: {
+              keys: ["assignments", "assignments*", "shifts", "shifts*"],
+            },
+          }),
         );
         await loadData();
       } else {
@@ -261,7 +328,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               Upcoming Events
               <span className="text-xs font-medium bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
-                {events.length}
+                {cachedEvents?.length || 0}
               </span>
             </h2>
             <Link
@@ -273,7 +340,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid gap-4">
-            {events.map((event) => (
+            {cachedEvents?.map((event) => (
               <Card
                 key={event.id}
                 className="bg-white border-none shadow-sm overflow-hidden flex flex-col md:flex-row"

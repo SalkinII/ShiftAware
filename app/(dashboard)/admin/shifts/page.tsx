@@ -14,8 +14,12 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
+import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
@@ -41,11 +45,20 @@ interface Event {
 
 export default function ShiftsPage() {
   const toast = useToast();
-  const [shifts, setShifts] = useState<Shift[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    shiftId: string | null;
+    shiftName: string;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    shiftId: null,
+    shiftName: "",
+    isLoading: false,
+  });
   const [formData, setFormData] = useState({
     eventId: "",
     type: "MOBILE_TEAM_1" as ShiftType,
@@ -58,23 +71,72 @@ export default function ShiftsPage() {
     requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
   });
 
+  // Use cache for shifts
+  const {
+    data: cachedShifts,
+    loading: shiftsLoading,
+    error: shiftsError,
+    refetch: refetchShifts,
+  } = useCache<Shift[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) {
+        let errorMessage = "Failed to fetch shifts";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = `${errorMessage}: ${res.status} ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+      return res.json();
+    },
+  });
+
+  const shifts = cachedShifts || [];
+  const loading = shiftsLoading;
+
+  // Show error toast if fetch fails
   useEffect(() => {
-    loadData();
+    if (shiftsError) {
+      toast.error(shiftsError.message || "Failed to load shifts");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shiftsError]);
+
+  useEffect(() => {
+    loadEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadData() {
-    try {
-      const [shiftsRes, eventsRes] = await Promise.all([
-        fetch("/api/shifts"),
-        fetch("/api/events"),
-      ]);
-
-      if (shiftsRes.ok) {
-        const shiftsData = await shiftsRes.json();
-        setShifts(shiftsData);
+  // Listen for cache invalidation events
+  useEffect(() => {
+    function handleCacheInvalidate(e: CustomEvent) {
+      const keys = e.detail?.keys as string[] | undefined;
+      if (keys && keys.some((k) => k === "shifts" || k.startsWith("shifts*"))) {
+        refetchShifts();
       }
+    }
 
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function loadEvents() {
+    try {
+      const eventsRes = await fetch("/api/events");
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json();
         setEvents(eventsData);
@@ -83,9 +145,7 @@ export default function ShiftsPage() {
         }
       }
     } catch (error) {
-      console.error("Failed to load data:", error);
-    } finally {
-      setLoading(false);
+      console.error("Failed to load events:", error);
     }
   }
 
@@ -158,9 +218,18 @@ export default function ShiftsPage() {
 
       if (res.ok) {
         toast.success("Shift created successfully");
-        await loadData();
         setShowForm(false);
         setFormErrors({});
+        // Notify schedule page to refresh
+        window.dispatchEvent(new CustomEvent("shiftaware:refresh-schedule"));
+        // Invalidate cache
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: {
+              keys: ["shifts", "shifts*", "assignments", "assignments*"],
+            },
+          }),
+        );
         // Reset form
         setFormData({
           eventId: events.length > 0 ? events[0].id : "",
@@ -175,22 +244,91 @@ export default function ShiftsPage() {
         });
       } else {
         const errorData = await res.json();
-        // Extract validation error details if available
         let errorMessage = errorData.error || "Failed to create shift";
-        if (errorData.details?.issues) {
-          const issues = errorData.details.issues
-            .map(
-              (issue: { path: string[]; message: string }) =>
-                `${issue.path.join(".")}: ${issue.message}`,
-            )
+
+        // Parse Zod validation errors
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const issues = errorData.details
+            .map((issue: { path?: string | string[]; message?: string }) => {
+              const path = Array.isArray(issue.path)
+                ? issue.path.join(".")
+                : issue.path || "unknown";
+              // Map common field names to user-friendly labels
+              const fieldMap: Record<string, string> = {
+                eventId: "Event",
+                startTime: "Start Time",
+                endTime: "End Time",
+                durationMinutes: "Duration",
+                type: "Shift Type",
+                priority: "Priority",
+                capacity: "Capacity",
+                requiredRoles: "Required Roles",
+              };
+              const friendlyPath = fieldMap[path] || path;
+              return `${friendlyPath}: ${issue.message || "Invalid value"}`;
+            })
             .join(", ");
           errorMessage = `Validation error: ${issues}`;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
         }
+
         toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Failed to create shift:", error);
       toast.error("Failed to create shift. Please try again.");
+    }
+  }
+
+  async function handleDeleteShift(shiftId: string) {
+    const shift = shifts.find((s) => s.id === shiftId);
+    if (!shift) return;
+
+    setDeleteDialog({
+      isOpen: true,
+      shiftId,
+      shiftName: `${shift.type.replace("_", " ")} - ${shift.event.name}`,
+      isLoading: false,
+    });
+  }
+
+  async function confirmDelete() {
+    if (!deleteDialog.shiftId) return;
+
+    setDeleteDialog((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const res = await fetch(`/api/shifts/${deleteDialog.shiftId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Shift deleted successfully");
+        // Invalidate cache
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: {
+              keys: ["shifts", "shifts*", "assignments", "assignments*"],
+            },
+          }),
+        );
+        setDeleteDialog({
+          isOpen: false,
+          shiftId: null,
+          shiftName: "",
+          isLoading: false,
+        });
+      } else {
+        const errorData = await res.json();
+        const errorMessage = errorData.error || "Failed to delete shift";
+        toast.error(errorMessage);
+        setDeleteDialog((prev) => ({ ...prev, isLoading: false }));
+      }
+    } catch (error) {
+      console.error("Failed to delete shift:", error);
+      toast.error("Failed to delete shift. Please try again.");
+      setDeleteDialog((prev) => ({ ...prev, isLoading: false }));
     }
   }
 
@@ -202,6 +340,14 @@ export default function ShiftsPage() {
         if (showForm) {
           setShowForm(false);
           setFormErrors({});
+        }
+        if (deleteDialog.isOpen && !deleteDialog.isLoading) {
+          setDeleteDialog({
+            isOpen: false,
+            shiftId: null,
+            shiftName: "",
+            isLoading: false,
+          });
         }
       },
     },
@@ -238,418 +384,450 @@ export default function ShiftsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-            Shift Configuration
-          </h1>
-          <p className="text-gray-500 font-medium">
-            Define and manage event shift requirements
-          </p>
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => {
+          if (!deleteDialog.isLoading) {
+            setDeleteDialog({
+              isOpen: false,
+              shiftId: null,
+              shiftName: "",
+              isLoading: false,
+            });
+          }
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Shift"
+        message={`Are you sure you want to delete "${deleteDialog.shiftName}"? This action cannot be undone. If this shift has assignments, it cannot be deleted.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={deleteDialog.isLoading}
+      />
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+              Shift Configuration
+            </h1>
+            <p className="text-gray-500 font-medium">
+              Define and manage event shift requirements
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
+          >
+            {showForm ? (
+              "Cancel"
+            ) : (
+              <>
+                <Plus className="w-4 h-4" /> Define New Shift
+              </>
+            )}
+          </Button>
         </div>
-        <Button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
-        >
-          {showForm ? (
-            "Cancel"
-          ) : (
-            <>
-              <Plus className="w-4 h-4" /> Define New Shift
-            </>
-          )}
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="shadow-sm p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                Filter by Event
-              </span>
-            </div>
-            <select className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20">
-              <option>All Events</option>
-              {events.map((e) => (
-                <option key={e.id}>{e.name}</option>
-              ))}
-            </select>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="shadow-sm p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+                  Filter by Event
+                </span>
+              </div>
+              <select className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20">
+                <option>All Events</option>
+                {events.map((e) => (
+                  <option key={e.id}>{e.name}</option>
+                ))}
+              </select>
+            </Card>
 
-          <div className="space-y-4">
-            {shifts.map((shift) => (
-              <Card
-                key={shift.id}
-                className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
-              >
-                <div className="flex flex-col md:flex-row">
-                  <div
-                    className={cn(
-                      "w-2 md:w-3 shrink-0",
-                      getShiftTypeColor(shift.type),
-                    )}
-                  />
-                  <div className="flex-1 p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className="text-lg font-bold text-gray-900">
-                            {shift.type.replace("_", " ")}
-                          </h3>
-                          <span
-                            className={cn(
-                              "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
-                              getPriorityColor(shift.priority),
-                            )}
-                          >
-                            {shift.priority}
-                          </span>
+            <div className="space-y-4">
+              {shifts.map((shift) => (
+                <Card
+                  key={shift.id}
+                  className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
+                >
+                  <div className="flex flex-col md:flex-row">
+                    <div
+                      className={cn(
+                        "w-2 md:w-3 shrink-0",
+                        getShiftTypeColor(shift.type),
+                      )}
+                    />
+                    <div className="flex-1 p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {shift.type.replace("_", " ")}
+                            </h3>
+                            <span
+                              className={cn(
+                                "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
+                                getPriorityColor(shift.priority),
+                              )}
+                            >
+                              {shift.priority}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5" /> {shift.event.name}
+                          </p>
                         </div>
-                        <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
-                          <Tag className="w-3.5 h-3.5" /> {shift.event.name}
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-xl font-black text-gray-900 leading-none">
+                              {shift.capacity}
+                            </p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                              Capacity
+                            </p>
+                          </div>
+                          <ShiftCardActions
+                            shiftId={shift.id}
+                            onDelete={() => handleDeleteShift(shift.id)}
+                          />
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xl font-black text-gray-900 leading-none">
-                          {shift.capacity}
-                        </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                          Capacity
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-50">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                          <Clock className="w-4 h-4" />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                            <Clock className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                              Timing
+                            </p>
+                            <p className="text-sm font-bold text-gray-700 leading-none">
+                              {shift.startTime && shift.endTime
+                                ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
+                                : "TBD"}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                            Timing
-                          </p>
-                          <p className="text-sm font-bold text-gray-700 leading-none">
-                            {shift.startTime && shift.endTime
-                              ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
-                              : "TBD"}
-                          </p>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                            <Calendar className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                              Date
+                            </p>
+                            <p className="text-sm font-bold text-gray-700 leading-none">
+                              {shift.startTime
+                                ? format(
+                                    new Date(shift.startTime),
+                                    "MMM do, yyyy",
+                                  )
+                                : "TBD"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                          <Calendar className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                            Date
-                          </p>
-                          <p className="text-sm font-bold text-gray-700 leading-none">
-                            {shift.startTime
-                              ? format(
-                                  new Date(shift.startTime),
-                                  "MMM do, yyyy",
-                                )
-                              : "TBD"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                          <Shield className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                            Score
-                          </p>
-                          <div className="flex gap-0.5 text-accent-500">
-                            {[...Array(5)].map((_, i) => (
-                              <span
-                                key={i}
-                                className={cn(
-                                  "text-xs",
-                                  i >= shift.desirabilityScore &&
-                                    "text-gray-200",
-                                )}
-                              >
-                                ★
-                              </span>
-                            ))}
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                            <Shield className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                              Score
+                            </p>
+                            <div className="flex gap-0.5 text-accent-500">
+                              {[...Array(5)].map((_, i) => (
+                                <span
+                                  key={i}
+                                  className={cn(
+                                    "text-xs",
+                                    i >= shift.desirabilityScore &&
+                                      "text-gray-200",
+                                  )}
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                    <button className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100">
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
                   </div>
-                  <button className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100">
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-6">
-          {showForm ? (
-            <Card className="bg-white border-none shadow-xl p-8 animate-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-primary-500" /> New Shift
-              </h2>
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-5"
-                aria-label="Create new shift form"
-              >
-                <Select
-                  label="Event Context"
-                  value={formData.eventId}
-                  onChange={(e) => {
-                    setFormData({ ...formData, eventId: e.target.value });
-                    if (formErrors.eventId) {
-                      setFormErrors({ ...formErrors, eventId: "" });
-                    }
-                  }}
-                  error={formErrors.eventId}
-                  required
-                  className="bg-gray-50 border-gray-100 font-medium"
+          <div className="space-y-6">
+            {showForm ? (
+              <Card className="bg-white border-none shadow-xl p-8 animate-in slide-in-from-right-4 duration-300">
+                <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-primary-500" /> New Shift
+                </h2>
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-5"
+                  aria-label="Create new shift form"
                 >
-                  <option value="">Select event</option>
-                  {events.map((event) => (
-                    <option key={event.id} value={event.id}>
-                      {event.name}
-                    </option>
-                  ))}
-                </Select>
-
-                <Select
-                  label="Shift Type"
-                  value={formData.type}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      type: e.target.value as ShiftType,
-                    })
-                  }
-                  className="bg-gray-50 border-gray-100 font-medium"
-                >
-                  <option value="MOBILE_TEAM_1">Mobile Team 1</option>
-                  <option value="MOBILE_TEAM_2">Mobile Team 2</option>
-                  <option value="STATIONARY">Stationary</option>
-                  <option value="EXECUTIVE">Executive</option>
-                </Select>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Start Time"
-                    type="datetime-local"
-                    value={formData.startTime}
-                    onChange={(e) => {
-                      const startValue = e.target.value;
-                      if (formErrors.startTime) {
-                        setFormErrors({ ...formErrors, startTime: "" });
-                      }
-                      if (!startValue) {
-                        setFormData({
-                          ...formData,
-                          startTime: "",
-                          endTime: "",
-                        });
-                        return;
-                      }
-                      const start = new Date(startValue);
-                      if (isNaN(start.getTime())) {
-                        return; // Invalid date, don't update
-                      }
-                      const duration = formData.durationMinutes || 360;
-                      const end = new Date(start.getTime() + duration * 60000);
-                      if (isNaN(end.getTime())) {
-                        return; // Invalid end date, don't update
-                      }
-                      setFormData({
-                        ...formData,
-                        startTime: startValue,
-                        endTime: end.toISOString().slice(0, 16),
-                      });
-                    }}
-                    error={formErrors.startTime}
-                    required
-                    className="bg-gray-50 border-gray-100 text-xs font-bold"
-                  />
-                  <Input
-                    label="End Time"
-                    type="datetime-local"
-                    value={formData.endTime}
-                    onChange={(e) => {
-                      if (formErrors.endTime) {
-                        setFormErrors({ ...formErrors, endTime: "" });
-                      }
-                      const endValue = e.target.value;
-                      if (!endValue) {
-                        setFormData({
-                          ...formData,
-                          endTime: "",
-                        });
-                        return;
-                      }
-                      if (!formData.startTime) {
-                        setFormData({
-                          ...formData,
-                          endTime: endValue,
-                        });
-                        return;
-                      }
-                      const start = new Date(formData.startTime);
-                      const end = new Date(endValue);
-                      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                        setFormData({
-                          ...formData,
-                          endTime: endValue,
-                        });
-                        return;
-                      }
-                      const minutes = Math.round(
-                        (end.getTime() - start.getTime()) / 60000,
-                      );
-                      if (isNaN(minutes) || minutes < 0) {
-                        setFormData({
-                          ...formData,
-                          endTime: endValue,
-                        });
-                        return;
-                      }
-                      setFormData({
-                        ...formData,
-                        endTime: endValue,
-                        durationMinutes: minutes,
-                      });
-                    }}
-                    error={formErrors.endTime}
-                    required
-                    className="bg-gray-50 border-gray-100 text-xs font-bold"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <Select
-                    label="Priority"
-                    value={formData.priority}
+                    label="Event Context"
+                    value={formData.eventId}
+                    onChange={(e) => {
+                      setFormData({ ...formData, eventId: e.target.value });
+                      if (formErrors.eventId) {
+                        setFormErrors({ ...formErrors, eventId: "" });
+                      }
+                    }}
+                    error={formErrors.eventId}
+                    required
+                    className="bg-gray-50 border-gray-100 font-medium"
+                  >
+                    <option value="">Select event</option>
+                    {events.map((event) => (
+                      <option key={event.id} value={event.id}>
+                        {event.name}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <Select
+                    label="Shift Type"
+                    value={formData.type}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        priority: e.target.value as ShiftPriority,
+                        type: e.target.value as ShiftType,
                       })
                     }
                     className="bg-gray-50 border-gray-100 font-medium"
                   >
-                    <option value="CORE">Core</option>
-                    <option value="BUFFER">Buffer</option>
+                    <option value="MOBILE_TEAM_1">Mobile Team 1</option>
+                    <option value="MOBILE_TEAM_2">Mobile Team 2</option>
+                    <option value="STATIONARY">Stationary</option>
+                    <option value="EXECUTIVE">Executive</option>
                   </Select>
-                  <Input
-                    label="Score (1-5)"
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={
-                      isNaN(formData.desirabilityScore)
-                        ? ""
-                        : formData.desirabilityScore
-                    }
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      if (!isNaN(value) && value >= 1 && value <= 5) {
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <DateTimePicker
+                      label="Start Date & Time"
+                      value={formData.startTime}
+                      onChange={(value) => {
+                        if (formErrors.startTime) {
+                          setFormErrors({ ...formErrors, startTime: "" });
+                        }
+                        if (!value) {
+                          setFormData({
+                            ...formData,
+                            startTime: "",
+                            endTime: "",
+                          });
+                          return;
+                        }
+                        const start = new Date(value);
+                        if (isNaN(start.getTime())) {
+                          return;
+                        }
+                        const duration = formData.durationMinutes || 360;
+                        const end = new Date(
+                          start.getTime() + duration * 60000,
+                        );
+                        if (isNaN(end.getTime())) {
+                          return;
+                        }
                         setFormData({
                           ...formData,
-                          desirabilityScore: value,
+                          startTime: value,
+                          endTime: end.toISOString().slice(0, 16),
+                        });
+                      }}
+                      error={formErrors.startTime}
+                      required
+                      use24Hour={true}
+                    />
+                    <DateTimePicker
+                      label="End Date & Time"
+                      value={formData.endTime}
+                      onChange={(value) => {
+                        if (formErrors.endTime) {
+                          setFormErrors({ ...formErrors, endTime: "" });
+                        }
+                        if (!value) {
+                          setFormData({
+                            ...formData,
+                            endTime: "",
+                          });
+                          return;
+                        }
+                        if (!formData.startTime) {
+                          setFormData({
+                            ...formData,
+                            endTime: value,
+                          });
+                          return;
+                        }
+                        const start = new Date(formData.startTime);
+                        const end = new Date(value);
+                        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                          setFormData({
+                            ...formData,
+                            endTime: value,
+                          });
+                          return;
+                        }
+                        const minutes = Math.round(
+                          (end.getTime() - start.getTime()) / 60000,
+                        );
+                        if (isNaN(minutes) || minutes < 0) {
+                          setFormData({
+                            ...formData,
+                            endTime: value,
+                          });
+                          return;
+                        }
+                        setFormData({
+                          ...formData,
+                          endTime: value,
+                          durationMinutes: minutes,
+                        });
+                      }}
+                      error={formErrors.endTime}
+                      required
+                      use24Hour={true}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Select
+                      label="Priority"
+                      value={formData.priority}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          priority: e.target.value as ShiftPriority,
+                        })
+                      }
+                      className="bg-gray-50 border-gray-100 font-medium"
+                    >
+                      <option value="CORE">Core</option>
+                      <option value="BUFFER">Buffer</option>
+                    </Select>
+                    <Input
+                      label="Score (1-5)"
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={
+                        isNaN(formData.desirabilityScore)
+                          ? ""
+                          : formData.desirabilityScore
+                      }
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 1 && value <= 5) {
+                          setFormData({
+                            ...formData,
+                            desirabilityScore: value,
+                          });
+                        }
+                      }}
+                      required
+                      className="bg-gray-50 border-gray-100 font-medium"
+                    />
+                  </div>
+
+                  <Input
+                    label="Staff Capacity"
+                    type="number"
+                    min="1"
+                    value={isNaN(formData.capacity) ? "" : formData.capacity}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 1) {
+                        setFormData({
+                          ...formData,
+                          capacity: value,
                         });
                       }
                     }}
                     required
                     className="bg-gray-50 border-gray-100 font-medium"
                   />
-                </div>
 
-                <Input
-                  label="Staff Capacity"
-                  type="number"
-                  min="1"
-                  value={isNaN(formData.capacity) ? "" : formData.capacity}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1) {
-                      setFormData({
-                        ...formData,
-                        capacity: value,
-                      });
-                    }
-                  }}
-                  required
-                  className="bg-gray-50 border-gray-100 font-medium"
-                />
-
-                <Button
-                  type="submit"
-                  className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs mt-4"
-                >
-                  Register Shift Template
-                </Button>
-              </form>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-                  <Clock className="w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-black mb-2 leading-tight">
-                  Configurable Slots
-                </h3>
-                <p className="text-sm text-primary-100 leading-relaxed opacity-90">
-                  Each shift defines its type, required capacity, and
-                  desirability. The algorithm uses the score to prioritize
-                  popular or difficult slots.
-                </p>
+                  <Button
+                    type="submit"
+                    className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs mt-4"
+                  >
+                    Register Shift Template
+                  </Button>
+                </form>
               </Card>
+            ) : (
+              <div className="space-y-6">
+                <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-black mb-2 leading-tight">
+                    Configurable Slots
+                  </h3>
+                  <p className="text-sm text-primary-100 leading-relaxed opacity-90">
+                    Each shift defines its type, required capacity, and
+                    desirability. The algorithm uses the score to prioritize
+                    popular or difficult slots.
+                  </p>
+                </Card>
 
-              <Card className="bg-white border-none shadow-sm p-6">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-                  Slot Breakdown
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
-                      Mobile 1
-                    </span>
-                    <span className="text-sm font-black text-gray-900">
-                      {shifts.filter((s) => s.type === "MOBILE_TEAM_1").length}
-                    </span>
+                <Card className="bg-white border-none shadow-sm p-6">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                    Slot Breakdown
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
+                        Mobile 1
+                      </span>
+                      <span className="text-sm font-black text-gray-900">
+                        {
+                          shifts.filter((s) => s.type === "MOBILE_TEAM_1")
+                            .length
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>{" "}
+                        Mobile 2
+                      </span>
+                      <span className="text-sm font-black text-gray-900">
+                        {
+                          shifts.filter((s) => s.type === "MOBILE_TEAM_2")
+                            .length
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-success-500"></div>{" "}
+                        Stationary
+                      </span>
+                      <span className="text-sm font-black text-gray-900">
+                        {shifts.filter((s) => s.type === "STATIONARY").length}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>{" "}
-                      Mobile 2
-                    </span>
-                    <span className="text-sm font-black text-gray-900">
-                      {shifts.filter((s) => s.type === "MOBILE_TEAM_2").length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-success-500"></div>{" "}
-                      Stationary
-                    </span>
-                    <span className="text-sm font-black text-gray-900">
-                      {shifts.filter((s) => s.type === "STATIONARY").length}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
+                </Card>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

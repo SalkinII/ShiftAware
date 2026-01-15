@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useCache } from "@/lib/cache/useCache";
 import { Download, FileText, Users, Calendar } from "lucide-react";
 import { exportScheduleToPDF } from "@/lib/services/export";
 
@@ -32,9 +33,6 @@ interface Shift {
 }
 
 export default function ExportPage() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [shifts, setShifts] = useState<Shift[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [selectedMemberId, setSelectedMemberId] = useState<string>("all");
   const [exportScope, setExportScope] = useState<"schedule" | "member">(
@@ -47,51 +45,93 @@ export default function ExportPage() {
     useState<boolean>(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Use cache for members and events
+  const {
+    data: members,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useCache<Member[]>({
+    key: "members",
+    fetchFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+  });
+
+  const {
+    data: events,
+    loading: eventsLoading,
+    refetch: refetchEvents,
+  } = useCache<Event[]>({
+    key: "events",
+    fetchFn: async () => {
+      const res = await fetch("/api/events");
+      if (!res.ok) throw new Error("Failed to fetch events");
+      return res.json();
+    },
+  });
+
+  // Use cache for shifts (filtered by event client-side)
+  const {
+    data: allShifts,
+    loading: shiftsLoading,
+    refetch: refetchShifts,
+  } = useCache<Shift[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      return res.json();
+    },
+  });
+
+  // Filter shifts by selected event
+  const shifts = useMemo(() => {
+    if (!allShifts || !selectedEventId) return [];
+    return allShifts.filter((s) => s.event?.id === selectedEventId);
+  }, [allShifts, selectedEventId]);
+
+  // Set default event on first load
   useEffect(() => {
-    loadData();
-  }, []);
+    if (events && events.length > 0 && !selectedEventId) {
+      setSelectedEventId(events[0].id);
+    }
+  }, [events, selectedEventId]);
 
+  // Listen for cache invalidation events
   useEffect(() => {
-    if (selectedEventId) {
-      loadShifts(selectedEventId);
-    }
-  }, [selectedEventId]);
-
-  async function loadData() {
-    try {
-      const [membersRes, eventsRes] = await Promise.all([
-        fetch("/api/members"),
-        fetch("/api/events"),
-      ]);
-
-      if (membersRes.ok) {
-        const membersData = await membersRes.json();
-        setMembers(membersData);
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      if (
+        keys.some(
+          (k: string) =>
+            k === "members" ||
+            k.startsWith("members") ||
+            k === "events" ||
+            k.startsWith("events") ||
+            k === "shifts" ||
+            k.startsWith("shifts"),
+        )
+      ) {
+        refetchMembers();
+        refetchEvents();
+        refetchShifts();
       }
+    };
 
-      if (eventsRes.ok) {
-        const eventsData = await eventsRes.json();
-        setEvents(eventsData);
-        if (eventsData.length > 0) {
-          setSelectedEventId(eventsData[0].id);
-        }
-      }
-    } catch (error) {
-      console.error("Load data error:", error);
-    }
-  }
-
-  async function loadShifts(eventId: string) {
-    try {
-      const res = await fetch(`/api/shifts?eventId=${eventId}`);
-      if (res.ok) {
-        const shiftsData = await res.json();
-        setShifts(shiftsData);
-      }
-    } catch (error) {
-      console.error("Load shifts error:", error);
-    }
-  }
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function handleExport() {
     if (!selectedEventId) {
@@ -117,7 +157,7 @@ export default function ExportPage() {
         includePseudonymMap: exportIncludePseudonymMap,
         title:
           exportScope === "member"
-            ? `Member Schedule - ${members.find((m) => m.id === selectedMemberId)?.alias || ""}`
+            ? `Member Schedule - ${(members || []).find((m) => m.id === selectedMemberId)?.alias || ""}`
             : "ShiftAware Schedule",
       });
     } catch (error) {
@@ -153,7 +193,7 @@ export default function ExportPage() {
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
               >
                 <option value="">Select an event</option>
-                {events.map((event) => (
+                {(events || []).map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.name}
                   </option>
@@ -215,7 +255,7 @@ export default function ExportPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
                 >
                   <option value="all">Choose a member</option>
-                  {members.map((member) => (
+                  {(members || []).map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.avatarId} {member.alias}
                     </option>

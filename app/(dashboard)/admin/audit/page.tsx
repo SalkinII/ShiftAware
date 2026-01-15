@@ -4,8 +4,10 @@ import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
-import { Download, Search, RefreshCw } from "lucide-react";
+import { Download, Search, RefreshCw, RotateCcw } from "lucide-react";
 import { AuditAction, EntityType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ interface AuditLog {
 }
 
 export default function AuditLogPage() {
+  const toast = useToast();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -39,6 +42,21 @@ export default function AuditLogPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  // Rollback dialog state
+  const [rollbackDialog, setRollbackDialog] = useState<{
+    isOpen: boolean;
+    auditLogId: string | null;
+    action: AuditAction;
+    entityType: EntityType;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    auditLogId: null,
+    action: AuditAction.CREATE,
+    entityType: EntityType.TEAM_MEMBER,
+    isLoading: false,
+  });
 
   useEffect(() => {
     loadLogs(true);
@@ -138,6 +156,118 @@ export default function AuditLogPage() {
     }
     return result;
   }, [logs, searchQuery]);
+
+  // Check if an action is rollbackable
+  function isRollbackable(log: AuditLog): boolean {
+    // Don't allow rolling back rollback entries
+    if (log.reason && log.reason.includes("Rollback of")) {
+      return false;
+    }
+
+    const rollbackableActions: AuditAction[] = [
+      AuditAction.CREATE,
+      AuditAction.UPDATE,
+      AuditAction.DELETE,
+      AuditAction.MANUAL_SWAP,
+    ];
+    return rollbackableActions.includes(log.action);
+  }
+
+  function handleRollbackClick(log: AuditLog) {
+    setRollbackDialog({
+      isOpen: true,
+      auditLogId: log.id,
+      action: log.action,
+      entityType: log.entityType,
+      isLoading: false,
+    });
+  }
+
+  async function confirmRollback() {
+    if (!rollbackDialog.auditLogId) return;
+
+    setRollbackDialog((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const res = await fetch("/api/audit/rollback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auditLogId: rollbackDialog.auditLogId }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        // Response is not valid JSON
+        throw new Error(
+          `Failed to rollback action: ${res.status} ${res.statusText}`,
+        );
+      }
+
+      if (!res.ok) {
+        // API error responses use either 'error' or 'message' field
+        const errorMessage =
+          data.message || data.error || "Failed to rollback action";
+        throw new Error(errorMessage);
+      }
+
+      toast.success(data.message || "Action rolled back successfully");
+
+      // Invalidate cache for the affected entity type
+      const cacheKeys: string[] = [];
+      switch (rollbackDialog.entityType) {
+        case EntityType.SHIFT:
+          cacheKeys.push("shifts", "shifts*", "assignments", "assignments*");
+          break;
+        case EntityType.TEAM_MEMBER:
+          cacheKeys.push("members", "assignments", "assignments*");
+          break;
+        case EntityType.ASSIGNMENT:
+          cacheKeys.push("assignments", "assignments*");
+          break;
+        case EntityType.PREFERENCE:
+          cacheKeys.push("shifts", "shifts*"); // Preferences affect shift display
+          break;
+      }
+      if (cacheKeys.length > 0) {
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: cacheKeys },
+          }),
+        );
+      }
+
+      // Reload audit logs to show the rollback entry
+      await loadLogs(true);
+
+      setRollbackDialog({
+        isOpen: false,
+        auditLogId: null,
+        action: AuditAction.CREATE,
+        entityType: EntityType.TEAM_MEMBER,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Rollback error:", error);
+      let errorMessage = "Failed to rollback action";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+      toast.error(errorMessage);
+      setRollbackDialog((prev) => ({ ...prev, isLoading: false }));
+    }
+  }
+
+  function getRollbackMessage(): string {
+    const actionName = rollbackDialog.action.replace("_", " ");
+    const entityName = rollbackDialog.entityType
+      .replace("_", " ")
+      .toLowerCase();
+    return `Are you sure you want to rollback this ${actionName} action on ${entityName}? This will undo the changes made.`;
+  }
 
   const actionColors: Partial<Record<AuditAction, string>> = {
     CREATE: "bg-success-50 text-success-700 border-success-200",
@@ -337,13 +467,27 @@ export default function AuditLogPage() {
                     </details>
                   )}
                 </div>
-                <div className="text-right text-xs text-gray-500">
-                  <p className="font-semibold">
-                    {format(new Date(log.createdAt), "MMM d, yyyy")}
-                  </p>
-                  <p>{format(new Date(log.createdAt), "HH:mm:ss")}</p>
-                  {log.ipAddress && (
-                    <p className="mt-1 text-[10px]">IP: {log.ipAddress}</p>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="text-right text-xs text-gray-500">
+                    <p className="font-semibold">
+                      {format(new Date(log.createdAt), "MMM d, yyyy")}
+                    </p>
+                    <p>{format(new Date(log.createdAt), "HH:mm:ss")}</p>
+                    {log.ipAddress && (
+                      <p className="mt-1 text-[10px]">IP: {log.ipAddress}</p>
+                    )}
+                  </div>
+                  {isRollbackable(log) && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleRollbackClick(log)}
+                      className="flex items-center gap-2 text-xs"
+                      title={`Rollback ${log.action.replace("_", " ")} action`}
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Rollback
+                    </Button>
                   )}
                 </div>
               </div>
@@ -351,6 +495,26 @@ export default function AuditLogPage() {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={rollbackDialog.isOpen}
+        onClose={() =>
+          setRollbackDialog({
+            isOpen: false,
+            auditLogId: null,
+            action: AuditAction.CREATE,
+            entityType: EntityType.TEAM_MEMBER,
+            isLoading: false,
+          })
+        }
+        onConfirm={confirmRollback}
+        title="Rollback Action"
+        message={getRollbackMessage()}
+        confirmText="Rollback"
+        cancelText="Cancel"
+        variant="default"
+        isLoading={rollbackDialog.isLoading}
+      />
 
       {hasMore && (
         <div className="flex justify-center">

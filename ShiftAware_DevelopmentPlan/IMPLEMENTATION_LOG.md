@@ -226,3 +226,62 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: applied toast notifications and skeleton loading to preferences page
 - v0.2.0: applied skeleton loading to audit page
 - v0.2.0: all UX enhancements now applied across all admin pages
+
+## 2026-01-15T23:30:00Z
+- v0.3.0: created TimePicker component (components/ui/TimePicker.tsx) with visual hour/minute selection and 12/24 hour format support
+- v0.3.0: created DateTimePicker component (components/ui/DateTimePicker.tsx) combining date input with TimePicker
+- v0.3.0: integrated DateTimePicker into shifts form, replacing datetime-local inputs with visual time picker
+- v0.3.0: moved date display from schedule page header to CalendarView component
+- v0.3.0: added date navigation (prev/next buttons) to CalendarView, positioned above timeline scale
+- v0.3.0: removed date display and navigation from schedule page header
+- v0.3.0: date display now appears in/near calendar window as requested
+
+## 2026-01-15T23:45:00Z
+- v0.3.0: created ShiftCardActions component (components/ui/ShiftCardActions.tsx) with quick actions menu
+- v0.3.0: added quick actions to shift cards: View Details, Edit, Assign Member, Swap, Delete
+- v0.3.0: integrated actions menu into CalendarView timeline bars with hover visibility
+- v0.3.0: installed @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities for drag-and-drop functionality
+- v0.3.0: actions menu appears on hover with smooth opacity transitions
+
+## 2026-01-15T23:55:00Z
+- v0.3.0: created SwapInterface component (components/features/SwapInterface/SwapInterface.tsx) with drag-and-drop
+- v0.3.0: implemented drag-and-drop selection for swapping assignments (select 2, then swap)
+- v0.3.0: integrated SwapInterface into assignments page with List/Swap view toggle
+- v0.3.0: added visual feedback during drag operations (drag overlay, selection highlighting)
+- v0.3.0: connected SwapInterface to existing swap API endpoint (/api/assignments/swap)
+
+## 2026-01-16T00:00:00Z
+- v0.3.0: fixed timeline view navigation issues - improved date range calculation from all shifts
+- v0.3.0: added week view navigation controls (prev/next week buttons)
+- v0.3.0: fixed day view navigation to work regardless of shift existence
+- v0.3.0: ensured navigation controls always visible even on empty states
+- v0.3.0: added "Today" button for quick navigation to current date
+- v0.3.0: added date picker input field to navigation controls for quick date jumping
+- v0.3.0: date picker respects min/max date boundaries and works for both Day and Week views
+- v0.3.0: improved empty state messaging with contextual messages for Day/Week views
+- v0.3.0: fixed week view horizontal scrolling by ensuring timeline-scroll container allows overflow
+- v0.3.0: fixed multi-day shift display clipping (partial fix - some edge cases remain for future improvement)
+- v0.3.0: documented remaining timeline view issues (day view multi-day shifts, week view vertical scrolling, grid view improvements)
+- v0.3.0: designed caching strategy for frequently accessed data (client-side in-memory cache with React Context)
+- v0.3.0: implemented Phase 1 basic caching system (CacheProvider, useCache hook, cache utilities)
+- v0.3.0: integrated cache with schedule page for shifts data
+- v0.3.0: added cache invalidation on shift creation via custom events
+- v0.3.0: completed Caching Phase 2 - integrated cache with all 7 pages (dashboard, assignments, coverage, members, preferences, export, schedule)
+- v0.3.0: added automatic cache invalidation on all mutation endpoints (shifts POST, members POST, preferences POST, assignments POST/swap)
+- v0.3.0: fixed infinite loop in cache event listeners by removing refetch functions from useEffect deps and adding key filtering
+- v0.3.0: fixed swap API unique constraint violation by using delete+create pattern and adding validation
+- v0.3.0: documented swap UI issue (multiple selection not sensible) for future improvement
+- v0.3.0: created ConfirmDialog component (components/ui/ConfirmDialog.tsx) with accessibility features (keyboard navigation, focus trap, ARIA labels, loading states)
+- v0.3.0: implemented shift delete functionality in admin/shifts page with confirmation dialog and cache invalidation
+- v0.3.0: implemented shift delete functionality in schedule page (via CalendarView onShiftDelete prop)
+- v0.3.0: implemented member delete functionality in admin/members page with confirmation dialog and cache invalidation
+- v0.3.0: all delete operations require authentication (API endpoints already check auth via isAuthenticated())
+- v0.3.0: optimized CalendarView rendering performance (extracted TimelineRow with React.memo, memoized callbacks, optimized grid view sorting)
+- v0.3.0: optimized PDF generation performance (single-pass processing, pre-parsed dates, optimized member lookup, reduced array operations)
+- v0.3.0: created action rollback API endpoint (app/api/audit/rollback/route.ts) with rollback logic for Shifts, Members, Assignments, and Preferences
+- v0.3.0: implemented rollback UI in audit log page (app/(dashboard)/admin/audit/page.tsx) with rollback button, confirmation dialog, toast notifications, and cache invalidation
+- v0.3.0: rollback supports CREATE, UPDATE, DELETE, and PREFERENCE_SUBMIT actions (MANUAL_SWAP rollback deferred - requires swap context)
+- v0.3.0: created conflict detection API endpoint (app/api/conflicts/route.ts) detecting SHIFT_OVERLAP, SHIFT_CAPACITY, GENDER_BALANCE conflicts with resolution suggestions
+- v0.3.0: created conflict resolution API endpoint (app/api/conflicts/resolve/route.ts) supporting UNASSIGN, ASSIGN, REASSIGN, SWAP actions with transaction-based atomicity and audit logging
+- v0.3.0: implemented ConflictWizard component (components/features/ConflictWizard/ConflictWizard.tsx) with guided workflow, progress indicator, conflict navigation, and resolution suggestions
+- v0.3.0: integrated conflict wizard into coverage dashboard (app/(dashboard)/admin/coverage/page.tsx) with "Resolve Conflicts" button

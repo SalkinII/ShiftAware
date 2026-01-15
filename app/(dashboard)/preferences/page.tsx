@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { useCache } from "@/lib/cache/useCache";
 import {
   Sparkles,
   Calendar,
@@ -30,47 +31,86 @@ interface Shift {
 
 export default function PreferencesPage() {
   const toast = useToast();
-  const [shifts, setShifts] = useState<Shift[]>([]);
   const [selectedShifts, setSelectedShifts] = useState<Map<string, number>>(
     new Map(),
   );
-  const [members, setMembers] = useState<{ id: string; alias: string }[]>([]);
   const [selectedMember, setSelectedMember] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [currentEventDate, setCurrentEventDate] = useState<string>();
 
+  // Use cache for shifts and members
+  const {
+    data: shifts,
+    loading: shiftsLoading,
+    refetch: refetchShifts,
+  } = useCache<Shift[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      return res.json();
+    },
+  });
+
+  const {
+    data: members,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useCache<{ id: string; alias: string }[]>({
+    key: "members",
+    fetchFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+  });
+
+  const loading = shiftsLoading || membersLoading;
+
+  // Set default member and event date on first load
   useEffect(() => {
-    loadData();
-  }, []);
+    if (members && members.length > 0 && !selectedMember) {
+      setSelectedMember(members[0].id);
+    }
+    if (shifts && shifts.length > 0 && !currentEventDate) {
+      setCurrentEventDate(shifts[0].startTime.split("T")[0]);
+    }
+  }, [members, shifts, selectedMember, currentEventDate]);
+
+  // Listen for cache invalidation events
+  useEffect(() => {
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if our cache keys are affected
+      if (
+        keys.some(
+          (k: string) =>
+            k === "shifts" ||
+            k.startsWith("shifts") ||
+            k === "members" ||
+            k.startsWith("members"),
+        )
+      ) {
+        refetchShifts();
+        refetchMembers();
+      }
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function loadData() {
-    try {
-      const [shiftsRes, membersRes] = await Promise.all([
-        fetch("/api/shifts"),
-        fetch("/api/members"),
-      ]);
-
-      if (shiftsRes.ok) {
-        const shiftsData = await shiftsRes.json();
-        setShifts(shiftsData);
-        if (shiftsData.length > 0) {
-          setCurrentEventDate(shiftsData[0].startTime.split("T")[0]);
-        }
-      }
-
-      if (membersRes.ok) {
-        const membersData = await membersRes.json();
-        setMembers(membersData);
-        if (membersData.length > 0) {
-          setSelectedMember(membersData[0].id);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load data:", error);
-    } finally {
-      setLoading(false);
-    }
+    await Promise.all([refetchShifts(), refetchMembers()]);
   }
 
   function toggleShift(shiftId: string) {
@@ -89,7 +129,7 @@ export default function PreferencesPage() {
   }
 
   async function handleSubmit() {
-    if (!selectedMember) {
+    if (!selectedMember || selectedMember.trim() === "") {
       toast.warning("Please select a team member");
       return;
     }
@@ -99,14 +139,28 @@ export default function PreferencesPage() {
       return;
     }
 
+    // Validate that all shift IDs are valid
+    const invalidShifts = Array.from(selectedShifts.keys()).filter(
+      (id) => !id || id.trim() === "" || id.length < 10,
+    );
+    if (invalidShifts.length > 0) {
+      toast.error(
+        "Some selected shifts have invalid IDs. Please refresh and try again.",
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const preferences = Array.from(selectedShifts.entries()).map(
-        ([shiftId, priority]) => ({
+      const preferences = Array.from(selectedShifts.entries())
+        .filter(
+          ([shiftId]) =>
+            shiftId && shiftId.trim() !== "" && shiftId.length >= 10,
+        )
+        .map(([shiftId, priority]) => ({
           shiftId,
           priority,
-        }),
-      );
+        }));
 
       const res = await fetch("/api/preferences", {
         method: "POST",
@@ -120,9 +174,30 @@ export default function PreferencesPage() {
       if (res.ok) {
         toast.success("Preferences submitted successfully!");
         setSelectedShifts(new Map());
+        // Invalidate cache for preferences
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["preferences", "preferences*"] },
+          }),
+        );
       } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to submit preferences");
+        const errorData = await res.json();
+        let errorMessage = errorData.error || "Failed to submit preferences";
+
+        // Parse Zod validation errors
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const issues = errorData.details
+            .map((issue: { path?: string; message?: string }) => {
+              const path = issue.path || "unknown";
+              return `${path}: ${issue.message || "Invalid value"}`;
+            })
+            .join(", ");
+          errorMessage = `Validation error: ${issues}`;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Failed to submit preferences:", error);
@@ -141,7 +216,7 @@ export default function PreferencesPage() {
     );
   }
 
-  const selectedList = shifts
+  const selectedList = (shifts || [])
     .filter((s) => selectedShifts.has(s.id))
     .sort(
       (a, b) =>
@@ -173,7 +248,7 @@ export default function PreferencesPage() {
               className="pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 appearance-none shadow-sm"
             >
               <option value="">Select identity</option>
-              {members.map((member) => (
+              {(members || []).map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.alias}
                 </option>

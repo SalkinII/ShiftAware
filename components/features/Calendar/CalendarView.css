@@ -18,6 +18,8 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 6px;
+  /* Ensure scrolling works on all screen sizes */
+  -webkit-overflow-scrolling: touch;
 }
 
 .timeline-scroll--snap {
@@ -29,6 +31,8 @@
   flex-direction: column;
   min-width: var(--timeline-min-width);
   width: max(100%, var(--timeline-min-width));
+  /* Ensure canvas is at least as wide as min-width for scrolling */
+  flex-shrink: 0;
 }
 
 .timeline-day-markers {
@@ -77,6 +81,8 @@
   grid-template-columns: 1fr;
   grid-template-areas: 'scale-area';
   overflow: hidden;
+  /* Ensure parent can scroll on larger screens */
+  min-width: var(--timeline-min-width);
 }
 
 .timeline-scale {
@@ -132,6 +138,16 @@
   
   .timeline-scale-fade {
     display: none;
+  }
+  
+  /* Ensure week view can scroll horizontally on larger screens */
+  .timeline-scale-container--infinite {
+    overflow: visible;
+  }
+  
+  .timeline-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 }
 
@@ -275,11 +291,23 @@
   gap: 8px;
   font-size: 11px;
   font-weight: 800;
+  flex: 1;
 }
 
 .timeline-bar__capacity {
   opacity: 0.8;
   font-weight: 700;
+}
+
+.timeline-bar__actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.timeline-bar:hover .timeline-bar__actions {
+  opacity: 1;
 }
 
 .timeline-empty {

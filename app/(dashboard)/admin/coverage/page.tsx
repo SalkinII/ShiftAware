@@ -3,8 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConflictWizard } from "@/components/features/ConflictWizard/ConflictWizard";
+import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
+import { useCache } from "@/lib/cache/useCache";
 import { format } from "date-fns";
-import { RefreshCw, Users, Lightbulb } from "lucide-react";
+import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CoverageGap {
@@ -28,58 +31,100 @@ interface TeamMember {
 }
 
 export default function CoverageDashboard() {
-  const [gaps, setGaps] = useState<CoverageGap[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [showConflictWizard, setShowConflictWizard] = useState(false);
+  const [showAvailabilityHeatmap, setShowAvailabilityHeatmap] = useState(false);
 
+  // Use cache for shifts and members
+  const {
+    data: cachedShifts,
+    loading: shiftsLoading,
+    refetch: refetchShifts,
+  } = useCache<any[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      return res.json();
+    },
+  });
+
+  const {
+    data: cachedMembers,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useCache<TeamMember[]>({
+    key: "members",
+    fetchFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+  });
+
+  const loading = shiftsLoading || membersLoading;
+
+  // Calculate gaps from cached shifts
+  const gaps = useMemo(() => {
+    if (!cachedShifts) return [];
+    return cachedShifts
+      .map((s: any) => ({
+        id: s.id,
+        type: s.type,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        priority: s.priority,
+        capacity: s.capacity,
+        currentCount: s.assignments?.length || 0,
+        event: s.event,
+        requiredRoles: s.requiredRoles,
+      }))
+      .filter((s: any) => s.currentCount < s.capacity);
+  }, [cachedShifts]);
+
+  // Listen for cache invalidation events
   useEffect(() => {
-    loadData();
-  }, []);
+    const handleCacheInvalidate = (e: CustomEvent) => {
+      const keys = e.detail?.keys || [];
+      // Only refetch if our cache keys are affected
+      if (
+        keys.some(
+          (k: string) =>
+            k === "shifts" ||
+            k.startsWith("shifts") ||
+            k === "members" ||
+            k.startsWith("members"),
+        )
+      ) {
+        refetchShifts();
+        refetchMembers();
+      }
+    };
+
+    window.addEventListener(
+      "shiftaware:cache-invalidate",
+      handleCacheInvalidate as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "shiftaware:cache-invalidate",
+        handleCacheInvalidate as EventListener,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - refetch functions are stable from useCache
 
   async function loadData() {
-    setLoading(true);
-    try {
-      const [shiftsRes, membersRes] = await Promise.all([
-        fetch("/api/shifts"),
-        fetch("/api/members"),
-      ]);
-
-      if (shiftsRes.ok) {
-        const shifts = await shiftsRes.json();
-        const gapList = shifts
-          .map((s: any) => ({
-            id: s.id,
-            type: s.type,
-            startTime: s.startTime,
-            endTime: s.endTime,
-            priority: s.priority,
-            capacity: s.capacity,
-            currentCount: s.assignments?.length || 0,
-            event: s.event,
-            requiredRoles: s.requiredRoles,
-          }))
-          .filter((s: any) => s.currentCount < s.capacity);
-        setGaps(gapList);
-      }
-
-      if (membersRes.ok) {
-        const membersData = await membersRes.json();
-        setMembers(membersData);
-      }
-    } catch (error) {
-      console.error("Failed to load data:", error);
-    } finally {
-      setLoading(false);
-    }
+    await Promise.all([refetchShifts(), refetchMembers()]);
   }
 
   const quickFillRecommendations = useMemo(() => {
+    if (!cachedMembers) return [];
     return gaps
       .filter((gap) => gap.currentCount === 0)
       .slice(0, 5)
       .map((gap) => {
         const needed = gap.capacity - gap.currentCount;
-        const availableMembers = members.filter((member) => {
+        const availableMembers = cachedMembers.filter((member) => {
           // Check if member has preferences for this shift
           const hasPreference = member.preferences?.some(
             (p: any) => p.shiftId === gap.id,
@@ -105,7 +150,7 @@ export default function CoverageDashboard() {
           recommendedMembers: availableMembers.slice(0, needed),
         };
       });
-  }, [gaps, members]);
+  }, [gaps, cachedMembers]);
 
   if (loading) {
     return (
@@ -129,15 +174,62 @@ export default function CoverageDashboard() {
             Identify and fill staffing gaps
           </p>
         </div>
-        <Button
-          variant="primary"
-          onClick={loadData}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setShowAvailabilityHeatmap(true)}
+            className="flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            View Availability
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setShowConflictWizard(true)}
+            className="flex items-center gap-2"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            Resolve Conflicts
+          </Button>
+          <Button
+            variant="primary"
+            onClick={loadData}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      <ConflictWizard
+        isOpen={showConflictWizard}
+        onClose={() => setShowConflictWizard(false)}
+      />
+
+      {showAvailabilityHeatmap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <Card className="relative z-10 max-w-[95vw] max-h-[95vh] overflow-auto">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b">
+              <h2 className="text-2xl font-bold">
+                Member Availability Heatmap
+              </h2>
+              <button
+                onClick={() => setShowAvailabilityHeatmap(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <AvailabilityHeatmap
+              shiftIds={gaps.map((g) => g.id)}
+              onCellClick={(memberId, shiftId, status) => {
+                console.log("Cell clicked:", { memberId, shiftId, status });
+              }}
+            />
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 rounded-2xl border border-red-100 bg-red-50">
