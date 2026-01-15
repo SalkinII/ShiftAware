@@ -242,3 +242,10 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: integrated actions menu into CalendarView timeline bars with hover visibility
 - v0.3.0: installed @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities for drag-and-drop functionality
 - v0.3.0: actions menu appears on hover with smooth opacity transitions
+
+## 2026-01-15T23:55:00Z
+- v0.3.0: created SwapInterface component (components/features/SwapInterface/SwapInterface.tsx) with drag-and-drop
+- v0.3.0: implemented drag-and-drop selection for swapping assignments (select 2, then swap)
+- v0.3.0: integrated SwapInterface into assignments page with List/Swap view toggle
+- v0.3.0: added visual feedback during drag operations (drag overlay, selection highlighting)
+- v0.3.0: connected SwapInterface to existing swap API endpoint (/api/assignments/swap)
