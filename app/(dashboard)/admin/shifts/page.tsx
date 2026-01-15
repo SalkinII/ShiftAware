@@ -230,8 +230,9 @@ export default function ShiftsPage() {
                             Timing
                           </p>
                           <p className="text-sm font-bold text-gray-700 leading-none">
-                            {format(new Date(shift.startTime), "HH:mm")} -{" "}
-                            {format(new Date(shift.endTime), "HH:mm")}
+                            {shift.startTime && shift.endTime
+                              ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
+                              : "TBD"}
                           </p>
                         </div>
                       </div>
@@ -244,7 +245,12 @@ export default function ShiftsPage() {
                             Date
                           </p>
                           <p className="text-sm font-bold text-gray-700 leading-none">
-                            {format(new Date(shift.startTime), "MMM do, yyyy")}
+                            {shift.startTime
+                              ? format(
+                                  new Date(shift.startTime),
+                                  "MMM do, yyyy",
+                                )
+                              : "TBD"}
                           </p>
                         </div>
                       </div>
@@ -427,7 +433,11 @@ export default function ShiftsPage() {
                     type="number"
                     min="1"
                     max="5"
-                    value={formData.desirabilityScore || ""}
+                    value={
+                      isNaN(formData.desirabilityScore)
+                        ? ""
+                        : formData.desirabilityScore
+                    }
                     onChange={(e) => {
                       const value = parseInt(e.target.value);
                       if (!isNaN(value) && value >= 1 && value <= 5) {
@@ -446,7 +456,7 @@ export default function ShiftsPage() {
                   label="Staff Capacity"
                   type="number"
                   min="1"
-                  value={formData.capacity || ""}
+                  value={isNaN(formData.capacity) ? "" : formData.capacity}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
                     if (!isNaN(value) && value >= 1) {
