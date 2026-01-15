@@ -219,3 +219,57 @@
       border-color: #e7e5e4; /* fallback gray-200 */
     }
   }
+
+  /* Print-optimized styles for schedule view */
+  @media print {
+    /* Hide navigation and UI controls */
+    header,
+    nav,
+    aside,
+    button {
+      display: none !important;
+    }
+    
+    [class*="print:hidden"],
+    [class*="print\\:hidden"] {
+      display: none !important;
+    }
+    
+    /* Hide filters and export options */
+    [class*="filter"],
+    [class*="export"],
+    [class*="Filter"],
+    [class*="Export"] {
+      display: none !important;
+    }
+    
+    /* Ensure schedule content is visible */
+    .calendar-container,
+    .timeline-container,
+    .calendar-grid-view {
+      display: block !important;
+      overflow: visible !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+    
+    /* Remove shadows and rounded corners for print */
+    * {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    
+    /* Optimize page breaks */
+    .timeline-row,
+    .timeline-bar,
+    .calendar-grid-view tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    /* Ensure proper spacing */
+    body {
+      margin: 0;
+      padding: 1cm;
+    }
+  }

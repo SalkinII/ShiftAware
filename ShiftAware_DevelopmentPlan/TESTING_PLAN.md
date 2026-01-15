@@ -11,19 +11,19 @@ Use this as a living checklist. Append new suites as features ship. Keep steps d
 ## Environments
 - **Dev (local compose):** app http://localhost:43000, db localhost:45432.
 - **Test data:** Starlight Meadow 2026 seed (30 aliases, 6 shifts).
-- **Secrets:** `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` loaded via env; verify before tests.
+- **Secrets:** `ADMIN_PASSWORD` loaded via env; verify before tests.
 
 ## Tooling
 - HTTP: `curl` or REST client.
 - Browser/E2E: Playwright (when UI available).
-- Scripts: `node scripts/check-env.js`, `node scripts/test-password.js <pw> <hash>` (if present).
+- Scripts: `node scripts/check-env.js`.
 - Logs: `docker compose logs -f app db`.
 
 ## Smoke Checklist (run before suites)
 1) `docker compose ps` shows `app`, `db` healthy.  
 2) `curl http://localhost:43000/api/health` returns `status: ok` (once implemented).  
 3) `psql` to `postgresql://postgres:postgres@localhost:45432/appdb` succeeds.  
-4) `node scripts/check-env.js` reports `ADMIN_PASSWORD_HASH` present (if script exists).  
+4) `node scripts/check-env.js` reports `ADMIN_PASSWORD` present (if script exists).  
 5) `npm run lint` passes (if configured).
 
 ## Authentication Suite (current focus)
@@ -85,6 +85,29 @@ Goal: validate new sidebar/header navigation and design system compliance.
 - Protected routes reject unauthenticated requests.
 - Basic perf sanity: key endpoints <500ms p95 on seed data.
 - Visual/UX check against design system and UI spec (palette, spacing, key screens) — fill in once UI is built.
+
+## Visualization & Export Suite (Phase 2)
+Goal: validate enhanced schedule views (SVAR Gantt) and PDF export options.
+
+1) **Schedule Views (Day/Week/Grid)**
+   - Load `/schedule` with seeded data; verify Day/Week/Grid toggles persist across refresh.
+   - SVAR Gantt renders shifts with coverage badges/assignments; Grid view replaces any Month view.
+   - Cells outside the event window are visually muted; scrolling and zoom behave.
+2) **Filtering & Metrics**
+   - Coverage filter (All/Full/Partial/Unstaffed) narrows visible shifts and updates metrics cards.
+   - Role filter narrows to matching requiredRoles/assignment roles.
+   - Member filter narrows to shifts containing selected member assignment.
+   - Metrics cards (coverage %, full/partial/unstaffed counts) update with filters.
+3) **Export PDF**
+   - Export in landscape/portrait for full schedule; file downloads.
+   - Member-only export limits rows to that member’s assignments.
+   - Pseudonym map page included when toggle is on; shows alias + avatar token.
+   - Coverage summary line matches on-screen metrics (filled/capacity).
+4) **Accessibility & Layout**
+   - Gantt area remains scrollable/responsive; buttons have focus ring.
+   - Legend/colors align to design system (success/accent/red).
+5) **Performance sanity**
+   - Schedule view renders within 1s on seed data; export completes without console errors.
 
 ## How to Append
 - Add new suite sections at the bottom.

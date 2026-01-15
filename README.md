@@ -1,13 +1,21 @@
-# ShiftAware (Phase 0)
+# ShiftAware
 
-Privacy-first, single-password shift management app. This repo now follows `ShiftAware_DevelopmentPlan` as the source of truth.
+Privacy-first, single-password shift management application for event staffing.
 
-## Canonical docs
-- `ShiftAware_DevelopmentPlan/README.md` (index to plan)
-- `ShiftAware_DevelopmentPlan/ROADMAP.md` (phase breakdown)
-- `ShiftAware_DevelopmentPlan/DATABASE_SCHEMA.md` (data model)
+## Features
 
-## Dev quickstart (Phase 0)
+- **Team Member Management**: Pseudonymized profiles with avatar assignment
+- **Shift Configuration**: Flexible shift types with role requirements
+- **Preference Entry**: Calendar-based shift preference selection
+- **Assignment Algorithm**: Fair shift assignment with constraint validation
+- **Schedule Visualization**: Day/Week/Grid views with coverage indicators
+- **PDF Export**: Schedule export with pseudonym mapping options
+- **Audit Trail**: Complete logging of all system changes
+- **Coverage Dashboard**: Gap identification with quick-fill recommendations
+
+## Quick Start
+
+### Development
 ```bash
 npm install
 cp .env.example .env.local   # set ADMIN_PASSWORD + SESSION_TIMEOUT_MINUTES
@@ -17,14 +25,58 @@ npx prisma db seed
 npm run dev                  # app on host 43000 -> container 3000
 ```
 
-## Ports (host → container)
+### Production
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed production deployment instructions.
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
+```
+
+## Configuration
+
+### Environment Variables
+- `ADMIN_PASSWORD` - Shared password for admin authentication (required)
+- `DATABASE_URL` - PostgreSQL connection string (required)
+- `SESSION_TIMEOUT_MINUTES` - Session timeout in minutes (default: 60)
+- `POSTGRES_PASSWORD` - Database password (for Docker setup)
+- `POSTGRES_USER` - Database user (default: shiftaware)
+- `POSTGRES_DB` - Database name (default: shiftaware)
+
+### Ports (host → container)
 - App: `43000 -> 3000`
 - Postgres: `45432 -> 5432`
-- Optional python compute (future): `43010 -> 8000`
 
-## Auth
-- Single shared password (`ADMIN_PASSWORD` in env, plain text comparison per plan)
-- Simple HTTP-only session cookie (`authenticated=true`, 60 min default, configurable via `SESSION_TIMEOUT_MINUTES`)
+## Authentication
+
+- Single shared password (`ADMIN_PASSWORD` in env)
+- HTTP-only session cookie (`authenticated=true`)
+- Configurable session timeout via `SESSION_TIMEOUT_MINUTES`
+
+## Documentation
+
+- `ShiftAware_DevelopmentPlan/README.md` - Project overview
+- `ShiftAware_DevelopmentPlan/ROADMAP.md` - Development phases
+- `ShiftAware_DevelopmentPlan/DATABASE_SCHEMA.md` - Data model
+- `DEPLOYMENT.md` - Production deployment guide
+- `ShiftAware_DevelopmentPlan/IMPLEMENTATION_LOG.md` - Change log
+
+## Testing
+
+```bash
+npm test                    # Run test suite
+npm run lint               # Run linter
+```
+
+## Health Check
+
+The application provides a health check endpoint:
+```bash
+curl http://localhost:43000/api/health
+```
+
+Returns status of environment variables and database connectivity.
 
 ## License
-- Apache-2.0 (see `LICENSE`)
+
+Apache-2.0 (see `LICENSE`)

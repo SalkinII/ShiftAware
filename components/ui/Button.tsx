@@ -14,7 +14,7 @@ export function Button({
   const base =
     "inline-flex items-center justify-center gap-2 px-4 py-3 text-sm rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2";
 
-  const variants: Record<ButtonProps["variant"], string> = {
+  const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
     primary:
       "bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/20 focus:ring-primary-500",
     secondary:
@@ -29,4 +29,3 @@ export function Button({
     </button>
   );
 }
-

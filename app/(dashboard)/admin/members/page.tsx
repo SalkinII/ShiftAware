@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Download, Search, UserCircle2, Mail, Shield, Zap } from "lucide-react";
+import { Plus, Download, Search, UserCircle2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -56,16 +56,20 @@ export default function MembersPage() {
   function handleExportMapping() {
     setIsExporting(true);
     try {
-      const doc = jsPDF();
+      const doc = new jsPDF();
       doc.setFontSize(18);
       doc.text("Pseudonym Conversion Table", 14, 20);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text("CONFIDENTIAL - FOR INTERNAL USE ONLY", 14, 28);
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
 
-      const tableData = members.map(m => [m.avatarId, m.alias, "____________________"]);
+      const tableData = members.map((m) => [
+        m.avatarId,
+        m.alias,
+        "____________________",
+      ]);
 
       autoTable(doc, {
         startY: 40,
@@ -121,16 +125,20 @@ export default function MembersPage() {
     );
   }
 
-  const filteredMembers = members.filter(m => 
-    m.alias.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMembers = members.filter((m) =>
+    m.alias.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const getExpBadgeColor = (level: ExperienceLevel) => {
-    switch(level) {
-      case "SENIOR": return "bg-primary-100 text-primary-700";
-      case "INTERMEDIATE": return "bg-accent-50 text-accent-700";
-      case "JUNIOR": return "bg-success-50 text-success-700";
-      default: return "bg-gray-100 text-gray-700";
+    switch (level) {
+      case "SENIOR":
+        return "bg-primary-100 text-primary-700";
+      case "INTERMEDIATE":
+        return "bg-accent-50 text-accent-700";
+      case "JUNIOR":
+        return "bg-success-50 text-success-700";
+      default:
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -138,24 +146,34 @@ export default function MembersPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Team Members</h1>
-          <p className="text-gray-500 font-medium">Manage and organize your event staff</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Team Members
+          </h1>
+          <p className="text-gray-500 font-medium">
+            Manage and organize your event staff
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button 
-            variant="secondary" 
-            onClick={handleExportMapping} 
+          <Button
+            variant="secondary"
+            onClick={handleExportMapping}
             disabled={isExporting || members.length === 0}
             className="flex items-center gap-2 bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"
           >
             <Download className="w-4 h-4" />
             {isExporting ? "Generating..." : "Export Mapping"}
           </Button>
-          <Button 
+          <Button
             onClick={() => setShowForm(!showForm)}
             className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
           >
-            {showForm ? "Cancel" : <><Plus className="w-4 h-4" /> Add Member</>}
+            {showForm ? (
+              "Cancel"
+            ) : (
+              <>
+                <Plus className="w-4 h-4" /> Add Member
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -165,7 +183,7 @@ export default function MembersPage() {
           <Card className="shadow-sm p-2">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="Search by alias..."
                 className="w-full pl-12 pr-4 py-3 bg-transparent focus:outline-none text-gray-900 font-medium placeholder:text-gray-400"
@@ -177,34 +195,51 @@ export default function MembersPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {filteredMembers.map((member) => (
-              <Card key={member.id} className="shadow-sm hover:shadow-md transition-all p-6 group">
+              <Card
+                key={member.id}
+                className="shadow-sm hover:shadow-md transition-all p-6 group"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl shadow-inner border border-gray-100 group-hover:scale-110 transition-transform">
                       {member.avatarId}
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900 leading-tight">{member.alias}</h3>
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                        {member.alias}
+                      </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded", getExpBadgeColor(member.experienceLevel))}>
+                        <span
+                          className={cn(
+                            "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
+                            getExpBadgeColor(member.experienceLevel),
+                          )}
+                        >
                           {member.experienceLevel}
                         </span>
-                        <span className="text-xs text-gray-400 font-bold uppercase tracking-tighter">• {member.genderRole}</span>
+                        <span className="text-xs text-gray-400 font-bold uppercase tracking-tighter">
+                          • {member.genderRole}
+                        </span>
                       </div>
                     </div>
                   </div>
                   {!member.isActive && (
-                    <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Inactive</span>
+                    <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Inactive
+                    </span>
                   )}
                 </div>
-                
+
                 <div className="mt-6 pt-4 border-t border-gray-50">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <Shield className="w-3 h-3 text-primary-400" /> Capabilities
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {member.capabilities.map(cap => (
-                      <span key={cap} className="text-[10px] font-bold bg-gray-50 text-gray-600 px-2 py-1 rounded-lg border border-gray-100">
+                    {member.capabilities.map((cap) => (
+                      <span
+                        key={cap}
+                        className="text-[10px] font-bold bg-gray-50 text-gray-600 px-2 py-1 rounded-lg border border-gray-100"
+                      >
                         {cap.replace("_", " ")}
                       </span>
                     ))}
@@ -226,7 +261,9 @@ export default function MembersPage() {
                   label="System Alias"
                   placeholder="e.g. Wolf, Fox, Bear"
                   value={formData.alias}
-                  onChange={(e) => setFormData({ ...formData, alias: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, alias: e.target.value })
+                  }
                   required
                   className="bg-gray-50 border-gray-100 font-medium"
                 />
@@ -234,7 +271,9 @@ export default function MembersPage() {
                   <Input
                     label="Avatar Emoji"
                     value={formData.avatarId}
-                    onChange={(e) => setFormData({ ...formData, avatarId: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, avatarId: e.target.value })
+                    }
                     required
                     className="bg-gray-50 border-gray-100 text-center text-xl"
                   />
@@ -242,7 +281,10 @@ export default function MembersPage() {
                     label="Exp Level"
                     value={formData.experienceLevel}
                     onChange={(e) =>
-                      setFormData({ ...formData, experienceLevel: e.target.value as ExperienceLevel })
+                      setFormData({
+                        ...formData,
+                        experienceLevel: e.target.value as ExperienceLevel,
+                      })
                     }
                     className="bg-gray-50 border-gray-100 font-medium"
                   >
@@ -255,7 +297,9 @@ export default function MembersPage() {
                   label="Gender Role"
                   placeholder="e.g. Male, Female, Non-binary"
                   value={formData.genderRole}
-                  onChange={(e) => setFormData({ ...formData, genderRole: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, genderRole: e.target.value })
+                  }
                   required
                   className="bg-gray-50 border-gray-100 font-medium"
                 />
@@ -265,7 +309,10 @@ export default function MembersPage() {
                   </label>
                   <div className="grid grid-cols-1 gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     {Object.values(Role).map((role) => (
-                      <label key={role} className="flex items-center gap-3 cursor-pointer group">
+                      <label
+                        key={role}
+                        className="flex items-center gap-3 cursor-pointer group"
+                      >
                         <div className="relative flex items-center">
                           <input
                             type="checkbox"
@@ -274,12 +321,17 @@ export default function MembersPage() {
                               if (e.target.checked) {
                                 setFormData({
                                   ...formData,
-                                  capabilities: [...formData.capabilities, role],
+                                  capabilities: [
+                                    ...formData.capabilities,
+                                    role,
+                                  ],
                                 });
                               } else {
                                 setFormData({
                                   ...formData,
-                                  capabilities: formData.capabilities.filter((r) => r !== role),
+                                  capabilities: formData.capabilities.filter(
+                                    (r) => r !== role,
+                                  ),
                                 });
                               }
                             }}
@@ -293,7 +345,10 @@ export default function MembersPage() {
                     ))}
                   </div>
                 </div>
-                <Button type="submit" className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs">
+                <Button
+                  type="submit"
+                  className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs"
+                >
                   Create Member Record
                 </Button>
               </form>
@@ -304,26 +359,47 @@ export default function MembersPage() {
                 <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
                   <UserCircle2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 leading-tight">Privacy First Staffing</h3>
+                <h3 className="text-2xl font-black mb-2 leading-tight">
+                  Privacy First Staffing
+                </h3>
                 <p className="text-sm text-primary-100 leading-relaxed opacity-90">
-                  Team members use aliases to protect their real identities in the system. Use the mapping template to keep local track of real names.
+                  Team members use aliases to protect their real identities in
+                  the system. Use the mapping template to keep local track of
+                  real names.
                 </p>
               </Card>
-              
+
               <Card className="bg-white border-none shadow-sm p-6">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Quick Stats</h4>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                  Quick Stats
+                </h4>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Total Records</span>
-                    <span className="text-sm font-black text-gray-900">{members.length}</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      Total Records
+                    </span>
+                    <span className="text-sm font-black text-gray-900">
+                      {members.length}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Active Duty</span>
-                    <span className="text-sm font-black text-success-600">{members.filter(m => m.isActive).length}</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      Active Duty
+                    </span>
+                    <span className="text-sm font-black text-success-600">
+                      {members.filter((m) => m.isActive).length}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Senior Staff</span>
-                    <span className="text-sm font-black text-primary-600">{members.filter(m => m.experienceLevel === "SENIOR").length}</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      Senior Staff
+                    </span>
+                    <span className="text-sm font-black text-primary-600">
+                      {
+                        members.filter((m) => m.experienceLevel === "SENIOR")
+                          .length
+                      }
+                    </span>
                   </div>
                 </div>
               </Card>
@@ -334,4 +410,3 @@ export default function MembersPage() {
     </div>
   );
 }
-

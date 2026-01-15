@@ -1,4 +1,4 @@
-import { TeamMember, Shift, Assignment } from "@prisma/client";
+import { TeamMember, Shift } from "@prisma/client";
 import { AssignmentState, AssignmentScore, AlgorithmWeights } from "./types";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
@@ -11,7 +11,7 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
 export function calculatePreferenceScore(
   member: TeamMember,
   shift: Shift,
-  preferences: { shiftId: string; priority: number }[]
+  preferences: { shiftId: string; priority: number }[],
 ): number {
   const preference = preferences.find((p) => p.shiftId === shift.id);
   if (!preference) return 0;
@@ -24,7 +24,7 @@ export function calculateExperienceBalance(
   member: TeamMember,
   shift: Shift,
   currentState: AssignmentState,
-  membersMap: Map<string, TeamMember>
+  membersMap: Map<string, TeamMember>,
 ): number {
   const shiftAssignments = currentState.assignments.get(shift.id) || [];
   const experienceLevels = shiftAssignments
@@ -39,7 +39,8 @@ export function calculateExperienceBalance(
 
   let score = 0;
   if (member.experienceLevel === "JUNIOR" && !hasJunior) score += 50;
-  if (member.experienceLevel === "INTERMEDIATE" && !hasIntermediate) score += 50;
+  if (member.experienceLevel === "INTERMEDIATE" && !hasIntermediate)
+    score += 50;
   if (member.experienceLevel === "SENIOR" && !hasSenior) score += 50;
 
   return Math.min(100, score);
@@ -47,7 +48,7 @@ export function calculateExperienceBalance(
 
 export function calculateWorkloadFairness(
   member: TeamMember,
-  currentState: AssignmentState
+  currentState: AssignmentState,
 ): number {
   const memberShifts = currentState.memberShifts.get(member.id) || [];
   const currentWorkload = memberShifts.length;
@@ -71,9 +72,7 @@ export function calculateWorkloadFairness(
   return Math.max(0, 100 - (currentWorkload - averageWorkload) * 20);
 }
 
-export function calculateCoreShiftCoverage(
-  shift: Shift
-): number {
+export function calculateCoreShiftCoverage(shift: Shift): number {
   // Core shifts are more important
   return shift.priority === "CORE" ? 100 : 50;
 }
@@ -84,10 +83,15 @@ export function scoreAssignment(
   currentState: AssignmentState,
   preferences: { shiftId: string; priority: number }[],
   membersMap: Map<string, TeamMember>,
-  weights: AlgorithmWeights = DEFAULT_WEIGHTS
+  weights: AlgorithmWeights = DEFAULT_WEIGHTS,
 ): AssignmentScore {
   const preferenceMatch = calculatePreferenceScore(member, shift, preferences);
-  const experienceBalance = calculateExperienceBalance(member, shift, currentState, membersMap);
+  const experienceBalance = calculateExperienceBalance(
+    member,
+    shift,
+    currentState,
+    membersMap,
+  );
   const workloadFairness = calculateWorkloadFairness(member, currentState);
   const coreShiftCoverage = calculateCoreShiftCoverage(shift);
 
@@ -105,4 +109,3 @@ export function scoreAssignment(
     overall,
   };
 }
-

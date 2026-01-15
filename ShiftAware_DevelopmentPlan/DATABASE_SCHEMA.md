@@ -264,9 +264,9 @@ model SystemConfig {
 }
 
 // Example configs:
-// key: "auth_password_hash", value: bcrypt hash
 // key: "session_timeout_minutes", value: 60
 // key: "default_avatar_set", value: ["wolf", "eagle", ...]
+// key: "ui_theme", value: "starlight"
 ```
 
 ---
@@ -481,8 +481,8 @@ ORDER BY s.startTime;
 ### Development
 ```env
 DATABASE_URL="postgresql://user:pass@localhost:45432/shiftaware_dev"
-ADMIN_PASSWORD_HASH="<bcrypt_hash>"
-SESSION_SECRET="<random_string>"
+ADMIN_PASSWORD="<plain_password>"
+SESSION_TIMEOUT_MINUTES=60
 STORAGE_BUCKET_URL="<cloud_bucket_url>"
 ```
 
@@ -492,8 +492,8 @@ DATABASE_URL="postgresql://user:pass@postgres:5432/shiftaware_prod"
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 DATABASE_CONNECTION_TIMEOUT=10000
-ADMIN_PASSWORD_HASH="<bcrypt_hash>"
-SESSION_SECRET="<random_string>"
+ADMIN_PASSWORD="<plain_password>"
+SESSION_TIMEOUT_MINUTES=60
 STORAGE_BUCKET_URL="<cloud_bucket_url>"
 ```
 

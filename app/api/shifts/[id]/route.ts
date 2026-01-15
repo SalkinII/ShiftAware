@@ -7,7 +7,7 @@ import { AuditAction, EntityType } from "@prisma/client";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -15,8 +15,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const shift = await prisma.shift.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         event: true,
         requiredRoles: true,
@@ -39,14 +40,14 @@ export async function GET(
     console.error("Get shift error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -54,11 +55,12 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: shiftId } = await params;
     const body = await request.json();
-    const validated = updateShiftSchema.parse({ ...body, id: params.id });
+    const validated = updateShiftSchema.parse({ ...body, id: shiftId });
 
     const existing = await prisma.shift.findUnique({
-      where: { id: params.id },
+      where: { id: shiftId },
       include: { requiredRoles: true },
     });
 
@@ -80,8 +82,12 @@ export async function PUT(
         where: { id },
         data: {
           ...updateData,
-          startTime: updateData.startTime ? new Date(updateData.startTime) : undefined,
-          endTime: updateData.endTime ? new Date(updateData.endTime) : undefined,
+          startTime: updateData.startTime
+            ? new Date(updateData.startTime)
+            : undefined,
+          endTime: updateData.endTime
+            ? new Date(updateData.endTime)
+            : undefined,
           ...(requiredRoles && {
             requiredRoles: {
               create: requiredRoles,
@@ -111,20 +117,20 @@ export async function PUT(
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json(
         { error: "Validation error", details: error },
-        { status: 400 }
+        { status: 400 },
       );
     }
     console.error("Update shift error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -132,8 +138,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: shiftId } = await params;
     const shift = await prisma.shift.findUnique({
-      where: { id: params.id },
+      where: { id: shiftId },
       include: { requiredRoles: true },
     });
 
@@ -143,18 +150,18 @@ export async function DELETE(
 
     // Check if shift has assignments
     const assignmentCount = await prisma.assignment.count({
-      where: { shiftId: params.id },
+      where: { shiftId },
     });
 
     if (assignmentCount > 0) {
       return NextResponse.json(
         { error: "Cannot delete shift with existing assignments" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     await prisma.shift.delete({
-      where: { id: params.id },
+      where: { id: shiftId },
     });
 
     await createAuditLog({
@@ -170,8 +177,7 @@ export async function DELETE(
     console.error("Delete shift error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

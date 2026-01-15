@@ -7,7 +7,7 @@ import { AuditAction, EntityType } from "@prisma/client";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -15,8 +15,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const member = await prisma.teamMember.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         preferences: {
           include: { shift: true },
@@ -38,14 +39,14 @@ export async function GET(
     console.error("Get member error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -53,11 +54,12 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: memberId } = await params;
     const body = await request.json();
-    const validated = updateTeamMemberSchema.parse({ ...body, id: params.id });
+    const validated = updateTeamMemberSchema.parse({ ...body, id: memberId });
 
     const existing = await prisma.teamMember.findUnique({
-      where: { id: params.id },
+      where: { id: memberId },
     });
 
     if (!existing) {
@@ -72,7 +74,7 @@ export async function PUT(
       if (aliasExists) {
         return NextResponse.json(
           { error: "Alias already exists" },
-          { status: 409 }
+          { status: 409 },
         );
       }
     }
@@ -98,20 +100,20 @@ export async function PUT(
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json(
         { error: "Validation error", details: error },
-        { status: 400 }
+        { status: 400 },
       );
     }
     console.error("Update member error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -119,8 +121,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const member = await prisma.teamMember.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!member) {
@@ -129,7 +132,7 @@ export async function DELETE(
 
     // Soft delete by setting isActive to false
     const deleted = await prisma.teamMember.update({
-      where: { id: params.id },
+      where: { id },
       data: { isActive: false },
     });
 
@@ -147,8 +150,7 @@ export async function DELETE(
     console.error("Delete member error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

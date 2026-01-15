@@ -19,11 +19,10 @@ export async function createAuditLog(input: AuditLogInput) {
       action: input.action,
       entityType: input.entityType,
       entityId: input.entityId,
-      before: input.before ? (input.before as object) : null,
-      after: input.after ? (input.after as object) : null,
+      before: input.before ? (input.before as object) : undefined,
+      after: input.after ? (input.after as object) : undefined,
       reason: input.reason,
       ipAddress: input.ipAddress,
     },
   });
 }
-

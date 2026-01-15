@@ -83,7 +83,7 @@ theme: {
 
 **Configuration:**
 - Password stored as plain env (`ADMIN_PASSWORD`) and compared directly (low-risk scope)
-- Admin can change password via settings UI (writes new env value)
+- Admin updates `ADMIN_PASSWORD` in env and restarts the app
 - Session timeout 60 minutes (configurable)
 
 **NOT using:**
@@ -219,7 +219,7 @@ FROM node:20-alpine AS runner
 - `.env.local`: Local development
 - `.env.production`: Production secrets
 - Docker secrets for sensitive data
-- Key vars: `DATABASE_URL`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, `STORAGE_BUCKET_URL`
+- Key vars: `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_TIMEOUT_MINUTES`, `STORAGE_BUCKET_URL`
 
 ---
 

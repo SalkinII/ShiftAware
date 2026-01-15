@@ -7,7 +7,7 @@ A lightweight, privacy-focused shift management tool for coordinating a rotating
 ### Core Philosophy
 - **Privacy First**: Pseudonymized representation throughout the system
 - **Transparency**: All algorithmic decisions are visible and explainable
-- **Lightweight**: Minimal dependencies, containerized deployment
+- **Modern & Professional**: High-end UI/UX with modern aesthetics (gradients, rich shadows, refined typography) while remaining resource-efficient
 - **Non-Profit**: MIT/Apache2 licensed, community-focused
 - **Audit Trail**: Full transaction logging for rollback capability
 

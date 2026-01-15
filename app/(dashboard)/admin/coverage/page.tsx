@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { format } from "date-fns";
+import { RefreshCw, Users, Lightbulb } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CoverageGap {
   id: string;
@@ -14,21 +16,36 @@ interface CoverageGap {
   capacity: number;
   currentCount: number;
   event: { name: string };
+  requiredRoles?: { role: string; count: number }[];
+}
+
+interface TeamMember {
+  id: string;
+  alias: string;
+  avatarId: string;
+  assignments: any[];
+  preferences: any[];
 }
 
 export default function CoverageDashboard() {
   const [gaps, setGaps] = useState<CoverageGap[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadGaps();
+    loadData();
   }, []);
 
-  async function loadGaps() {
+  async function loadData() {
+    setLoading(true);
     try {
-      const res = await fetch("/api/shifts");
-      if (res.ok) {
-        const shifts = await res.json();
+      const [shiftsRes, membersRes] = await Promise.all([
+        fetch("/api/shifts"),
+        fetch("/api/members"),
+      ]);
+
+      if (shiftsRes.ok) {
+        const shifts = await shiftsRes.json();
         const gapList = shifts
           .map((s: any) => ({
             id: s.id,
@@ -39,83 +56,235 @@ export default function CoverageDashboard() {
             capacity: s.capacity,
             currentCount: s.assignments?.length || 0,
             event: s.event,
+            requiredRoles: s.requiredRoles,
           }))
           .filter((s: any) => s.currentCount < s.capacity);
-        
         setGaps(gapList);
       }
+
+      if (membersRes.ok) {
+        const membersData = await membersRes.json();
+        setMembers(membersData);
+      }
     } catch (error) {
-      console.error("Failed to load gaps:", error);
+      console.error("Failed to load data:", error);
     } finally {
       setLoading(false);
     }
   }
 
+  const quickFillRecommendations = useMemo(() => {
+    return gaps
+      .filter((gap) => gap.currentCount === 0)
+      .slice(0, 5)
+      .map((gap) => {
+        const needed = gap.capacity - gap.currentCount;
+        const availableMembers = members.filter((member) => {
+          // Check if member has preferences for this shift
+          const hasPreference = member.preferences?.some(
+            (p: any) => p.shiftId === gap.id,
+          );
+          // Check if member is available (no overlapping assignments)
+          const hasConflict = member.assignments?.some((a: any) => {
+            const assignmentStart = new Date(a.shift?.startTime);
+            const assignmentEnd = new Date(a.shift?.endTime);
+            const gapStart = new Date(gap.startTime);
+            const gapEnd = new Date(gap.endTime);
+            return (
+              (gapStart >= assignmentStart && gapStart < assignmentEnd) ||
+              (gapEnd > assignmentStart && gapEnd <= assignmentEnd) ||
+              (gapStart <= assignmentStart && gapEnd >= assignmentEnd)
+            );
+          });
+          return hasPreference && !hasConflict;
+        });
+
+        return {
+          gap,
+          needed,
+          recommendedMembers: availableMembers.slice(0, needed),
+        };
+      });
+  }, [gaps, members]);
+
   if (loading) {
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
   }
 
-  const criticalGaps = gaps.filter(g => g.currentCount === 0);
-  const partialGaps = gaps.filter(g => g.currentCount > 0);
+  const criticalGaps = gaps.filter((g) => g.currentCount === 0);
+  const partialGaps = gaps.filter((g) => g.currentCount > 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-50">Coverage Gaps</h1>
-        <Button onClick={loadGaps} className="text-sm">Refresh</Button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Coverage Gaps
+          </h1>
+          <p className="text-gray-500 font-medium">
+            Identify and fill staffing gaps
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          onClick={loadData}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+          Refresh
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-red-500/50 bg-red-500/5">
-          <h3 className="text-red-400 font-bold text-lg mb-1">{criticalGaps.length}</h3>
-          <p className="text-xs text-slate-400 uppercase tracking-wider">Unstaffed Shifts</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4 rounded-2xl border border-red-100 bg-red-50">
+          <p className="text-xs uppercase tracking-widest font-black text-red-700">
+            Unstaffed
+          </p>
+          <p className="text-2xl font-black text-red-900 mt-1">
+            {criticalGaps.length}
+          </p>
+          <p className="text-red-700 text-sm">Shifts need attention</p>
         </Card>
-        <Card className="border-orange-500/50 bg-orange-500/5">
-          <h3 className="text-orange-400 font-bold text-lg mb-1">{partialGaps.length}</h3>
-          <p className="text-xs text-slate-400 uppercase tracking-wider">Partially Staffed</p>
+        <Card className="p-4 rounded-2xl border border-accent-100 bg-accent-50">
+          <p className="text-xs uppercase tracking-widest font-black text-accent-700">
+            Partial
+          </p>
+          <p className="text-2xl font-black text-accent-900 mt-1">
+            {partialGaps.length}
+          </p>
+          <p className="text-accent-700 text-sm">Need more coverage</p>
         </Card>
-        <Card className="border-emerald-500/50 bg-emerald-500/5">
-          <h3 className="text-emerald-400 font-bold text-lg mb-1">
-            {gaps.length === 0 ? "100%" : `${Math.round(((gaps.length - criticalGaps.length) / gaps.length) * 100)}%`}
-          </h3>
-          <p className="text-xs text-slate-400 uppercase tracking-wider">Overall Coverage</p>
+        <Card className="p-4 rounded-2xl border border-success-100 bg-success-50">
+          <p className="text-xs uppercase tracking-widest font-black text-success-700">
+            Coverage
+          </p>
+          <p className="text-2xl font-black text-success-900 mt-1">
+            {gaps.length === 0
+              ? "100%"
+              : `${Math.round(
+                  ((gaps.length - criticalGaps.length) / gaps.length) * 100,
+                )}%`}
+          </p>
+          <p className="text-success-700 text-sm">Overall status</p>
         </Card>
       </div>
+
+      {quickFillRecommendations.length > 0 && (
+        <Card className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 border-primary-200">
+          <div className="flex items-center gap-3 mb-4">
+            <Lightbulb className="w-5 h-5 text-primary-600" />
+            <h2 className="text-lg font-bold text-gray-900">
+              Quick-Fill Recommendations
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {quickFillRecommendations.map((rec) => (
+              <div
+                key={rec.gap.id}
+                className="p-4 bg-white rounded-xl border border-primary-200"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 className="font-bold text-gray-900">
+                      {rec.gap.type.replace("_", " ")}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {format(new Date(rec.gap.startTime), "MMM d, HH:mm")} -{" "}
+                      {format(new Date(rec.gap.endTime), "HH:mm")}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">
+                    Need {rec.needed}
+                  </span>
+                </div>
+                {rec.recommendedMembers.length > 0 ? (
+                  <div className="flex items-center gap-2 mt-3">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <div className="flex items-center gap-2">
+                      {rec.recommendedMembers.map((member) => (
+                        <span
+                          key={member.id}
+                          className="px-2 py-1 rounded-lg bg-primary-50 text-primary-700 text-xs font-semibold flex items-center gap-1"
+                        >
+                          <span>{member.avatarId}</span>
+                          {member.alias}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-2">
+                    No members with preferences available
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Priority Attention Needed</h2>
-        
+        <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">
+          All Coverage Gaps
+        </h2>
+
         {gaps.length === 0 ? (
-          <Card>
-            <p className="text-slate-500 italic text-center py-8">No coverage gaps found! All shifts are fully staffed.</p>
+          <Card className="p-8 text-center">
+            <p className="text-gray-500 italic">
+              No coverage gaps found! All shifts are fully staffed.
+            </p>
           </Card>
         ) : (
           <div className="grid gap-4">
-            {gaps.sort((a, b) => a.currentCount - b.currentCount).map((gap) => (
-              <Card key={gap.id} className={gap.currentCount === 0 ? "border-l-4 border-l-red-500" : "border-l-4 border-l-orange-500"}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`w-2 h-2 rounded-full ${gap.currentCount === 0 ? "bg-red-500" : "bg-orange-500"}`}></span>
-                      <h3 className="font-bold text-slate-100">{gap.type.replace("_", " ")}</h3>
+            {gaps
+              .sort((a, b) => a.currentCount - b.currentCount)
+              .map((gap) => (
+                <Card
+                  key={gap.id}
+                  className={cn(
+                    "p-4",
+                    gap.currentCount === 0
+                      ? "border-l-4 border-l-red-500 bg-red-50"
+                      : "border-l-4 border-l-accent-500 bg-accent-50",
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full",
+                            gap.currentCount === 0
+                              ? "bg-red-500"
+                              : "bg-accent-500",
+                          )}
+                        ></span>
+                        <h3 className="font-bold text-gray-900">
+                          {gap.type.replace("_", " ")}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {gap.event.name} •{" "}
+                        {format(new Date(gap.startTime), "MMM d, HH:mm")} -{" "}
+                        {format(new Date(gap.endTime), "HH:mm")}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {gap.event.name} • {format(new Date(gap.startTime), "MMM d, HH:mm")} - {format(new Date(gap.endTime), "HH:mm")}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-gray-900">
+                        {gap.currentCount} / {gap.capacity}
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase">Staffed</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-slate-200">
-                      {gap.currentCount} / {gap.capacity}
-                    </p>
-                    <p className="text-[10px] text-slate-500 uppercase">Capacity</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))}
           </div>
         )}
       </div>
     </div>
   );
 }
-

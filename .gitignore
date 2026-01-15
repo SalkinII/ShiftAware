@@ -28,6 +28,8 @@
 *.pem
 /.idea
 .context/
+CLAUDE.md
+agents/
 
 # debug
 npm-debug.log*

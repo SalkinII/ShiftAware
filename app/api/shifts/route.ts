@@ -20,6 +20,11 @@ export async function GET(request: Request) {
       include: {
         event: true,
         requiredRoles: true,
+        assignments: {
+          include: {
+            teamMember: true,
+          },
+        },
         _count: {
           select: {
             preferences: true,

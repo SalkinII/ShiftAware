@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Sparkles, 
-  ChevronRight, 
-  Calendar, 
-  UserCircle2, 
+import {
+  Sparkles,
+  Calendar,
+  UserCircle2,
   CheckCircle2,
   Trash2,
-  HelpCircle
+  HelpCircle,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -28,7 +28,9 @@ interface Shift {
 
 export default function PreferencesPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [selectedShifts, setSelectedShifts] = useState<Map<string, number>>(new Map());
+  const [selectedShifts, setSelectedShifts] = useState<Map<string, number>>(
+    new Map(),
+  );
   const [members, setMembers] = useState<{ id: string; alias: string }[]>([]);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -96,10 +98,12 @@ export default function PreferencesPage() {
 
     setSubmitting(true);
     try {
-      const preferences = Array.from(selectedShifts.entries()).map(([shiftId, priority]) => ({
-        shiftId,
-        priority,
-      }));
+      const preferences = Array.from(selectedShifts.entries()).map(
+        ([shiftId, priority]) => ({
+          shiftId,
+          priority,
+        }),
+      );
 
       const res = await fetch("/api/preferences", {
         method: "POST",
@@ -135,17 +139,25 @@ export default function PreferencesPage() {
 
   const selectedList = shifts
     .filter((s) => selectedShifts.has(s.id))
-    .sort((a, b) => (selectedShifts.get(a.id) || 0) - (selectedShifts.get(b.id) || 0));
+    .sort(
+      (a, b) =>
+        (selectedShifts.get(a.id) || 0) - (selectedShifts.get(b.id) || 0),
+    );
 
-  const coreCount = selectedList.filter(s => s.priority === "CORE").length;
+  const coreCount = selectedList.filter((s) => s.priority === "CORE").length;
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Shift Preferences</h1>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Shift Preferences
+          </h1>
           <p className="text-gray-500 font-medium flex items-center gap-2">
-            Select your ideal slots for <span className="text-primary-600 font-bold uppercase tracking-tighter">Starlight Meadow 2026</span>
+            Select your ideal slots for{" "}
+            <span className="text-primary-600 font-bold uppercase tracking-tighter">
+              Starlight Meadow 2026
+            </span>
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -158,7 +170,9 @@ export default function PreferencesPage() {
             >
               <option value="">Select identity</option>
               {members.map((member) => (
-                <option key={member.id} value={member.id}>{member.alias}</option>
+                <option key={member.id} value={member.id}>
+                  {member.alias}
+                </option>
               ))}
             </select>
           </div>
@@ -167,7 +181,13 @@ export default function PreferencesPage() {
             disabled={selectedShifts.size < 2 || !selectedMember || submitting}
             className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
           >
-            {submitting ? "Processing..." : <><CheckCircle2 className="w-4 h-4" /> Submit Selection</>}
+            {submitting ? (
+              "Processing..."
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" /> Submit Selection
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -178,20 +198,37 @@ export default function PreferencesPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">✨</div>
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+                  ✨
+                </div>
                 <div>
-                  <h3 className="text-lg font-bold leading-tight">Interactive Calendar Selection</h3>
-                  <p className="text-primary-100 text-xs font-medium opacity-90">Click blocks to select. Minimum 2 shifts required.</p>
+                  <h3 className="text-lg font-bold leading-tight">
+                    Interactive Calendar Selection
+                  </h3>
+                  <p className="text-primary-100 text-xs font-medium opacity-90">
+                    Click blocks to select. Minimum 2 shifts required.
+                  </p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <div className="text-center px-4 border-r border-white/20">
                   <p className="text-2xl font-black">{selectedShifts.size}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Selected</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+                    Selected
+                  </p>
                 </div>
                 <div className="text-center px-4">
-                  <p className={cn("text-2xl font-black", coreCount < 2 ? "text-accent-300" : "text-white")}>{coreCount}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Core Event</p>
+                  <p
+                    className={cn(
+                      "text-2xl font-black",
+                      coreCount < 2 ? "text-accent-300" : "text-white",
+                    )}
+                  >
+                    {coreCount}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+                    Core Event
+                  </p>
                 </div>
               </div>
             </div>
@@ -213,7 +250,7 @@ export default function PreferencesPage() {
               Your Ranking
               <HelpCircle className="w-3.5 h-3.5" />
             </h2>
-            
+
             {selectedList.length === 0 ? (
               <div className="flex-grow flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-gray-100 rounded-2xl">
                 <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4">
@@ -254,15 +291,18 @@ export default function PreferencesPage() {
                 ))}
               </div>
             )}
-            
+
             <div className="mt-6 pt-6 border-t border-gray-50">
               <div className="p-4 bg-primary-50 rounded-2xl border border-primary-100">
                 <div className="flex items-center gap-2 mb-1 text-primary-700">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">Selection Tip</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">
+                    Selection Tip
+                  </p>
                 </div>
                 <p className="text-[11px] text-primary-600 font-medium leading-relaxed">
-                  Rank your most desired shifts at the top. The algorithm prioritizes your #1 and #2 choices.
+                  Rank your most desired shifts at the top. The algorithm
+                  prioritizes your #1 and #2 choices.
                 </p>
               </div>
             </div>
@@ -272,5 +312,3 @@ export default function PreferencesPage() {
     </div>
   );
 }
-
-

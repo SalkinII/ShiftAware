@@ -1,6 +1,6 @@
 # Feature Requirements Specification
 
-**Status:** Phase 0 completed (schema/seed/auth/ports). All FR-001..FR-012 features (shift config, preferences, assignment algorithm, coverage, swaps, PDF, audit UI, config UI) are pending implementation in Phase 1+.
+**Status:** Requirements only. Implementation status is tracked in `ROADMAP.md` and `IMPLEMENTATION_LOG.md`.
 
 ## FR-001: Shift Preference Entry
 
@@ -191,9 +191,9 @@ As a user, I want to see the shift schedule in an intuitive calendar format.
   - Responsive design (mobile/tablet/desktop)
 
 ### Design Principles (Tailwind)
-- Clean, minimal interface
+- Modern, high-end interface with refined aesthetics
+- Rich visual hierarchy using gradients and soft shadows
 - Color-coded shift types
-- Clear visual hierarchy
 - Intuitive navigation
 - Fast rendering (<1s)
 
@@ -348,11 +348,11 @@ As an administrator, I want simple protection against unauthorized access.
 middleware.ts:
   - Check auth cookie
   - Redirect to /login if missing
-  - Validate password hash
+  - Compare with `ADMIN_PASSWORD`
   
 /api/auth/login:
-  - Compare password to hash
-  - Set HTTP-only cookie
+  - Compare password to `ADMIN_PASSWORD`
+  - Set HTTP-only cookie `authenticated=true`
   - Redirect to dashboard
 ```
 

@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     console.error("Get assignments error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     if (!eventId) {
       return NextResponse.json(
         { error: "eventId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -125,24 +125,22 @@ export async function POST(request: Request) {
       },
     };
 
-    const weights = typeof config.algorithmWeights === "object" && config.algorithmWeights !== null
-      ? config.algorithmWeights as any
-      : {
-          preferenceMatch: 0.35,
-          experienceBalance: 0.25,
-          workloadFairness: 0.15,
-          coreShiftCoverage: 0.05,
-        };
+    const weights =
+      typeof config.algorithmWeights === "object" &&
+      config.algorithmWeights !== null
+        ? (config.algorithmWeights as any)
+        : {
+            preferenceMatch: 0.35,
+            experienceBalance: 0.25,
+            workloadFairness: 0.15,
+            coreShiftCoverage: 0.05,
+          };
 
-    const result = await runAssignmentAlgorithm(
-      members as any,
-      shifts as any,
-      {
-        minShiftsPerPerson: config.minShiftsPerPerson || 2,
-        coreShifts,
-        weights,
-      }
-    );
+    const result = await runAssignmentAlgorithm(members as any, shifts as any, {
+      minShiftsPerPerson: config.minShiftsPerPerson || 2,
+      coreShifts,
+      weights,
+    });
 
     // Save assignments to database
     const savedAssignments = await prisma.$transaction(
@@ -154,15 +152,24 @@ export async function POST(request: Request) {
             role: assignment.role,
             isLead: assignment.isLead || false,
             assignmentType: assignment.assignmentType,
-            algorithmScore: result.scores.get(`${assignment.teamMemberId}-${assignment.shiftId}`) || null,
-            notes: result.explanations.get(`${assignment.teamMemberId}-${assignment.shiftId}`) || null,
+            algorithmScore: result.scores.get(
+              `${assignment.teamMemberId}-${assignment.shiftId}`,
+            )
+              ? (result.scores.get(
+                  `${assignment.teamMemberId}-${assignment.shiftId}`,
+                ) as any)
+              : null,
+            notes:
+              result.explanations.get(
+                `${assignment.teamMemberId}-${assignment.shiftId}`,
+              ) || null,
           },
           include: {
             shift: true,
             teamMember: true,
           },
-        })
-      )
+        }),
+      ),
     );
 
     await createAuditLog({
@@ -185,9 +192,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Run assignment algorithm error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 },
     );
   }
 }
-

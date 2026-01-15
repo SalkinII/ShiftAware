@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export default function LoginPage() {
         const data = await res.json();
         setError(data.error || "Invalid password");
       }
-    } catch (err) {
+    } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -40,7 +40,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
-        
         {/* Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-500 to-primary-600 text-white text-4xl mb-6 shadow-xl shadow-primary-500/20 ring-4 ring-white">
@@ -53,11 +52,11 @@ export default function LoginPage() {
             Starlight Meadow Festival 2026
           </p>
         </div>
-        
+
         {/* Form Card */}
         <div className="bg-white rounded-[2rem] shadow-2xl shadow-primary-900/5 border border-gray-100 p-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
-          
+
           <div className="relative">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome back
@@ -65,21 +64,25 @@ export default function LoginPage() {
             <p className="text-sm text-gray-400 font-medium mb-8">
               Please enter the event password to access the system
             </p>
-            
+
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 animate-in slide-in-from-top-2">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-red-800">Access Denied</p>
-                  <p className="text-xs text-red-600 font-medium mt-0.5">{error}</p>
+                  <p className="text-sm font-bold text-red-800">
+                    Access Denied
+                  </p>
+                  <p className="text-xs text-red-600 font-medium mt-0.5">
+                    {error}
+                  </p>
                 </div>
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label 
-                  htmlFor="password" 
+                <label
+                  htmlFor="password"
                   className="block text-xs font-bold text-gray-400 uppercase tracking-widest px-1"
                 >
                   Event Password
@@ -98,7 +101,7 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-              
+
               <button
                 type="submit"
                 disabled={loading}
@@ -114,7 +117,7 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
-            
+
             <div className="mt-10 pt-8 border-t border-gray-50 flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4 text-accent-400" />
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -123,15 +126,28 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             Powered by ShiftAware · MIT License 2026
           </p>
         </div>
-        
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center">
+          <div className="w-6 h-6 border-3 border-primary-300 border-t-primary-600 rounded-full animate-spin"></div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

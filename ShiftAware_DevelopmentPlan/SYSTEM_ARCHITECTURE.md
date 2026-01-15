@@ -133,7 +133,7 @@ POST   /api/export/pdf              - Generate PDF
 
 ## Component Architecture
 
-**Design source of truth:** Follow the design system (`.context/260106_DESIGN_SYSTEM_1.md`) for palette/typography/spacing and the UI spec (`.context/UI_SPECIFICATION_1.md`) for app shell, login/dashboard, timeline, preferences, and admin views.
+**Design source of truth:** Follow the modern design system (`.context/260106_DESIGN_SYSTEM_1.md`) for palette/typography/spacing and the high-end UI spec (`.context/UI_SPECIFICATION_1.md`) for app shell, login/dashboard, timeline, preferences, and admin views.
 
 ### Page Components
 ```
@@ -227,8 +227,8 @@ User → Export button → Fetch assignment data (API)
 ```
 1. User → /login page
 2. Enter password → POST /api/auth/login
-3. Server: Hash password, compare with stored hash
-4. Match? Set HTTP-only cookie with session token
+3. Server: Compare password with `ADMIN_PASSWORD`
+4. Match? Set HTTP-only cookie `authenticated=true`
 5. Redirect to /dashboard
 6. Middleware checks cookie on each request
 7. Invalid/expired? Redirect to /login
@@ -238,8 +238,8 @@ User → Export button → Fetch assignment data (API)
 - HTTP-only cookies (prevent XSS)
 - Secure flag in production (HTTPS only)
 - SameSite=Lax (CSRF protection)
-- Configurable timeout (default 60 min)
-- Session storage in database or memory (Redis for scale)
+- Configurable timeout via `SESSION_TIMEOUT_MINUTES` (default 60)
+- No server-side session store (low-risk scope)
 
 ---
 
@@ -344,8 +344,8 @@ function scoreAssignment(
    - SQL injection prevention (Prisma)
 
 3. **Authentication Layer**
-   - Password hashing (bcrypt)
-   - Session management
+   - Plain `ADMIN_PASSWORD` comparison (low-risk scope)
+   - Simple `authenticated=true` cookie
    - HTTP-only cookies
    - Secure cookie flags
 
@@ -372,8 +372,8 @@ function scoreAssignment(
 
 ### Environment Configuration (placeholders)
 - `DATABASE_URL` (Postgres connection)
-- `ADMIN_PASSWORD_HASH` (bcrypt)
-- `SESSION_SECRET`
+- `ADMIN_PASSWORD` (plain password)
+- `SESSION_TIMEOUT_MINUTES` (default 60)
 - `STORAGE_BUCKET_URL` (for PDF exports)
 - Host port palette (host→container): app `43000→3000`, postgres `45432→5432`, optional python `43010→8000`
 

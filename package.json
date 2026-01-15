@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
+    "test": "vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -15,7 +16,6 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@daypilot/daypilot-lite-react": "^5.2.0",
     "@prisma/client": "^5.18.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
@@ -26,6 +26,7 @@
     "prisma": "^5.18.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-window": "^2.2.4",
     "tailwind-merge": "^3.4.0",
     "zod": "^3.22.4"
   },
@@ -35,13 +36,15 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-window": "^1.8.8",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "15.1.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.7.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.4"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

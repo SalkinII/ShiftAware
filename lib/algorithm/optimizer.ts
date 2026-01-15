@@ -1,8 +1,14 @@
-import { TeamMember, Shift, Assignment, ShiftPreference } from "@prisma/client";
-import { AssignmentState, AlgorithmResult, AlgorithmWeights, TeamMemberWithRelations, ShiftWithRelations } from "./types";
+import { Shift, Assignment } from "@prisma/client";
+import {
+  AssignmentState,
+  AlgorithmResult,
+  AlgorithmWeights,
+  TeamMemberWithRelations,
+  ShiftWithRelations,
+  AssignmentScore,
+} from "./types";
 import { scoreAssignment } from "./scorer";
 import {
-  validateShiftOverlap,
   validateMinimumShifts,
   validateShiftCapacity,
   validateGenderBalance,
@@ -23,7 +29,7 @@ export async function runAssignmentAlgorithm(
     minShiftsPerPerson: number;
     coreShifts: Shift[];
     weights?: AlgorithmWeights;
-  }
+  },
 ): Promise<AlgorithmResult> {
   const weights = eventConfig.weights || DEFAULT_WEIGHTS;
   const state: AssignmentState = {
@@ -62,27 +68,28 @@ export async function runAssignmentAlgorithm(
         member.id,
         shift,
         state,
-        allShiftsMap
+        allShiftsMap,
       );
       if (overlapViolation) continue;
 
       const capacityViolation = validateShiftCapacity(
         shift.id,
         state,
-        shift.capacity
+        shift.capacity,
       );
       if (capacityViolation) continue;
 
       // Determine role based on shift requirements
       // Find first available role requirement
       const requiredRoleEntry = shift.requiredRoles.find((rr) => {
-        const currentCount = (state.assignments.get(shift.id) || [])
-          .filter((a) => a.role === rr.role).length;
+        const currentCount = (state.assignments.get(shift.id) || []).filter(
+          (a) => a.role === rr.role,
+        ).length;
         return currentCount < rr.count;
       });
       const requiredRole = requiredRoleEntry?.role || "TEAM_MEMBER";
       const isLead = requiredRole === "SHIFT_LEAD";
-      
+
       // Create assignment
       const assignment: Partial<Assignment> = {
         shiftId: shift.id,
@@ -102,28 +109,31 @@ export async function runAssignmentAlgorithm(
 
       state.shiftCoverage.set(
         shift.id,
-        (state.shiftCoverage.get(shift.id) || 0) + 1
+        (state.shiftCoverage.get(shift.id) || 0) + 1,
       );
 
       const score = scoreAssignment(
         member,
         shift,
         state,
-        member.preferences.map((p) => ({ shiftId: p.shiftId, priority: p.priority })),
+        member.preferences.map((p) => ({
+          shiftId: p.shiftId,
+          priority: p.priority,
+        })),
         membersMap,
-        weights
+        weights,
       );
       scores.set(`${member.id}-${shift.id}`, score);
       explanations.set(
         `${member.id}-${shift.id}`,
-        `Assigned based on preference (priority ${pref.priority})`
+        `Assigned based on preference (priority ${pref.priority})`,
       );
     }
   }
 
   // Phase 2: Fill remaining shifts using scoring
   const unfilledShifts = shifts.filter(
-    (shift) => (state.shiftCoverage.get(shift.id) || 0) < shift.capacity
+    (shift) => (state.shiftCoverage.get(shift.id) || 0) < shift.capacity,
   );
 
   for (const shift of unfilledShifts) {
@@ -134,7 +144,7 @@ export async function runAssignmentAlgorithm(
             member.id,
             shift,
             state,
-            allShiftsMap
+            allShiftsMap,
           );
           if (overlapViolation) return null;
 
@@ -142,14 +152,22 @@ export async function runAssignmentAlgorithm(
             member,
             shift,
             state,
-            member.preferences.map((p) => ({ shiftId: p.shiftId, priority: p.priority })),
+            member.preferences.map((p) => ({
+              shiftId: p.shiftId,
+              priority: p.priority,
+            })),
             membersMap,
-            weights
+            weights,
           );
 
           return { member, score };
         })
-        .filter((c): c is { member: TeamMember; score: any } => c !== null)
+        .filter(
+          (
+            c,
+          ): c is { member: TeamMemberWithRelations; score: AssignmentScore } =>
+            c !== null,
+        )
         .sort((a, b) => b.score.overall - a.score.overall);
 
       if (candidates.length === 0) break;
@@ -157,13 +175,14 @@ export async function runAssignmentAlgorithm(
       const best = candidates[0];
       // Find first available role requirement
       const requiredRoleEntry = shift.requiredRoles.find((rr) => {
-        const currentCount = (state.assignments.get(shift.id) || [])
-          .filter((a) => a.role === rr.role).length;
+        const currentCount = (state.assignments.get(shift.id) || []).filter(
+          (a) => a.role === rr.role,
+        ).length;
         return currentCount < rr.count;
       });
       const requiredRole = requiredRoleEntry?.role || "TEAM_MEMBER";
       const isLead = requiredRole === "SHIFT_LEAD";
-      
+
       const assignment: Partial<Assignment> = {
         shiftId: shift.id,
         teamMemberId: best.member.id,
@@ -182,13 +201,13 @@ export async function runAssignmentAlgorithm(
 
       state.shiftCoverage.set(
         shift.id,
-        (state.shiftCoverage.get(shift.id) || 0) + 1
+        (state.shiftCoverage.get(shift.id) || 0) + 1,
       );
 
       scores.set(`${best.member.id}-${shift.id}`, best.score);
       explanations.set(
         `${best.member.id}-${shift.id}`,
-        `Assigned based on algorithm score (${best.score.overall.toFixed(1)})`
+        `Assigned based on algorithm score (${best.score.overall.toFixed(1)})`,
       );
     }
   }
@@ -199,7 +218,7 @@ export async function runAssignmentAlgorithm(
       member.id,
       state,
       eventConfig.coreShifts,
-      eventConfig.minShiftsPerPerson
+      eventConfig.minShiftsPerPerson,
     );
     if (minShiftViolation) {
       violations.push(`${member.alias}: ${minShiftViolation.message}`);
@@ -211,7 +230,7 @@ export async function runAssignmentAlgorithm(
     const genderViolation = validateGenderBalance(
       shift.id,
       assignments,
-      membersMap
+      membersMap,
     );
     if (genderViolation) {
       violations.push(`Shift ${shift.id}: ${genderViolation.message}`);
@@ -231,4 +250,3 @@ export async function runAssignmentAlgorithm(
     explanations,
   };
 }
-
