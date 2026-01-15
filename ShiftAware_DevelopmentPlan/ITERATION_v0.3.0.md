@@ -21,7 +21,7 @@ This iteration focuses on implementing all deferred features from previous itera
 
 ### Phase 3: Admin Features & Polish
 - [x] **Drag-and-drop swap interface** - Visual swap tool (SwapInterface component created, integrated into assignments page with view toggle)
-- [ ] **Conflict resolution wizard** - Guided conflict resolution
+- [x] **Conflict resolution wizard** - Guided conflict resolution (API endpoints + ConflictWizard UI component)
 - [x] **Action rollback** - Undo recent changes (rollback API endpoint, UI integration in audit log page)
 - [ ] **Member availability heatmap** - Visual availability overview
 
@@ -103,6 +103,10 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Created action rollback API endpoint (POST /api/audit/rollback) with rollback logic for all entity types
 - ✅ Implemented rollback UI in audit log page with rollback button, confirmation dialog, and cache invalidation
 - ✅ Rollback supports CREATE, UPDATE, DELETE, and PREFERENCE_SUBMIT actions for Shifts, Members, Assignments, and Preferences
+- ✅ Created conflict detection API endpoint (GET /api/conflicts) detecting SHIFT_OVERLAP, SHIFT_CAPACITY, GENDER_BALANCE conflicts
+- ✅ Created conflict resolution API endpoint (POST /api/conflicts/resolve) supporting UNASSIGN, ASSIGN, REASSIGN, SWAP actions
+- ✅ Implemented ConflictWizard component with guided workflow, progress indicator, and resolution suggestions
+- ✅ Integrated conflict wizard into coverage dashboard with "Resolve Conflicts" button
 
 ---
 

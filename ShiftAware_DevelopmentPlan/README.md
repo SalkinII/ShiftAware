@@ -22,6 +22,7 @@ Single source of truth for planning and execution context. Keep this folder alig
 ## Design & Analysis Documents
 - `CACHING_STRATEGY.md` — caching system design and implementation plan
 - `TIMELINE_VIEW_ANALYSIS.md` — timeline view issues, fixes, and future improvements
+- `UI_DESIGN_ADAPTATION_PLAN.md` — UI design adaptation plan (reactive patterns, Design System v2) for v0.4.0+
 
 ## Conventions
 - Auth model is plain `ADMIN_PASSWORD` (no hash) with `authenticated=true` cookie.

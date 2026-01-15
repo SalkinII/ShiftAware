@@ -46,6 +46,17 @@ Delete functionality has been successfully implemented and tested. We need to co
 3. Developer guide
 4. Troubleshooting guide expansion
 
+### UI Design Adaptation (v0.4.0+)
+1. **UI Design Adaptation** - Comprehensive plan created in `UI_DESIGN_ADAPTATION_PLAN.md`
+   - Phase 1: Design Document Analysis & Gap Assessment
+   - Phase 2: Design Token Migration
+   - Phase 3: Component Library Updates
+   - Phase 4: Reactive UI Patterns Implementation
+   - Phase 5: Page-Level Updates
+   - Phase 6: Testing & Validation
+   - Phase 7: Documentation & Migration Guide
+   - **Status:** Plan complete, awaiting design documents (`260115_UI_DESIGN_reactive.md`, `260115_DESIGN_System2.md`)
+
 ---
 
 ## Priority Assessment
@@ -97,3 +108,9 @@ Delete functionality has been successfully implemented and tested. We need to co
 ## Next Action
 
 Awaiting user decision on priority, then delegate to @planner for design of selected task.
+
+---
+
+## Related Plans
+
+- **UI Design Adaptation:** See `UI_DESIGN_ADAPTATION_PLAN.md` for comprehensive plan to adapt UI based on reactive design patterns and Design System v2. Plan is ready for execution once design documents are available.

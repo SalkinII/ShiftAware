@@ -202,6 +202,7 @@ Note: status checkboxes are historical; confirm current state in `IMPLEMENTATION
 2. Configuration UI
 3. Audit log export
 4. Performance optimizations
+5. UI Design Adaptation (v0.4.0) - See `UI_DESIGN_ADAPTATION_PLAN.md`
 
 ### P3 - Low (Future Enhancements)
 1. Email notifications
@@ -344,6 +345,7 @@ test('user can submit preferences', async ({ page }) => {
 - Documentation improvements
 
 ### Future Iterations
+- **v0.4.0:** UI Design Adaptation (reactive patterns, Design System v2) - See `UI_DESIGN_ADAPTATION_PLAN.md`
 - **v1.1:** Advanced features (P2 items)
 - **v1.2:** User experience improvements
 - **v2.0:** Multi-event support, notifications

@@ -1,8 +1,8 @@
 # Conflict Resolution Wizard - Design Specification
 
 **Date:** 2026-01-16  
-**Agent:** @planner  
-**Status:** Design Complete
+**Agent:** @planner → @implementer  
+**Status:** ✅ Implementation Complete (Phases 1-2)
 
 ---
 
@@ -228,13 +228,13 @@ interface ResolutionSuggestion {
 
 ## Success Criteria
 
-- [ ] Users can detect all conflicts in schedule
-- [ ] Conflicts are grouped by type and severity
-- [ ] Resolution suggestions are provided for each conflict
-- [ ] Users can apply resolutions through guided workflow
-- [ ] Resolutions are atomic and audited
-- [ ] New conflicts created by resolution are detected
-- [ ] UI integrates with existing pages
+- [x] Users can detect all conflicts in schedule - GET /api/conflicts endpoint implemented
+- [x] Conflicts are grouped by type and severity - Summary statistics provided
+- [x] Resolution suggestions are provided for each conflict - Suggestions generated per conflict type
+- [x] Users can apply resolutions through guided workflow - ConflictWizard component implemented
+- [x] Resolutions are atomic and audited - Transaction-based with audit logging
+- [x] New conflicts created by resolution are detected - Rescan after resolution
+- [x] UI integrates with existing pages - Integrated into coverage dashboard
 
 ---
 

@@ -281,3 +281,7 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: created action rollback API endpoint (app/api/audit/rollback/route.ts) with rollback logic for Shifts, Members, Assignments, and Preferences
 - v0.3.0: implemented rollback UI in audit log page (app/(dashboard)/admin/audit/page.tsx) with rollback button, confirmation dialog, toast notifications, and cache invalidation
 - v0.3.0: rollback supports CREATE, UPDATE, DELETE, and PREFERENCE_SUBMIT actions (MANUAL_SWAP rollback deferred - requires swap context)
+- v0.3.0: created conflict detection API endpoint (app/api/conflicts/route.ts) detecting SHIFT_OVERLAP, SHIFT_CAPACITY, GENDER_BALANCE conflicts with resolution suggestions
+- v0.3.0: created conflict resolution API endpoint (app/api/conflicts/resolve/route.ts) supporting UNASSIGN, ASSIGN, REASSIGN, SWAP actions with transaction-based atomicity and audit logging
+- v0.3.0: implemented ConflictWizard component (components/features/ConflictWizard/ConflictWizard.tsx) with guided workflow, progress indicator, conflict navigation, and resolution suggestions
+- v0.3.0: integrated conflict wizard into coverage dashboard (app/(dashboard)/admin/coverage/page.tsx) with "Resolve Conflicts" button

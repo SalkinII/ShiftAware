@@ -126,7 +126,8 @@
 4. Performance optimizations (large schedule renders, PDF generation)
 
 ### Future Iterations
-- v0.4.0: Timeline view improvements, two-column swap interface
+- v0.4.0: UI Design Adaptation (reactive patterns, Design System v2) - See `UI_DESIGN_ADAPTATION_PLAN.md`
+- v0.5.0: Timeline view improvements, two-column swap interface
 - v1.0: Conflict resolution wizard, action rollback, availability heatmap
 - v1.1+: Advanced features, notifications, multi-event support
 
