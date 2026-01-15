@@ -56,7 +56,7 @@
 
 ### Performance & Infrastructure ✅
 - ✅ Virtual scrolling (react-window in timeline)
-- ✅ Basic caching system (Phase 1 complete - CacheProvider, useCache hook)
+- ✅ Basic caching system (Caching Phase 1 complete: CacheProvider, useCache hook, manual invalidation)
 - ✅ Error boundaries
 - ✅ Standardized API error responses
 - ✅ Production Docker setup
@@ -74,7 +74,7 @@
 - ✅ Timeline navigation fixes (day/week navigation, date picker)
 - ✅ Week view horizontal scrolling fix
 - ✅ Multi-day shift display improvements (partial)
-- ✅ Phase 1 caching implementation
+- ✅ Caching Phase 1 implementation (basic cache with manual invalidation)
 
 ### 🚧 Remaining Work (v0.3.0)
 
@@ -85,7 +85,7 @@
 
 **Performance Improvements**
 - [x] Virtual scrolling ✅
-- [x] Basic caching ✅ (Phase 1 complete, Phase 2 pending)
+- [x] Basic caching ✅ (Caching Phase 1 complete: CacheProvider, useCache hook, manual invalidation; Caching Phase 2 pending: automatic invalidation, integrate with all pages)
 - [ ] Optimize large schedule renders
 - [ ] Optimize PDF generation performance
 
@@ -120,10 +120,10 @@
 ## Next Steps
 
 ### Immediate (Continue v0.3.0)
-1. Complete Phase 2 caching (automatic invalidation, integrate with all pages)
+1. Complete Caching Phase 2 (automatic invalidation on mutations, integrate cache with all data-fetching pages)
 2. Address remaining timeline view issues (if prioritized)
 3. Add integration tests for critical flows
-4. Performance optimizations
+4. Performance optimizations (large schedule renders, PDF generation)
 
 ### Future Iterations
 - v0.4.0: Timeline view improvements, two-column swap interface
@@ -146,5 +146,9 @@
 - MVP functionality is complete and production-ready
 - Current focus is on UX enhancements and performance improvements
 - Documentation has been consolidated and streamlined
-- Caching system implemented (Phase 1) and ready for expansion
+- Caching system implemented (Caching Phase 1: basic cache with manual invalidation) and ready for expansion (Caching Phase 2: automatic invalidation)
 - Timeline view has some known issues but core functionality works
+
+**Note:** "Phase" terminology refers to two different systems:
+- **Project Phases (0-4):** From ROADMAP.md - overall project development phases
+- **Caching Phases (1-2):** From CACHING_STRATEGY.md - caching implementation phases

@@ -13,6 +13,7 @@ Single source of truth for planning and execution context. Keep this folder alig
 
 ## Active Iteration
 - `ITERATION_v0.3.0.md` — current iteration plan, progress, and design specs
+- `PROJECT_STATUS.md` — quick overview of project state, completed work, and next steps
 
 ## Logs (Append-Only)
 - `IMPLEMENTATION_LOG.md` — change log of delivered work (includes bug fixes and debugging notes)

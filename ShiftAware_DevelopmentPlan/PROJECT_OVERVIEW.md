@@ -105,8 +105,8 @@ A lightweight, privacy-focused shift management tool for coordinating a rotating
 ---
 
 ## Next Steps
-1. Phase 0 done: Prisma schema + seed (Starlight Meadow 2026), signed-cookie auth, port palette applied.
-2. Next focus: Phase 1 data/APIs and UI (shifts/preferences CRUD, assignment groundwork, audit/export/coverage).
-3. Implement algorithm with hard gender balance, core-only min shifts, explanations.
-4. Add coverage dashboard, manual swaps, PDF export, audit UI.
-5. Prepare monitoring/testing as part of Phase 2/3 hardening.
+1. ✅ Phase 0-4 complete: All core project phases delivered (infrastructure, core functionality, visualization/export, admin features, testing/deployment)
+2. 🚧 Current: Iteration v0.3.0 - Deferred features and enhancements (UX improvements, performance optimizations, advanced admin features)
+3. 📋 Future: Iteration v0.4.0+ - Timeline view improvements, two-column swap interface, conflict resolution wizard, action rollback, availability heatmap
+
+**Current Status:** MVP complete and production-ready. See `PROJECT_STATUS.md` for detailed status and `ITERATION_v0.3.0.md` for current work.
