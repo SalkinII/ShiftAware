@@ -15,7 +15,7 @@ This iteration focuses on implementing all deferred features from previous itera
 ## Deferred Features (from Roadmap)
 
 ### Phase 2: Visualization & Export
-- [ ] **Advanced shift card interactions** - Drag-and-drop, quick actions
+- [x] **Advanced shift card interactions** - Quick actions menu implemented (drag-and-drop pending)
 - [x] **Time picker** - let's you set the time for the shift, not just keyboard input (DateTimePicker component created, integrated in shifts form)
 - [x] **move date display to calendar window** - currently sits at the top of the page, should be in or near the calendar window (Date display moved to CalendarView component, above timeline scale)
 
@@ -68,6 +68,10 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Moved date display from schedule page header to CalendarView component
 - ✅ Added date navigation (prev/next) to CalendarView, positioned above timeline scale
 - ✅ Removed date display from schedule page header
+- ✅ Created ShiftCardActions component with quick actions menu
+- ✅ Integrated actions menu into shift cards (View, Edit, Assign, Swap, Delete)
+- ✅ Actions menu appears on hover with smooth transitions
+- ✅ Installed @dnd-kit packages for drag-and-drop functionality
 
 ---
 
