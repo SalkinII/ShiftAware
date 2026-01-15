@@ -507,6 +507,17 @@ export default function SchedulePage() {
           onAssignmentClick={handleAssignmentClick}
           onDateChange={setCurrentEventDate}
           eventRange={eventRange || undefined}
+          onShiftEdit={(shiftId) => {
+            const shift = filteredShifts.find((s) => s.id === shiftId);
+            if (shift) {
+              // TODO: Navigate to edit shift page or open edit modal
+              console.log("Edit shift:", shiftId);
+            }
+          }}
+          onShiftSwap={(shiftId) => {
+            // TODO: Open swap interface
+            console.log("Swap shift:", shiftId);
+          }}
         />
       </Card>
 

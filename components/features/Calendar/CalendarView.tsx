@@ -10,6 +10,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { List, RowComponentProps } from "react-window";
+import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import "./CalendarView.css";
 
 interface CalendarViewProps {
@@ -22,6 +23,10 @@ interface CalendarViewProps {
   showAssignments?: boolean;
   onDateChange?: (date: string) => void;
   eventRange?: { start: string; end: string };
+  onShiftEdit?: (shiftId: string) => void;
+  onShiftDelete?: (shiftId: string) => void;
+  onShiftAssign?: (shiftId: string) => void;
+  onShiftSwap?: (shiftId: string) => void;
 }
 
 type CoverageState = "full" | "partial" | "empty";
@@ -68,6 +73,10 @@ const CalendarView = ({
   showAssignments = false,
   onDateChange,
   eventRange,
+  onShiftEdit,
+  onShiftDelete,
+  onShiftAssign,
+  onShiftSwap,
 }: CalendarViewProps) => {
   const tasks = useMemo(
     () =>
@@ -349,6 +358,24 @@ const CalendarView = ({
               <div className="timeline-bar__label">
                 <span>{shift.assignments?.length || 0} assigned</span>
                 <span className="timeline-bar__capacity">cap {capacity}</span>
+              </div>
+              <div className="timeline-bar__actions">
+                <ShiftCardActions
+                  shiftId={shift.id}
+                  onViewDetails={() =>
+                    showAssignments
+                      ? onAssignmentClick?.(shift)
+                      : onShiftClick?.(shift.id)
+                  }
+                  onEdit={onShiftEdit ? () => onShiftEdit(shift.id) : undefined}
+                  onAssignMember={
+                    onShiftAssign ? () => onShiftAssign(shift.id) : undefined
+                  }
+                  onSwap={onShiftSwap ? () => onShiftSwap(shift.id) : undefined}
+                  onDelete={
+                    onShiftDelete ? () => onShiftDelete(shift.id) : undefined
+                  }
+                />
               </div>
             </div>
           </div>

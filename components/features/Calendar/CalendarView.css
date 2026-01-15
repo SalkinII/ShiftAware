@@ -275,11 +275,23 @@
   gap: 8px;
   font-size: 11px;
   font-weight: 800;
+  flex: 1;
 }
 
 .timeline-bar__capacity {
   opacity: 0.8;
   font-weight: 700;
+}
+
+.timeline-bar__actions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.timeline-bar:hover .timeline-bar__actions {
+  opacity: 1;
 }
 
 .timeline-empty {

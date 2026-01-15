@@ -61,3 +61,46 @@ Create `TimePicker` component that:
 - Time picker complexity might slow down form usage
 - Date display relocation might affect layout
 - **Mitigation:** Start simple, iterate based on feedback
+
+---
+
+## 3. Advanced Shift Card Interactions
+
+### Requirements
+- Quick actions menu (context menu or hover actions)
+- Drag-and-drop support for shift cards
+- Visual feedback during interactions
+- Actions: View details, Edit shift, Assign member, Swap, Delete
+
+### Solution
+- Add quick actions menu that appears on hover/right-click
+- Implement drag-and-drop using @dnd-kit/core (lightweight, accessible)
+- Add visual states (hover, dragging, selected)
+- Integrate with existing shift detail modal
+
+### Implementation Notes
+- Start with quick actions menu (hover/click)
+- Then add drag-and-drop for reordering/swapping
+- Use existing design system for menu styling
+- Ensure accessibility (keyboard navigation, ARIA labels)
+
+---
+
+## 4. Drag-and-Drop Swap Interface
+
+### Requirements
+- Visual drag-and-drop interface for swapping assignments
+- Show drop zones clearly
+- Validate swaps before applying
+- Visual feedback during drag
+
+### Solution
+- Use @dnd-kit/core for drag-and-drop
+- Create dedicated swap interface component
+- Show drop zones with visual indicators
+- Validate constraints before allowing drop
+
+### Implementation Notes
+- Can reuse drag-and-drop infrastructure from shift cards
+- Integrate with existing swap API endpoint
+- Show validation errors if swap invalid
