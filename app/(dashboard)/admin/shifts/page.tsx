@@ -164,6 +164,12 @@ export default function ShiftsPage() {
         setFormErrors({});
         // Notify schedule page to refresh
         window.dispatchEvent(new CustomEvent("shiftaware:refresh-schedule"));
+        // Invalidate cache
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["shifts", "shifts*"] },
+          }),
+        );
         // Reset form
         setFormData({
           eventId: events.length > 0 ? events[0].id : "",
