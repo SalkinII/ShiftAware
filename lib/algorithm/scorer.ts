@@ -8,6 +8,15 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
   coreShiftCoverage: 0.05,
 };
 
+/**
+ * Calculates preference score for a member-shift assignment.
+ * Higher priority preferences receive higher scores.
+ *
+ * @param member - Team member being scored
+ * @param shift - Shift being scored
+ * @param preferences - Array of member preferences with shiftId and priority (1-5)
+ * @returns Score from 0-100, where priority 1 = 100, priority 5 = 20
+ */
 export function calculatePreferenceScore(
   member: TeamMember,
   shift: Shift,
@@ -20,6 +29,16 @@ export function calculatePreferenceScore(
   return 100 - (preference.priority - 1) * 20;
 }
 
+/**
+ * Calculates experience balance score for a member-shift assignment.
+ * Rewards assignments that create a balanced mix of experience levels (Junior, Intermediate, Senior).
+ *
+ * @param member - Team member being scored
+ * @param shift - Shift being scored
+ * @param currentState - Current assignment state
+ * @param membersMap - Map of member IDs to TeamMember objects
+ * @returns Score from 0-100, higher if assignment improves experience balance
+ */
 export function calculateExperienceBalance(
   member: TeamMember,
   shift: Shift,
@@ -46,6 +65,14 @@ export function calculateExperienceBalance(
   return Math.min(100, score);
 }
 
+/**
+ * Calculates workload fairness score for a member-shift assignment.
+ * Rewards assignments that balance workload across all team members.
+ *
+ * @param member - Team member being scored
+ * @param currentState - Current assignment state
+ * @returns Score from 0-100, higher if member is below average workload
+ */
 export function calculateWorkloadFairness(
   member: TeamMember,
   currentState: AssignmentState,
@@ -72,11 +99,30 @@ export function calculateWorkloadFairness(
   return Math.max(0, 100 - (currentWorkload - averageWorkload) * 20);
 }
 
+/**
+ * Calculates core shift coverage score.
+ * Core shifts receive higher priority in the assignment algorithm.
+ *
+ * @param shift - Shift being scored
+ * @returns Score of 100 for CORE shifts, 50 for others
+ */
 export function calculateCoreShiftCoverage(shift: Shift): number {
   // Core shifts are more important
   return shift.priority === "CORE" ? 100 : 50;
 }
 
+/**
+ * Calculates overall assignment score for a member-shift pair.
+ * Combines multiple scoring factors using weighted average.
+ *
+ * @param member - Team member being scored
+ * @param shift - Shift being scored
+ * @param currentState - Current assignment state
+ * @param preferences - Array of member preferences
+ * @param membersMap - Map of member IDs to TeamMember objects
+ * @param weights - Algorithm weights for each scoring factor (defaults to DEFAULT_WEIGHTS)
+ * @returns AssignmentScore object with individual factor scores and overall weighted score
+ */
 export function scoreAssignment(
   member: TeamMember,
   shift: Shift,
