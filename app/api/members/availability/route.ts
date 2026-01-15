@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { checkAuth } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth";
+import { createUnauthorizedResponse } from "@/lib/api-errors";
 
 interface AvailabilityStatus {
   memberId: string;
