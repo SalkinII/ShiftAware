@@ -130,3 +130,12 @@ This iteration focuses on implementing all deferred features from previous itera
 - Performance improvements should be measured before and after
 - Testing should be incremental and comprehensive
 - Documentation should be user-friendly and comprehensive
+
+## Known Issues (Deferred)
+
+### Swap Interface UI
+**Issue:** Multiple selection is possible but not sensible - users can select more than 2 assignments, but swap only works with exactly 2. The UI should enforce 2-selection limit or provide better feedback.
+
+**Status:** Documented for future improvement (v0.4.0+)
+
+**Rationale:** Current drag-and-drop swap works functionally but UX could be improved. This is a polish issue that doesn't block core functionality.

@@ -174,6 +174,12 @@ export default function PreferencesPage() {
       if (res.ok) {
         toast.success("Preferences submitted successfully!");
         setSelectedShifts(new Map());
+        // Invalidate cache for preferences
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["preferences", "preferences*"] },
+          }),
+        );
       } else {
         const errorData = await res.json();
         let errorMessage = errorData.error || "Failed to submit preferences";
