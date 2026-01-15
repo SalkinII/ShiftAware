@@ -4,6 +4,13 @@ import { prisma } from "@/lib/db";
 import { updateTeamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+  createNotFoundResponse,
+  createConflictResponse,
+} from "@/lib/api-errors";
 
 export async function GET(
   request: Request,
@@ -12,7 +19,7 @@ export async function GET(
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { id } = await params;
@@ -31,16 +38,13 @@ export async function GET(
     });
 
     if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      return createNotFoundResponse("Team member");
     }
 
-    return NextResponse.json(member);
+    return createSuccessResponse(member);
   } catch (error) {
     console.error("Get member error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to fetch member");
   }
 }
 
@@ -51,7 +55,7 @@ export async function PUT(
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { id: memberId } = await params;
@@ -63,7 +67,7 @@ export async function PUT(
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      return createNotFoundResponse("Team member");
     }
 
     // Check alias uniqueness if changing alias
@@ -72,10 +76,7 @@ export async function PUT(
         where: { alias: validated.alias },
       });
       if (aliasExists) {
-        return NextResponse.json(
-          { error: "Alias already exists" },
-          { status: 409 },
-        );
+        return createConflictResponse("Alias already exists");
       }
     }
 
@@ -95,19 +96,10 @@ export async function PUT(
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json(member);
+    return createSuccessResponse(member);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json(
-        { error: "Validation error", details: error },
-        { status: 400 },
-      );
-    }
     console.error("Update member error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to update member");
   }
 }
 
@@ -118,7 +110,7 @@ export async function DELETE(
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { id } = await params;
@@ -127,7 +119,7 @@ export async function DELETE(
     });
 
     if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      return createNotFoundResponse("Team member");
     }
 
     // Soft delete by setting isActive to false
@@ -145,12 +137,9 @@ export async function DELETE(
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json(deleted);
+    return createSuccessResponse(deleted);
   } catch (error) {
     console.error("Delete member error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to delete member");
   }
 }

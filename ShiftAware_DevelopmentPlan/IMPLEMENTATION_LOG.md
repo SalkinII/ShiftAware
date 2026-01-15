@@ -147,3 +147,18 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: cleared webpack cache (.next folder) to resolve module 638.js build errors
 - v0.2.0: build now completes successfully without errors
 - v0.2.0: error pages now properly handle client-side interactivity in Next.js 15
+
+## 2026-01-15T18:00:00Z
+- v0.2.0: updated all API routes to use standardized error response utilities (lib/api-errors.ts)
+- v0.2.0: updated members API routes (GET, POST, PUT, DELETE) with standardized error handling
+- v0.2.0: updated shifts/[id] API routes (GET, PUT, DELETE) with standardized error handling
+- v0.2.0: updated assignments API routes (GET, POST) with standardized error handling
+- v0.2.0: updated preferences API routes (GET, POST) with standardized error handling and proper 404 handling
+- v0.2.0: updated events API route (GET) with standardized error handling
+- v0.2.0: updated audit API route (GET) with standardized error handling
+- v0.2.0: updated assignments/swap API route (POST) with standardized error handling and proper 404 handling
+- v0.2.0: all API routes now return consistent error format with error code, message, and structured details
+- v0.2.0: all API routes properly handle missing resources with createNotFoundResponse utility
+- v0.2.0: all API routes properly handle conflicts with createConflictResponse utility
+- v0.2.0: verified all navigation links work correctly (Sidebar.tsx contains all valid routes)
+- v0.2.0: build completes successfully with all standardized error responses

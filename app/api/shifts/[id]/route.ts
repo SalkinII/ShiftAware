@@ -4,6 +4,13 @@ import { prisma } from "@/lib/db";
 import { updateShiftSchema } from "@/lib/validations/shift";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+  createNotFoundResponse,
+  createConflictResponse,
+} from "@/lib/api-errors";
 
 export async function GET(
   request: Request,
@@ -12,7 +19,7 @@ export async function GET(
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { id } = await params;
@@ -32,16 +39,13 @@ export async function GET(
     });
 
     if (!shift) {
-      return NextResponse.json({ error: "Shift not found" }, { status: 404 });
+      return createNotFoundResponse("Shift");
     }
 
-    return NextResponse.json(shift);
+    return createSuccessResponse(shift);
   } catch (error) {
     console.error("Get shift error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to fetch shift");
   }
 }
 
@@ -52,7 +56,7 @@ export async function PUT(
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { id: shiftId } = await params;
@@ -65,7 +69,7 @@ export async function PUT(
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Shift not found" }, { status: 404 });
+      return createNotFoundResponse("Shift");
     }
 
     const { id, requiredRoles, ...updateData } = validated;
@@ -112,19 +116,10 @@ export async function PUT(
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json(shift);
+    return createSuccessResponse(shift);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json(
-        { error: "Validation error", details: error },
-        { status: 400 },
-      );
-    }
     console.error("Update shift error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to update shift");
   }
 }
 
@@ -135,7 +130,7 @@ export async function DELETE(
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { id: shiftId } = await params;
@@ -145,7 +140,7 @@ export async function DELETE(
     });
 
     if (!shift) {
-      return NextResponse.json({ error: "Shift not found" }, { status: 404 });
+      return createNotFoundResponse("Shift");
     }
 
     // Check if shift has assignments
@@ -154,9 +149,8 @@ export async function DELETE(
     });
 
     if (assignmentCount > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete shift with existing assignments" },
-        { status: 409 },
+      return createConflictResponse(
+        "Cannot delete shift with existing assignments",
       );
     }
 
@@ -172,12 +166,9 @@ export async function DELETE(
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json({ success: true });
+    return createSuccessResponse({ success: true });
   } catch (error) {
     console.error("Delete shift error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Failed to delete shift");
   }
 }

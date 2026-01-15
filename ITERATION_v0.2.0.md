@@ -112,8 +112,11 @@ This iteration focuses on:
 - ✅ Fixed shift creation validation error - form now converts datetime-local to ISO strings and calculates duration correctly
 - ✅ Created 404 (not-found.tsx) and 500 (error.tsx) error pages with proper UI
 - ✅ Created standardized API error response utilities (lib/api-errors.ts)
-- ✅ Updated shifts API route to use standardized error responses
+- ✅ Updated ALL API routes to use standardized error responses (members, shifts, assignments, preferences, events, audit, swap)
+- ✅ All API routes now properly handle missing resources with consistent 404 responses
+- ✅ All API routes now properly handle conflicts with consistent 409 responses
 - ✅ Improved error messages in shift creation form with detailed validation feedback
+- ✅ Verified all navigation links work correctly (all routes in Sidebar.tsx are valid)
 
 ## Notes
 

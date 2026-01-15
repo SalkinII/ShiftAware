@@ -4,12 +4,18 @@ import { prisma } from "@/lib/db";
 import { preferencesSubmissionSchema } from "@/lib/validations/preference";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createUnauthorizedResponse,
+  createNotFoundResponse,
+} from "@/lib/api-errors";
 
 export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -27,19 +33,13 @@ export async function GET(request: Request) {
           include: { event: true },
         },
       },
-      orderBy: [
-        { teamMember: { alias: "asc" } },
-        { priority: "asc" },
-      ],
+      orderBy: [{ teamMember: { alias: "asc" } }, { priority: "asc" }],
     });
 
-    return NextResponse.json(preferences);
+    return createSuccessResponse(preferences);
   } catch (error) {
     console.error("Get preferences error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to fetch preferences");
   }
 }
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const body = await request.json();
@@ -59,10 +59,7 @@ export async function POST(request: Request) {
     });
 
     if (!member) {
-      return NextResponse.json(
-        { error: "Team member not found" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("Team member");
     }
 
     // Verify all shifts exist and belong to same event
@@ -73,17 +70,15 @@ export async function POST(request: Request) {
     });
 
     if (shifts.length !== shiftIds.length) {
-      return NextResponse.json(
-        { error: "One or more shifts not found" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("One or more shifts");
     }
 
     const eventIds = new Set(shifts.map((s) => s.eventId));
     if (eventIds.size > 1) {
-      return NextResponse.json(
-        { error: "All shifts must belong to the same event" },
-        { status: 400 }
+      return createErrorResponse(
+        new Error("All shifts must belong to the same event"),
+        "All shifts must belong to the same event",
+        400,
       );
     }
 
@@ -107,8 +102,8 @@ export async function POST(request: Request) {
               include: { event: true },
             },
           },
-        })
-      )
+        }),
+      ),
     );
 
     await createAuditLog({
@@ -120,19 +115,9 @@ export async function POST(request: Request) {
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return NextResponse.json(preferences, { status: 201 });
+    return createSuccessResponse(preferences, 201);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      return NextResponse.json(
-        { error: "Validation error", details: error },
-        { status: 400 }
-      );
-    }
     console.error("Submit preferences error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Failed to submit preferences");
   }
 }
-
