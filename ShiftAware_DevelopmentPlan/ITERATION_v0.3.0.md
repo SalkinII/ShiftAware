@@ -22,7 +22,7 @@ This iteration focuses on implementing all deferred features from previous itera
 ### Phase 3: Admin Features & Polish
 - [x] **Drag-and-drop swap interface** - Visual swap tool (SwapInterface component created, integrated into assignments page with view toggle)
 - [ ] **Conflict resolution wizard** - Guided conflict resolution
-- [ ] **Action rollback** - Undo recent changes
+- [x] **Action rollback** - Undo recent changes (rollback API endpoint, UI integration in audit log page)
 - [ ] **Member availability heatmap** - Visual availability overview
 
 ---
@@ -100,6 +100,9 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ All delete operations require authentication (API endpoints already check auth)
 - ✅ Optimized CalendarView rendering performance (extracted TimelineRow component, memoized callbacks, optimized grid view sorting)
 - ✅ Optimized PDF generation performance (single-pass processing, pre-parsed dates, optimized member lookup, reduced array operations)
+- ✅ Created action rollback API endpoint (POST /api/audit/rollback) with rollback logic for all entity types
+- ✅ Implemented rollback UI in audit log page with rollback button, confirmation dialog, and cache invalidation
+- ✅ Rollback supports CREATE, UPDATE, DELETE, and PREFERENCE_SUBMIT actions for Shifts, Members, Assignments, and Preferences
 
 ---
 
