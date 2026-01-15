@@ -98,6 +98,7 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Implemented member delete functionality in admin/members page with confirmation dialog
 - ✅ Added cache invalidation after successful delete operations
 - ✅ All delete operations require authentication (API endpoints already check auth)
+- ✅ Optimized CalendarView rendering performance (extracted TimelineRow component, memoized callbacks, optimized grid view sorting)
 
 ---
 

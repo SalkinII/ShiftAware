@@ -9,71 +9,166 @@ interface ExportOptions {
   title?: string;
 }
 
-export function exportScheduleToPDF(shifts: any[], options: ExportOptions = {}) {
-  const { orientation = "landscape", memberId, includePseudonymMap = false, title } = options;
+export function exportScheduleToPDF(
+  shifts: any[],
+  options: ExportOptions = {},
+) {
+  const {
+    orientation = "landscape",
+    memberId,
+    includePseudonymMap = false,
+    title,
+  } = options;
 
-  const filteredShifts = memberId
-    ? shifts
-        .map((shift) => ({
-          ...shift,
-          assignments: (shift.assignments || []).filter((a: any) => a.teamMemberId === memberId || a.teamMember?.id === memberId),
-        }))
-        .filter((shift) => shift.assignments?.length > 0)
-    : shifts;
+  // Optimized single-pass processing: filter, calculate coverage, build member map, and prepare table data
+  const processedData = (() => {
+    let totalCapacity = 0;
+    let totalFilled = 0;
+    const filteredShifts: any[] = [];
+    const memberMap = new Map<string, { alias: string; avatarId?: string }>();
+    let memberAlias: string | undefined;
+    let eventName: string | undefined;
 
-  if (filteredShifts.length === 0) {
+    // Single pass: filter shifts, calculate coverage, build member map
+    for (const shift of shifts) {
+      if (!eventName && shift.event?.name) {
+        eventName = shift.event.name;
+      }
+
+      let assignments = shift.assignments || [];
+
+      // Filter assignments if memberId specified
+      if (memberId) {
+        assignments = assignments.filter(
+          (a: any) =>
+            a.teamMemberId === memberId || a.teamMember?.id === memberId,
+        );
+        if (assignments.length === 0) continue;
+
+        // Find member alias during filtering (first match)
+        if (!memberAlias) {
+          const assignment = assignments.find(
+            (a: any) =>
+              a.teamMember?.id === memberId || a.teamMemberId === memberId,
+          );
+          memberAlias = assignment?.teamMember?.alias;
+        }
+      }
+
+      // Build member map for pseudonym mapping
+      if (includePseudonymMap) {
+        for (const assignment of assignments) {
+          if (assignment.teamMember?.id) {
+            const id = assignment.teamMember.id;
+            if (!memberMap.has(id)) {
+              memberMap.set(id, {
+                alias: assignment.teamMember.alias,
+                avatarId: assignment.teamMember.avatarId,
+              });
+            }
+          }
+        }
+      }
+
+      // Calculate coverage during filtering
+      const capacity = shift.capacity || 0;
+      const filled = assignments.length;
+      totalCapacity += capacity;
+      totalFilled += filled;
+
+      filteredShifts.push({
+        ...shift,
+        assignments,
+        _parsedStart: new Date(shift.startTime),
+        _parsedEnd: new Date(shift.endTime),
+        _assignmentCount: filled,
+        _capacity: capacity,
+      });
+    }
+
+    return {
+      filteredShifts,
+      totalCapacity,
+      totalFilled,
+      memberMap,
+      memberAlias,
+      eventName: title || eventName || "ShiftAware Schedule",
+    };
+  })();
+
+  if (processedData.filteredShifts.length === 0) {
     throw new Error("No shifts available to export");
   }
 
   const doc = new jsPDF({ orientation });
-  const eventName = title || filteredShifts[0]?.event?.name || "ShiftAware Schedule";
   const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
-  const memberAlias =
-    memberId &&
-    filteredShifts
-      .flatMap((s: any) => s.assignments || [])
-      .find((a: any) => a.teamMember?.id === memberId || a.teamMemberId === memberId)?.teamMember?.alias;
+  const coverage =
+    processedData.totalCapacity === 0
+      ? 0
+      : Math.round(
+          (processedData.totalFilled / processedData.totalCapacity) * 100,
+        );
 
   // Title
   doc.setFontSize(18);
-  doc.text(eventName, 14, 20);
-  
+  doc.text(processedData.eventName, 14, 20);
+
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.text(`Generated on: ${timestamp}`, 14, 28);
   if (memberId) {
-    doc.text(`Scope: Member ${memberAlias ? `"${memberAlias}"` : memberId}`, 14, 32);
+    doc.text(
+      `Scope: Member ${processedData.memberAlias ? `"${processedData.memberAlias}"` : memberId}`,
+      14,
+      32,
+    );
   }
 
   // Coverage summary
-  const totalCapacity = filteredShifts.reduce((acc: number, shift: any) => acc + (shift.capacity || 0), 0);
-  const totalFilled = filteredShifts.reduce((acc: number, shift: any) => acc + ((shift.assignments || []).length || 0), 0);
-  const coverage = totalCapacity === 0 ? 0 : Math.round((totalFilled / totalCapacity) * 100);
   doc.setFontSize(11);
-  doc.text(`Coverage: ${coverage}% (${totalFilled}/${totalCapacity})`, 14, memberId ? 38 : 34);
+  doc.text(
+    `Coverage: ${coverage}% (${processedData.totalFilled}/${processedData.totalCapacity})`,
+    14,
+    memberId ? 38 : 34,
+  );
 
-  // Table Data
-  const tableData = filteredShifts
-    .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-    .map((shift: any) => {
-      const startTime = format(new Date(shift.startTime), "MMM d, HH:mm");
-      const endTime = format(new Date(shift.endTime), "HH:mm");
-      const assignments = shift.assignments
-        ?.map((a: any) => `${a.teamMember?.avatarId || ""} ${a.teamMember?.alias || ""}`.trim())
-        .filter(Boolean)
-        .join(", ") || "None";
-      const staffed = `${shift.assignments?.length || 0}/${shift.capacity}`;
-      const status = (shift.assignments?.length || 0) >= shift.capacity ? "Fully Staffed" : (shift.assignments?.length || 0) > 0 ? "Partial" : "Unstaffed";
+  // Pre-sort shifts by start time (using pre-parsed dates)
+  const sortedShifts = [...processedData.filteredShifts].sort(
+    (a, b) => a._parsedStart.getTime() - b._parsedStart.getTime(),
+  );
 
-      return [
-        startTime,
-        endTime,
-        shift.type?.replace("_", " ") || "Shift",
-        assignments,
-        staffed,
-        status,
-      ];
-    });
+  // Build table data efficiently (dates already parsed, reuse them)
+  const tableData = sortedShifts.map((shift) => {
+    // Use pre-parsed dates
+    const startTime = format(shift._parsedStart, "MMM d, HH:mm");
+    const endTime = format(shift._parsedEnd, "HH:mm");
+
+    // Build assignment string efficiently
+    const assignmentStrings: string[] = [];
+    for (const assignment of shift.assignments) {
+      const member = assignment.teamMember;
+      if (member) {
+        const str = `${member.avatarId || ""} ${member.alias || ""}`.trim();
+        if (str) assignmentStrings.push(str);
+      }
+    }
+    const assignments =
+      assignmentStrings.length > 0 ? assignmentStrings.join(", ") : "None";
+
+    // Use pre-calculated values
+    const staffed = `${shift._assignmentCount}/${shift._capacity}`;
+    const status =
+      shift._assignmentCount >= shift._capacity
+        ? "Fully Staffed"
+        : shift._assignmentCount > 0
+          ? "Partial"
+          : "Unstaffed";
+
+    // Cache shift type replacement
+    const shiftType = shift.type?.replace("_", " ") || "Shift";
+
+    return [startTime, endTime, shiftType, assignments, staffed, status];
+  });
 
   autoTable(doc, {
     startY: 40,
@@ -84,42 +179,41 @@ export function exportScheduleToPDF(shifts: any[], options: ExportOptions = {}) 
     margin: { top: 40 },
   });
 
-  if (includePseudonymMap) {
-    const mapping = new Map<string, { alias: string; avatarId?: string }>();
-    filteredShifts.forEach((shift: any) => {
-      shift.assignments?.forEach((a: any) => {
-        if (a.teamMember?.id) {
-          mapping.set(a.teamMember.id, { alias: a.teamMember.alias, avatarId: a.teamMember.avatarId });
-        }
-      });
+  // Pseudonym map (already built during initial pass)
+  if (includePseudonymMap && processedData.memberMap.size > 0) {
+    const rows = Array.from(processedData.memberMap.values()).map((entry) => [
+      entry.alias || "Unknown",
+      entry.avatarId || "",
+    ]);
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text("Pseudonym Mapping", 14, 20);
+    autoTable(doc, {
+      startY: 26,
+      head: [["Alias", "Avatar"]],
+      body: rows,
+      headStyles: { fillColor: [15, 23, 42] },
     });
-    const rows = Array.from(mapping.values()).map((entry) => [entry.alias || "Unknown", entry.avatarId || ""]);
-    if (rows.length > 0) {
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Pseudonym Mapping", 14, 20);
-      autoTable(doc, {
-        startY: 26,
-        head: [["Alias", "Avatar"]],
-        body: rows,
-        headStyles: { fillColor: [15, 23, 42] },
-      });
-    }
   }
 
-  // Footer
+  // Footer (optimized: calculate text once, reuse)
   const pageCount = (doc as any).internal.getNumberOfPages();
+  const footerText = `Page {page} of ${pageCount} - Privacy-first shift management`;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.text(
-      `Page ${i} of ${pageCount} - Privacy-first shift management`,
-      doc.internal.pageSize.getWidth() / 2,
-      doc.internal.pageSize.getHeight() - 10,
-      { align: "center" }
+      footerText.replace("{page}", String(i)),
+      pageWidth / 2,
+      pageHeight - 10,
+      { align: "center" },
     );
   }
 
-  doc.save(`${eventName.replace(/\s+/g, "_")}_Schedule_${format(new Date(), "yyyyMMdd")}.pdf`);
+  // Cache filename generation
+  const filename = `${processedData.eventName.replace(/\s+/g, "_")}_Schedule_${format(new Date(), "yyyyMMdd")}.pdf`;
+  doc.save(filename);
 }
-
