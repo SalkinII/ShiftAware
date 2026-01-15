@@ -276,3 +276,5 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: implemented shift delete functionality in schedule page (via CalendarView onShiftDelete prop)
 - v0.3.0: implemented member delete functionality in admin/members page with confirmation dialog and cache invalidation
 - v0.3.0: all delete operations require authentication (API endpoints already check auth via isAuthenticated())
+- v0.3.0: optimized CalendarView rendering performance (extracted TimelineRow with React.memo, memoized callbacks, optimized grid view sorting)
+- v0.3.0: optimized PDF generation performance (single-pass processing, pre-parsed dates, optimized member lookup, reduced array operations)

@@ -31,8 +31,8 @@ This iteration focuses on implementing all deferred features from previous itera
 
 - [x] **Implement virtual scrolling for long lists** - Already implemented using `react-window` in CalendarView timeline
 - [x] **Cache frequently accessed data** - Phase 1 & 2 complete (CacheProvider, useCache hook, automatic invalidation via client-side events, integrated with all 7 pages)
-- [ ] Optimize large schedule renders
-- [ ] Optimize PDF generation performance
+- [x] **Optimize large schedule renders** - Component memoization, callback optimization, reduced re-renders
+- [x] **Optimize PDF generation performance** - Single-pass processing, pre-parsed dates, optimized calculations
 
 ---
 
@@ -99,6 +99,7 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Added cache invalidation after successful delete operations
 - ✅ All delete operations require authentication (API endpoints already check auth)
 - ✅ Optimized CalendarView rendering performance (extracted TimelineRow component, memoized callbacks, optimized grid view sorting)
+- ✅ Optimized PDF generation performance (single-pass processing, pre-parsed dates, optimized member lookup, reduced array operations)
 
 ---
 
