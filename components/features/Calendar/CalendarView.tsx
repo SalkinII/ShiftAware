@@ -8,6 +8,7 @@ import {
   startOfDay,
   startOfWeek,
 } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { List, RowComponentProps } from "react-window";
 import "./CalendarView.css";
 
@@ -19,6 +20,8 @@ interface CalendarViewProps {
   viewType?: "Day" | "Week" | "Grid";
   startDate?: string;
   showAssignments?: boolean;
+  onDateChange?: (date: string) => void;
+  eventRange?: { start: string; end: string };
 }
 
 type CoverageState = "full" | "partial" | "empty";
@@ -63,6 +66,8 @@ const CalendarView = ({
   viewType = "Week",
   startDate,
   showAssignments = false,
+  onDateChange,
+  eventRange,
 }: CalendarViewProps) => {
   const tasks = useMemo(
     () =>
@@ -372,6 +377,63 @@ const CalendarView = ({
                     className="timeline-day-marker"
                   />
                 ))}
+              </div>
+            )}
+            {/* Date display navigation - moved from schedule page header */}
+            {viewType === "Day" && eventRange && onDateChange && (
+              <div className="mb-4 flex items-center justify-center">
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+                  <button
+                    onClick={() => {
+                      const current = startDate
+                        ? new Date(startDate)
+                        : new Date(eventRange.start);
+                      const prev = addDays(current, -1);
+                      const prevKey = format(prev, "yyyy-MM-dd");
+                      if (prevKey >= eventRange.start) {
+                        onDateChange(prevKey);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
+                    aria-label="Previous day"
+                    disabled={
+                      startDate
+                        ? format(new Date(startDate), "yyyy-MM-dd") <=
+                          eventRange.start
+                        : false
+                    }
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <div className="text-sm font-bold uppercase tracking-widest text-gray-700 px-3 min-w-[140px] text-center">
+                    {format(
+                      new Date(startDate || eventRange.start),
+                      "EEEE, MMMM d, yyyy",
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const current = startDate
+                        ? new Date(startDate)
+                        : new Date(eventRange.start);
+                      const next = addDays(current, 1);
+                      const nextKey = format(next, "yyyy-MM-dd");
+                      if (nextKey <= eventRange.end) {
+                        onDateChange(nextKey);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
+                    aria-label="Next day"
+                    disabled={
+                      startDate
+                        ? format(new Date(startDate), "yyyy-MM-dd") >=
+                          eventRange.end
+                        : false
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
             {/* Infinite scroll timeline scale - only on smaller screens */}

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
@@ -440,17 +441,15 @@ export default function ShiftsPage() {
                   <option value="EXECUTIVE">Executive</option>
                 </Select>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Start Time"
-                    type="datetime-local"
+                <div className="grid grid-cols-1 gap-4">
+                  <DateTimePicker
+                    label="Start Date & Time"
                     value={formData.startTime}
-                    onChange={(e) => {
-                      const startValue = e.target.value;
+                    onChange={(value) => {
                       if (formErrors.startTime) {
                         setFormErrors({ ...formErrors, startTime: "" });
                       }
-                      if (!startValue) {
+                      if (!value) {
                         setFormData({
                           ...formData,
                           startTime: "",
@@ -458,35 +457,33 @@ export default function ShiftsPage() {
                         });
                         return;
                       }
-                      const start = new Date(startValue);
+                      const start = new Date(value);
                       if (isNaN(start.getTime())) {
-                        return; // Invalid date, don't update
+                        return;
                       }
                       const duration = formData.durationMinutes || 360;
                       const end = new Date(start.getTime() + duration * 60000);
                       if (isNaN(end.getTime())) {
-                        return; // Invalid end date, don't update
+                        return;
                       }
                       setFormData({
                         ...formData,
-                        startTime: startValue,
+                        startTime: value,
                         endTime: end.toISOString().slice(0, 16),
                       });
                     }}
                     error={formErrors.startTime}
                     required
-                    className="bg-gray-50 border-gray-100 text-xs font-bold"
+                    use24Hour={true}
                   />
-                  <Input
-                    label="End Time"
-                    type="datetime-local"
+                  <DateTimePicker
+                    label="End Date & Time"
                     value={formData.endTime}
-                    onChange={(e) => {
+                    onChange={(value) => {
                       if (formErrors.endTime) {
                         setFormErrors({ ...formErrors, endTime: "" });
                       }
-                      const endValue = e.target.value;
-                      if (!endValue) {
+                      if (!value) {
                         setFormData({
                           ...formData,
                           endTime: "",
@@ -496,16 +493,16 @@ export default function ShiftsPage() {
                       if (!formData.startTime) {
                         setFormData({
                           ...formData,
-                          endTime: endValue,
+                          endTime: value,
                         });
                         return;
                       }
                       const start = new Date(formData.startTime);
-                      const end = new Date(endValue);
+                      const end = new Date(value);
                       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
                         setFormData({
                           ...formData,
-                          endTime: endValue,
+                          endTime: value,
                         });
                         return;
                       }
@@ -515,19 +512,19 @@ export default function ShiftsPage() {
                       if (isNaN(minutes) || minutes < 0) {
                         setFormData({
                           ...formData,
-                          endTime: endValue,
+                          endTime: value,
                         });
                         return;
                       }
                       setFormData({
                         ...formData,
-                        endTime: endValue,
+                        endTime: value,
                         durationMinutes: minutes,
                       });
                     }}
                     error={formErrors.endTime}
                     required
-                    className="bg-gray-50 border-gray-100 text-xs font-bold"
+                    use24Hour={true}
                   />
                 </div>
 

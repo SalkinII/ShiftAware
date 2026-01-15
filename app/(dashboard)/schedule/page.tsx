@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   Download,
   RefreshCw,
   User,
@@ -144,16 +142,7 @@ export default function SchedulePage() {
     return "empty";
   }
 
-  function shiftDay(delta: number) {
-    if (!eventRange) return;
-    const current = currentEventDate
-      ? new Date(currentEventDate)
-      : new Date(eventRange.start);
-    const next = addDays(current, delta);
-    const nextKey = format(next, "yyyy-MM-dd");
-    if (nextKey < eventRange.start || nextKey > eventRange.end) return;
-    setCurrentEventDate(nextKey);
-  }
+  // shiftDay function removed - date navigation now handled in CalendarView
 
   const roleOptions = useMemo(() => {
     const roles = new Set<string>();
@@ -272,30 +261,6 @@ export default function SchedulePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {viewType === "Day" && eventRange && (
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-2 py-1 shadow-sm">
-              <button
-                onClick={() => shiftDay(-1)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
-                aria-label="Previous day"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-600 px-1">
-                {format(
-                  new Date(currentEventDate || eventRange.start),
-                  "EEE, MMM d",
-                )}
-              </div>
-              <button
-                onClick={() => shiftDay(1)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
-                aria-label="Next day"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
           <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">
             {(["Day", "Week", "Grid"] as const).map((option) => (
               <button
@@ -539,6 +504,8 @@ export default function SchedulePage() {
           startDate={currentEventDate}
           showAssignments={true}
           onAssignmentClick={handleAssignmentClick}
+          onDateChange={setCurrentEventDate}
+          eventRange={eventRange || undefined}
         />
       </Card>
 

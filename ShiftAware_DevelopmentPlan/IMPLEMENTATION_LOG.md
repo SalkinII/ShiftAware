@@ -226,3 +226,12 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: applied toast notifications and skeleton loading to preferences page
 - v0.2.0: applied skeleton loading to audit page
 - v0.2.0: all UX enhancements now applied across all admin pages
+
+## 2026-01-15T23:30:00Z
+- v0.3.0: created TimePicker component (components/ui/TimePicker.tsx) with visual hour/minute selection and 12/24 hour format support
+- v0.3.0: created DateTimePicker component (components/ui/DateTimePicker.tsx) combining date input with TimePicker
+- v0.3.0: integrated DateTimePicker into shifts form, replacing datetime-local inputs with visual time picker
+- v0.3.0: moved date display from schedule page header to CalendarView component
+- v0.3.0: added date navigation (prev/next buttons) to CalendarView, positioned above timeline scale
+- v0.3.0: removed date display and navigation from schedule page header
+- v0.3.0: date display now appears in/near calendar window as requested

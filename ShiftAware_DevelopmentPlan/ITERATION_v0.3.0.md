@@ -15,15 +15,14 @@ This iteration focuses on implementing all deferred features from previous itera
 ## Deferred Features (from Roadmap)
 
 ### Phase 2: Visualization & Export
-- [ ] **Batch export functionality** - Export schedules for multiple members at once
 - [ ] **Advanced shift card interactions** - Drag-and-drop, quick actions
+- [x] **Time picker** - let's you set the time for the shift, not just keyboard input (DateTimePicker component created, integrated in shifts form)
+- [x] **move date display to calendar window** - currently sits at the top of the page, should be in or near the calendar window (Date display moved to CalendarView component, above timeline scale)
 
 ### Phase 3: Admin Features & Polish
 - [ ] **Drag-and-drop swap interface** - Visual swap tool
-- [ ] **Mass reassignment tool** - Bulk assignment changes
 - [ ] **Conflict resolution wizard** - Guided conflict resolution
 - [ ] **Action rollback** - Undo recent changes
-- [ ] **Predictive gap analysis** - Forecast staffing needs
 - [ ] **Member availability heatmap** - Visual availability overview
 
 ---
@@ -63,6 +62,12 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Created iteration v0.3.0 plan
 - ✅ Merged iteration v0.2.0 into main
 - ✅ Created iteration/v0.3.0 branch
+- ✅ Created TimePicker component (components/ui/TimePicker.tsx) with visual hour/minute selection
+- ✅ Created DateTimePicker component (components/ui/DateTimePicker.tsx) combining date and time pickers
+- ✅ Integrated DateTimePicker into shifts form (replaced datetime-local inputs)
+- ✅ Moved date display from schedule page header to CalendarView component
+- ✅ Added date navigation (prev/next) to CalendarView, positioned above timeline scale
+- ✅ Removed date display from schedule page header
 
 ---
 
