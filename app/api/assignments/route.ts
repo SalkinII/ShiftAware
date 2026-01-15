@@ -8,6 +8,7 @@ import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
+  createNotFoundResponse,
 } from "@/lib/api-errors";
 
 export async function GET(request: Request) {
@@ -61,9 +62,10 @@ export async function POST(request: Request) {
     const { eventId } = body;
 
     if (!eventId) {
-      return NextResponse.json(
-        { error: "eventId is required" },
-        { status: 400 },
+      return createErrorResponse(
+        new Error("eventId is required"),
+        "eventId is required",
+        400,
       );
     }
 
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
     });
 
     if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      return createNotFoundResponse("Event");
     }
 
     // Get all active members
