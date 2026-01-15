@@ -183,6 +183,14 @@ export default function SchedulePage() {
         if (shiftDate !== currentEventDate) return false;
       }
 
+      // Filter by week in Week view
+      if (viewType === "Week" && currentEventDate) {
+        const shiftDate = new Date(shift.startTime);
+        const weekStart = new Date(currentEventDate);
+        const weekEnd = addDays(weekStart, 7);
+        if (shiftDate < weekStart || shiftDate >= weekEnd) return false;
+      }
+
       const state = coverageState(shift);
       if (coverageFilter !== "all" && state !== coverageFilter) return false;
       if (roleFilter !== "all") {
@@ -527,7 +535,14 @@ export default function SchedulePage() {
           startDate={currentEventDate}
           showAssignments={true}
           onAssignmentClick={handleAssignmentClick}
-          onDateChange={setCurrentEventDate}
+          onDateChange={(date) => {
+            setCurrentEventDate(date);
+            // Also update view if needed
+            if (viewType === "Week") {
+              // Week view navigation updates the startDate which is the week start
+              setCurrentEventDate(date);
+            }
+          }}
           eventRange={eventRange || undefined}
           onShiftEdit={(shiftId) => {
             const shift = filteredShifts.find((s) => s.id === shiftId);

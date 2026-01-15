@@ -102,6 +102,7 @@ const CalendarView = ({
   const baseDate = useMemo(() => {
     if (startDate) return new Date(startDate);
     if (tasks.length > 0) return tasks[0].start;
+    // If no shifts and no startDate, use today
     return new Date();
   }, [startDate, tasks]);
 
@@ -120,19 +121,47 @@ const CalendarView = ({
     return sorted.map((date) => startOfDay(new Date(date)));
   }, [shifts, startDate, baseDate]);
 
+  // Calculate date range from all shifts, not just baseDate
+  const allShiftDates = useMemo(() => {
+    const dates = new Set<string>();
+    shifts.forEach((shift) => {
+      dates.add(shift.startTime.split("T")[0]);
+    });
+    if (startDate) {
+      dates.add(startDate);
+    }
+    return Array.from(dates).sort();
+  }, [shifts, startDate]);
+
+  const minDate = useMemo(() => {
+    if (allShiftDates.length > 0) {
+      return new Date(allShiftDates[0]);
+    }
+    return startDate ? new Date(startDate) : new Date();
+  }, [allShiftDates, startDate]);
+
+  const maxDate = useMemo(() => {
+    if (allShiftDates.length > 0) {
+      return new Date(allShiftDates[allShiftDates.length - 1]);
+    }
+    return startDate ? new Date(startDate) : addDays(new Date(), 7);
+  }, [allShiftDates, startDate]);
+
   const startBound = useMemo(
     () =>
       viewType === "Day"
-        ? dayStarts[0]
-        : startOfWeek(baseDate, { weekStartsOn: 1 }),
-    [baseDate, dayStarts, viewType],
+        ? startDate
+          ? startOfDay(new Date(startDate))
+          : dayStarts[0] || startOfDay(new Date())
+        : startDate
+          ? startOfWeek(new Date(startDate), { weekStartsOn: 1 })
+          : startOfWeek(baseDate, { weekStartsOn: 1 }),
+    [baseDate, dayStarts, viewType, startDate],
   );
 
   const endBound = useMemo(
     () =>
-      viewType === "Day"
-        ? addDays(startBound, dayStarts.length)
-        : addDays(startBound, 7),
+      viewType === "Day" ? addDays(startBound, 1) : addDays(startBound, 7),
     [startBound, viewType],
   );
 
@@ -285,14 +314,8 @@ const CalendarView = ({
   };
 
   const renderTimeline = () => {
-    if (sortedShifts.length === 0) {
-      return (
-        <div className="timeline-empty">
-          <div className="timeline-empty__icon">📅</div>
-          <div className="timeline-empty__text">No shifts to display</div>
-        </div>
-      );
-    }
+    // Don't show empty state here - navigation should always be visible
+    // Empty state will be handled by the timeline list itself
 
     type TimelineRowProps = { shifts: any[] };
 
@@ -383,6 +406,9 @@ const CalendarView = ({
       );
     };
 
+    // Ensure navigation is always available, even with empty shifts
+    const hasShifts = sortedShifts.length > 0;
+
     return (
       <div className="timeline-container">
         <div
@@ -406,59 +432,137 @@ const CalendarView = ({
                 ))}
               </div>
             )}
-            {/* Date display navigation - moved from schedule page header */}
-            {viewType === "Day" && eventRange && onDateChange && (
+            {/* Date display navigation - Day and Week views */}
+            {(viewType === "Day" || viewType === "Week") && onDateChange && (
               <div className="mb-4 flex items-center justify-center">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+                  {/* Previous button */}
                   <button
                     onClick={() => {
                       const current = startDate
                         ? new Date(startDate)
-                        : new Date(eventRange.start);
-                      const prev = addDays(current, -1);
-                      const prevKey = format(prev, "yyyy-MM-dd");
-                      if (prevKey >= eventRange.start) {
-                        onDateChange(prevKey);
+                        : baseDate;
+                      const change = viewType === "Day" ? -1 : -7;
+                      const newDate = addDays(current, change);
+                      const newDateKey = format(newDate, "yyyy-MM-dd");
+
+                      // Allow navigation within reasonable range (1 year back/forward from min/max)
+                      const minAllowed = format(
+                        addDays(minDate, -365),
+                        "yyyy-MM-dd",
+                      );
+                      const maxAllowed = format(
+                        addDays(maxDate, 365),
+                        "yyyy-MM-dd",
+                      );
+
+                      if (
+                        newDateKey >= minAllowed &&
+                        newDateKey <= maxAllowed
+                      ) {
+                        onDateChange(newDateKey);
                       }
                     }}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
-                    aria-label="Previous day"
-                    disabled={
-                      startDate
-                        ? format(new Date(startDate), "yyyy-MM-dd") <=
-                          eventRange.start
-                        : false
-                    }
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`Previous ${viewType === "Day" ? "day" : "week"}`}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <div className="text-sm font-bold uppercase tracking-widest text-gray-700 px-3 min-w-[140px] text-center">
-                    {format(
-                      new Date(startDate || eventRange.start),
-                      "EEEE, MMMM d, yyyy",
+
+                  {/* Date display */}
+                  <div className="text-sm font-bold uppercase tracking-widest text-gray-700 px-3 min-w-[180px] text-center">
+                    {viewType === "Day" ? (
+                      format(
+                        new Date(startDate || baseDate),
+                        "EEEE, MMMM d, yyyy",
+                      )
+                    ) : (
+                      <>
+                        {format(startBound, "MMM d")} -{" "}
+                        {format(addDays(startBound, 6), "MMM d, yyyy")}
+                      </>
                     )}
                   </div>
+
+                  {/* Date picker for quick navigation */}
+                  <input
+                    type="date"
+                    value={
+                      viewType === "Day"
+                        ? format(new Date(startDate || baseDate), "yyyy-MM-dd")
+                        : format(startBound, "yyyy-MM-dd")
+                    }
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      if (selectedDate) {
+                        // Validate date is within allowed range
+                        const minAllowed = format(
+                          addDays(minDate, -365),
+                          "yyyy-MM-dd",
+                        );
+                        const maxAllowed = format(
+                          addDays(maxDate, 365),
+                          "yyyy-MM-dd",
+                        );
+
+                        if (
+                          selectedDate >= minAllowed &&
+                          selectedDate <= maxAllowed
+                        ) {
+                          onDateChange(selectedDate);
+                        }
+                      }
+                    }}
+                    min={format(addDays(minDate, -365), "yyyy-MM-dd")}
+                    max={format(addDays(maxDate, 365), "yyyy-MM-dd")}
+                    className="px-2 py-1 text-xs rounded-lg border border-gray-300 text-gray-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none bg-white"
+                    aria-label="Jump to date"
+                    title="Jump to specific date"
+                  />
+
+                  {/* Next button */}
                   <button
                     onClick={() => {
                       const current = startDate
                         ? new Date(startDate)
-                        : new Date(eventRange.start);
-                      const next = addDays(current, 1);
-                      const nextKey = format(next, "yyyy-MM-dd");
-                      if (nextKey <= eventRange.end) {
-                        onDateChange(nextKey);
+                        : baseDate;
+                      const change = viewType === "Day" ? 1 : 7;
+                      const newDate = addDays(current, change);
+                      const newDateKey = format(newDate, "yyyy-MM-dd");
+
+                      // Allow navigation within reasonable range
+                      const minAllowed = format(
+                        addDays(minDate, -365),
+                        "yyyy-MM-dd",
+                      );
+                      const maxAllowed = format(
+                        addDays(maxDate, 365),
+                        "yyyy-MM-dd",
+                      );
+
+                      if (
+                        newDateKey >= minAllowed &&
+                        newDateKey <= maxAllowed
+                      ) {
+                        onDateChange(newDateKey);
                       }
                     }}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition"
-                    aria-label="Next day"
-                    disabled={
-                      startDate
-                        ? format(new Date(startDate), "yyyy-MM-dd") >=
-                          eventRange.end
-                        : false
-                    }
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`Next ${viewType === "Day" ? "day" : "week"}`}
                   >
                     <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  {/* Today button */}
+                  <button
+                    onClick={() => {
+                      const today = format(new Date(), "yyyy-MM-dd");
+                      onDateChange(today);
+                    }}
+                    className="px-3 py-1 text-xs font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition"
+                    aria-label="Jump to today"
+                  >
+                    Today
                   </button>
                 </div>
               </div>
@@ -548,17 +652,31 @@ const CalendarView = ({
               {/* Fade overlay for smooth edges */}
               <div className="timeline-scale-fade" aria-hidden="true"></div>
             </div>
-            <List
-              defaultHeight={520}
-              rowCount={sortedShifts.length}
-              rowHeight={132}
-              rowComponent={Row}
-              rowProps={{ shifts: sortedShifts }}
-              className="timeline-list"
-              style={{ height: "100%", width: "100%" }}
-            >
-              {null}
-            </List>
+            {sortedShifts.length === 0 ? (
+              <div className="timeline-empty" style={{ padding: "2rem" }}>
+                <div className="timeline-empty__icon">📅</div>
+                <div className="timeline-empty__text">No shifts to display</div>
+                <div className="text-sm text-gray-500 mt-2">
+                  {viewType === "Day"
+                    ? "No shifts found for this date"
+                    : viewType === "Week"
+                      ? "No shifts found for this week"
+                      : "No shifts found"}
+                </div>
+              </div>
+            ) : (
+              <List
+                defaultHeight={520}
+                rowCount={sortedShifts.length}
+                rowHeight={132}
+                rowComponent={Row}
+                rowProps={{ shifts: sortedShifts }}
+                className="timeline-list"
+                style={{ height: "100%", width: "100%" }}
+              >
+                {null}
+              </List>
+            )}
           </div>
         </div>
       </div>

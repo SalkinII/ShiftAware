@@ -249,3 +249,13 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: integrated SwapInterface into assignments page with List/Swap view toggle
 - v0.3.0: added visual feedback during drag operations (drag overlay, selection highlighting)
 - v0.3.0: connected SwapInterface to existing swap API endpoint (/api/assignments/swap)
+
+## 2026-01-16T00:00:00Z
+- v0.3.0: fixed timeline view navigation issues - improved date range calculation from all shifts
+- v0.3.0: added week view navigation controls (prev/next week buttons)
+- v0.3.0: fixed day view navigation to work regardless of shift existence
+- v0.3.0: ensured navigation controls always visible even on empty states
+- v0.3.0: added "Today" button for quick navigation to current date
+- v0.3.0: added date picker input field to navigation controls for quick date jumping
+- v0.3.0: date picker respects min/max date boundaries and works for both Day and Week views
+- v0.3.0: improved empty state messaging with contextual messages for Day/Week views
