@@ -263,3 +263,6 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: fixed multi-day shift display clipping (partial fix - some edge cases remain for future improvement)
 - v0.3.0: documented remaining timeline view issues (day view multi-day shifts, week view vertical scrolling, grid view improvements)
 - v0.3.0: designed caching strategy for frequently accessed data (client-side in-memory cache with React Context)
+- v0.3.0: implemented Phase 1 basic caching system (CacheProvider, useCache hook, cache utilities)
+- v0.3.0: integrated cache with schedule page for shifts data
+- v0.3.0: added cache invalidation on shift creation via custom events
