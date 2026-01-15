@@ -139,3 +139,11 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: error utilities handle Zod validation errors, Error instances, and unknown errors
 - v0.2.0: updated shifts API route to use standardized error responses (GET and POST)
 - v0.2.0: error responses now include error code, message, and structured details for better debugging
+
+## 2026-01-15T17:00:00Z
+- v0.2.0: fixed Next.js 15 error "Event handlers cannot be passed to Client Component props" in not-found.tsx
+- v0.2.0: added "use client" directive to not-found.tsx to enable onClick handler for "Go Back" button
+- v0.2.0: verified error.tsx already has "use client" directive (correctly implemented)
+- v0.2.0: cleared webpack cache (.next folder) to resolve module 638.js build errors
+- v0.2.0: build now completes successfully without errors
+- v0.2.0: error pages now properly handle client-side interactivity in Next.js 15
