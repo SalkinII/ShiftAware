@@ -330,17 +330,41 @@ const CalendarView = ({
       const filled = shift.assignments?.length || 0;
       const capacity = shift.capacity || 0;
       const status = getCoverage(shift);
-      const left = Math.max(
+
+      // Calculate position relative to startBound
+      const startMinutes = differenceInMinutes(start, startBound);
+      const endMinutes = differenceInMinutes(end, startBound);
+
+      // Clip shift to visible bounds
+      const visibleStartMinutes = Math.max(0, startMinutes);
+      const visibleEndMinutes = Math.min(totalMinutes, endMinutes);
+
+      // Calculate left position (percentage from startBound)
+      const left = Math.max(0, (visibleStartMinutes / totalMinutes) * 100);
+
+      // Calculate width (percentage of visible portion)
+      const visibleDuration = Math.max(
         0,
-        (differenceInMinutes(start, startBound) / totalMinutes) * 100,
+        visibleEndMinutes - visibleStartMinutes,
       );
-      const rawWidth = Math.max(
-        2,
-        (differenceInMinutes(end, start) / totalMinutes) * 100,
-      );
-      let width = Math.max(12, rawWidth); // ensure enough space for labels
+      let width = Math.max(12, (visibleDuration / totalMinutes) * 100); // ensure enough space for labels
+
+      // Ensure shift doesn't extend beyond 100%
       if (left + width > 100) {
         width = Math.max(8, 100 - left); // keep inside track even near the right edge
+      }
+
+      // If shift is completely outside visible range, render empty row
+      if (
+        visibleDuration <= 0 ||
+        endMinutes < 0 ||
+        startMinutes > totalMinutes
+      ) {
+        return (
+          <div style={style} className="timeline-row" aria-hidden="true">
+            {/* Empty row for shifts outside visible range */}
+          </div>
+        );
       }
 
       return (

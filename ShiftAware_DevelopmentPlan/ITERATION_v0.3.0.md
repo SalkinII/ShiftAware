@@ -76,6 +76,9 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Integrated SwapInterface into assignments page with List/Swap view toggle
 - ✅ Drag-and-drop allows selecting 2 assignments to swap
 - ✅ Visual feedback during drag operations
+- ✅ Fixed timeline view navigation issues (day/week navigation, date range calculation)
+- ✅ Added date picker for quick navigation in timeline view
+- ✅ Improved empty state messaging and ensured navigation always visible
 
 ---
 
