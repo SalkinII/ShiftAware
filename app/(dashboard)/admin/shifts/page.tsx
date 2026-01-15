@@ -75,18 +75,37 @@ export default function ShiftsPage() {
   const {
     data: cachedShifts,
     loading: shiftsLoading,
+    error: shiftsError,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
     key: "shifts",
     fetchFn: async () => {
       const res = await fetch("/api/shifts");
-      if (!res.ok) throw new Error("Failed to fetch shifts");
+      if (!res.ok) {
+        let errorMessage = "Failed to fetch shifts";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = `${errorMessage}: ${res.status} ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
       return res.json();
     },
   });
 
   const shifts = cachedShifts || [];
   const loading = shiftsLoading;
+
+  // Show error toast if fetch fails
+  useEffect(() => {
+    if (shiftsError) {
+      toast.error(shiftsError.message || "Failed to load shifts");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shiftsError]);
 
   useEffect(() => {
     loadEvents();
