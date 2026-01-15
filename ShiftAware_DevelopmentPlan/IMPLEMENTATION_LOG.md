@@ -206,3 +206,13 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: integrated ToastProvider into dashboard layout
 - v0.2.0: replaced loading spinners with Skeleton components in dashboard
 - v0.2.0: replaced alert() calls with toast notifications in dashboard
+
+## 2026-01-15T22:30:00Z
+- v0.2.0: enhanced Input component with improved error styling and ARIA attributes (aria-invalid, aria-describedby)
+- v0.2.0: added form validation with inline error messages to members page
+- v0.2.0: replaced alert() calls with toast notifications in members page
+- v0.2.0: replaced loading spinner with Skeleton components in members page
+- v0.2.0: created keyboard shortcuts hook (lib/hooks/useKeyboardShortcuts.ts) with Escape key support
+- v0.2.0: added keyboard shortcuts to members page (Escape to close form)
+- v0.2.0: added ARIA labels to forms and buttons for better accessibility
+- v0.2.0: improved form error handling with real-time validation feedback

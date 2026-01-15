@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  useKeyboardShortcuts,
+  commonShortcuts,
+} from "@/lib/hooks/useKeyboardShortcuts";
 import { Plus, Download, Search, UserCircle2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
 import { ExperienceLevel, Role } from "@prisma/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -22,11 +28,13 @@ interface TeamMember {
 }
 
 export default function MembersPage() {
+  const toast = useToast();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     alias: "",
     avatarId: "🐺",
@@ -38,6 +46,19 @@ export default function MembersPage() {
   useEffect(() => {
     loadMembers();
   }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "Escape",
+      handler: () => {
+        if (showForm) {
+          setShowForm(false);
+          setFormErrors({});
+        }
+      },
+    },
+  ]);
 
   async function loadMembers() {
     try {
@@ -82,14 +103,39 @@ export default function MembersPage() {
       doc.save("ShiftAware_Pseudonym_Mapping_Template.pdf");
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Failed to generate mapping template");
+      toast.error("Failed to generate mapping template");
     } finally {
       setIsExporting(false);
     }
   }
 
+  function validateForm(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (!formData.alias.trim()) {
+      errors.alias = "Alias is required";
+    }
+
+    if (!formData.genderRole) {
+      errors.genderRole = "Gender role is required";
+    }
+
+    if (formData.capabilities.length === 0) {
+      errors.capabilities = "At least one capability is required";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the form errors before submitting");
+      return;
+    }
+
     try {
       const res = await fetch("/api/members", {
         method: "POST",
@@ -98,8 +144,10 @@ export default function MembersPage() {
       });
 
       if (res.ok) {
+        toast.success("Member created successfully");
         await loadMembers();
         setShowForm(false);
+        setFormErrors({});
         setFormData({
           alias: "",
           avatarId: "🐺",
@@ -109,18 +157,19 @@ export default function MembersPage() {
         });
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to create member");
+        toast.error(error.error || "Failed to create member");
       }
     } catch (error) {
       console.error("Failed to create member:", error);
-      alert("Failed to create member");
+      toast.error("Failed to create member. Please try again.");
     }
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" variant="text" />
+        <SkeletonList count={5} />
       </div>
     );
   }
@@ -256,14 +305,22 @@ export default function MembersPage() {
               <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
                 <Plus className="w-5 h-5 text-primary-500" /> New Member
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+                aria-label="Add new team member form"
+              >
                 <Input
                   label="System Alias"
                   placeholder="e.g. Wolf, Fox, Bear"
                   value={formData.alias}
-                  onChange={(e) =>
-                    setFormData({ ...formData, alias: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, alias: e.target.value });
+                    if (formErrors.alias) {
+                      setFormErrors({ ...formErrors, alias: "" });
+                    }
+                  }}
+                  error={formErrors.alias}
                   required
                   className="bg-gray-50 border-gray-100 font-medium"
                 />
@@ -297,16 +354,30 @@ export default function MembersPage() {
                   label="Gender Role"
                   placeholder="e.g. Male, Female, Non-binary"
                   value={formData.genderRole}
-                  onChange={(e) =>
-                    setFormData({ ...formData, genderRole: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, genderRole: e.target.value });
+                    if (formErrors.genderRole) {
+                      setFormErrors({ ...formErrors, genderRole: "" });
+                    }
+                  }}
+                  error={formErrors.genderRole}
                   required
                   className="bg-gray-50 border-gray-100 font-medium"
                 />
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">
                     Capabilities
+                    <span className="text-red-500 ml-1">*</span>
                   </label>
+                  {formErrors.capabilities && (
+                    <p
+                      className="text-sm text-red-600 font-medium flex items-center gap-1"
+                      role="alert"
+                    >
+                      <span>⚠</span>
+                      {formErrors.capabilities}
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     {Object.values(Role).map((role) => (
                       <label
@@ -332,6 +403,12 @@ export default function MembersPage() {
                                   capabilities: formData.capabilities.filter(
                                     (r) => r !== role,
                                   ),
+                                });
+                              }
+                              if (formErrors.capabilities) {
+                                setFormErrors({
+                                  ...formErrors,
+                                  capabilities: "",
                                 });
                               }
                             }}
