@@ -29,8 +29,8 @@ This iteration focuses on implementing all deferred features from previous itera
 
 ## Performance Improvements
 
+- [x] **Implement virtual scrolling for long lists** - Already implemented using `react-window` in CalendarView timeline
 - [ ] Optimize large schedule renders
-- [ ] Implement virtual scrolling for long lists
 - [ ] Cache frequently accessed data
 - [ ] Optimize PDF generation performance
 
@@ -79,6 +79,11 @@ This iteration focuses on implementing all deferred features from previous itera
 - ✅ Fixed timeline view navigation issues (day/week navigation, date range calculation)
 - ✅ Added date picker for quick navigation in timeline view
 - ✅ Improved empty state messaging and ensured navigation always visible
+- ✅ Fixed week view horizontal scrolling
+- ✅ Fixed multi-day shift display clipping (partial fix - some edge cases remain)
+
+### 2026-01-16
+- ✅ Documented remaining timeline view issues for future improvement (day view multi-day shifts, week view vertical scrolling, grid view compactness, grid view for swap interface)
 
 ---
 

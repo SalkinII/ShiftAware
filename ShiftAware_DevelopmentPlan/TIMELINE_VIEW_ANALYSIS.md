@@ -158,6 +158,21 @@
 
 ---
 
+## Remaining Issues (Deferred for Future Improvement)
+
+### 2026-01-16: Additional Timeline View Issues
+**Issues Identified:**
+1. **Day view multi-day shift display**: Shifts that run over to the next day are still not visible (showing empty row with `aria-hidden="true"`). The clipping logic may be too aggressive, hiding shifts that should be partially visible.
+2. **Week view vertical scrolling**: No scroll down for week view. The timeline list needs vertical scrolling when there are many shifts.
+3. **Grid view compactness**: Grid view could be more compact - cells are too large, could reduce padding/spacing for better information density.
+4. **Grid view for swap interface**: Grid view would be a nice solution for the swap interface - could use grid view as a two-column layout for swap operations with better visual pairing.
+
+**Status:** Deferred to future iteration (v0.4.0+)
+
+**Rationale:** These are UX improvements that don't block core functionality. Current timeline view works for basic use cases. These enhancements can be prioritized based on user feedback.
+
+---
+
 ## Notes
 
 - Current timeline uses `react-window` for virtualization
