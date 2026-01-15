@@ -216,3 +216,13 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.2.0: added keyboard shortcuts to members page (Escape to close form)
 - v0.2.0: added ARIA labels to forms and buttons for better accessibility
 - v0.2.0: improved form error handling with real-time validation feedback
+
+## 2026-01-15T23:00:00Z
+- v0.2.0: enhanced Select component with error styling and ARIA attributes (matching Input component)
+- v0.2.0: applied toast notifications and skeleton loading to shifts page
+- v0.2.0: added form validation with inline errors to shifts page
+- v0.2.0: added keyboard shortcuts (Escape) to shifts page
+- v0.2.0: applied toast notifications and skeleton loading to assignments page
+- v0.2.0: applied toast notifications and skeleton loading to preferences page
+- v0.2.0: applied skeleton loading to audit page
+- v0.2.0: all UX enhancements now applied across all admin pages

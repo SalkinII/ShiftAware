@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
+import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -37,10 +40,12 @@ interface Event {
 }
 
 export default function ShiftsPage() {
+  const toast = useToast();
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     eventId: "",
     type: "MOBILE_TEAM_1" as ShiftType,
@@ -84,17 +89,46 @@ export default function ShiftsPage() {
     }
   }
 
+  function validateForm(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (!formData.eventId) {
+      errors.eventId = "Please select an event";
+    }
+
+    if (!formData.startTime) {
+      errors.startTime = "Start time is required";
+    }
+
+    if (!formData.endTime) {
+      errors.endTime = "End time is required";
+    }
+
+    if (formData.startTime && formData.endTime) {
+      const startDate = new Date(formData.startTime);
+      const endDate = new Date(formData.endTime);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        errors.startTime = "Invalid date format";
+      } else {
+        const calculatedDuration = Math.round(
+          (endDate.getTime() - startDate.getTime()) / 60000,
+        );
+        if (calculatedDuration <= 0) {
+          errors.endTime = "End time must be after start time";
+        }
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Validate required fields before submission
-    if (!formData.eventId) {
-      alert("Please select an event");
-      return;
-    }
-
-    if (!formData.startTime || !formData.endTime) {
-      alert("Please provide both start and end times");
+    if (!validateForm()) {
+      toast.error("Please fix the form errors before submitting");
       return;
     }
 
@@ -102,20 +136,10 @@ export default function ShiftsPage() {
     const startDate = new Date(formData.startTime);
     const endDate = new Date(formData.endTime);
 
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      alert("Invalid date format");
-      return;
-    }
-
     // Calculate duration from actual times to ensure it matches
     const calculatedDuration = Math.round(
       (endDate.getTime() - startDate.getTime()) / 60000,
     );
-
-    if (calculatedDuration <= 0) {
-      alert("End time must be after start time");
-      return;
-    }
 
     // Prepare payload with ISO datetime strings and matching duration
     const payload = {
@@ -133,8 +157,10 @@ export default function ShiftsPage() {
       });
 
       if (res.ok) {
+        toast.success("Shift created successfully");
         await loadData();
         setShowForm(false);
+        setFormErrors({});
         // Reset form
         setFormData({
           eventId: events.length > 0 ? events[0].id : "",
@@ -147,7 +173,6 @@ export default function ShiftsPage() {
           capacity: 2,
           requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
         });
-        alert("Shift created successfully");
       } else {
         const errorData = await res.json();
         // Extract validation error details if available
@@ -158,21 +183,35 @@ export default function ShiftsPage() {
               (issue: { path: string[]; message: string }) =>
                 `${issue.path.join(".")}: ${issue.message}`,
             )
-            .join("\n");
-          errorMessage = `Validation error:\n${issues}`;
+            .join(", ");
+          errorMessage = `Validation error: ${issues}`;
         }
-        alert(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Failed to create shift:", error);
-      alert("Failed to create shift. Please check the console for details.");
+      toast.error("Failed to create shift. Please try again.");
     }
   }
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "Escape",
+      handler: () => {
+        if (showForm) {
+          setShowForm(false);
+          setFormErrors({});
+        }
+      },
+    },
+  ]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" variant="text" />
+        <SkeletonList count={5} />
       </div>
     );
   }
@@ -358,13 +397,21 @@ export default function ShiftsPage() {
               <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
                 <Plus className="w-5 h-5 text-primary-500" /> New Shift
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+                aria-label="Create new shift form"
+              >
                 <Select
                   label="Event Context"
                   value={formData.eventId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, eventId: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, eventId: e.target.value });
+                    if (formErrors.eventId) {
+                      setFormErrors({ ...formErrors, eventId: "" });
+                    }
+                  }}
+                  error={formErrors.eventId}
                   required
                   className="bg-gray-50 border-gray-100 font-medium"
                 >
@@ -400,6 +447,9 @@ export default function ShiftsPage() {
                     value={formData.startTime}
                     onChange={(e) => {
                       const startValue = e.target.value;
+                      if (formErrors.startTime) {
+                        setFormErrors({ ...formErrors, startTime: "" });
+                      }
                       if (!startValue) {
                         setFormData({
                           ...formData,
@@ -423,6 +473,7 @@ export default function ShiftsPage() {
                         endTime: end.toISOString().slice(0, 16),
                       });
                     }}
+                    error={formErrors.startTime}
                     required
                     className="bg-gray-50 border-gray-100 text-xs font-bold"
                   />
@@ -431,6 +482,9 @@ export default function ShiftsPage() {
                     type="datetime-local"
                     value={formData.endTime}
                     onChange={(e) => {
+                      if (formErrors.endTime) {
+                        setFormErrors({ ...formErrors, endTime: "" });
+                      }
                       const endValue = e.target.value;
                       if (!endValue) {
                         setFormData({
@@ -471,6 +525,7 @@ export default function ShiftsPage() {
                         durationMinutes: minutes,
                       });
                     }}
+                    error={formErrors.endTime}
                     required
                     className="bg-gray-50 border-gray-100 text-xs font-bold"
                   />

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
 import {
   Sparkles,
   Calendar,
@@ -27,6 +29,7 @@ interface Shift {
 }
 
 export default function PreferencesPage() {
+  const toast = useToast();
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [selectedShifts, setSelectedShifts] = useState<Map<string, number>>(
     new Map(),
@@ -87,12 +90,12 @@ export default function PreferencesPage() {
 
   async function handleSubmit() {
     if (!selectedMember) {
-      alert("Please select a team member");
+      toast.warning("Please select a team member");
       return;
     }
 
     if (selectedShifts.size < 2) {
-      alert("Please select at least 2 shifts");
+      toast.warning("Please select at least 2 shifts");
       return;
     }
 
@@ -115,15 +118,15 @@ export default function PreferencesPage() {
       });
 
       if (res.ok) {
-        alert("Preferences submitted successfully!");
+        toast.success("Preferences submitted successfully!");
         setSelectedShifts(new Map());
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to submit preferences");
+        toast.error(error.error || "Failed to submit preferences");
       }
     } catch (error) {
       console.error("Failed to submit preferences:", error);
-      alert("Failed to submit preferences");
+      toast.error("Failed to submit preferences. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -131,8 +134,9 @@ export default function PreferencesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" variant="text" />
+        <SkeletonList count={3} />
       </div>
     );
   }

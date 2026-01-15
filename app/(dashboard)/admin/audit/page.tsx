@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { format } from "date-fns";
 import { Download, Search, RefreshCw } from "lucide-react";
 import { AuditAction, EntityType } from "@prisma/client";
@@ -267,9 +268,7 @@ export default function AuditLogPage() {
 
       <div className="space-y-3">
         {loading && filteredLogs.length === 0 ? (
-          <Card className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
-          </Card>
+          <SkeletonList count={5} />
         ) : filteredLogs.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-gray-500">No audit logs found</p>

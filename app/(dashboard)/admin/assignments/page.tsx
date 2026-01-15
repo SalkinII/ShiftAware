@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
 import {
   RefreshCw,
@@ -46,6 +48,7 @@ interface Event {
 }
 
 export default function AssignmentsPage() {
+  const toast = useToast();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -116,6 +119,7 @@ export default function AssignmentsPage() {
     }
 
     setRunningAlgorithm(true);
+    toast.info("Running assignment algorithm...");
     try {
       const res = await fetch("/api/assignments", {
         method: "POST",
@@ -125,17 +129,17 @@ export default function AssignmentsPage() {
 
       if (res.ok) {
         const result = await res.json();
-        alert(
+        toast.success(
           `Algorithm completed! Created ${result.assignmentsCount} assignments.`,
         );
         await loadAssignments(eventId);
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error || "Failed to run algorithm"}`);
+        toast.error(error.error || "Failed to run algorithm");
       }
     } catch (error) {
       console.error("Run algorithm error:", error);
-      alert("Failed to run algorithm");
+      toast.error("Failed to run algorithm. Please try again.");
     } finally {
       setRunningAlgorithm(false);
     }
@@ -160,8 +164,9 @@ export default function AssignmentsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="w-8 h-8 animate-spin text-primary-600" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" variant="text" />
+        <SkeletonList count={5} />
       </div>
     );
   }
