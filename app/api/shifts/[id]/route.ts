@@ -154,8 +154,23 @@ export async function DELETE(
       );
     }
 
-    await prisma.shift.delete({
-      where: { id: shiftId },
+    // Delete related records first (ShiftRole, ShiftPreference)
+    // Use transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+      // Delete shift roles
+      await tx.shiftRole.deleteMany({
+        where: { shiftId },
+      });
+
+      // Delete shift preferences
+      await tx.shiftPreference.deleteMany({
+        where: { shiftId },
+      });
+
+      // Finally delete the shift
+      await tx.shift.delete({
+        where: { id: shiftId },
+      });
     });
 
     await createAuditLog({
