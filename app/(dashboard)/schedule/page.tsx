@@ -18,6 +18,7 @@ import CalendarView from "@/components/features/Calendar/CalendarView";
 import { addDays, format } from "date-fns";
 import { exportScheduleToPDF } from "@/lib/services/export";
 import { cn } from "@/lib/utils";
+import { useCache } from "@/lib/cache/useCache";
 
 type CoverageState = "full" | "partial" | "empty";
 
@@ -96,54 +97,105 @@ export default function SchedulePage() {
     return { start: dates[0], end: dates[dates.length - 1] };
   }, [shifts]);
 
+  // Use cache for shifts data
+  const {
+    data: cachedShifts,
+    loading: cacheLoading,
+    refetch: refetchShifts,
+  } = useCache<Shift[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      const data = await res.json();
+      return data;
+    },
+  });
+
   useEffect(() => {
     const savedView = localStorage.getItem("shiftaware:schedule:view");
     if (savedView === "Day" || savedView === "Week" || savedView === "Grid") {
       setViewType(savedView);
     }
-    loadSchedule();
 
     // Listen for custom event to refresh schedule
     const handleRefresh = () => {
-      loadSchedule();
+      refetchShifts();
     };
     window.addEventListener("shiftaware:refresh-schedule", handleRefresh);
     return () => {
       window.removeEventListener("shiftaware:refresh-schedule", handleRefresh);
     };
-  }, []);
+  }, [refetchShifts]);
+
+  // Update shifts when cache data changes
+  useEffect(() => {
+    if (cachedShifts) {
+      setShifts(cachedShifts);
+      if (cachedShifts.length > 0) {
+        const earliest = cachedShifts.reduce(
+          (earliestDate: string | undefined, shift: Shift) => {
+            const start = shift.startTime.split("T")[0];
+            if (!earliestDate) return start;
+            return new Date(start) < new Date(earliestDate)
+              ? start
+              : earliestDate;
+          },
+          undefined as string | undefined,
+        );
+        setCurrentEventDate(earliest);
+      }
+      setLoading(false);
+    } else if (!cacheLoading) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [cachedShifts, cacheLoading]);
+
+  // Use cache for shifts data
+  const {
+    data: cachedShifts,
+    loading: cacheLoading,
+    refetch: refetchShifts,
+  } = useCache<Shift[]>({
+    key: "shifts",
+    fetchFn: async () => {
+      const res = await fetch("/api/shifts");
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      const data = await res.json();
+      return data;
+    },
+  });
 
   useEffect(() => {
     localStorage.setItem("shiftaware:schedule:view", viewType);
   }, [viewType]);
 
-  async function loadSchedule() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/shifts");
-      if (res.ok) {
-        const data = await res.json();
-        setShifts(data);
-        if (data.length > 0) {
-          const earliest = data.reduce(
-            (earliestDate: string | undefined, shift: Shift) => {
-              const start = shift.startTime.split("T")[0];
-              if (!earliestDate) return start;
-              return new Date(start) < new Date(earliestDate)
-                ? start
-                : earliestDate;
-            },
-            undefined as string | undefined,
-          );
-          setCurrentEventDate(earliest);
-        }
+  // Update shifts when cache data changes
+  useEffect(() => {
+    if (cachedShifts) {
+      setShifts(cachedShifts);
+      if (cachedShifts.length > 0) {
+        const earliest = cachedShifts.reduce(
+          (earliestDate: string | undefined, shift: Shift) => {
+            const start = shift.startTime.split("T")[0];
+            if (!earliestDate) return start;
+            return new Date(start) < new Date(earliestDate)
+              ? start
+              : earliestDate;
+          },
+          undefined as string | undefined,
+        );
+        setCurrentEventDate(earliest);
       }
-    } catch (error) {
-      console.error("Failed to load schedule:", error);
-    } finally {
       setLoading(false);
+    } else if (!cacheLoading) {
+      setLoading(false);
+    } else {
+      setLoading(true);
     }
-  }
+  }, [cachedShifts, cacheLoading]);
 
   function coverageState(shift: Shift): CoverageState {
     const filled = shift.assignments?.length || 0;
