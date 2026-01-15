@@ -89,7 +89,7 @@ export default function PreferencesPage() {
   }
 
   async function handleSubmit() {
-    if (!selectedMember) {
+    if (!selectedMember || selectedMember.trim() === "") {
       toast.warning("Please select a team member");
       return;
     }
@@ -99,14 +99,28 @@ export default function PreferencesPage() {
       return;
     }
 
+    // Validate that all shift IDs are valid
+    const invalidShifts = Array.from(selectedShifts.keys()).filter(
+      (id) => !id || id.trim() === "" || id.length < 10,
+    );
+    if (invalidShifts.length > 0) {
+      toast.error(
+        "Some selected shifts have invalid IDs. Please refresh and try again.",
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const preferences = Array.from(selectedShifts.entries()).map(
-        ([shiftId, priority]) => ({
+      const preferences = Array.from(selectedShifts.entries())
+        .filter(
+          ([shiftId]) =>
+            shiftId && shiftId.trim() !== "" && shiftId.length >= 10,
+        )
+        .map(([shiftId, priority]) => ({
           shiftId,
           priority,
-        }),
-      );
+        }));
 
       const res = await fetch("/api/preferences", {
         method: "POST",

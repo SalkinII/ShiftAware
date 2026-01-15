@@ -84,3 +84,25 @@
 ## Outstanding Issues
 
 - Document any remaining issues here after fixes are applied
+
+---
+
+## 5. CUID Validation Errors
+
+**Problem:** Validation errors showing "Invalid cuid" for shiftId and eventId fields.
+
+**Root Cause:** 
+- Zod `.cuid()` validator is very strict and requires exact CUID format
+- Some IDs from database might not match strict CUID format
+- Empty strings might be sent before validation
+
+**Intended Behavior:**
+- Accept valid CUIDs (25 chars, starts with 'c')
+- Also accept other reasonable ID formats (>= 10 chars) for flexibility
+- Reject empty strings and very short IDs (< 10 chars)
+- Provide clear error messages
+
+**Fix:** 
+- Created lenient `idSchema` that accepts CUID format OR any string >= 10 chars
+- Added client-side validation to prevent empty IDs from being sent
+- Updated tests to match new validation approach
