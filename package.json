@@ -15,6 +15,7 @@
     "test:e2e:headed": "playwright test --headed",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate-safe": "powershell -ExecutionPolicy Bypass -File scripts/migrate-and-generate.ps1",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"

@@ -16,17 +16,6 @@ export async function GET(request: Request) {
       return createUnauthorizedResponse();
     }
 
-    // Check if Prisma client has the new models
-    if (!prisma.shiftTemplate) {
-      console.error(
-        "Prisma client missing shiftTemplate model. Run: npx prisma generate",
-      );
-      return createErrorResponse(
-        new Error("Prisma client not updated. Please restart the dev server."),
-        "Database models not available. Please restart the server.",
-      );
-    }
-
     const templates = await prisma.shiftTemplate.findMany({
       include: {
         requiredRoles: true,
@@ -39,11 +28,18 @@ export async function GET(request: Request) {
     return createSuccessResponse(templates);
   } catch (error) {
     console.error("Get templates error:", error);
-    if (error instanceof Error) {
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
+
+    // Check for Prisma client missing model error
+    if (error instanceof Error && error.message.includes("shiftTemplate")) {
+      const helpfulError = new Error(
+        "Prisma client not regenerated. Stop dev server, run 'npx prisma generate', then restart.",
+      );
+      return createErrorResponse(
+        helpfulError,
+        "Database models not available. Please regenerate Prisma client and restart the server.",
+      );
     }
+
     return createErrorResponse(error, "Failed to fetch templates");
   }
 }
@@ -59,17 +55,6 @@ export async function POST(request: Request) {
     const validated = shiftTemplateSchema.parse(body);
 
     const { requiredRoles, ...templateData } = validated;
-
-    // Check if Prisma client has the new models
-    if (!prisma.shiftTemplate) {
-      console.error(
-        "Prisma client missing shiftTemplate model. Run: npx prisma generate",
-      );
-      return createErrorResponse(
-        new Error("Prisma client not updated. Please restart the dev server."),
-        "Database models not available. Please restart the server.",
-      );
-    }
 
     const template = await prisma.shiftTemplate.create({
       data: {
@@ -94,11 +79,18 @@ export async function POST(request: Request) {
     return createSuccessResponse(template, 201);
   } catch (error) {
     console.error("Create template error:", error);
-    if (error instanceof Error) {
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
+
+    // Check for Prisma client missing model error
+    if (error instanceof Error && error.message.includes("shiftTemplate")) {
+      const helpfulError = new Error(
+        "Prisma client not regenerated. Stop dev server, run 'npx prisma generate', then restart.",
+      );
+      return createErrorResponse(
+        helpfulError,
+        "Database models not available. Please regenerate Prisma client and restart the server.",
+      );
     }
+
     return createErrorResponse(error, "Failed to create template");
   }
 }

@@ -6,10 +6,11 @@
 
 ## Shift Templates (v1.1.0)
 
-**Issue:** Prisma client regeneration required after migration  
-**Status:** Blocking  
-**Fix:** Restart dev server after `npx prisma migrate dev` to include new models (`shiftTemplate`, `shiftTemplateRole`, `scheduledShift`)  
-**Impact:** Templates API returns 500 until client regenerated
+**Issue:** Prisma client regeneration blocked by dev server file lock  
+**Status:** Resolved  
+**Fix:** Use `npm run db:migrate-safe` script (checks for running dev server, runs migrate + generate, verifies client)  
+**Workaround:** Stop dev server → `npx prisma migrate dev` → `npx prisma generate` → restart dev server  
+**Impact:** Templates API returns 500 if client not regenerated (helpful error message provided)
 
 ---
 
