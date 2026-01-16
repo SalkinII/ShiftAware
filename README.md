@@ -26,8 +26,6 @@ npm run dev                  # app on host 43000 -> container 3000
 ```
 
 ### Production
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed production deployment instructions.
-
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
@@ -55,11 +53,14 @@ docker compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
 
 ## Documentation
 
-- `ShiftAware_DevelopmentPlan/README.md` - Project overview
-- `ShiftAware_DevelopmentPlan/ROADMAP.md` - Development phases
-- `ShiftAware_DevelopmentPlan/DATABASE_SCHEMA.md` - Data model
-- `DEPLOYMENT.md` - Production deployment guide
-- `ShiftAware_DevelopmentPlan/IMPLEMENTATION_LOG.md` - Change log
+**Core Documentation** (see `ShiftAware_DevelopmentPlan/README.md`):
+- `SYSTEM_ARCHITECTURE.md` - Architecture, flows, auth model
+- `DATABASE_SCHEMA.md` - Data model and constraints
+- `UI_PARADIGM.md` - UI design rules (Design System v2)
+- `UX_FLOW.md` - Admin/user flows and information flow
+- `PROJECT_STATUS.md` - Current state and progress
+- `ROADMAP.md` - Short-term plan and next steps
+- `IMPLEMENTATION_LOG.md` - Change log (append-only)
 
 ## Testing
 

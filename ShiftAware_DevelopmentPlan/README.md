@@ -17,9 +17,9 @@ Essential documentation for understanding technical setup, architecture, and cur
 
 ## Design/Feature Notes
 
-- `SHIFT_TEMPLATES_DESIGN.md` — Template system decisions
-- `SWAP_INTERFACE_DESIGN.md` — Swap UI decisions
-- `UI_IMPROVEMENTS_PLAN.md` — Planned improvements (kept lean)
+- `SHIFT_TEMPLATES_DESIGN.md` — Template system design decisions
+- `SWAP_INTERFACE_DESIGN.md` — Swap UI design decisions
+- `UI_IMPROVEMENTS_PLAN.md` — Planned UI improvements (kept lean)
 
 ## Conventions
 

@@ -374,3 +374,8 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.1.0: implemented shift time snapping to 15-minute intervals (drag-and-drop rescheduling snaps to nearest 15-min)
 - v1.1.0: fixed modal rounded corners (changed rounded-[2rem] to rounded-3xl for smoother edges)
 - v1.1.0: implemented Modify Slot functionality (time editor modal with DateTimePicker for manual time editing)
+
+## 2026-01-17T01:00:00Z
+- v1.1.0: consolidated documentation (merged DESIGN_SYSTEM_V2_PLAN.md into UI_PARADIGM.md, merged KNOWN_ISSUES.md into PROJECT_STATUS.md)
+- v1.1.0: streamlined ROADMAP.md (removed duplicate status, references PROJECT_STATUS.md)
+- v1.1.0: updated root README.md to reflect current documentation structure

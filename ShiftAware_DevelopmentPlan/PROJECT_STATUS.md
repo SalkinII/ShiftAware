@@ -1,6 +1,6 @@
 # Project Status Summary
 
-**Last Updated:** 2026-01-16  
+**Last Updated:** 2026-01-17  
 **Current Iteration:** v1.1.0 (development)  
 **Branch:** `iteration/v1.1`  
 **Latest Release:** v1.0.0 (tagged and merged to main)
@@ -40,10 +40,14 @@
 **Completed (v1.1.0):**
 - ✅ Shift Templates implementation (schema, API, UI, drag-drop)
 - ✅ Swap Interface condensed grid/calendar view (filters, date grouping, compact cards)
-- ⚠️ Known issue: Prisma client regeneration required (see KNOWN_ISSUES.md)
+- ✅ Calendar timeline improvements (15-minute ticks, shift snapping, condensed lanes)
+- ✅ Conflict detection integration (swap/reschedule flows, ConflictWizard entry points)
+- ✅ Export centralization (removed duplicate UI, fixed PDF quality)
+- ✅ Drag-and-drop fixes (templates, shifts, drop zones)
+- ✅ Modify Slot functionality (time editor modal)
+- ✅ Template drag-and-drop from palette panel
 
 **Next:**
-- Shift Templates testing and refinement
 - Calendar scroll improvements (vertical infinite scroll, horizontal inspired)
 - Reactive patterns (transitions, progressive disclosure)
 - UI polish and accessibility audit
@@ -125,18 +129,26 @@
 
 ---
 
-## Known Issues (Deferred to Post-v1.0)
+## Known Issues
 
-### Timeline View
+### Resolved
+**Prisma Client Regeneration (v1.1.0)**
+- **Issue:** Prisma client regeneration blocked by dev server file lock
+- **Status:** Resolved
+- **Fix:** Use `npm run db:migrate-safe` script (checks for running dev server, runs migrate + generate, verifies client)
+- **Workaround:** Stop dev server → `npx prisma migrate dev` → `npx prisma generate` → restart dev server
+- **Impact:** Templates API returns 500 if client not regenerated (helpful error message provided)
+
+### Deferred to Post-v1.1.0
+
+**Timeline View**
 1. Day view multi-day shift display (shifts running over still show empty rows)
 2. Week view vertical scrolling (needed when many shifts)
 3. Grid view compactness (cells could be smaller)
-4. Grid view for swap interface (two-column layout enhancement)
+4. Swap interface two-column layout enhancement
 
-### Swap Interface UI
+**Swap Interface UI**
 - Multiple selection possible but not sensible (needs 2-selection limit or better feedback)
-
-**Status:** Documented, deferred to post-v1.0
 
 ---
 
