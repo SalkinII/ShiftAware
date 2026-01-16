@@ -245,6 +245,7 @@ const CalendarView = ({
                   <DateDropZone
                     key={shift.id}
                     date={shiftDate}
+                    as="th"
                     className="p-4 text-center border-b border-r min-w-[140px]"
                   >
                     <div className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">

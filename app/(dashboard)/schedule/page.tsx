@@ -21,6 +21,7 @@ import {
   DragEndEvent,
   DragStartEvent,
   useDroppable,
+  closestCenter,
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -483,6 +484,7 @@ export default function SchedulePage() {
       />
       <DndContext
         sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
