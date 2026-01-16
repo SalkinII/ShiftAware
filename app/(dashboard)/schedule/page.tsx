@@ -34,6 +34,7 @@ import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import dynamic from "next/dynamic";
 
 // PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
@@ -112,6 +113,9 @@ export default function SchedulePage() {
     x: number;
     y: number;
   } | null>(null);
+  const [showTimeEditor, setShowTimeEditor] = useState(false);
+  const [editedStartTime, setEditedStartTime] = useState<string>("");
+  const [editedEndTime, setEditedEndTime] = useState<string>("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -341,7 +345,20 @@ export default function SchedulePage() {
         start.getSeconds(),
         start.getMilliseconds(),
       );
+      // Snap to 15-minute intervals
+      const startMinutes = newStart.getMinutes();
+      const snappedMinutes = Math.round(startMinutes / 15) * 15;
+      newStart.setMinutes(snappedMinutes);
+      newStart.setSeconds(0);
+      newStart.setMilliseconds(0);
+
       const newEnd = new Date(newStart.getTime() + durationMs);
+      // Snap end time to 15-minute intervals
+      const endMinutes = newEnd.getMinutes();
+      const snappedEndMinutes = Math.round(endMinutes / 15) * 15;
+      newEnd.setMinutes(snappedEndMinutes);
+      newEnd.setSeconds(0);
+      newEnd.setMilliseconds(0);
 
       try {
         const res = await fetch(`/api/shifts/${shift.id}`, {
@@ -886,7 +903,7 @@ export default function SchedulePage() {
 
           {selectedShift && (
             <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-              <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-[2rem] overflow-hidden animate-in zoom-in-95 duration-200">
+              <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="bg-primary-600 p-8 text-white relative">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                   <div className="relative">
@@ -1018,10 +1035,114 @@ export default function SchedulePage() {
                   </Button>
                   <Button
                     variant="primary"
+                    onClick={() => {
+                      if (selectedShift) {
+                        setEditedStartTime(selectedShift.startTime);
+                        setEditedEndTime(selectedShift.endTime);
+                        setShowTimeEditor(true);
+                      }
+                    }}
                     className="shadow-lg shadow-primary-500/20 px-8 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs"
                   >
                     Modify Slot
                   </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Time Editor Modal */}
+          {showTimeEditor && selectedShift && (
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[101] flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <Card className="max-w-md w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="p-8 space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-black text-gray-900 mb-2">
+                      Modify Shift Time
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Update the start and end times for this shift
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <DateTimePicker
+                      label="Start Time"
+                      value={editedStartTime}
+                      onChange={(value) => setEditedStartTime(value)}
+                      use24Hour={true}
+                      required
+                    />
+                    <DateTimePicker
+                      label="End Time"
+                      value={editedEndTime}
+                      onChange={(value) => setEditedEndTime(value)}
+                      use24Hour={true}
+                      required
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setShowTimeEditor(false);
+                        setEditedStartTime("");
+                        setEditedEndTime("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `/api/shifts/${selectedShift.id}`,
+                            {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                startTime: editedStartTime,
+                                endTime: editedEndTime,
+                              }),
+                            },
+                          );
+
+                          if (res.ok) {
+                            toast.success("Shift time updated");
+                            refetchShifts();
+                            window.dispatchEvent(
+                              new CustomEvent("shiftaware:cache-invalidate", {
+                                detail: { keys: ["shifts", "shifts*"] },
+                              }),
+                            );
+                            setShowTimeEditor(false);
+                            setSelectedShift(null);
+                            const hasConflicts = await checkConflicts();
+                            if (hasConflicts) {
+                              toast.warning(
+                                "Conflicts detected. Review and resolve.",
+                                5000,
+                              );
+                            }
+                          } else {
+                            const errorData = await res.json();
+                            toast.error(
+                              errorData.error || "Failed to update shift time",
+                            );
+                          }
+                        } catch (error) {
+                          console.error("Failed to update shift time:", error);
+                          toast.error(
+                            "Failed to update shift time. Please try again.",
+                          );
+                        }
+                      }}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </div>

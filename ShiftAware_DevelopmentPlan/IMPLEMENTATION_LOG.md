@@ -368,3 +368,9 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.1.0: fixed horizontal scroll in calendar (ensured timeline-canvas has proper min-width based on scaleMinWidth)
 - v1.1.0: fixed template drag-and-drop (moved listeners/attributes to outer div instead of Card component)
 - v1.1.0: added time feedback during drag (DateDropZone shows target date/time tooltip when dragging over)
+
+## 2026-01-17T00:45:00Z
+- v1.1.0: added 15-minute interval timeline ticks (Day view now shows 15-min intervals with hour labels, smaller cells 22px)
+- v1.1.0: implemented shift time snapping to 15-minute intervals (drag-and-drop rescheduling snaps to nearest 15-min)
+- v1.1.0: fixed modal rounded corners (changed rounded-[2rem] to rounded-3xl for smoother edges)
+- v1.1.0: implemented Modify Slot functionality (time editor modal with DateTimePicker for manual time editing)

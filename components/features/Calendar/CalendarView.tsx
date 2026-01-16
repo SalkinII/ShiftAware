@@ -14,6 +14,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { List, RowComponentProps } from "react-window";
 import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import { DateDropZone } from "./DateDropZone";
+import { cn } from "@/lib/utils";
 import "./CalendarView.css";
 
 interface CalendarViewProps {
@@ -185,11 +186,12 @@ const CalendarView = ({
   // Memoize sorted shifts for grid view to avoid re-sorting multiple times
   const sortedShiftsForGrid = useMemo(() => sortedShifts, [sortedShifts]);
 
-  const scaleSegments = viewType === "Day" ? dayStarts.length * 24 : 7;
-  const minCellPx = viewType === "Day" ? 88 : 120;
+  // Calculate segments: Day view = hours * 4 (15-min intervals), Week view = 7 days
+  const scaleSegments = viewType === "Day" ? dayStarts.length * 24 * 4 : 7;
+  const minCellPx = viewType === "Day" ? 22 : 120; // Smaller cells for 15-min intervals
   const scaleMinWidth = scaleSegments * minCellPx;
   const gridTemplateColumns = `repeat(${scaleSegments}, minmax(${minCellPx}px, 1fr))`;
-  const dayWidth = useMemo(() => 24 * minCellPx, [minCellPx]);
+  const dayWidth = useMemo(() => 24 * 4 * minCellPx, [minCellPx]); // 24 hours * 4 intervals * cell width
 
   const activeDayIndex = useMemo(() => {
     if (viewType !== "Day") return 0;
@@ -462,6 +464,8 @@ const CalendarView = ({
       const status = getCoverage(shift);
 
       // Calculate position relative to startBound
+      // Note: We display shifts aligned to 15-minute intervals visually,
+      // but use actual times for calculation
       const startMinutes = differenceInMinutes(start, startBound);
       const endMinutes = differenceInMinutes(end, startBound);
 
@@ -743,14 +747,25 @@ const CalendarView = ({
                 style={{ gridTemplateColumns }}
               >
                 {viewType === "Day"
-                  ? Array.from({ length: scaleSegments }, (_, i) => (
-                      <div
-                        key={`h-first-${i}`}
-                        className="timeline-scale__cell"
-                      >
-                        {i % 24}:00
-                      </div>
-                    ))
+                  ? Array.from({ length: scaleSegments }, (_, i) => {
+                      const hour = Math.floor(i / 4) % 24;
+                      const quarter = i % 4;
+                      const minute = quarter * 15;
+                      const showLabel = quarter === 0; // Only show label on the hour
+                      return (
+                        <div
+                          key={`h-first-${i}`}
+                          className={cn(
+                            "timeline-scale__cell",
+                            !showLabel && "opacity-40 text-[9px]",
+                          )}
+                        >
+                          {showLabel
+                            ? `${hour}:00`
+                            : `${hour}:${String(minute).padStart(2, "0")}`}
+                        </div>
+                      );
+                    })
                   : Array.from({ length: 7 }, (_, i) => {
                       const day = addDays(startBound, i);
                       return (
@@ -770,14 +785,25 @@ const CalendarView = ({
                 style={{ gridTemplateColumns }}
               >
                 {viewType === "Day"
-                  ? Array.from({ length: scaleSegments }, (_, i) => (
-                      <div
-                        key={`h-second-${i}`}
-                        className="timeline-scale__cell"
-                      >
-                        {i % 24}:00
-                      </div>
-                    ))
+                  ? Array.from({ length: scaleSegments }, (_, i) => {
+                      const hour = Math.floor(i / 4) % 24;
+                      const quarter = i % 4;
+                      const minute = quarter * 15;
+                      const showLabel = quarter === 0;
+                      return (
+                        <div
+                          key={`h-second-${i}`}
+                          className={cn(
+                            "timeline-scale__cell",
+                            !showLabel && "opacity-40 text-[9px]",
+                          )}
+                        >
+                          {showLabel
+                            ? `${hour}:00`
+                            : `${hour}:${String(minute).padStart(2, "0")}`}
+                        </div>
+                      );
+                    })
                   : Array.from({ length: 7 }, (_, i) => {
                       const day = addDays(startBound, i);
                       return (
@@ -797,14 +823,25 @@ const CalendarView = ({
                 style={{ gridTemplateColumns }}
               >
                 {viewType === "Day"
-                  ? Array.from({ length: scaleSegments }, (_, i) => (
-                      <div
-                        key={`h-third-${i}`}
-                        className="timeline-scale__cell"
-                      >
-                        {i % 24}:00
-                      </div>
-                    ))
+                  ? Array.from({ length: scaleSegments }, (_, i) => {
+                      const hour = Math.floor(i / 4) % 24;
+                      const quarter = i % 4;
+                      const minute = quarter * 15;
+                      const showLabel = quarter === 0;
+                      return (
+                        <div
+                          key={`h-third-${i}`}
+                          className={cn(
+                            "timeline-scale__cell",
+                            !showLabel && "opacity-40 text-[9px]",
+                          )}
+                        >
+                          {showLabel
+                            ? `${hour}:00`
+                            : `${hour}:${String(minute).padStart(2, "0")}`}
+                        </div>
+                      );
+                    })
                   : Array.from({ length: 7 }, (_, i) => {
                       const day = addDays(startBound, i);
                       return (
