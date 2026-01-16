@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
+import CalendarView from "@/components/features/Calendar/CalendarView";
 import { format, startOfDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,8 @@ interface Assignment {
     type: string;
     startTime: string;
     endTime: string;
+    capacity?: number;
+    priority?: string;
     event: { name: string };
   };
   teamMember: {
@@ -143,12 +146,14 @@ export function SwapInterface({
   onRefresh,
 }: SwapInterfaceProps) {
   const toast = useToast();
+  const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSwapping, setIsSwapping] = useState(false);
   const [filterDate, setFilterDate] = useState<string>("");
   const [filterPerson, setFilterPerson] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("");
+  const [activeSwapShift, setActiveSwapShift] = useState<any | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -189,11 +194,9 @@ export function SwapInterface({
     return Array.from(types).sort();
   }, [assignments]);
 
-  // Filter and group assignments
-  const filteredAndGrouped = useMemo(() => {
+  const filteredAssignments = useMemo(() => {
     let filtered = assignments;
 
-    // Apply filters
     if (filterDate) {
       filtered = filtered.filter((a) => {
         const date = format(
@@ -212,9 +215,13 @@ export function SwapInterface({
       filtered = filtered.filter((a) => a.shift.type === filterType);
     }
 
-    // Group by date
+    return filtered;
+  }, [assignments, filterDate, filterPerson, filterType]);
+
+  // Filter and group assignments
+  const filteredAndGrouped = useMemo(() => {
     const grouped = new Map<string, Assignment[]>();
-    filtered.forEach((assignment) => {
+    filteredAssignments.forEach((assignment) => {
       const dateKey = format(
         startOfDay(parseISO(assignment.shift.startTime)),
         "yyyy-MM-dd",
@@ -242,7 +249,37 @@ export function SwapInterface({
         assignments: items,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [assignments, filterDate, filterPerson, filterType]);
+  }, [filteredAssignments]);
+
+  const shiftsForCalendar = useMemo(() => {
+    const map = new Map<string, any>();
+    filteredAssignments.forEach((assignment) => {
+      if (!map.has(assignment.shiftId)) {
+        const fallbackCapacity = Math.max(assignment.shift.capacity || 0, 1);
+        map.set(assignment.shiftId, {
+          id: assignment.shiftId,
+          type: assignment.shift.type,
+          startTime: assignment.shift.startTime,
+          endTime: assignment.shift.endTime,
+          capacity: assignment.shift.capacity ?? fallbackCapacity,
+          priority: assignment.shift.priority,
+          event: assignment.shift.event,
+          assignments: [],
+        });
+      }
+      map.get(assignment.shiftId).assignments.push(assignment);
+    });
+    return Array.from(map.values()).sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
+  }, [filteredAssignments]);
+
+  const calendarStartDate = useMemo(() => {
+    if (shiftsForCalendar.length === 0) return undefined;
+    const first = shiftsForCalendar[0];
+    return format(new Date(first.startTime), "yyyy-MM-dd");
+  }, [shiftsForCalendar]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -353,6 +390,22 @@ export function SwapInterface({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+            {(["cards", "calendar"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest transition-all",
+                  viewMode === mode
+                    ? "bg-primary-500 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700",
+                )}
+              >
+                {mode === "cards" ? "Cards" : "Calendar"}
+              </button>
+            ))}
+          </div>
           {selectedIds.size > 0 && (
             <>
               <span className="text-sm text-gray-600">
@@ -461,77 +514,146 @@ export function SwapInterface({
         </Card>
       )}
 
-      {/* Grid View */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        {filteredAndGrouped.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-gray-500">
-              {assignments.length === 0
-                ? "No assignments available to swap"
-                : "No assignments match the selected filters"}
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {filteredAndGrouped.map(
-              ({ date, assignments: dateAssignments }) => (
-                <div key={date} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {format(parseISO(date), "EEEE, MMMM d, yyyy")}
-                    </h3>
-                    <span className="text-sm text-gray-500">
-                      ({dateAssignments.length} assignment
-                      {dateAssignments.length !== 1 ? "s" : ""})
-                    </span>
+      {viewMode === "cards" ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          {filteredAndGrouped.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-gray-500">
+                {assignments.length === 0
+                  ? "No assignments available to swap"
+                  : "No assignments match the selected filters"}
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {filteredAndGrouped.map(
+                ({ date, assignments: dateAssignments }) => (
+                  <div key={date} className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {format(parseISO(date), "EEEE, MMMM d, yyyy")}
+                      </h3>
+                      <span className="text-sm text-gray-500">
+                        ({dateAssignments.length} assignment
+                        {dateAssignments.length !== 1 ? "s" : ""})
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {dateAssignments.map((assignment) => (
+                        <CompactAssignmentCard
+                          key={assignment.id}
+                          assignment={assignment}
+                          isDragging={activeId === assignment.id}
+                          isSelected={selectedIds.has(assignment.id)}
+                          onSelect={() => handleCardClick(assignment.id)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {dateAssignments.map((assignment) => (
-                      <CompactAssignmentCard
-                        key={assignment.id}
-                        assignment={assignment}
-                        isDragging={activeId === assignment.id}
-                        isSelected={selectedIds.has(assignment.id)}
-                        onSelect={() => handleCardClick(assignment.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-        )}
+                ),
+              )}
+            </div>
+          )}
 
-        <DragOverlay>
-          {activeAssignment ? (
-            <div className="p-3 rounded-lg border-2 border-primary-500 bg-primary-50 shadow-lg max-w-xs">
-              <div className="flex items-start gap-2">
-                <span className="text-xl">
-                  {activeAssignment.teamMember.avatarId}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-gray-900">
-                    {activeAssignment.teamMember.alias}
-                  </div>
-                  <div className="text-xs text-gray-600 mt-0.5">
-                    {format(
-                      new Date(activeAssignment.shift.startTime),
-                      "HH:mm",
-                    )}{" "}
-                    —{" "}
-                    {format(new Date(activeAssignment.shift.endTime), "HH:mm")}
+          <DragOverlay>
+            {activeAssignment ? (
+              <div className="p-3 rounded-lg border-2 border-primary-500 bg-primary-50 shadow-lg max-w-xs">
+                <div className="flex items-start gap-2">
+                  <span className="text-xl">
+                    {activeAssignment.teamMember.avatarId}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-gray-900">
+                      {activeAssignment.teamMember.alias}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-0.5">
+                      {format(
+                        new Date(activeAssignment.shift.startTime),
+                        "HH:mm",
+                      )}{" "}
+                      —{" "}
+                      {format(
+                        new Date(activeAssignment.shift.endTime),
+                        "HH:mm",
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <div className="space-y-4">
+          <Card className="p-0 shadow-sm overflow-hidden">
+            <CalendarView
+              shifts={shiftsForCalendar}
+              viewType="Week"
+              startDate={calendarStartDate}
+              showAssignments={true}
+              onAssignmentClick={(shift) => setActiveSwapShift(shift)}
+            />
+          </Card>
+
+          {activeSwapShift ? (
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">
+                    {activeSwapShift.type.replace("_", " ")} Assignments
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {format(
+                      new Date(activeSwapShift.startTime),
+                      "MMM d, HH:mm",
+                    )}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {activeSwapShift.assignments?.length || 0} assigned
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(activeSwapShift.assignments || []).map(
+                  (assignment: Assignment) => (
+                    <div
+                      key={assignment.id}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
+                        selectedIds.has(assignment.id)
+                          ? "border-primary-500 bg-primary-50"
+                          : "border-gray-200 bg-white hover:border-gray-300",
+                      )}
+                      onClick={() => handleCardClick(assignment.id)}
+                    >
+                      <div className="text-2xl">
+                        {assignment.teamMember.avatarId}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-900 truncate">
+                          {assignment.teamMember.alias}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {assignment.role.replace("_", " ")}
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-4 text-center text-sm text-gray-500">
+              Select a shift on the calendar to view assignments.
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 }

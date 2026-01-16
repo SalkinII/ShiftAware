@@ -347,3 +347,6 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 ## 2026-01-16T22:40:00Z
 - v1.1.0: enabled drag-to-reschedule shifts in calendar timeline
 - v1.1.0: shift drag overlay added for reschedule feedback
+
+## 2026-01-16T23:00:00Z
+- v1.1.0: added calendar mode to swap interface for context-based selection
