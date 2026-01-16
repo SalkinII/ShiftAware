@@ -356,3 +356,8 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.1.0: integrated conflict detection after shift rescheduling (schedule page checks conflicts post-reschedule, shows warning toast, displays conflict count badge)
 - v1.1.0: added ConflictWizard entry points from swap interface and schedule page (conflict buttons open wizard, refresh count on close)
 - v1.1.0: conflict detection runs automatically when shifts are loaded/refreshed in schedule view
+
+## 2026-01-16T23:45:00Z
+- v1.1.0: fixed drag-and-drop in Grid view (body cells now use DateDropZone as="td" to enable template/shift drops)
+- v1.1.0: fixed drag-and-drop in Week view (added full-height drop zones overlaying each day column)
+- v1.1.0: enabled Day view drop zones for both Day and Week views (timeline-day-markers now render for both)

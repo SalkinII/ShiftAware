@@ -283,10 +283,13 @@ const CalendarView = ({
                   );
                   const status = getCoverage(shift);
                   const style = coverageStyles[status];
+                  const shiftDate = new Date(shift.startTime);
 
                   return (
-                    <td
+                    <DateDropZone
                       key={`${member.id}-${shift.id}`}
+                      date={shiftDate}
+                      as="td"
                       className="p-2 border-b border-r text-center"
                     >
                       {isAssigned ? (
@@ -301,7 +304,7 @@ const CalendarView = ({
                           ···
                         </div>
                       )}
-                    </td>
+                    </DateDropZone>
                   );
                 })}
               </tr>
@@ -638,11 +641,13 @@ const CalendarView = ({
             {
               "--timeline-min-width": `${scaleMinWidth}px`,
               "--timeline-day-width": `${dayWidth}px`,
+              position: "relative",
             } as React.CSSProperties
           }
         >
-          <div className="timeline-canvas">
-            {viewType === "Day" && (
+          <div className="timeline-canvas" style={{ position: "relative" }}>
+            {/* Day drop zones for Day and Week views */}
+            {(viewType === "Day" || viewType === "Week") && (
               <div className="timeline-day-markers" aria-hidden="true">
                 {dayStarts.map((day) => (
                   <DateDropZone
@@ -803,6 +808,31 @@ const CalendarView = ({
               {/* Fade overlay for smooth edges */}
               <div className="timeline-scale-fade" aria-hidden="true"></div>
             </div>
+            {/* Full-height drop zones for Week view - overlay each day column */}
+            {viewType === "Week" && dayStarts.length > 0 && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ zIndex: 1, top: "60px" }}
+              >
+                {dayStarts.map((day, index) => {
+                  const dayWidthPercent = 100 / dayStarts.length;
+                  const left = index * dayWidthPercent;
+                  return (
+                    <DateDropZone
+                      key={`week-drop-${format(day, "yyyy-MM-dd")}`}
+                      date={day}
+                      className="absolute"
+                      style={{
+                        left: `${left}%`,
+                        width: `${dayWidthPercent}%`,
+                        height: "100%",
+                        pointerEvents: "auto",
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            )}
             {sortedShifts.length === 0 ? (
               <div className="timeline-empty" style={{ padding: "2rem" }}>
                 <div className="timeline-empty__icon">📅</div>
