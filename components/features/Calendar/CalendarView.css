@@ -20,6 +20,9 @@
   padding-bottom: 6px;
   /* Ensure scrolling works on all screen sizes */
   -webkit-overflow-scrolling: touch;
+  /* Force horizontal scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
 .timeline-scroll--snap {
@@ -166,10 +169,10 @@
 }
 
 .timeline-row {
-  padding: 14px 16px 18px;
+  padding: 8px 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .timeline-row__meta {
@@ -232,10 +235,10 @@
 
 .timeline-track {
   position: relative;
-  height: 72px;
+  height: 56px;
   background: #f8fafc;
   border: 1px dashed #e2e8f0;
-  border-radius: 18px;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
   min-width: 100%;
@@ -243,10 +246,10 @@
 
 .timeline-bar {
   position: absolute;
-  top: 10px;
-  bottom: 10px;
-  border-radius: 16px;
-  padding: 10px 16px;
+  top: 6px;
+  bottom: 6px;
+  border-radius: 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -256,8 +259,10 @@
   font-weight: 700;
   box-shadow: 0 10px 20px -8px rgba(15, 23, 42, 0.25);
   transition: transform 150ms ease, box-shadow 150ms ease;
-  min-width: 180px;
+  min-width: 200px;
   box-sizing: border-box;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .timeline-bar.full {
@@ -289,9 +294,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   flex: 1;
+  min-width: 0;
+  overflow: visible;
 }
 
 .timeline-bar__capacity {

@@ -47,8 +47,10 @@ function TemplateItem({ template }: TemplateItemProps) {
         "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-50",
       )}
+      {...listeners}
+      {...attributes}
     >
-      <Card elevation={1} hover className="p-3" {...listeners} {...attributes}>
+      <Card elevation={1} hover className="p-3">
         <div className="flex items-start gap-2">
           <GripVertical className="w-4 h-4 text-gray-400 mt-0.5" />
           <div className="flex-1 min-w-0">

@@ -361,3 +361,10 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.1.0: fixed drag-and-drop in Grid view (body cells now use DateDropZone as="td" to enable template/shift drops)
 - v1.1.0: fixed drag-and-drop in Week view (added full-height drop zones overlaying each day column)
 - v1.1.0: enabled Day view drop zones for both Day and Week views (timeline-day-markers now render for both)
+
+## 2026-01-17T00:15:00Z
+- v1.1.0: condensed calendar timeline lanes (reduced row padding 14px→8px, gap 12px→6px, row height 132px→96px, track height 72px→56px)
+- v1.1.0: improved shift card text display (increased min-width 180px→200px, added white-space: nowrap, overflow: visible)
+- v1.1.0: fixed horizontal scroll in calendar (ensured timeline-canvas has proper min-width based on scaleMinWidth)
+- v1.1.0: fixed template drag-and-drop (moved listeners/attributes to outer div instead of Card component)
+- v1.1.0: added time feedback during drag (DateDropZone shows target date/time tooltip when dragging over)

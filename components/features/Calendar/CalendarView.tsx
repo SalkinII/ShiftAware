@@ -645,7 +645,14 @@ const CalendarView = ({
             } as React.CSSProperties
           }
         >
-          <div className="timeline-canvas" style={{ position: "relative" }}>
+          <div
+            className="timeline-canvas"
+            style={{
+              position: "relative",
+              minWidth: `${scaleMinWidth}px`,
+              width: "max(100%, var(--timeline-min-width))",
+            }}
+          >
             {/* Day drop zones for Day and Week views */}
             {(viewType === "Day" || viewType === "Week") && (
               <div className="timeline-day-markers" aria-hidden="true">
@@ -849,7 +856,7 @@ const CalendarView = ({
               <List
                 defaultHeight={520}
                 rowCount={sortedShifts.length}
-                rowHeight={132}
+                rowHeight={96}
                 rowComponent={Row}
                 rowProps={{ shifts: sortedShifts }}
                 className="timeline-list"

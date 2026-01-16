@@ -32,25 +32,64 @@ export function DateDropZone({
     className,
   );
 
+  // Show date/time tooltip when dragging over
+  const showTooltip = isOver;
+
+  const dateDisplay = format(date, "MMM d");
+  const timeDisplay = format(date, "HH:mm");
+
   if (as === "th") {
     return (
-      <th ref={setNodeRef} className={baseClasses}>
+      <th
+        ref={setNodeRef}
+        className={baseClasses}
+        title={isOver ? `Drop here: ${dateDisplay} ${timeDisplay}` : undefined}
+      >
         {children}
+        {showTooltip && (
+          <div className="absolute inset-0 flex items-center justify-center bg-primary-100/90 z-50 pointer-events-none rounded">
+            <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow">
+              {dateDisplay} {timeDisplay}
+            </div>
+          </div>
+        )}
       </th>
     );
   }
 
   if (as === "td") {
     return (
-      <td ref={setNodeRef} className={baseClasses}>
+      <td
+        ref={setNodeRef}
+        className={cn(baseClasses, "relative")}
+        title={isOver ? `Drop here: ${dateDisplay}` : undefined}
+      >
         {children}
+        {showTooltip && (
+          <div className="absolute inset-0 flex items-center justify-center bg-primary-100/90 z-50 pointer-events-none rounded">
+            <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow">
+              {dateDisplay}
+            </div>
+          </div>
+        )}
       </td>
     );
   }
 
   return (
-    <div ref={setNodeRef} className={baseClasses}>
+    <div
+      ref={setNodeRef}
+      className={cn(baseClasses, "relative")}
+      title={isOver ? `Drop here: ${dateDisplay} ${timeDisplay}` : undefined}
+    >
       {children}
+      {showTooltip && (
+        <div className="absolute inset-0 flex items-center justify-center bg-primary-100/90 z-50 pointer-events-none rounded">
+          <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow">
+            {dateDisplay} {timeDisplay}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
