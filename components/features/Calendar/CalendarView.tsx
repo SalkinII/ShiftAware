@@ -11,6 +11,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { List, RowComponentProps } from "react-window";
 import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
+import { DateDropZone } from "./DateDropZone";
 import "./CalendarView.css";
 
 interface CalendarViewProps {
@@ -238,23 +239,27 @@ const CalendarView = ({
               <th className="p-4 text-left text-xs font-black uppercase tracking-widest text-gray-500 border-b border-r sticky left-0 bg-gray-50 z-30">
                 Team Member
               </th>
-              {sortedShiftsForGrid.map((shift) => (
-                <th
-                  key={shift.id}
-                  className="p-4 text-center border-b border-r min-w-[140px]"
-                >
-                  <div className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">
-                    {format(new Date(shift.startTime), "MMM d")}
-                  </div>
-                  <div className="text-xs font-bold text-gray-700 whitespace-nowrap">
-                    {format(new Date(shift.startTime), "HH:mm")} -{" "}
-                    {format(new Date(shift.endTime), "HH:mm")}
-                  </div>
-                  <div className="text-[9px] font-bold text-primary-500 mt-1">
-                    {shift.type.replace("_", " ")}
-                  </div>
-                </th>
-              ))}
+              {sortedShiftsForGrid.map((shift) => {
+                const shiftDate = new Date(shift.startTime);
+                return (
+                  <DateDropZone
+                    key={shift.id}
+                    date={shiftDate}
+                    className="p-4 text-center border-b border-r min-w-[140px]"
+                  >
+                    <div className="text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1">
+                      {format(shiftDate, "MMM d")}
+                    </div>
+                    <div className="text-xs font-bold text-gray-700 whitespace-nowrap">
+                      {format(new Date(shift.startTime), "HH:mm")} -{" "}
+                      {format(new Date(shift.endTime), "HH:mm")}
+                    </div>
+                    <div className="text-[9px] font-bold text-primary-500 mt-1">
+                      {shift.type.replace("_", " ")}
+                    </div>
+                  </DateDropZone>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -614,8 +619,9 @@ const CalendarView = ({
             {viewType === "Day" && (
               <div className="timeline-day-markers" aria-hidden="true">
                 {dayStarts.map((day) => (
-                  <div
+                  <DateDropZone
                     key={`day-${format(day, "yyyy-MM-dd")}`}
+                    date={day}
                     className="timeline-day-marker"
                   />
                 ))}
