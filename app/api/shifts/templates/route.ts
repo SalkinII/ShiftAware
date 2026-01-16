@@ -28,6 +28,11 @@ export async function GET(request: Request) {
     return createSuccessResponse(templates);
   } catch (error) {
     console.error("Get templates error:", error);
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     return createErrorResponse(error, "Failed to fetch templates");
   }
 }
@@ -67,6 +72,11 @@ export async function POST(request: Request) {
     return createSuccessResponse(template, 201);
   } catch (error) {
     console.error("Create template error:", error);
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     return createErrorResponse(error, "Failed to create template");
   }
 }
