@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   isAuthenticated,
@@ -10,7 +9,7 @@ import { shiftTemplateSchema } from "@/lib/validations/template";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {

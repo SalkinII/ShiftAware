@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   isAuthenticated,
@@ -12,7 +11,7 @@ import { AuditAction, EntityType } from "@prisma/client";
 import { setHours, setMinutes, addMinutes } from "date-fns";
 
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ scheduledId: string }> },
 ) {
   try {
