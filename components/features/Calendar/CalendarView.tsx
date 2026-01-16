@@ -788,7 +788,7 @@ const CalendarView = ({
                 rowCount={sortedShifts.length}
                 rowHeight={132}
                 rowComponent={Row}
-                rowProps={{}}
+                rowProps={{ shifts: sortedShifts }}
                 className="timeline-list"
                 style={{ height: "100%", width: "100%" }}
               >

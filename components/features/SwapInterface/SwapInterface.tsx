@@ -222,10 +222,10 @@ export function SwapInterface({
                 {selectedIds.size} selected
               </span>
               <Button
-                variant="outline"
-                size="sm"
+                variant="secondary"
                 onClick={handleClearSelection}
                 disabled={isSwapping}
+                className="text-xs px-2 py-1"
               >
                 <X className="w-4 h-4 mr-1" />
                 Clear

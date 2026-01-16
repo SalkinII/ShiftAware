@@ -323,3 +323,6 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.4.0: created PHASE3_SUMMARY.md documenting all Phase 3 achievements (security audit, browser compatibility, performance optimization, technical debt cleanup)
 - v0.4.0: updated PROJECT_STATUS.md to reflect Phase 3 completion, ready for Phase 4 (v1.0 Release Preparation)
 - v0.4.0: Phase 3 complete - all production readiness criteria met, application ready for v1.0.0 release preparation
+- v1.0.0: Release preparation - systematic TypeScript build error fixes
+- v1.0.0: fixed TypeScript errors blocking Docker build: export/page.tsx (event.id), preferences/page.tsx (null shifts), conflicts/route.ts (undefined shift), availability/route.ts (Role/ShiftType types), CalendarView.tsx (rowProps), SwapInterface.tsx (invalid variant), ConfirmDialog.tsx (Button refs via forwardRef)
+- v1.0.0: build verified - all TypeScript compilation errors resolved, ready for Docker build and release

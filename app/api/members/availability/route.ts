@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { createUnauthorizedResponse } from "@/lib/api-errors";
-import { Prisma } from "@prisma/client";
+import { Prisma, ShiftType, Role } from "@prisma/client";
 
 // Type definitions for Prisma includes
 type MemberWithRelations = Prisma.TeamMemberGetPayload<{
@@ -99,7 +99,7 @@ function checkMemberMeetsRequirements(
   const memberRoles = member.capabilities || [];
   const requiredRoles = shift.requiredRoles.map((r) => r.role);
   const missingRoles = requiredRoles.filter(
-    (role: string) => !memberRoles.includes(role),
+    (role: Role) => !memberRoles.includes(role),
   );
 
   return {
@@ -246,7 +246,7 @@ export async function GET(request: NextRequest) {
       shiftsWhere.endTime = { lte: endDate };
     }
     if (shiftTypeParam) {
-      shiftsWhere.type = shiftTypeParam as Prisma.ShiftType;
+      shiftsWhere.type = shiftTypeParam as ShiftType;
     }
 
     const shifts = await prisma.shift.findMany({

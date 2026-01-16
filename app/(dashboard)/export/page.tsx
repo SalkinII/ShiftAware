@@ -29,7 +29,7 @@ interface Shift {
     teamMemberId: string;
     teamMember?: { id: string; alias: string };
   }>;
-  event?: { name: string };
+  event?: { id: string; name: string };
 }
 
 export default function ExportPage() {

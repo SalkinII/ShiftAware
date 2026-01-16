@@ -315,7 +315,7 @@ export default function PreferencesPage() {
 
           <Card className="flex-grow p-0 shadow-sm overflow-hidden bg-white">
             <CalendarView
-              shifts={shifts}
+              shifts={shifts || []}
               onShiftClick={toggleShift}
               selectedShiftIds={new Set(selectedShifts.keys())}
               startDate={currentEventDate}

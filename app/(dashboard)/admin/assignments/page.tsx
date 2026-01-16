@@ -375,7 +375,7 @@ export default function AssignmentsPage() {
             <SwapInterface
               assignments={assignments}
               onSwap={handleSwap}
-              onRefresh={() => loadAssignments(selectedEventId)}
+              onRefresh={refetchAssignments}
             />
           </Card>
         ) : uniqueShifts.length === 0 ? (

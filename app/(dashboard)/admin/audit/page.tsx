@@ -480,9 +480,8 @@ export default function AuditLogPage() {
                   {isRollbackable(log) && (
                     <Button
                       variant="secondary"
-                      size="sm"
                       onClick={() => handleRollbackClick(log)}
-                      className="flex items-center gap-2 text-xs"
+                      className="flex items-center gap-2 text-xs px-2 py-1"
                       title={`Rollback ${log.action.replace("_", " ")} action`}
                     >
                       <RotateCcw className="w-3 h-3" />

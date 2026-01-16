@@ -472,6 +472,7 @@ function generateSuggestions(
       if (conflict.affectedEntities.shifts) {
         const shiftId = conflict.affectedEntities.shifts[0];
         const shift = shiftsMap.get(shiftId);
+        if (!shift) break;
         const currentCount = state.shiftCoverage.get(shiftId) || 0;
         if (currentCount < shift.capacity) {
           const currentMembers =
