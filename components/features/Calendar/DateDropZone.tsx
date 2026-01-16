@@ -28,7 +28,7 @@ export function DateDropZone({
 
   const baseClasses = cn(
     "transition-colors duration-200",
-    isOver && "bg-primary-50 border-2 border-primary-300 border-dashed",
+    isOver && "bg-primary-50/30 border border-primary-400",
     className,
   );
 
@@ -47,8 +47,8 @@ export function DateDropZone({
       >
         {children}
         {showTooltip && (
-          <div className="absolute inset-0 flex items-center justify-center bg-primary-100/90 z-50 pointer-events-none rounded">
-            <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+            <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow-lg border border-primary-300">
               {dateDisplay} {timeDisplay}
             </div>
           </div>
@@ -66,8 +66,8 @@ export function DateDropZone({
       >
         {children}
         {showTooltip && (
-          <div className="absolute inset-0 flex items-center justify-center bg-primary-100/90 z-50 pointer-events-none rounded">
-            <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+            <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow-lg border border-primary-300">
               {dateDisplay}
             </div>
           </div>
@@ -84,8 +84,8 @@ export function DateDropZone({
     >
       {children}
       {showTooltip && (
-        <div className="absolute inset-0 flex items-center justify-center bg-primary-100/90 z-50 pointer-events-none rounded">
-          <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="text-xs font-bold text-primary-700 px-2 py-1 bg-white rounded shadow-lg border border-primary-300">
             {dateDisplay} {timeDisplay}
           </div>
         </div>

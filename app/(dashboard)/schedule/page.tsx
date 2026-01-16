@@ -20,7 +20,9 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
+  DragOverEvent,
   closestCenter,
+  useDndMonitor,
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -105,6 +107,11 @@ export default function SchedulePage() {
   const [conflictCount, setConflictCount] = useState<number | null>(null);
   const [showConflictWizard, setShowConflictWizard] = useState(false);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [dragOverInfo, setDragOverInfo] = useState<{
+    date: string | null;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -230,14 +237,30 @@ export default function SchedulePage() {
   }, [shifts.length, loading]);
 
   async function handleDragEnd(event: DragEndEvent) {
+    setDragOverInfo(null);
     const { active, over } = event;
     setActiveTemplate(null);
     setActiveShiftDrag(null);
 
-    if (!over || !active.data.current) return;
+    if (!over || !active.data.current) {
+      console.log("Drag end: no over or no data", {
+        over: over?.id,
+        active: active.id,
+      });
+      return;
+    }
 
     const dropId = over.id as string;
-    if (!dropId.startsWith("date-")) return;
+    console.log("Drag end:", {
+      dropId,
+      activeId: active.id,
+      overData: over.data.current,
+    });
+
+    if (!dropId.startsWith("date-")) {
+      console.log("Drop ID doesn't start with 'date-':", dropId);
+      return;
+    }
     const dateStr = dropId.replace("date-", "");
 
     const template = active.data.current.template;
@@ -365,6 +388,29 @@ export default function SchedulePage() {
     if (event.active.data.current?.shift) {
       setActiveShiftDrag(event.active.data.current.shift);
     }
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { over, activatorEvent } = event;
+    if (!over || !activatorEvent) {
+      setDragOverInfo(null);
+      return;
+    }
+
+    const dropId = over.id as string;
+    if (!dropId.startsWith("date-")) {
+      setDragOverInfo(null);
+      return;
+    }
+
+    const dateStr = dropId.replace("date-", "");
+    const mouseEvent = activatorEvent as MouseEvent;
+
+    setDragOverInfo({
+      date: dateStr,
+      x: mouseEvent.clientX,
+      y: mouseEvent.clientY,
+    });
   }
 
   function coverageState(shift: Shift): CoverageState {
@@ -563,6 +609,7 @@ export default function SchedulePage() {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <div className="space-y-8 relative">
@@ -820,6 +867,22 @@ export default function SchedulePage() {
               </Card>
             )}
           </DragOverlay>
+
+          {/* Dynamic coordinate tooltip */}
+          {dragOverInfo && (activeTemplate || activeShiftDrag) && (
+            <div
+              className="fixed z-[9999] pointer-events-none"
+              style={{
+                left: `${dragOverInfo.x + 10}px`,
+                top: `${dragOverInfo.y - 10}px`,
+              }}
+            >
+              <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
+                {dragOverInfo.date &&
+                  format(parseISO(dragOverInfo.date), "MMM d, yyyy")}
+              </div>
+            </div>
+          )}
 
           {selectedShift && (
             <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">

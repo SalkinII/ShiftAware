@@ -484,6 +484,11 @@ const CalendarView = ({
         width = Math.max(8, 100 - left);
       }
 
+      // Prevent excessive width (max 95% to avoid overflow)
+      if (width > 95) {
+        width = 95;
+      }
+
       const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
           id: `shift-${shift.id}`,
