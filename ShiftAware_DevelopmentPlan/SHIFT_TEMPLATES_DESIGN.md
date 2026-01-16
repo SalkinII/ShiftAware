@@ -208,11 +208,14 @@ Creates Shift with calculated startTime/endTime
 
 ## Implementation Notes for @implementer
 
-1. Start with schema migration (add 3 new models)
-2. Create template API endpoints
-3. Build template management page
-4. Add drag-drop to calendar (use @dnd-kit - already in project)
-5. Implement ScheduledShift → Shift conversion
-6. Test with existing shift creation (should still work)
+1. ✅ Start with schema migration (add 3 new models)
+2. ✅ Create template API endpoints
+3. ✅ Build template management page
+4. 🔄 Add drag-drop to calendar (use @dnd-kit - already in project)
+   - ✅ TemplatePalette component created
+   - ✅ DndContext wrapper added to schedule page
+   - ⚠️ Calendar drop zones need implementation (calendar cells need useDroppable)
+5. ✅ Implement ScheduledShift → Shift conversion
+6. ⏳ Test with existing shift creation (should still work)
 
-**Entry Point:** Start with schema migration, then template API
+**Status:** Core functionality complete. Calendar drop zones need refinement to detect drops on specific dates.
