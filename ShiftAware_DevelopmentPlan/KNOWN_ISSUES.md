@@ -2,6 +2,8 @@
 
 **Last Updated:** 2026-01-16
 
+**Note:** Use `npm run db:migrate-safe` for safe migrations (checks dev server, handles workflow)
+
 ---
 
 ## Shift Templates (v1.1.0)

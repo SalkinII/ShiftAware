@@ -29,10 +29,16 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Get templates error:", error);
 
-    // Check for Prisma client missing model error
-    if (error instanceof Error && error.message.includes("shiftTemplate")) {
+    // Check for Prisma client missing model error (common patterns)
+    if (
+      error instanceof Error &&
+      (error.message.includes("shiftTemplate") ||
+        error.message.includes("Unknown model") ||
+        error.message.includes("does not exist") ||
+        error.name === "PrismaClientKnownRequestError")
+    ) {
       const helpfulError = new Error(
-        "Prisma client not regenerated. Stop dev server, run 'npx prisma generate', then restart.",
+        "Prisma client not regenerated. Stop dev server, run 'npm run db:migrate-safe' or 'npx prisma generate', then restart.",
       );
       return createErrorResponse(
         helpfulError,
@@ -80,10 +86,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Create template error:", error);
 
-    // Check for Prisma client missing model error
-    if (error instanceof Error && error.message.includes("shiftTemplate")) {
+    // Check for Prisma client missing model error (common patterns)
+    if (
+      error instanceof Error &&
+      (error.message.includes("shiftTemplate") ||
+        error.message.includes("Unknown model") ||
+        error.message.includes("does not exist") ||
+        error.name === "PrismaClientKnownRequestError")
+    ) {
       const helpfulError = new Error(
-        "Prisma client not regenerated. Stop dev server, run 'npx prisma generate', then restart.",
+        "Prisma client not regenerated. Stop dev server, run 'npm run db:migrate-safe' or 'npx prisma generate', then restart.",
       );
       return createErrorResponse(
         helpfulError,
