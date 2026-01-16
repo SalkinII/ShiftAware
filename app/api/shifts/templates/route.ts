@@ -29,13 +29,24 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Get templates error:", error);
 
+    // Log full error details for debugging
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      if (error.stack) console.error("Error stack:", error.stack);
+    }
+
     // Check for Prisma client missing model error (common patterns)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorName = error instanceof Error ? error.name : "";
+
     if (
-      error instanceof Error &&
-      (error.message.includes("shiftTemplate") ||
-        error.message.includes("Unknown model") ||
-        error.message.includes("does not exist") ||
-        error.name === "PrismaClientKnownRequestError")
+      errorMessage.includes("shiftTemplate") ||
+      errorMessage.includes("Unknown model") ||
+      errorMessage.includes("does not exist") ||
+      errorMessage.includes("Cannot read property") ||
+      errorName === "PrismaClientKnownRequestError" ||
+      errorName === "TypeError"
     ) {
       const helpfulError = new Error(
         "Prisma client not regenerated. Stop dev server, run 'npm run db:migrate-safe' or 'npx prisma generate', then restart.",
@@ -86,13 +97,24 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Create template error:", error);
 
+    // Log full error details for debugging
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      if (error.stack) console.error("Error stack:", error.stack);
+    }
+
     // Check for Prisma client missing model error (common patterns)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorName = error instanceof Error ? error.name : "";
+
     if (
-      error instanceof Error &&
-      (error.message.includes("shiftTemplate") ||
-        error.message.includes("Unknown model") ||
-        error.message.includes("does not exist") ||
-        error.name === "PrismaClientKnownRequestError")
+      errorMessage.includes("shiftTemplate") ||
+      errorMessage.includes("Unknown model") ||
+      errorMessage.includes("does not exist") ||
+      errorMessage.includes("Cannot read property") ||
+      errorName === "PrismaClientKnownRequestError" ||
+      errorName === "TypeError"
     ) {
       const helpfulError = new Error(
         "Prisma client not regenerated. Stop dev server, run 'npm run db:migrate-safe' or 'npx prisma generate', then restart.",
