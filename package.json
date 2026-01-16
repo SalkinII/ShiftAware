@@ -16,6 +16,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate-safe": "powershell -ExecutionPolicy Bypass -File scripts/migrate-and-generate.ps1",
+    "db:verify": "tsx scripts/verify-prisma-client.ts",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
