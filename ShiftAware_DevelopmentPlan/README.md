@@ -6,12 +6,20 @@ Essential documentation for understanding technical setup, architecture, and cur
 
 - `SYSTEM_ARCHITECTURE.md` — Architecture, flows, auth model
 - `DATABASE_SCHEMA.md` — Data model and constraints
-- `TECHNOLOGY_STACK.md` — Tech decisions and rationale
+- `UI_PARADIGM.md` — UI design rules (Design System v2)
+- `UX_FLOW.md` — Admin/user flows and information flow
 - `PROJECT_STATUS.md` — Current state and progress
+- `ROADMAP.md` — Short-term plan and next steps
 
 ## Archive
 
 - `IMPLEMENTATION_LOG.md` — Change log (append-only, concise)
+
+## Design/Feature Notes
+
+- `SHIFT_TEMPLATES_DESIGN.md` — Template system decisions
+- `SWAP_INTERFACE_DESIGN.md` — Swap UI decisions
+- `UI_IMPROVEMENTS_PLAN.md` — Planned improvements (kept lean)
 
 ## Conventions
 

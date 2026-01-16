@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
   ChevronRight,
-  Download,
   RefreshCw,
   User,
   ShieldCheck,
@@ -91,7 +90,6 @@ export default function SchedulePage() {
   const [viewType, setViewType] = useState<"Day" | "Week" | "Grid">("Week");
   const [currentEventDate, setCurrentEventDate] = useState<string>();
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
   const [showTemplatePalette, setShowTemplatePalette] = useState(false);
 
@@ -119,15 +117,6 @@ export default function SchedulePage() {
   );
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [memberFilter, setMemberFilter] = useState<string>("all");
-  const [exportScope, setExportScope] = useState<"schedule" | "member">(
-    "schedule",
-  );
-  const [exportOrientation, setExportOrientation] = useState<
-    "portrait" | "landscape"
-  >("landscape");
-  const [exportMemberId, setExportMemberId] = useState<string>("all");
-  const [exportIncludePseudonymMap, setExportIncludePseudonymMap] =
-    useState<boolean>(false);
 
   const eventRange = useMemo(() => {
     if (shifts.length === 0) return null;
@@ -368,29 +357,6 @@ export default function SchedulePage() {
     };
   }, [filteredShifts]);
 
-  async function handleExport() {
-    setIsExporting(true);
-    try {
-      // Lazy load PDF export on demand (heavy library - jspdf ~200KB)
-      const { exportScheduleToPDF } = await import("@/lib/services/export");
-      exportScheduleToPDF(filteredShifts, {
-        orientation: exportOrientation,
-        memberId:
-          exportScope === "member" && exportMemberId !== "all"
-            ? exportMemberId
-            : undefined,
-        includePseudonymMap: exportIncludePseudonymMap,
-        title:
-          exportScope === "member" ? "Member Schedule" : "ShiftAware Schedule",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      alert("Failed to generate PDF");
-    } finally {
-      setIsExporting(false);
-    }
-  }
-
   function handleAssignmentClick(data: any) {
     const shift = filteredShifts.find((s) => s.id === data.id);
     setSelectedShift(shift || null);
@@ -525,16 +491,6 @@ export default function SchedulePage() {
               </div>
 
               <Button
-                variant="secondary"
-                onClick={handleExport}
-                disabled={isExporting || filteredShifts.length === 0}
-                className="flex items-center gap-2 bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-              >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export PDF</span>
-              </Button>
-
-              <Button
                 onClick={() => refetchShifts()}
                 variant="primary"
                 className="shadow-lg shadow-primary-500/20"
@@ -597,9 +553,9 @@ export default function SchedulePage() {
           <Card className="p-4 bg-white border border-gray-200 shadow-sm rounded-2xl">
             <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-700">
               <SlidersHorizontal className="w-4 h-4 text-primary-500" />
-              Filters & Export Options
+              Filters
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500">
                   Coverage
@@ -660,67 +616,6 @@ export default function SchedulePage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-gray-500">
-                  Export
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={exportScope}
-                    onChange={(e) =>
-                      setExportScope(e.target.value as "schedule" | "member")
-                    }
-                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
-                  >
-                    <option value="schedule">Full schedule</option>
-                    <option value="member">Member only</option>
-                  </select>
-                  <select
-                    value={exportOrientation}
-                    onChange={(e) =>
-                      setExportOrientation(
-                        e.target.value as "portrait" | "landscape",
-                      )
-                    }
-                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
-                  >
-                    <option value="landscape">Landscape</option>
-                    <option value="portrait">Portrait</option>
-                  </select>
-                </div>
-                {exportScope === "member" && (
-                  <select
-                    value={exportMemberId}
-                    onChange={(e) => setExportMemberId(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
-                  >
-                    <option value="all">Choose member</option>
-                    {memberOptions.map(([id, alias]) => (
-                      <option key={`export-${id}`} value={id}>
-                        {alias}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="export-pseudonym-map"
-                    checked={exportIncludePseudonymMap}
-                    onChange={(e) =>
-                      setExportIncludePseudonymMap(e.target.checked)
-                    }
-                    className="w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-400 focus:ring-2"
-                  />
-                  <label
-                    htmlFor="export-pseudonym-map"
-                    className="text-xs font-semibold text-gray-700 cursor-pointer"
-                  >
-                    Include pseudonym mapping sheet
-                  </label>
-                </div>
               </div>
             </div>
           </Card>

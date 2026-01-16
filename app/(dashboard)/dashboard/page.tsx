@@ -7,7 +7,6 @@ import {
   Clock,
   CheckCircle2,
   ChevronRight,
-  TrendingUp,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -233,12 +232,6 @@ export default function DashboardPage() {
             >
               <Calendar className="w-4 h-4" />
               View Schedule
-            </Button>
-          </Link>
-          <Link href="/export">
-            <Button className="flex items-center gap-2 shadow-lg shadow-primary-500/20">
-              <TrendingUp className="w-4 h-4" />
-              Quick Report
             </Button>
           </Link>
         </div>

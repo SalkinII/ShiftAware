@@ -100,8 +100,9 @@ export function exportScheduleToPDF(
     throw new Error("No shifts available to export");
   }
 
-  const doc = new jsPDF({ orientation });
+  const doc = new jsPDF({ orientation, unit: "pt", format: "a4" });
   const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+  const pageWidth = doc.internal.pageSize.getWidth();
   const coverage =
     processedData.totalCapacity === 0
       ? 0
@@ -111,16 +112,16 @@ export function exportScheduleToPDF(
 
   // Title
   doc.setFontSize(18);
-  doc.text(processedData.eventName, 14, 20);
+  doc.text(processedData.eventName, 40, 40);
 
   doc.setFontSize(10);
   doc.setTextColor(100);
-  doc.text(`Generated on: ${timestamp}`, 14, 28);
+  doc.text(`Generated on: ${timestamp}`, 40, 56);
   if (memberId) {
     doc.text(
       `Scope: Member ${processedData.memberAlias ? `"${processedData.memberAlias}"` : memberId}`,
-      14,
-      32,
+      40,
+      70,
     );
   }
 
@@ -128,8 +129,8 @@ export function exportScheduleToPDF(
   doc.setFontSize(11);
   doc.text(
     `Coverage: ${coverage}% (${processedData.totalFilled}/${processedData.totalCapacity})`,
-    14,
-    memberId ? 38 : 34,
+    40,
+    memberId ? 86 : 76,
   );
 
   // Pre-sort shifts by start time (using pre-parsed dates)
@@ -170,13 +171,32 @@ export function exportScheduleToPDF(
     return [startTime, endTime, shiftType, assignments, staffed, status];
   });
 
+  const assignmentsWidth = Math.max(
+    180,
+    pageWidth - (70 + 60 + 110 + 70 + 70 + 80),
+  );
+
   autoTable(doc, {
-    startY: 40,
+    startY: memberId ? 104 : 96,
     head: [["Start", "End", "Shift Type", "Assignments", "Staffing", "Status"]],
     body: tableData,
-    headStyles: { fillColor: [15, 23, 42] },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    margin: { top: 40 },
+    theme: "striped",
+    styles: {
+      fontSize: 8,
+      cellPadding: 4,
+      overflow: "linebreak",
+      valign: "middle",
+    },
+    headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { cellWidth: 60 },
+      2: { cellWidth: 110 },
+      3: { cellWidth: assignmentsWidth },
+      4: { cellWidth: 70 },
+      5: { cellWidth: 80 },
+    },
+    margin: { left: 40, right: 40 },
   });
 
   // Pseudonym map (already built during initial pass)
@@ -187,12 +207,15 @@ export function exportScheduleToPDF(
     ]);
     doc.addPage();
     doc.setFontSize(14);
-    doc.text("Pseudonym Mapping", 14, 20);
+    doc.text("Pseudonym Mapping", 40, 40);
     autoTable(doc, {
-      startY: 26,
+      startY: 54,
       head: [["Alias", "Avatar"]],
       body: rows,
-      headStyles: { fillColor: [15, 23, 42] },
+      theme: "striped",
+      styles: { fontSize: 9, cellPadding: 4 },
+      headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+      margin: { left: 40, right: 40 },
     });
   }
 

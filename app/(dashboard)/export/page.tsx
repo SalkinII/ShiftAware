@@ -281,7 +281,7 @@ export default function ExportPage() {
                       : "border-gray-200 text-gray-600 hover:border-primary-200",
                   )}
                 >
-                  <FileText className="w-5 h-5 mx-auto mb-1" />
+                  <FileText className="w-5 h-5 mx-auto mb-1 rotate-90" />
                   <p className="text-xs font-bold">Landscape</p>
                 </button>
                 <button
@@ -293,7 +293,7 @@ export default function ExportPage() {
                       : "border-gray-200 text-gray-600 hover:border-primary-200",
                   )}
                 >
-                  <FileText className="w-5 h-5 mx-auto mb-1 rotate-90" />
+                  <FileText className="w-5 h-5 mx-auto mb-1" />
                   <p className="text-xs font-bold">Portrait</p>
                 </button>
               </div>

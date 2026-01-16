@@ -16,6 +16,47 @@ User provided two context files:
 
 ---
 
+## Flow-Driven Priorities (New)
+
+This plan is now anchored to the user and admin flows in `UX_FLOW.md`.
+
+1. **Centralize Export**
+   - Keep export only on `/export`
+   - Remove duplicate export UI (dashboard quick report, schedule widget)
+   - Fix orientation icons and improve PDF output quality
+
+2. **Calendar-Based Interactions**
+   - Admin: drag shifts into calendar to reschedule
+   - Swap: calendar-based swap view (not only list/grid)
+   - Integrate conflict detection and resolution into these flows
+
+3. **Admin vs Team Member Separation**
+   - Admin flows: configure, assign, adjust
+   - Team member flows: view, preference, swap
+
+---
+
+## Orchestrator Plan (v1.1.0 Focus)
+
+1. **Export centralization (Done)**
+   - Remove dashboard quick report
+   - Remove schedule export widget
+   - Fix orientation icons
+   - Improve PDF output quality
+
+2. **Calendar-based shift rescheduling (Next)**
+   - Drag shifts into calendar to move dates/times
+   - Show conflict warnings inline
+
+3. **Swap calendar view + conflicts (Next)**
+   - Calendar-based swap UI
+   - Conflict detection + resolution entry points
+
+4. **Admin vs user flow separation (Scope)**
+   - Define minimal routing split without full restructure
+
+---
+
 ## Analysis: Existing vs Requested
 
 ### ✅ Already Exists
