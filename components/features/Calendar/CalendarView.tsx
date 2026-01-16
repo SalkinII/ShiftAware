@@ -711,12 +711,13 @@ const CalendarView = ({
                   : Array.from({ length: 7 }, (_, i) => {
                       const day = addDays(startBound, i);
                       return (
-                        <div
+                        <DateDropZone
                           key={`d-first-${i}`}
+                          date={day}
                           className="timeline-scale__cell"
                         >
                           {format(day, "EEE d")}
-                        </div>
+                        </DateDropZone>
                       );
                     })}
               </div>
