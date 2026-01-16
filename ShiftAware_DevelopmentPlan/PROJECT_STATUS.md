@@ -39,10 +39,12 @@
 
 **Completed (v1.1.0):**
 - ✅ Shift Templates implementation (schema, API, UI, drag-drop)
+- ✅ Swap Interface condensed grid/calendar view (filters, date grouping, compact cards)
 - ⚠️ Known issue: Prisma client regeneration required (see KNOWN_ISSUES.md)
 
 **Next:**
 - Shift Templates testing and refinement
+- Calendar scroll improvements (vertical infinite scroll, horizontal inspired)
 - Reactive patterns (transitions, progressive disclosure)
 - UI polish and accessibility audit
 

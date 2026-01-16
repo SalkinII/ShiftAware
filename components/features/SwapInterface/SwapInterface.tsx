@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { format, startOfDay, parseISO, isSameDay } from "date-fns";
+import { format, startOfDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface Assignment {
@@ -258,24 +258,33 @@ export function SwapInterface({
 
     // Toggle selection on drop
     const newSelected = new Set(selectedIds);
-    if (newSelected.has(active.id as string)) {
-      newSelected.delete(active.id as string);
+    const activeIdStr = active.id as string;
+    const overIdStr = over.id as string;
+
+    // Toggle active item
+    if (newSelected.has(activeIdStr)) {
+      newSelected.delete(activeIdStr);
     } else {
       if (newSelected.size >= 2) {
         toast.warning("You can only select 2 assignments at a time");
         return;
       }
-      newSelected.add(active.id as string);
+      newSelected.add(activeIdStr);
     }
-    if (newSelected.has(over.id as string)) {
-      newSelected.delete(over.id as string);
-    } else {
-      if (newSelected.size >= 2 && !newSelected.has(active.id as string)) {
-        toast.warning("You can only select 2 assignments at a time");
-        return;
+
+    // Toggle over item (if different from active)
+    if (overIdStr !== activeIdStr) {
+      if (newSelected.has(overIdStr)) {
+        newSelected.delete(overIdStr);
+      } else {
+        if (newSelected.size >= 2) {
+          toast.warning("You can only select 2 assignments at a time");
+          return;
+        }
+        newSelected.add(overIdStr);
       }
-      newSelected.add(over.id as string);
     }
+
     setSelectedIds(newSelected);
   };
 
