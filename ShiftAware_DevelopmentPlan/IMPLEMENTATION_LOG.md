@@ -250,6 +250,21 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: added visual feedback during drag operations (drag overlay, selection highlighting)
 - v0.3.0: connected SwapInterface to existing swap API endpoint (/api/assignments/swap)
 
+## 2026-01-16T12:00:00Z
+- v0.4.0: Phase 2 code cleanup - removed obsolete password scripts (test-password.js, test-password.ps1, generate-password-hash.js)
+- v0.4.0: Phase 2 code cleanup - updated package.json version from 0.2.0 to 0.4.0
+- v0.4.0: Phase 2 code cleanup - removed outdated TESTRESULTS/TESTING_SUMMARY.md
+- v0.4.0: Phase 2 code cleanup - removed obsolete .cursor/plans file
+- v0.4.0: Phase 2 code cleanup - updated TODO comments in schedule/page.tsx (marked as deferred features)
+- v0.4.0: Phase 3 - documented technical debt (TECHNICAL_DEBT.md) with unused imports, any types, linter issues
+- v0.4.0: Phase 3 - created UI testing strategy (.context/PLAYWRIGHT.md) and UI refurbish plans (.context/260115_DESIGN_System2.md, .context/260115_UI_DESIGN_reactive.md)
+- v0.4.0: Phase 3 - set up Playwright for E2E testing (playwright.config.ts, test structure, page objects)
+- v0.4.0: Phase 3 - implemented Playwright critical flow tests (auth.spec.ts, critical-flows.spec.ts)
+- v0.4.0: Phase 3 - removed unused NextResponse imports from 13 API routes (assignments, events, preferences, members, shifts, conflicts, audit routes)
+- v0.4.0: Phase 3 - security audit complete (SECURITY_AUDIT.md) - all controls in place, Next.js update recommended
+- v0.4.0: Phase 3 - browser compatibility analysis complete (BROWSER_COMPATIBILITY.md) - modern stack, responsive design verified
+- v0.4.0: UX fix - added mobile hamburger menu to Header for sidebar access on mobile devices (fixes missing navigation on mobile)
+
 ## 2026-01-16T00:00:00Z
 - v0.3.0: fixed timeline view navigation issues - improved date range calculation from all shifts
 - v0.3.0: added week view navigation controls (prev/next week buttons)
@@ -291,3 +306,20 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v0.3.0: added integration tests (tests/integration.test.ts) for critical flows: member management, shift management, assignments, conflicts, availability, rollback
 - v0.3.0: iteration complete - merged to main, tagged v0.3.0
 - v0.4.0: radical documentation cleanup - deleted 19 obsolete files, kept only essential technical docs (SYSTEM_ARCHITECTURE.md, DATABASE_SCHEMA.md, TECHNOLOGY_STACK.md, PROJECT_STATUS.md, IMPLEMENTATION_LOG.md)
+
+## 2026-01-16T18:00:00Z
+- v0.4.0: Phase 3 Production Readiness - Performance Optimization
+- v0.4.0: created PERFORMANCE_REPORT.md documenting current performance characteristics, bundle size analysis, database query patterns, caching analysis, and optimization opportunities
+- v0.4.0: implemented code splitting for PDF export - lazy-loaded jspdf library (~200KB) on demand in schedule/page.tsx and export/page.tsx using dynamic import
+- v0.4.0: implemented code splitting for admin components - lazy-loaded ConflictWizard in admin/coverage/page.tsx and SwapInterface in admin/assignments/page.tsx using next/dynamic with ssr: false
+- v0.4.0: performance analysis identified efficient database queries (no N+1 patterns), good React optimizations (memoization, virtual scrolling), and client-side caching already implemented
+- v0.4.0: optimization opportunities documented: bundle analyzer setup, API route caching, further code splitting for calendar views
+- v0.4.0: Phase 3 Production Readiness - Critical Technical Debt Cleanup
+- v0.4.0: fixed critical `any` types in app/api/audit/rollback/route.ts - replaced with proper Prisma types (AuditLog, ExperienceLevel, Role, ShiftType, ShiftPriority, AssignmentType) and added type guards for JSON field validation
+- v0.4.0: fixed critical `any` types in app/api/conflicts/route.ts - replaced with Prisma type definitions (AssignmentWithRelations, ShiftWithRelations, MemberWithRelations) using Prisma.GetPayload
+- v0.4.0: fixed critical `any` types in app/api/members/availability/route.ts - replaced with proper Prisma types (MemberWithRelations, ShiftWithRelations) and Prisma.WhereInput types for query builders
+- v0.4.0: all critical `any` types replaced with proper TypeScript interfaces, type safety improved, no new linter errors introduced
+- v0.4.0: Phase 3 Production Readiness - Synthesis complete
+- v0.4.0: created PHASE3_SUMMARY.md documenting all Phase 3 achievements (security audit, browser compatibility, performance optimization, technical debt cleanup)
+- v0.4.0: updated PROJECT_STATUS.md to reflect Phase 3 completion, ready for Phase 4 (v1.0 Release Preparation)
+- v0.4.0: Phase 3 complete - all production readiness criteria met, application ready for v1.0.0 release preparation

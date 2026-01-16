@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useCache } from "@/lib/cache/useCache";
 import { Download, FileText, Users, Calendar } from "lucide-react";
-import { exportScheduleToPDF } from "@/lib/services/export";
+// PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
 
 interface Member {
   id: string;
@@ -151,6 +151,8 @@ export default function ExportPage() {
 
     setIsExporting(true);
     try {
+      // Lazy load PDF export on demand (heavy library - jspdf ~200KB)
+      const { exportScheduleToPDF } = await import("@/lib/services/export");
       exportScheduleToPDF(shifts, {
         orientation: exportOrientation,
         memberId: exportScope === "member" ? selectedMemberId : undefined,

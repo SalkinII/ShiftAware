@@ -1,5 +1,7 @@
--- Cleanup script for orphaned shift: cmkfpxc04000nt67nmvucpzux
+-- Cleanup script template for orphaned shifts
+-- Replace 'cmkfpxc04000nt67nmvucpzux' with the actual shift ID
 -- Run this in your PostgreSQL database if the shift cannot be deleted via UI
+-- Note: The cleanup API endpoint (/api/shifts/[id]/cleanup) is preferred for most cases
 
 -- Step 1: Check shift state
 SELECT 

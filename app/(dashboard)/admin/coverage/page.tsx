@@ -1,14 +1,23 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ConflictWizard } from "@/components/features/ConflictWizard/ConflictWizard";
 import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 import { useCache } from "@/lib/cache/useCache";
 import { format } from "date-fns";
 import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Lazy load ConflictWizard (admin-only feature, heavy component)
+const ConflictWizard = dynamic(
+  () =>
+    import("@/components/features/ConflictWizard/ConflictWizard").then(
+      (mod) => mod.ConflictWizard,
+    ),
+  { ssr: false },
+);
 
 interface CoverageGap {
   id: string;

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
