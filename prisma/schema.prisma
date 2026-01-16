@@ -66,20 +66,20 @@ enum EntityType {
 }
 
 model TeamMember {
-  id              String           @id @default(cuid())
-  alias           String           @unique
+  id              String          @id @default(cuid())
+  alias           String          @unique
   avatarId        String
   experienceLevel ExperienceLevel
   genderRole      String
   capabilities    Role[]
-  isActive        Boolean          @default(true)
+  isActive        Boolean         @default(true)
 
-  preferences     ShiftPreference[]
-  assignments     Assignment[]
-  auditLogs       AuditLog[]
+  preferences ShiftPreference[]
+  assignments Assignment[]
+  auditLogs   AuditLog[]
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([alias])
 }
@@ -91,34 +91,35 @@ model Event {
   endDate   DateTime
   status    EventStatus @default(PLANNING)
 
-  shifts    Shift[]
-  config    EventConfig?
+  shifts          Shift[]
+  config          EventConfig?
+  scheduledShifts ScheduledShift[]
 
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Shift {
-  id                String          @id @default(cuid())
-  eventId           String
-  event             Event           @relation(fields: [eventId], references: [id])
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
 
   type              ShiftType
   startTime         DateTime
   endTime           DateTime
   durationMinutes   Int
-  priority          ShiftPriority   @default(CORE)
-  desirabilityScore Int             @default(3)
-  isTemplate        Boolean         @default(false)
+  priority          ShiftPriority @default(CORE)
+  desirabilityScore Int           @default(3)
+  isTemplate        Boolean       @default(false)
 
-  requiredRoles     ShiftRole[]
-  capacity          Int             @default(2)
+  requiredRoles ShiftRole[]
+  capacity      Int         @default(2)
 
-  preferences       ShiftPreference[]
-  assignments       Assignment[]
+  preferences ShiftPreference[]
+  assignments Assignment[]
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([eventId, startTime])
   @@index([type, priority])
@@ -135,37 +136,37 @@ model ShiftRole {
 }
 
 model ShiftPreference {
-  id           String      @id @default(cuid())
+  id           String     @id @default(cuid())
   teamMemberId String
-  teamMember   TeamMember  @relation(fields: [teamMemberId], references: [id])
+  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id])
   shiftId      String
-  shift        Shift       @relation(fields: [shiftId], references: [id])
+  shift        Shift      @relation(fields: [shiftId], references: [id])
 
-  priority     Int         @default(1)
-  notes        String?
+  priority Int     @default(1)
+  notes    String?
 
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([teamMemberId, shiftId])
   @@index([shiftId])
 }
 
 model Assignment {
-  id            String         @id @default(cuid())
-  shiftId       String
-  shift         Shift          @relation(fields: [shiftId], references: [id])
-  teamMemberId  String
-  teamMember    TeamMember     @relation(fields: [teamMemberId], references: [id])
+  id           String     @id @default(cuid())
+  shiftId      String
+  shift        Shift      @relation(fields: [shiftId], references: [id])
+  teamMemberId String
+  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id])
 
-  role          Role
-  isLead        Boolean        @default(false)
+  role           Role
+  isLead         Boolean        @default(false)
   assignmentType AssignmentType @default(ALGORITHM)
   algorithmScore Json?
-  notes         String?
+  notes          String?
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([shiftId, teamMemberId])
   @@index([teamMemberId])
@@ -173,34 +174,34 @@ model Assignment {
 }
 
 model EventConfig {
-  id                   String   @id @default(cuid())
-  eventId              String   @unique
-  event                Event    @relation(fields: [eventId], references: [id])
+  id      String @id @default(cuid())
+  eventId String @unique
+  event   Event  @relation(fields: [eventId], references: [id])
 
-  minShiftsPerPerson   Int      @default(2)
-  algorithmWeights     Json
-  balanceThresholds    Json
-  autoAssignUnfilled   Boolean  @default(true)
+  minShiftsPerPerson Int     @default(2)
+  algorithmWeights   Json
+  balanceThresholds  Json
+  autoAssignUnfilled Boolean @default(true)
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {
-  id         String     @id @default(cuid())
-  userId     String?
-  user       TeamMember? @relation(fields: [userId], references: [id])
+  id     String      @id @default(cuid())
+  userId String?
+  user   TeamMember? @relation(fields: [userId], references: [id])
 
   action     AuditAction
   entityType EntityType
   entityId   String
 
-  before     Json?
-  after      Json?
-  reason     String?
-  ipAddress  String?
+  before    Json?
+  after     Json?
+  reason    String?
+  ipAddress String?
 
-  createdAt  DateTime   @default(now())
+  createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([entityType, entityId])
@@ -208,10 +209,53 @@ model AuditLog {
 }
 
 model SystemConfig {
-  id        String  @id @default(cuid())
-  key       String  @unique
-  value     Json
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json
 
   updatedAt DateTime @updatedAt
 }
 
+model ShiftTemplate {
+  id                String        @id @default(cuid())
+  name              String
+  type              ShiftType
+  durationMinutes   Int
+  startTime         String // "08:00" - time only, no date
+  priority          ShiftPriority @default(CORE)
+  desirabilityScore Int           @default(3)
+  capacity          Int           @default(2)
+  color             String? // For UI display
+
+  requiredRoles   ShiftTemplateRole[]
+  scheduledShifts ScheduledShift[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShiftTemplateRole {
+  id         String        @id @default(cuid())
+  templateId String
+  template   ShiftTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  role       Role
+  count      Int           @default(1)
+
+  @@unique([templateId, role])
+}
+
+model ScheduledShift {
+  id         String        @id @default(cuid())
+  templateId String
+  template   ShiftTemplate @relation(fields: [templateId], references: [id])
+  eventId    String
+  event      Event         @relation(fields: [eventId], references: [id])
+  date       DateTime // Date only (time comes from template)
+  shiftId    String?       @unique // Links to actual Shift after creation
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, date])
+  @@index([templateId])
+}
