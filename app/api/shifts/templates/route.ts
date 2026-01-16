@@ -16,6 +16,17 @@ export async function GET(request: Request) {
       return createUnauthorizedResponse();
     }
 
+    // Check if Prisma client has the new models
+    if (!prisma.shiftTemplate) {
+      console.error(
+        "Prisma client missing shiftTemplate model. Run: npx prisma generate",
+      );
+      return createErrorResponse(
+        new Error("Prisma client not updated. Please restart the dev server."),
+        "Database models not available. Please restart the server.",
+      );
+    }
+
     const templates = await prisma.shiftTemplate.findMany({
       include: {
         requiredRoles: true,
@@ -48,6 +59,17 @@ export async function POST(request: Request) {
     const validated = shiftTemplateSchema.parse(body);
 
     const { requiredRoles, ...templateData } = validated;
+
+    // Check if Prisma client has the new models
+    if (!prisma.shiftTemplate) {
+      console.error(
+        "Prisma client missing shiftTemplate model. Run: npx prisma generate",
+      );
+      return createErrorResponse(
+        new Error("Prisma client not updated. Please restart the dev server."),
+        "Database models not available. Please restart the server.",
+      );
+    }
 
     const template = await prisma.shiftTemplate.create({
       data: {
