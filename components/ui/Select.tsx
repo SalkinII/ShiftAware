@@ -1,4 +1,5 @@
 import { SelectHTMLAttributes, ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -30,21 +31,29 @@ export function Select({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      <select
-        id={selectId}
-        className={cn(
-          "w-full rounded-xl border bg-white px-4 py-3 text-gray-900 focus:ring-2 focus:outline-none shadow-sm transition-colors",
-          error
-            ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-            : "border-gray-200 focus:border-primary-500 focus:ring-primary-500/20",
-          className,
-        )}
-        aria-invalid={error ? "true" : "false"}
-        aria-describedby={error ? `${selectId}-error` : undefined}
-        {...props}
-      >
-        {children}
-      </select>
+      <div className="relative">
+        <select
+          id={selectId}
+          className={cn(
+            "w-full rounded-lg border bg-white pl-4 pr-10 py-2.5 text-sm text-gray-900",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-200",
+            "appearance-none cursor-pointer",
+            error
+              ? "border-error-300 focus-visible:border-error-500 focus-visible:ring-error-500"
+              : "border-gray-300 focus-visible:border-primary-500 focus-visible:ring-primary-500",
+            className,
+          )}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={error ? `${selectId}-error` : undefined}
+          {...props}
+        >
+          {children}
+        </select>
+        <ChevronDown
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+          aria-hidden="true"
+        />
+      </div>
       {error && (
         <p
           id={`${selectId}-error`}

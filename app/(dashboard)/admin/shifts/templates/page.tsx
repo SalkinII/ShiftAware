@@ -41,16 +41,26 @@ export default function TemplatesPage() {
     templateName: "",
     isLoading: false,
   });
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    type: ShiftType;
+    durationMinutes: number;
+    startTime: string;
+    priority: ShiftPriority;
+    desirabilityScore: number;
+    capacity: number;
+    color: string;
+    requiredRoles: Array<{ role: Role; count: number }>;
+  }>({
     name: "",
-    type: "MOBILE_TEAM_1" as ShiftType,
+    type: "MOBILE_TEAM_1",
     durationMinutes: 360,
     startTime: "08:00",
-    priority: "CORE" as ShiftPriority,
+    priority: "CORE",
     desirabilityScore: 3,
     capacity: 2,
     color: "",
-    requiredRoles: [{ role: "TEAM_MEMBER" as Role, count: 1 }],
+    requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
   });
 
   const {
@@ -109,14 +119,14 @@ export default function TemplatesPage() {
   function resetForm() {
     setFormData({
       name: "",
-      type: "MOBILE_TEAM_1",
+      type: "MOBILE_TEAM_1" as ShiftType,
       durationMinutes: 360,
       startTime: "08:00",
-      priority: "CORE",
+      priority: "CORE" as ShiftPriority,
       desirabilityScore: 3,
       capacity: 2,
       color: "",
-      requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
+      requiredRoles: [{ role: "TEAM_MEMBER" as Role, count: 1 }],
     });
   }
 
