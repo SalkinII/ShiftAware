@@ -1,8 +1,17 @@
-import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createAuditLog } from "@/lib/services/audit";
-import { AuditAction, EntityType, Prisma } from "@prisma/client";
+import {
+  AuditAction,
+  EntityType,
+  Prisma,
+  AuditLog,
+  ExperienceLevel,
+  Role,
+  ShiftType,
+  ShiftPriority,
+  AssignmentType,
+} from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -10,6 +19,80 @@ import {
   createNotFoundResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
+
+// Type definitions for rollback data
+type TeamMemberBeforeAfter = {
+  alias?: string;
+  avatarId?: string;
+  experienceLevel?: ExperienceLevel | string;
+  genderRole?: string;
+  capabilities?: Role[] | string[];
+  isActive?: boolean;
+};
+
+type ShiftBeforeAfter = {
+  eventId?: string;
+  type?: ShiftType | string;
+  startTime?: string | Date;
+  endTime?: string | Date;
+  durationMinutes?: number;
+  priority?: ShiftPriority | string;
+  desirabilityScore?: number;
+  capacity?: number;
+  requiredRoles?: Array<{ role: Role | string; count: number }>;
+};
+
+type AssignmentBeforeAfter = {
+  shiftId?: string;
+  teamMemberId?: string;
+  role?: Role | string;
+  isLead?: boolean;
+  assignmentType?: AssignmentType | string;
+  algorithmScore?: Prisma.InputJsonValue;
+  notes?: string | null;
+};
+
+type PreferenceBeforeAfter = {
+  teamMemberId?: string;
+  shiftId?: string;
+  priority?: number;
+  notes?: string | null;
+};
+
+// Type guard helpers
+function isValidExperienceLevel(value: unknown): value is ExperienceLevel {
+  return (
+    typeof value === "string" &&
+    Object.values(ExperienceLevel).includes(value as ExperienceLevel)
+  );
+}
+
+function isValidRole(value: unknown): value is Role {
+  return (
+    typeof value === "string" && Object.values(Role).includes(value as Role)
+  );
+}
+
+function isValidShiftType(value: unknown): value is ShiftType {
+  return (
+    typeof value === "string" &&
+    Object.values(ShiftType).includes(value as ShiftType)
+  );
+}
+
+function isValidShiftPriority(value: unknown): value is ShiftPriority {
+  return (
+    typeof value === "string" &&
+    Object.values(ShiftPriority).includes(value as ShiftPriority)
+  );
+}
+
+function isValidAssignmentType(value: unknown): value is AssignmentType {
+  return (
+    typeof value === "string" &&
+    Object.values(AssignmentType).includes(value as AssignmentType)
+  );
+}
 
 export async function POST(request: Request) {
   try {
@@ -132,10 +215,10 @@ export async function POST(request: Request) {
 
 async function rollbackTeamMember(
   tx: Prisma.TransactionClient,
-  auditLog: any,
+  auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
-  const before = auditLog.before as any;
-  const after = auditLog.after as any;
+  const before = auditLog.before as unknown as TeamMemberBeforeAfter | null;
+  const after = auditLog.after as unknown as TeamMemberBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:
@@ -177,9 +260,17 @@ async function rollbackTeamMember(
         data: {
           alias: before.alias,
           avatarId: before.avatarId,
-          experienceLevel: before.experienceLevel,
+          experienceLevel:
+            before.experienceLevel &&
+            isValidExperienceLevel(before.experienceLevel)
+              ? before.experienceLevel
+              : undefined,
           genderRole: before.genderRole,
-          capabilities: before.capabilities,
+          capabilities: before.capabilities
+            ? (before.capabilities.filter((r): r is Role =>
+                isValidRole(r),
+              ) as Role[])
+            : undefined,
           isActive: before.isActive,
         },
       });
@@ -219,10 +310,10 @@ async function rollbackTeamMember(
 
 async function rollbackShift(
   tx: Prisma.TransactionClient,
-  auditLog: any,
+  auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
-  const before = auditLog.before as any;
-  const after = auditLog.after as any;
+  const before = auditLog.before as unknown as ShiftBeforeAfter | null;
+  const after = auditLog.after as unknown as ShiftBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:
@@ -292,16 +383,36 @@ async function rollbackShift(
           );
         }
 
+        // Validate required fields
+        if (
+          !beforeShiftData.startTime ||
+          !beforeShiftData.endTime ||
+          !beforeShiftData.durationMinutes ||
+          !beforeShiftData.capacity
+        ) {
+          throw new Error("Cannot rollback: missing required shift fields");
+        }
+
         // Recreate the shift
         const recreatedShift = await tx.shift.create({
           data: {
             eventId: beforeShiftData.eventId,
-            type: beforeShiftData.type,
-            startTime: new Date(beforeShiftData.startTime),
-            endTime: new Date(beforeShiftData.endTime),
+            type: isValidShiftType(beforeShiftData.type)
+              ? beforeShiftData.type
+              : ShiftType.STATIONARY,
+            startTime:
+              beforeShiftData.startTime instanceof Date
+                ? beforeShiftData.startTime
+                : new Date(beforeShiftData.startTime),
+            endTime:
+              beforeShiftData.endTime instanceof Date
+                ? beforeShiftData.endTime
+                : new Date(beforeShiftData.endTime),
             durationMinutes: beforeShiftData.durationMinutes,
-            priority: beforeShiftData.priority,
-            desirabilityScore: beforeShiftData.desirabilityScore,
+            priority: isValidShiftPriority(beforeShiftData.priority)
+              ? beforeShiftData.priority
+              : ShiftPriority.CORE,
+            desirabilityScore: beforeShiftData.desirabilityScore ?? 3,
             capacity: beforeShiftData.capacity,
           },
         });
@@ -309,11 +420,13 @@ async function rollbackShift(
         // Recreate required roles
         if (beforeRoles && Array.isArray(beforeRoles)) {
           await tx.shiftRole.createMany({
-            data: beforeRoles.map((role: any) => ({
-              shiftId: recreatedShift.id,
-              role: role.role,
-              count: role.count || 1,
-            })),
+            data: beforeRoles
+              .filter((role) => isValidRole(role.role))
+              .map((role) => ({
+                shiftId: recreatedShift.id,
+                role: role.role as Role,
+                count: role.count || 1,
+              })),
           });
         }
 
@@ -329,13 +442,33 @@ async function rollbackShift(
       await tx.shift.update({
         where: { id: auditLog.entityId },
         data: {
-          type: shiftData.type,
-          startTime: new Date(shiftData.startTime),
-          endTime: new Date(shiftData.endTime),
-          durationMinutes: shiftData.durationMinutes,
-          priority: shiftData.priority,
-          desirabilityScore: shiftData.desirabilityScore,
-          capacity: shiftData.capacity,
+          ...(shiftData.type &&
+            isValidShiftType(shiftData.type) && { type: shiftData.type }),
+          ...(shiftData.startTime && {
+            startTime:
+              shiftData.startTime instanceof Date
+                ? shiftData.startTime
+                : new Date(shiftData.startTime),
+          }),
+          ...(shiftData.endTime && {
+            endTime:
+              shiftData.endTime instanceof Date
+                ? shiftData.endTime
+                : new Date(shiftData.endTime),
+          }),
+          ...(shiftData.durationMinutes !== undefined && {
+            durationMinutes: shiftData.durationMinutes,
+          }),
+          ...(shiftData.priority &&
+            isValidShiftPriority(shiftData.priority) && {
+              priority: shiftData.priority,
+            }),
+          ...(shiftData.desirabilityScore !== undefined && {
+            desirabilityScore: shiftData.desirabilityScore,
+          }),
+          ...(shiftData.capacity !== undefined && {
+            capacity: shiftData.capacity,
+          }),
         },
       });
 
@@ -346,11 +479,13 @@ async function rollbackShift(
         });
         if (requiredRoles.length > 0) {
           await tx.shiftRole.createMany({
-            data: requiredRoles.map((role: any) => ({
-              shiftId: auditLog.entityId,
-              role: role.role,
-              count: role.count || 1,
-            })),
+            data: requiredRoles
+              .filter((role) => isValidRole(role.role))
+              .map((role) => ({
+                shiftId: auditLog.entityId,
+                role: role.role as Role,
+                count: role.count || 1,
+              })),
           });
         }
       }
@@ -366,36 +501,61 @@ async function rollbackShift(
       if (!before) {
         throw new Error("Cannot rollback: missing 'before' data");
       }
-      const { requiredRoles: beforeRoles, ...beforeShiftData } = before;
+      const { requiredRoles: deleteBeforeRoles, ...deleteBeforeShiftData } =
+        before;
+
+      // Validate required fields
+      if (
+        !deleteBeforeShiftData.eventId ||
+        !deleteBeforeShiftData.type ||
+        !deleteBeforeShiftData.startTime ||
+        !deleteBeforeShiftData.endTime ||
+        !deleteBeforeShiftData.durationMinutes ||
+        !deleteBeforeShiftData.capacity
+      ) {
+        throw new Error("Cannot rollback: missing required shift fields");
+      }
 
       // Recreate shift (IDs are auto-generated, so we can't reuse the original ID)
-      const recreatedShift = await tx.shift.create({
+      const recreatedShiftDelete = await tx.shift.create({
         data: {
-          eventId: beforeShiftData.eventId,
-          type: beforeShiftData.type,
-          startTime: new Date(beforeShiftData.startTime),
-          endTime: new Date(beforeShiftData.endTime),
-          durationMinutes: beforeShiftData.durationMinutes,
-          priority: beforeShiftData.priority,
-          desirabilityScore: beforeShiftData.desirabilityScore,
-          capacity: beforeShiftData.capacity,
+          eventId: deleteBeforeShiftData.eventId,
+          type: isValidShiftType(deleteBeforeShiftData.type)
+            ? deleteBeforeShiftData.type
+            : ShiftType.STATIONARY,
+          startTime:
+            deleteBeforeShiftData.startTime instanceof Date
+              ? deleteBeforeShiftData.startTime
+              : new Date(deleteBeforeShiftData.startTime),
+          endTime:
+            deleteBeforeShiftData.endTime instanceof Date
+              ? deleteBeforeShiftData.endTime
+              : new Date(deleteBeforeShiftData.endTime),
+          durationMinutes: deleteBeforeShiftData.durationMinutes,
+          priority: isValidShiftPriority(deleteBeforeShiftData.priority)
+            ? deleteBeforeShiftData.priority
+            : ShiftPriority.CORE,
+          desirabilityScore: deleteBeforeShiftData.desirabilityScore ?? 3,
+          capacity: deleteBeforeShiftData.capacity,
         },
       });
 
       // Recreate required roles
-      if (beforeRoles && Array.isArray(beforeRoles)) {
+      if (deleteBeforeRoles && Array.isArray(deleteBeforeRoles)) {
         await tx.shiftRole.createMany({
-          data: beforeRoles.map((role: any) => ({
-            shiftId: recreatedShift.id,
-            role: role.role,
-            count: role.count || 1,
-          })),
+          data: deleteBeforeRoles
+            .filter((role) => isValidRole(role.role))
+            .map((role) => ({
+              shiftId: recreatedShiftDelete.id,
+              role: role.role as Role,
+              count: role.count || 1,
+            })),
         });
       }
 
       return {
         success: true,
-        message: `Rolled back shift deletion: ${recreatedShift.type}`,
+        message: `Rolled back shift deletion: ${recreatedShiftDelete.type}`,
         action: AuditAction.CREATE,
       };
 
@@ -408,10 +568,10 @@ async function rollbackShift(
 
 async function rollbackAssignment(
   tx: Prisma.TransactionClient,
-  auditLog: any,
+  auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
-  const before = auditLog.before as any;
-  const after = auditLog.after as any;
+  const before = auditLog.before as unknown as AssignmentBeforeAfter | null;
+  const after = auditLog.after as unknown as AssignmentBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:
@@ -450,11 +610,16 @@ async function rollbackAssignment(
       await tx.assignment.update({
         where: { id: auditLog.entityId },
         data: {
-          role: before.role,
-          isLead: before.isLead,
-          assignmentType: before.assignmentType,
-          algorithmScore: before.algorithmScore,
-          notes: before.notes,
+          ...(before.role && isValidRole(before.role) && { role: before.role }),
+          ...(before.isLead !== undefined && { isLead: before.isLead }),
+          ...(before.assignmentType &&
+            isValidAssignmentType(before.assignmentType) && {
+              assignmentType: before.assignmentType,
+            }),
+          ...(before.algorithmScore !== undefined && {
+            algorithmScore: before.algorithmScore,
+          }),
+          ...(before.notes !== undefined && { notes: before.notes }),
         },
       });
       return {
@@ -465,8 +630,11 @@ async function rollbackAssignment(
 
     case AuditAction.DELETE:
       // Recreate assignment from before
-      if (!before) {
-        throw new Error("Cannot rollback: missing 'before' data");
+      if (!before || !before.shiftId || !before.teamMemberId || !before.role) {
+        throw new Error("Cannot rollback: missing required assignment fields");
+      }
+      if (!isValidRole(before.role)) {
+        throw new Error("Cannot rollback: invalid role");
       }
       await tx.assignment.create({
         data: {
@@ -475,7 +643,11 @@ async function rollbackAssignment(
           teamMemberId: before.teamMemberId,
           role: before.role,
           isLead: before.isLead || false,
-          assignmentType: before.assignmentType,
+          assignmentType:
+            before.assignmentType &&
+            isValidAssignmentType(before.assignmentType)
+              ? before.assignmentType
+              : AssignmentType.MANUAL,
           algorithmScore: before.algorithmScore,
           notes: before.notes,
         },
@@ -509,10 +681,10 @@ async function rollbackAssignment(
 
 async function rollbackPreference(
   tx: Prisma.TransactionClient,
-  auditLog: any,
+  auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
-  const before = auditLog.before as any;
-  const after = auditLog.after as any;
+  const before = auditLog.before as unknown as PreferenceBeforeAfter | null;
+  const after = auditLog.after as unknown as PreferenceBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:
@@ -564,8 +736,13 @@ async function rollbackPreference(
 
     case AuditAction.DELETE:
       // Recreate preference from before
-      if (!before) {
-        throw new Error("Cannot rollback: missing 'before' data");
+      if (
+        !before ||
+        !before.teamMemberId ||
+        !before.shiftId ||
+        before.priority === undefined
+      ) {
+        throw new Error("Cannot rollback: missing required preference fields");
       }
       await tx.shiftPreference.create({
         data: {

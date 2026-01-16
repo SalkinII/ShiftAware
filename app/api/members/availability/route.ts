@@ -2,6 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { createUnauthorizedResponse } from "@/lib/api-errors";
+import { Prisma } from "@prisma/client";
+
+// Type definitions for Prisma includes
+type MemberWithRelations = Prisma.TeamMemberGetPayload<{
+  include: {
+    preferences: { include: { shift: true } };
+    assignments: { include: { shift: true } };
+  };
+}>;
+
+type ShiftWithRelations = Prisma.ShiftGetPayload<{
+  include: {
+    requiredRoles: true;
+    assignments: { include: { teamMember: true } };
+    preferences: { include: { teamMember: true } };
+  };
+}>;
+
+type ShiftRole = {
+  role: string;
+  count: number;
+};
 
 interface AvailabilityStatus {
   memberId: string;
@@ -19,9 +41,29 @@ interface AvailabilityStatus {
   };
 }
 
+interface MemberSummary {
+  id: string;
+  alias: string;
+  avatarId: string;
+  experienceLevel: string;
+  genderRole: string;
+  capabilities: string[];
+  isActive: boolean;
+}
+
+interface ShiftSummary {
+  id: string;
+  type: string;
+  startTime: Date;
+  endTime: Date;
+  capacity: number;
+  priority: string;
+  requiredRoles?: ShiftRole[];
+}
+
 interface HeatmapData {
-  members: any[];
-  shifts: any[];
+  members: MemberSummary[];
+  shifts: ShiftSummary[];
   availability: AvailabilityStatus[][];
   summary: {
     totalMembers: number;
@@ -47,15 +89,15 @@ function checkShiftOverlap(
 }
 
 function checkMemberMeetsRequirements(
-  member: any,
-  shift: any,
+  member: MemberWithRelations,
+  shift: ShiftWithRelations,
 ): { meets: boolean; missingRoles: string[] } {
   if (!shift.requiredRoles || shift.requiredRoles.length === 0) {
     return { meets: true, missingRoles: [] };
   }
 
   const memberRoles = member.capabilities || [];
-  const requiredRoles = shift.requiredRoles.map((r: any) => r.role);
+  const requiredRoles = shift.requiredRoles.map((r) => r.role);
   const missingRoles = requiredRoles.filter(
     (role: string) => !memberRoles.includes(role),
   );
@@ -67,11 +109,14 @@ function checkMemberMeetsRequirements(
 }
 
 function calculateAvailabilityStatus(
-  member: any,
-  shift: any,
+  member: MemberWithRelations,
+  shift: ShiftWithRelations,
   memberPreferences: Map<string, string[]>, // memberId -> shiftIds[]
-  memberAssignments: Map<string, any[]>, // memberId -> assignments[]
-  allShifts: any[],
+  memberAssignments: Map<
+    string,
+    Prisma.AssignmentGetPayload<{ include: { shift: true } }>[]
+  >, // memberId -> assignments[]
+  allShifts: ShiftWithRelations[],
 ): AvailabilityStatus {
   const memberId = member.id;
   const shiftId = shift.id;
@@ -88,9 +133,9 @@ function calculateAvailabilityStatus(
   // Check conflicts (overlapping shifts)
   const shiftStart = new Date(shift.startTime);
   const shiftEnd = new Date(shift.endTime);
-  const conflictingAssignments = assignments.filter((a: any) => {
+  const conflictingAssignments = assignments.filter((a) => {
     if (a.shiftId === shiftId) return false; // Don't count self
-    const assignedShift = allShifts.find((s: any) => s.id === a.shiftId);
+    const assignedShift = allShifts.find((s) => s.id === a.shiftId);
     if (!assignedShift) return false;
     return checkShiftOverlap(
       shiftStart,
@@ -130,10 +175,10 @@ function calculateAvailabilityStatus(
     meetsRequirements,
     details: {
       preferenceId: hasPreference
-        ? member.preferences?.find((p: any) => p.shiftId === shiftId)?.id
+        ? member.preferences?.find((p) => p.shiftId === shiftId)?.id
         : undefined,
       assignmentId: assignment?.id,
-      conflictShiftIds: conflictingAssignments.map((a: any) => a.shiftId),
+      conflictShiftIds: conflictingAssignments.map((a) => a.shiftId),
       missingRoles: missingRoles.length > 0 ? missingRoles : undefined,
     },
   };
@@ -165,7 +210,7 @@ export async function GET(request: NextRequest) {
     const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
     // Fetch members
-    const membersWhere: any = { isActive: true };
+    const membersWhere: Prisma.TeamMemberWhereInput = { isActive: true };
     if (memberIds && memberIds.length > 0) {
       membersWhere.id = { in: memberIds };
     }
@@ -190,7 +235,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch shifts
-    const shiftsWhere: any = {};
+    const shiftsWhere: Prisma.ShiftWhereInput = {};
     if (shiftIds && shiftIds.length > 0) {
       shiftsWhere.id = { in: shiftIds };
     }
@@ -201,7 +246,7 @@ export async function GET(request: NextRequest) {
       shiftsWhere.endTime = { lte: endDate };
     }
     if (shiftTypeParam) {
-      shiftsWhere.type = shiftTypeParam;
+      shiftsWhere.type = shiftTypeParam as Prisma.ShiftType;
     }
 
     const shifts = await prisma.shift.findMany({
@@ -226,11 +271,13 @@ export async function GET(request: NextRequest) {
 
     // Build maps for efficient lookup
     const memberPreferences = new Map<string, string[]>();
-    const memberAssignments = new Map<string, any[]>();
+    const memberAssignments = new Map<
+      string,
+      Prisma.AssignmentGetPayload<{ include: { shift: true } }>[]
+    >();
 
     members.forEach((member) => {
-      const preferredShiftIds =
-        member.preferences?.map((p: any) => p.shiftId) || [];
+      const preferredShiftIds = member.preferences?.map((p) => p.shiftId) || [];
       memberPreferences.set(member.id, preferredShiftIds);
 
       const assignments = member.assignments || [];
@@ -292,7 +339,7 @@ export async function GET(request: NextRequest) {
         endTime: s.endTime,
         capacity: s.capacity,
         priority: s.priority,
-        requiredRoles: s.requiredRoles?.map((r: any) => ({
+        requiredRoles: s.requiredRoles?.map((r) => ({
           role: r.role,
           count: r.count,
         })),

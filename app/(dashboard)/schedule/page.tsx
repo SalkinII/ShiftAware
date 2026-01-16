@@ -18,9 +18,10 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import CalendarView from "@/components/features/Calendar/CalendarView";
 import { addDays, format } from "date-fns";
-import { exportScheduleToPDF } from "@/lib/services/export";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
+
+// PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
 
 type CoverageState = "full" | "partial" | "empty";
 
@@ -272,9 +273,11 @@ export default function SchedulePage() {
     };
   }, [filteredShifts]);
 
-  function handleExport() {
+  async function handleExport() {
     setIsExporting(true);
     try {
+      // Lazy load PDF export on demand (heavy library - jspdf ~200KB)
+      const { exportScheduleToPDF } = await import("@/lib/services/export");
       exportScheduleToPDF(filteredShifts, {
         orientation: exportOrientation,
         memberId:
@@ -651,14 +654,20 @@ export default function SchedulePage() {
             }}
             eventRange={eventRange || undefined}
             onShiftEdit={(shiftId) => {
+              // Deferred to post-v1.0: Edit functionality exists in admin/shifts
+              // but not yet integrated into schedule view
               const shift = filteredShifts.find((s) => s.id === shiftId);
               if (shift) {
-                // TODO: Navigate to edit shift page or open edit modal
+                toast.info(
+                  "Edit shift functionality available in Admin > Shifts",
+                );
                 console.log("Edit shift:", shiftId);
               }
             }}
             onShiftSwap={(shiftId) => {
-              // TODO: Open swap interface
+              // Deferred to post-v1.0: Swap interface exists in admin/assignments
+              // but not yet integrated into schedule view
+              toast.info("Swap functionality available in Admin > Assignments");
               console.log("Swap shift:", shiftId);
             }}
             onShiftDelete={handleDeleteShift}

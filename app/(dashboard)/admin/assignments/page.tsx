@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
-import { SwapInterface } from "@/components/features/SwapInterface/SwapInterface";
 import { format } from "date-fns";
 import {
   RefreshCw,
@@ -19,6 +19,15 @@ import {
   List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Lazy load SwapInterface (admin-only feature, heavy component with drag-and-drop)
+const SwapInterface = dynamic(
+  () =>
+    import("@/components/features/SwapInterface/SwapInterface").then(
+      (mod) => mod.SwapInterface,
+    ),
+  { ssr: false },
+);
 
 interface Assignment {
   id: string;

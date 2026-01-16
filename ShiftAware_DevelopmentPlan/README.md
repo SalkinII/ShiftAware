@@ -1,35 +1,26 @@
 # ShiftAware Development Plan
 
-Single source of truth for planning and execution context. Keep this folder aligned with the current build and update it alongside behavior changes.
+Essential documentation for understanding technical setup, architecture, and current status.
 
-## Canonical Documents
-- `PROJECT_OVERVIEW.md` — vision, scope, success criteria
-- `FEATURE_REQUIREMENTS.md` — FRs with acceptance criteria
-- `SYSTEM_ARCHITECTURE.md` — architecture, flows, auth model
-- `DATABASE_SCHEMA.md` — data model and constraints
-- `TECHNOLOGY_STACK.md` — tech decisions and rationale
-- `ROADMAP.md` — phases, current focus, priorities
-- `TESTING_PLAN.md` — verification suites and checklists
+## Core Documents
 
-## Active Iteration
-- `ITERATION_v0.3.0.md` — current iteration plan, progress, and design specs
-- `PROJECT_STATUS.md` — quick overview of project state, completed work, and next steps
+- `SYSTEM_ARCHITECTURE.md` — Architecture, flows, auth model
+- `DATABASE_SCHEMA.md` — Data model and constraints
+- `TECHNOLOGY_STACK.md` — Tech decisions and rationale
+- `PROJECT_STATUS.md` — Current state and progress
 
-## Logs (Append-Only)
-- `IMPLEMENTATION_LOG.md` — change log of delivered work (includes bug fixes and debugging notes)
-- `COMPLIANCE_REVIEW.md` — plan vs repo adherence reviews
+## Archive
 
-## Design & Analysis Documents
-- `CACHING_STRATEGY.md` — caching system design and implementation plan
-- `TIMELINE_VIEW_ANALYSIS.md` — timeline view issues, fixes, and future improvements
-- `UI_DESIGN_ADAPTATION_PLAN.md` — UI design adaptation plan (reactive patterns, Design System v2) for v0.4.0+
+- `IMPLEMENTATION_LOG.md` — Change log (append-only, concise)
 
 ## Conventions
-- Auth model is plain `ADMIN_PASSWORD` (no hash) with `authenticated=true` cookie.
-- Session timeout is controlled by `SESSION_TIMEOUT_MINUTES` (default 60).
-- Port palette (host → container): app `43000→3000`, postgres `45432→5432`, optional python `43010→8000`.
+
+- Auth model: plain `ADMIN_PASSWORD` (no hash) with `authenticated=true` cookie
+- Session timeout: `SESSION_TIMEOUT_MINUTES` (default 60)
+- Port palette (host → container): app `43000→3000`, postgres `45432→5432`, optional python `43010→8000`
 
 ## Update Rules
-- If behavior changes, update the relevant doc in the Canonical list.
-- Keep logs chronological and append new entries at the bottom.
-- Consolidate redundant documentation — bugs and debugging notes go into `IMPLEMENTATION_LOG.md`.
+
+- Update core documents when behavior changes
+- Append to `IMPLEMENTATION_LOG.md` for all changes (keep concise)
+- Keep documentation minimal and focused on technical understanding

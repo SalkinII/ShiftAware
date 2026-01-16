@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
@@ -13,6 +12,25 @@ import {
   createSuccessResponse,
   createUnauthorizedResponse,
 } from "@/lib/api-errors";
+import { Prisma } from "@prisma/client";
+
+// Type definitions for Prisma includes
+type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
+  include: { shift: true; teamMember: true };
+}>;
+
+type ShiftWithRelations = Prisma.ShiftGetPayload<{
+  include: {
+    assignments: { include: { teamMember: true } };
+    requiredRoles: true;
+  };
+}>;
+
+type MemberWithRelations = Prisma.TeamMemberGetPayload<{
+  include: {
+    assignments: { include: { shift: true } };
+  };
+}>;
 
 export type ConflictType =
   | "SHIFT_OVERLAP"
@@ -179,8 +197,8 @@ export async function GET(request: Request) {
 // Conflict detection functions
 
 function detectOverlapConflicts(
-  assignments: any[],
-  shiftsMap: Map<string, any>,
+  assignments: AssignmentWithRelations[],
+  shiftsMap: Map<string, ShiftWithRelations>,
   state: AssignmentState,
 ): Conflict[] {
   const conflicts: Conflict[] = [];
@@ -242,7 +260,7 @@ function detectOverlapConflicts(
 }
 
 function detectCapacityConflicts(
-  shifts: any[],
+  shifts: ShiftWithRelations[],
   state: AssignmentState,
 ): Conflict[] {
   const conflicts: Conflict[] = [];
@@ -262,7 +280,7 @@ function detectCapacityConflicts(
           `Shift ${shift.type} exceeds capacity (${currentCount}/${shift.capacity})`,
         affectedEntities: {
           shifts: [shift.id],
-          assignments: assignments.map((a: any) => a.id),
+          assignments: assignments.map((a) => a.id),
         },
         suggestions: [],
       });
@@ -273,8 +291,8 @@ function detectCapacityConflicts(
 }
 
 function detectGenderBalanceConflicts(
-  shifts: any[],
-  membersMap: Map<string, any>,
+  shifts: ShiftWithRelations[],
+  membersMap: Map<string, MemberWithRelations>,
   state: AssignmentState,
 ): Conflict[] {
   const conflicts: Conflict[] = [];
@@ -292,8 +310,8 @@ function detectGenderBalanceConflicts(
         message: violation.message,
         affectedEntities: {
           shifts: [shift.id],
-          assignments: assignments.map((a: any) => a.id),
-          members: assignments.map((a: any) => a.teamMemberId),
+          assignments: assignments.map((a) => a.id),
+          members: assignments.map((a) => a.teamMemberId),
         },
         suggestions: [],
       });
@@ -307,12 +325,12 @@ function detectGenderBalanceConflicts(
 
 function generateSuggestions(
   conflict: Conflict,
-  assignments: any[],
-  shifts: any[],
-  members: any[],
+  assignments: AssignmentWithRelations[],
+  shifts: ShiftWithRelations[],
+  members: MemberWithRelations[],
   state: AssignmentState,
-  shiftsMap: Map<string, any>,
-  membersMap: Map<string, any>,
+  shiftsMap: Map<string, ShiftWithRelations>,
+  membersMap: Map<string, MemberWithRelations>,
 ): ResolutionSuggestion[] {
   const suggestions: ResolutionSuggestion[] = [];
 
