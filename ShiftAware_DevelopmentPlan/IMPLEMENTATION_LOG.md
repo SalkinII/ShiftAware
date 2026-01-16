@@ -350,3 +350,9 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 
 ## 2026-01-16T23:00:00Z
 - v1.1.0: added calendar mode to swap interface for context-based selection
+
+## 2026-01-16T23:30:00Z
+- v1.1.0: integrated conflict detection after swap operations (SwapInterface checks conflicts post-swap, shows warning toast, displays conflict count badge)
+- v1.1.0: integrated conflict detection after shift rescheduling (schedule page checks conflicts post-reschedule, shows warning toast, displays conflict count badge)
+- v1.1.0: added ConflictWizard entry points from swap interface and schedule page (conflict buttons open wizard, refresh count on close)
+- v1.1.0: conflict detection runs automatically when shifts are loaded/refreshed in schedule view

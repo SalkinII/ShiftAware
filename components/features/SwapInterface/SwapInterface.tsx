@@ -14,7 +14,13 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeftRight, GripVertical, X, Filter } from "lucide-react";
+import {
+  ArrowLeftRight,
+  GripVertical,
+  X,
+  Filter,
+  AlertTriangle,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
@@ -22,6 +28,16 @@ import { useToast } from "@/components/ui/Toast";
 import CalendarView from "@/components/features/Calendar/CalendarView";
 import { format, startOfDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+// Lazy load ConflictWizard
+const ConflictWizard = dynamic(
+  () =>
+    import("@/components/features/ConflictWizard/ConflictWizard").then(
+      (mod) => mod.ConflictWizard,
+    ),
+  { ssr: false },
+);
 
 interface Assignment {
   id: string;
@@ -154,6 +170,9 @@ export function SwapInterface({
   const [filterPerson, setFilterPerson] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("");
   const [activeSwapShift, setActiveSwapShift] = useState<any | null>(null);
+  const [conflictCount, setConflictCount] = useState<number | null>(null);
+  const [showConflictWizard, setShowConflictWizard] = useState(false);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -339,6 +358,24 @@ export function SwapInterface({
     setSelectedIds(newSelected);
   };
 
+  const checkConflicts = async () => {
+    setCheckingConflicts(true);
+    try {
+      const res = await fetch("/api/conflicts");
+      if (res.ok) {
+        const data = await res.json();
+        const count = data.summary?.total || 0;
+        setConflictCount(count);
+        return count > 0;
+      }
+    } catch (error) {
+      console.error("Failed to check conflicts:", error);
+    } finally {
+      setCheckingConflicts(false);
+    }
+    return false;
+  };
+
   const handleSwap = async () => {
     if (selectedIds.size !== 2) {
       toast.warning("Please select exactly 2 assignments to swap");
@@ -353,6 +390,15 @@ export function SwapInterface({
       toast.success("Assignments swapped successfully!");
       setSelectedIds(new Set());
       onRefresh();
+
+      // Check for conflicts after swap
+      const hasConflicts = await checkConflicts();
+      if (hasConflicts) {
+        toast.warning(
+          "Conflicts detected after swap. Review and resolve.",
+          5000,
+        );
+      }
     } catch (error) {
       console.error("Swap error:", error);
       toast.error("Failed to swap assignments. Please try again.");
@@ -390,6 +436,18 @@ export function SwapInterface({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {conflictCount !== null && conflictCount > 0 && (
+            <Button
+              variant="secondary"
+              onClick={() => setShowConflictWizard(true)}
+              className="flex items-center gap-2"
+            >
+              <AlertTriangle className="w-4 h-4 text-yellow-600" />
+              <span>
+                {conflictCount} Conflict{conflictCount !== 1 ? "s" : ""}
+              </span>
+            </Button>
+          )}
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
             {(["cards", "calendar"] as const).map((mode) => (
               <button
@@ -654,6 +712,15 @@ export function SwapInterface({
           )}
         </div>
       )}
+
+      {/* Conflict Wizard */}
+      <ConflictWizard
+        isOpen={showConflictWizard}
+        onClose={() => {
+          setShowConflictWizard(false);
+          checkConflicts(); // Refresh conflict count after wizard closes
+        }}
+      />
     </div>
   );
 }

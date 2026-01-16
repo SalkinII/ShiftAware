@@ -10,6 +10,7 @@ import {
   Clock,
   Users,
   SlidersHorizontal,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DndContext,
@@ -31,8 +32,17 @@ import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import dynamic from "next/dynamic";
 
 // PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
+// Lazy load ConflictWizard
+const ConflictWizard = dynamic(
+  () =>
+    import("@/components/features/ConflictWizard/ConflictWizard").then(
+      (mod) => mod.ConflictWizard,
+    ),
+  { ssr: false },
+);
 
 type CoverageState = "full" | "partial" | "empty";
 
@@ -92,6 +102,9 @@ export default function SchedulePage() {
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
   const [activeShiftDrag, setActiveShiftDrag] = useState<Shift | null>(null);
   const [showTemplatePalette, setShowTemplatePalette] = useState(false);
+  const [conflictCount, setConflictCount] = useState<number | null>(null);
+  const [showConflictWizard, setShowConflictWizard] = useState(false);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -190,6 +203,32 @@ export default function SchedulePage() {
     return shifts[0].event;
   }, [shifts]);
 
+  // Check for conflicts
+  const checkConflicts = async () => {
+    setCheckingConflicts(true);
+    try {
+      const res = await fetch("/api/conflicts");
+      if (res.ok) {
+        const data = await res.json();
+        const count = data.summary?.total || 0;
+        setConflictCount(count);
+        return count > 0;
+      }
+    } catch (error) {
+      console.error("Failed to check conflicts:", error);
+    } finally {
+      setCheckingConflicts(false);
+    }
+    return false;
+  };
+
+  // Check conflicts when shifts are loaded or refreshed
+  useEffect(() => {
+    if (shifts.length > 0 && !loading) {
+      checkConflicts();
+    }
+  }, [shifts.length, loading]);
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveTemplate(null);
@@ -243,6 +282,11 @@ export default function SchedulePage() {
                 detail: { keys: ["shifts", "shifts*"] },
               }),
             );
+            // Check for conflicts after creating shift
+            const hasConflicts = await checkConflicts();
+            if (hasConflicts) {
+              toast.warning("Conflicts detected. Review and resolve.", 5000);
+            }
           } else {
             toast.error("Template scheduled but failed to create shift");
           }
@@ -294,6 +338,14 @@ export default function SchedulePage() {
               detail: { keys: ["shifts", "shifts*"] },
             }),
           );
+          // Check for conflicts after rescheduling
+          const hasConflicts = await checkConflicts();
+          if (hasConflicts) {
+            toast.warning(
+              "Conflicts detected after reschedule. Review and resolve.",
+              5000,
+            );
+          }
         } else {
           const errorData = await res.json();
           toast.error(errorData.error || "Failed to reschedule shift");
@@ -524,6 +576,19 @@ export default function SchedulePage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {conflictCount !== null && conflictCount > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowConflictWizard(true)}
+                  className="flex items-center gap-2"
+                >
+                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                  <span>
+                    {conflictCount} Conflict{conflictCount !== 1 ? "s" : ""}
+                  </span>
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 size="sm"
@@ -900,6 +965,15 @@ export default function SchedulePage() {
           )}
         </div>
       </DndContext>
+
+      {/* Conflict Wizard */}
+      <ConflictWizard
+        isOpen={showConflictWizard}
+        onClose={() => {
+          setShowConflictWizard(false);
+          checkConflicts(); // Refresh conflict count after wizard closes
+        }}
+      />
     </>
   );
 }
