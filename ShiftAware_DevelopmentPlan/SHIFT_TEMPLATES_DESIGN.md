@@ -1,8 +1,8 @@
 # Shift Templates Design
 
-**Status:** Planning  
+**Status:** Implementation Complete  
 **Date:** 2026-01-16  
-**Planner:** @planner
+**Known Issue:** See KNOWN_ISSUES.md
 
 ---
 
@@ -219,6 +219,6 @@ Creates Shift with calculated startTime/endTime
    - ✅ Drop zones integrated into Week view (timeline scale day cells)
    - ✅ Drop zones integrated into Grid view (date headers)
 5. ✅ Implement ScheduledShift → Shift conversion
-6. ⏳ Test with existing shift creation (should still work)
+6. ⚠️ **Known Issue:** Prisma client regeneration required after migration. Restart dev server after `npx prisma migrate dev` to include new models (`shiftTemplate`, `shiftTemplateRole`, `scheduledShift`).
 
-**Status:** Implementation complete. Ready for testing and refinement.
+**Status:** Implementation complete. Requires dev server restart to work.

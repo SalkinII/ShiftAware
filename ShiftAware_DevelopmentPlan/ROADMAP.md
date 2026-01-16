@@ -10,26 +10,22 @@
 ### ✅ Completed (v1.1.0)
 - Playwright test fixes (timeouts, navigation waits)
 - Dead weight removal (non-functional buttons)
-- Design System v2 Phase 1 (design tokens)
-- Design System v2 Phase 2 - Button component
+- Design System v2 Phase 1 & 2 complete (tokens, Button, Input, Card, Navigation)
 - Fixed infinite loop in useCache (pages loading forever)
 - Standardized loading UI (Skeleton components)
-
-### 🔄 In Progress
-- Design System v2 Phase 2 (Input, Card, Navigation components)
-- Unused components audit
+- Shift Templates (schema, API, UI, drag-drop integration)
 
 ---
 
 ## Immediate Next Steps (v1.1.0)
 
-### 1. Complete Design System v2 Component Migration
+### 1. Shift Templates Testing & Refinement
 **Priority:** High  
-**Status:** Button ✅, Input/Card/Navigation pending
+**Status:** Implementation complete, testing pending
 
-- **Input Component:** Error states, help text, focus rings
-- **Card Component:** Elevation levels, hover effects
-- **Navigation:** Active states, focus indicators, transitions
+- Fix Prisma client regeneration issue (see KNOWN_ISSUES.md)
+- Test template creation, drag-drop, shift conversion
+- Refine UI/UX based on testing
 
 ### 2. Reactive Patterns Implementation
 **Priority:** Medium  

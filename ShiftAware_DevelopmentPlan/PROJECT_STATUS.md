@@ -37,11 +37,12 @@
 - ✅ Standardized loading UI (Skeleton components across all pages)
 - ✅ UI paradigm documented (UI_PARADIGM.md)
 
-**In Progress:**
-- ⏳ Unused components audit
+**Completed (v1.1.0):**
+- ✅ Shift Templates implementation (schema, API, UI, drag-drop)
+- ⚠️ Known issue: Prisma client regeneration required (see KNOWN_ISSUES.md)
 
 **Next:**
-- Complete component migration (Input, Card, Navigation)
+- Shift Templates testing and refinement
 - Reactive patterns (transitions, progressive disclosure)
 - UI polish and accessibility audit
 
