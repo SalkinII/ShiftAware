@@ -4,14 +4,17 @@ import { cn } from "@/lib/utils";
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  helpText?: string;
   required?: boolean;
 }
 
 export function Input({
   label,
   error,
+  helpText,
   required,
   className = "",
+  disabled,
   ...props
 }: InputProps) {
   const inputId =
@@ -25,30 +28,40 @@ export function Input({
           className="block text-sm font-semibold text-gray-700"
         >
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-error-600 ml-1">*</span>}
         </label>
       )}
       <input
         id={inputId}
         className={cn(
-          "w-full rounded-xl border bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:outline-none shadow-sm transition-colors",
+          "w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-200",
+          "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50",
           error
-            ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-            : "border-gray-200 focus:border-primary-500 focus:ring-primary-500/20",
+            ? "border-error-300 focus-visible:border-error-500 focus-visible:ring-error-500"
+            : "border-gray-300 focus-visible:border-primary-500 focus-visible:ring-primary-500",
           className,
         )}
         aria-invalid={error ? "true" : "false"}
-        aria-describedby={error ? `${inputId}-error` : undefined}
+        aria-describedby={
+          error ? `${inputId}-error` : helpText ? `${inputId}-help` : undefined
+        }
+        disabled={disabled}
         {...props}
       />
       {error && (
         <p
           id={`${inputId}-error`}
-          className="text-sm text-red-600 font-medium flex items-center gap-1"
+          className="text-sm text-error-600 font-medium flex items-center gap-1"
           role="alert"
         >
           <span>⚠</span>
           {error}
+        </p>
+      )}
+      {!error && helpText && (
+        <p id={`${inputId}-help`} className="text-xs text-gray-500">
+          {helpText}
         </p>
       )}
     </div>

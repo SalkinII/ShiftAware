@@ -336,3 +336,5 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.1.0: updated ConfirmDialog to use Button isLoading prop instead of manual loading state
 - v1.1.0: fixed infinite loop in useCache hook - removed cache from fetchData dependencies (cache methods are stable), prevents infinite re-renders causing pages to load forever
 - v1.1.0: standardized loading UI - replaced spinner circles with Skeleton components in coverage and schedule pages for consistent UX across all pages
+- v1.1.0: Design System v2 Phase 2 complete - migrated Input component (error states, help text, focus rings, disabled states), Card component (elevation levels 0-5, hover effects, interactive states), Navigation/Sidebar (active states, focus indicators, smooth transitions)
+- v1.1.0: documented UI paradigm (UI_PARADIGM.md) - concise guide for spacing, borders, tiles, component usage patterns
