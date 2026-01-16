@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
+import { isAuthenticated } from "@/lib/auth";
 import {
-  isAuthenticated,
   createUnauthorizedResponse,
   createSuccessResponse,
   createErrorResponse,
