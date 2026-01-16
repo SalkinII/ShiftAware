@@ -8,7 +8,9 @@ import {
   startOfDay,
   startOfWeek,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { List, RowComponentProps } from "react-window";
 import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import { DateDropZone } from "./DateDropZone";
@@ -479,6 +481,22 @@ const CalendarView = ({
         width = Math.max(8, 100 - left);
       }
 
+      const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useDraggable({
+          id: `shift-${shift.id}`,
+          data: {
+            type: "shift",
+            shift,
+          },
+        });
+
+      const barStyle: React.CSSProperties = {
+        left: `${left}%`,
+        width: `${width}%`,
+        transform: transform ? CSS.Transform.toString(transform) : undefined,
+        opacity: isDragging ? 0.7 : 1,
+      };
+
       // If shift is completely outside visible range, render empty row
       if (
         visibleDuration <= 0 ||
@@ -531,12 +549,19 @@ const CalendarView = ({
           <div className="timeline-track" onClick={handleTrackClickLocal}>
             <div
               className={`timeline-bar ${status} ${selectedShiftIds.has(shift.id) ? "is-selected" : ""}`}
-              style={{
-                left: `${left}%`,
-                width: `${width}%`,
-              }}
+              ref={setNodeRef}
+              style={barStyle}
             >
               <div className="timeline-bar__label">
+                <span
+                  {...attributes}
+                  {...listeners}
+                  className="inline-flex items-center cursor-grab active:cursor-grabbing opacity-80"
+                  aria-label="Drag shift to reschedule"
+                  title="Drag shift to reschedule"
+                >
+                  <GripVertical className="w-3 h-3" />
+                </span>
                 <span>{filled} assigned</span>
                 <span className="timeline-bar__capacity">cap {capacity}</span>
               </div>

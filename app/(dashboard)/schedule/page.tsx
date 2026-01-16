@@ -19,7 +19,6 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  useDroppable,
   closestCenter,
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +27,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import CalendarView from "@/components/features/Calendar/CalendarView";
 import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
-import { addDays, format, startOfDay } from "date-fns";
+import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -91,6 +90,7 @@ export default function SchedulePage() {
   const [currentEventDate, setCurrentEventDate] = useState<string>();
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
+  const [activeShiftDrag, setActiveShiftDrag] = useState<Shift | null>(null);
   const [showTemplatePalette, setShowTemplatePalette] = useState(false);
 
   const sensors = useSensors(
@@ -193,44 +193,101 @@ export default function SchedulePage() {
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveTemplate(null);
+    setActiveShiftDrag(null);
 
     if (!over || !active.data.current) return;
 
+    const dropId = over.id as string;
+    if (!dropId.startsWith("date-")) return;
+    const dateStr = dropId.replace("date-", "");
+
     const template = active.data.current.template;
-    if (!template || !currentEvent) {
-      toast.error("No event selected. Please ensure shifts are loaded.");
+    const shift = active.data.current.shift as Shift | undefined;
+
+    if (template) {
+      if (!currentEvent) {
+        toast.error("No event selected. Please ensure shifts are loaded.");
+        return;
+      }
+
+      const dropDate = parseISO(dateStr);
+
+      try {
+        // Schedule template to date
+        const res = await fetch(
+          `/api/shifts/templates/${template.id}/schedule`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              eventId: currentEvent.id,
+              date: dropDate.toISOString(),
+            }),
+          },
+        );
+
+        if (res.ok) {
+          const scheduledShift = await res.json();
+
+          // Convert to actual shift
+          const convertRes = await fetch(
+            `/api/shifts/from-scheduled/${scheduledShift.id}`,
+            { method: "POST" },
+          );
+
+          if (convertRes.ok) {
+            toast.success(`Shift created from template "${template.name}"`);
+            refetchShifts();
+            window.dispatchEvent(
+              new CustomEvent("shiftaware:cache-invalidate", {
+                detail: { keys: ["shifts", "shifts*"] },
+              }),
+            );
+          } else {
+            toast.error("Template scheduled but failed to create shift");
+          }
+        } else {
+          const errorData = await res.json();
+          toast.error(errorData.error || "Failed to schedule template");
+        }
+      } catch (error) {
+        console.error("Failed to schedule template:", error);
+        toast.error("Failed to schedule template. Please try again.");
+      }
+
       return;
     }
 
-    // Get drop date from over.id (format: "date-YYYY-MM-DD")
-    const dropId = over.id as string;
-    if (!dropId.startsWith("date-")) return;
+    if (shift) {
+      const currentDateStr = shift.startTime.split("T")[0];
+      if (currentDateStr === dateStr) return;
 
-    const dateStr = dropId.replace("date-", "");
-    const dropDate = new Date(dateStr);
+      const start = new Date(shift.startTime);
+      const end = new Date(shift.endTime);
+      const durationMs = end.getTime() - start.getTime();
 
-    try {
-      // Schedule template to date
-      const res = await fetch(`/api/shifts/templates/${template.id}/schedule`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId: currentEvent.id,
-          date: dropDate.toISOString(),
-        }),
-      });
+      const dropDate = parseISO(dateStr);
+      const newStart = new Date(dropDate);
+      newStart.setHours(
+        start.getHours(),
+        start.getMinutes(),
+        start.getSeconds(),
+        start.getMilliseconds(),
+      );
+      const newEnd = new Date(newStart.getTime() + durationMs);
 
-      if (res.ok) {
-        const scheduledShift = await res.json();
+      try {
+        const res = await fetch(`/api/shifts/${shift.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startTime: newStart.toISOString(),
+            endTime: newEnd.toISOString(),
+          }),
+        });
 
-        // Convert to actual shift
-        const convertRes = await fetch(
-          `/api/shifts/from-scheduled/${scheduledShift.id}`,
-          { method: "POST" },
-        );
-
-        if (convertRes.ok) {
-          toast.success(`Shift created from template "${template.name}"`);
+        if (res.ok) {
+          toast.success("Shift rescheduled");
           refetchShifts();
           window.dispatchEvent(
             new CustomEvent("shiftaware:cache-invalidate", {
@@ -238,21 +295,23 @@ export default function SchedulePage() {
             }),
           );
         } else {
-          toast.error("Template scheduled but failed to create shift");
+          const errorData = await res.json();
+          toast.error(errorData.error || "Failed to reschedule shift");
         }
-      } else {
-        const errorData = await res.json();
-        toast.error(errorData.error || "Failed to schedule template");
+      } catch (error) {
+        console.error("Failed to reschedule shift:", error);
+        toast.error("Failed to reschedule shift. Please try again.");
       }
-    } catch (error) {
-      console.error("Failed to schedule template:", error);
-      toast.error("Failed to schedule template. Please try again.");
     }
   }
 
   function handleDragStart(event: DragStartEvent) {
     if (event.active.data.current?.template) {
       setActiveTemplate(event.active.data.current.template);
+      return;
+    }
+    if (event.active.data.current?.shift) {
+      setActiveShiftDrag(event.active.data.current.shift);
     }
   }
 
@@ -681,6 +740,17 @@ export default function SchedulePage() {
                 <div className="font-medium text-sm">{activeTemplate.name}</div>
                 <div className="text-xs text-gray-500 mt-1">
                   {activeTemplate.startTime}
+                </div>
+              </Card>
+            )}
+            {activeShiftDrag && (
+              <Card className="p-3 w-56">
+                <div className="text-xs text-gray-500 mb-1">Reschedule</div>
+                <div className="font-medium text-sm">
+                  {activeShiftDrag.type.replace("_", " ")}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {format(new Date(activeShiftDrag.startTime), "MMM d, HH:mm")}
                 </div>
               </Card>
             )}

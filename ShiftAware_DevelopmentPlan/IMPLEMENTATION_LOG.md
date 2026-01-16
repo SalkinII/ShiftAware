@@ -343,3 +343,7 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.1.0: centralized export UI on `/export` (removed dashboard quick report and schedule export widget)
 - v1.1.0: fixed export orientation icons (portrait vs landscape)
 - v1.1.0: improved PDF output formatting (page sizing, column widths, line wrapping)
+
+## 2026-01-16T22:40:00Z
+- v1.1.0: enabled drag-to-reschedule shifts in calendar timeline
+- v1.1.0: shift drag overlay added for reschedule feedback
