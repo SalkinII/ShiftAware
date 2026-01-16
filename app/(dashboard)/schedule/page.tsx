@@ -20,6 +20,7 @@ import CalendarView from "@/components/features/Calendar/CalendarView";
 import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 
 // PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
 
@@ -358,8 +359,9 @@ export default function SchedulePage() {
 
   if (loading && shifts.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" variant="text" />
+        <SkeletonList count={3} />
       </div>
     );
   }
@@ -653,23 +655,6 @@ export default function SchedulePage() {
               }
             }}
             eventRange={eventRange || undefined}
-            onShiftEdit={(shiftId) => {
-              // Deferred to post-v1.0: Edit functionality exists in admin/shifts
-              // but not yet integrated into schedule view
-              const shift = filteredShifts.find((s) => s.id === shiftId);
-              if (shift) {
-                toast.info(
-                  "Edit shift functionality available in Admin > Shifts",
-                );
-                console.log("Edit shift:", shiftId);
-              }
-            }}
-            onShiftSwap={(shiftId) => {
-              // Deferred to post-v1.0: Swap interface exists in admin/assignments
-              // but not yet integrated into schedule view
-              toast.info("Swap functionality available in Admin > Assignments");
-              console.log("Swap shift:", shiftId);
-            }}
             onShiftDelete={handleDeleteShift}
           />
         </Card>

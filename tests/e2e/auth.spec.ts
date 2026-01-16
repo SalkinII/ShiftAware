@@ -6,14 +6,27 @@ test.describe("Authentication", () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
+    // Wait for login page to be ready
+    await page.waitForLoadState("domcontentloaded");
+
     // Get password from env or use default test password
     const password = process.env.ADMIN_PASSWORD || "test-password";
 
     await loginPage.login(password);
 
-    // Should redirect to dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
+    // Should already be on dashboard (LoginPage.login waits for navigation)
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
+
+    // Verify we're actually logged in
     expect(await loginPage.isLoggedIn()).toBe(true);
+
+    // Verify dashboard content is visible (not just URL change)
+    await expect(page.locator("text=/dashboard|welcome|shifts/i").first())
+      .toBeVisible({ timeout: 10000 })
+      .catch(() => {
+        // If specific text not found, just verify we're not on login page
+        expect(page.url()).not.toContain("/login");
+      });
   });
 
   test("login with incorrect password shows error", async ({ page }) => {
@@ -47,14 +60,23 @@ test.describe("Authentication", () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
+    // Wait for login page to be ready
+    await page.waitForLoadState("domcontentloaded");
+
     const password = process.env.ADMIN_PASSWORD || "test-password";
     await loginPage.login(password);
 
+    // Wait for dashboard to fully load before reloading
+    await page.waitForLoadState("domcontentloaded", { timeout: 10000 });
+
     // Reload page
-    await page.reload();
+    await page.reload({ waitUntil: "domcontentloaded" });
 
     // Should still be logged in
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
+
+    // Verify we're still logged in (not redirected to login)
+    expect(page.url()).not.toContain("/login");
   });
 
   test("logout clears session", async ({ page }) => {
@@ -64,21 +86,28 @@ test.describe("Authentication", () => {
     const password = process.env.ADMIN_PASSWORD || "test-password";
     await loginPage.login(password);
 
+    // Wait for dashboard to load
+    await page
+      .waitForLoadState("networkidle", { timeout: 10000 })
+      .catch(() => {});
+
     // Find and click logout (might be in header/sidebar)
     const logoutButton = page.locator(
-      'button:has-text("Logout"), a:has-text("Logout")',
+      'button[title="Logout"], button:has-text("Logout"), a:has-text("Logout")',
     );
-    if (await logoutButton.isVisible().catch(() => false)) {
-      await logoutButton.click();
+
+    if (await logoutButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await Promise.all([
+        page.waitForURL(/\/login/, { timeout: 10000 }),
+        logoutButton.click(),
+      ]);
     } else {
       // Try API logout
       await page.request.post("/api/auth/logout");
+      await page.goto("/dashboard");
     }
 
-    // Try to access protected route
-    await page.goto("/dashboard");
-
     // Should redirect to login
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
   });
 });

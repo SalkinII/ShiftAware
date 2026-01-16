@@ -55,7 +55,7 @@ export function useCache<T = any>({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, ttl, cache]); // Exclude fetchFn from deps to prevent infinite loops
+  }, [key, ttl]); // Exclude cache and fetchFn to prevent infinite loops - cache methods are stable
 
   const refetch = useCallback(async () => {
     // Invalidate cache and fetch fresh data
@@ -84,7 +84,7 @@ export function useCache<T = any>({
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, cache, enabled]); // Exclude fetchData to prevent infinite loops
+  }, [key, enabled]); // Exclude cache and fetchData - cache.get is stable, fetchData is memoized
 
   return {
     data: data as T | null,

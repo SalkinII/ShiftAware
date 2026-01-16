@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { LogOut, Settings, Bell, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/components/ui/Toast";
 
 interface HeaderProps {
   alias?: string;
@@ -12,6 +13,8 @@ interface HeaderProps {
 
 export function Header({ alias = "Admin", avatarEmoji = "🐺" }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const toast = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -52,9 +55,16 @@ export function Header({ alias = "Admin", avatarEmoji = "🐺" }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative">
+          <button
+            onClick={() => {
+              toast.info("Notifications feature coming soon");
+            }}
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative"
+            aria-label="Notifications"
+            title="Notifications (coming soon)"
+          >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            {/* Notification badge removed - feature not implemented yet */}
           </button>
 
           <div className="h-8 w-px bg-gray-200 mx-1"></div>

@@ -9,6 +9,7 @@ import { useCache } from "@/lib/cache/useCache";
 import { format } from "date-fns";
 import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 
 // Lazy load ConflictWizard (admin-only feature, heavy component)
 const ConflictWizard = dynamic(
@@ -163,8 +164,9 @@ export default function CoverageDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" variant="text" />
+        <SkeletonList count={3} />
       </div>
     );
   }

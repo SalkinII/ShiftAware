@@ -235,10 +235,12 @@ export default function DashboardPage() {
               View Schedule
             </Button>
           </Link>
-          <Button className="flex items-center gap-2 shadow-lg shadow-primary-500/20">
-            <TrendingUp className="w-4 h-4" />
-            Quick Report
-          </Button>
+          <Link href="/export">
+            <Button className="flex items-center gap-2 shadow-lg shadow-primary-500/20">
+              <TrendingUp className="w-4 h-4" />
+              Quick Report
+            </Button>
+          </Link>
         </div>
       </div>
 

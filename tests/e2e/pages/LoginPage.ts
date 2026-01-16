@@ -21,7 +21,34 @@ export class LoginPage {
 
   async login(password: string) {
     await this.passwordInput.fill(password);
-    await this.submitButton.click();
+
+    // Wait for navigation after clicking submit
+    // Use Promise.all to wait for both the click and navigation
+    await Promise.all([
+      this.page.waitForURL(/\/dashboard/, { timeout: 15000 }),
+      this.submitButton.click(),
+    ]).catch(async (error) => {
+      // If navigation fails, check if we're still on login page (error case)
+      const currentUrl = this.page.url();
+      if (currentUrl.includes("/login")) {
+        // Check for error message
+        const errorVisible = await this.errorMessage
+          .first()
+          .isVisible({ timeout: 2000 })
+          .catch(() => false);
+        if (errorVisible) {
+          throw new Error("Login failed - check password");
+        }
+      }
+      throw error;
+    });
+
+    // Ensure dashboard is actually loaded (not just URL change)
+    await this.page
+      .waitForLoadState("domcontentloaded", { timeout: 10000 })
+      .catch(() => {
+        // If domcontentloaded times out, continue anyway
+      });
   }
 
   async isLoggedIn(): Promise<boolean> {

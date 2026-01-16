@@ -26,7 +26,24 @@
 
 ### 🚧 Current Work: Iteration v1.1.0
 **Status:** Development  
-**Focus:** UI flow improvements and guided workflows
+**Focus:** UI cleanup, test fixes, Design System v2
+
+**Completed:**
+- ✅ Playwright test fixes (timeouts, navigation waits, domcontentloaded)
+- ✅ Dead weight removed (onShiftEdit/Swap handlers, Quick Report/Bell icon fixed)
+- ✅ Design System v2 Phase 1 (tokens: typography, shadows, colors, borders)
+- ✅ Design System v2 Phase 2 - Button component (sizes, ghost variant, loading state)
+- ✅ Fixed infinite loop in useCache hook (pages loading forever)
+- ✅ Standardized loading UI (Skeleton components across all pages)
+
+**In Progress:**
+- 🔄 Design System v2 Phase 2 (remaining components: Input, Card, Navigation)
+- ⏳ Unused components audit
+
+**Next:**
+- Complete component migration (Input, Card, Navigation)
+- Reactive patterns (transitions, progressive disclosure)
+- UI polish and accessibility audit
 
 ---
 
@@ -89,38 +106,19 @@
 - ✅ Performance optimizations (CalendarView rendering, PDF generation)
 - ✅ Integration tests (critical flows: member management, shift management, assignments, conflicts, availability, rollback)
 
-### Current Work: Iteration v0.4.0
-
-**Phase 1: Documentation Cleanup** ✅
-- ✅ Radical documentation cleanup (deleted 19 obsolete files)
-- ✅ Kept only essential docs: SYSTEM_ARCHITECTURE.md, DATABASE_SCHEMA.md, TECHNOLOGY_STACK.md, PROJECT_STATUS.md, IMPLEMENTATION_LOG.md
-
-**Phase 2: Code Cleanup** (In Progress)
-- ✅ Removed obsolete password scripts (test-password.js, test-password.ps1, generate-password-hash.js)
-- ✅ Updated package.json version from 0.2.0 to 0.4.0
-- ✅ Removed outdated TESTRESULTS/TESTING_SUMMARY.md
-- ✅ Removed obsolete .cursor/plans file
-- ✅ Updated TODO comments in schedule/page.tsx (marked as deferred features)
-- ✅ Reviewed cleanup endpoint and scripts (kept as admin utilities)
-- ⚠️ Linter identified unused imports/variables (NextResponse, unused vars) - needs cleanup
-- ⚠️ TypeScript `any` types identified (larger refactoring task - can be deferred)
+### Completed: Iteration v0.4.0 → v1.0.0
+- ✅ Documentation cleanup (deleted obsolete files, kept core docs)
+- ✅ Code cleanup (removed obsolete scripts, fixed critical technical debt)
 
 **Phase 3: Production Readiness** ✅ **Complete**
-- ✅ Technical debt documented (TECHNICAL_DEBT.md)
-- ✅ UI testing strategy defined (.context/PLAYWRIGHT.md)
-- ✅ Playwright setup and critical flow tests (infrastructure ready, basic tests implemented)
-- ✅ Security audit complete (SECURITY_AUDIT.md) - All controls verified, Next.js update recommended
-- ✅ Browser compatibility analysis complete (BROWSER_COMPATIBILITY.md) - Mobile navigation fixed
-- ✅ Performance optimization complete (PERFORMANCE_REPORT.md) - Code splitting implemented, bundle size optimized
-- ✅ Fix high-priority technical debt (removed unused NextResponse imports from 13 API routes)
-- ✅ Fix critical TypeScript `any` types (complete - audit/rollback, conflicts, availability routes)
-- 📋 UI refurbish planning (Design System v2, reactive patterns) - **Deferred to post-v1.0**
+- ✅ Security audit: All controls verified (see SECURITY_AUDIT.md)
+- ✅ Browser compatibility: Mobile navigation fixed (see BROWSER_COMPATIBILITY.md)
+- ✅ Performance: Code splitting implemented (see PERFORMANCE_REPORT.md)
+- ✅ Technical debt: Critical `any` types fixed, unused imports removed
+- ✅ Playwright: Tests configured, timeouts fixed (v1.1.0)
 
-**Phase 4: v1.0 Release Preparation** (Next)
-- Release checklist
-- Documentation finalization
-- Deployment preparation
-- Version tagging and release notes
+**Phase 4: v1.0 Release Preparation** ✅ **Complete**
+- ✅ v1.0.0 released (tagged and merged to main)
 
 ---
 
@@ -141,18 +139,21 @@
 
 ## Next Steps
 
-### Immediate (Iteration v0.4.0)
-1. ✅ Documentation cleanup (complete)
+### Completed (v1.0.0)
+1. ✅ Documentation cleanup
 2. ✅ Code cleanup (critical technical debt fixed)
-3. ✅ Production readiness (security audit, browser compatibility, performance optimization complete)
-4. 🚧 v1.0.0 release preparation (Phase 4)
+3. ✅ Production readiness (security, browser compatibility, performance)
+4. ✅ v1.0.0 release (tagged and merged)
 
 ### Post-v1.0
-- UI Design Adaptation (reactive patterns, Design System v2)
-  - See `.context/260115_DESIGN_System2.md` and `.context/260115_UI_DESIGN_reactive.md`
+- ✅ Design System v2 tokens (Phase 1 complete)
+- 🔄 Design System v2 components (Phase 2 in progress)
+- Reactive patterns implementation
 - Timeline view improvements
 - Advanced features, notifications, multi-event support
 - Complete technical debt cleanup (all `any` types, unused vars)
+
+**Design System v2 Plan:** See `.context/260115_DESIGN_System2.md` and `.context/260115_UI_DESIGN_reactive.md`
 
 ---
 
@@ -160,17 +161,15 @@
 
 **Test Coverage:** 46+ tests passing (smoke, API, algorithm, robustness, export, api-errors, integration)  
 **Build Status:** ✅ Passing  
-**Documentation:** 6 essential files (radically cleaned up from 25+)  
+**Documentation:** Core files maintained (SYSTEM_ARCHITECTURE.md, DATABASE_SCHEMA.md, TECHNOLOGY_STACK.md, PROJECT_STATUS.md, IMPLEMENTATION_LOG.md)  
 **Code Quality:** TypeScript strict mode, standardized error handling, error boundaries  
-**Latest Release:** v0.3.0 (tagged and merged to main)
+**Latest Release:** v1.0.0 (tagged and merged to main)
 
 ---
 
 ## Notes
 
 - All MVP functionality complete and production-ready
-- Iteration v0.3.0 complete: all deferred features, performance improvements, admin features implemented
-- Documentation radically cleaned: kept only essential technical docs (architecture, schema, tech stack, status, implementation log)
-- Current focus: cleanup and production readiness for v1.0.0 release
-- Caching system fully implemented and integrated across all pages
-- Integration tests added for critical user flows
+- v1.0.0 released and merged to main
+- v1.1.0 in progress: UI cleanup, test fixes, Design System v2 implementation
+- Core documentation: SYSTEM_ARCHITECTURE.md, DATABASE_SCHEMA.md, TECHNOLOGY_STACK.md, PROJECT_STATUS.md, IMPLEMENTATION_LOG.md

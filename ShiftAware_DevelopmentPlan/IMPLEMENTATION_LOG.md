@@ -326,3 +326,13 @@ Use UTC timestamps in ISO 8601. Keep entries chronological.
 - v1.0.0: Release preparation - systematic TypeScript build error fixes
 - v1.0.0: fixed TypeScript errors blocking Docker build: export/page.tsx (event.id), preferences/page.tsx (null shifts), conflicts/route.ts (undefined shift), availability/route.ts (Role/ShiftType types), CalendarView.tsx (rowProps), SwapInterface.tsx (invalid variant), ConfirmDialog.tsx (Button refs via forwardRef)
 - v1.0.0: build verified - all TypeScript compilation errors resolved, ready for Docker build and release
+
+## 2026-01-16T20:00:00Z
+- v1.1.0: UI cleanup - removed dead weight (onShiftEdit, onShiftSwap handlers from schedule page)
+- v1.1.0: fixed Quick Report button (now links to /export), fixed Bell icon (shows toast, removed fake badge)
+- v1.1.0: Playwright test fixes - improved LoginPage.login() with navigation waits, increased timeouts (60s test, 30s nav, 15s actions), changed to domcontentloaded for Next.js compatibility
+- v1.1.0: Design System v2 Phase 1 complete - implemented design tokens (typography scale, shadow/elevation system, color enhancements, border system) in tailwind.config.ts
+- v1.1.0: Design System v2 Phase 2 - Button component migrated: added sizes (sm/md/lg), ghost variant, loading state with spinner, active states, Design System v2 tokens (elevation shadows, focus rings), backward compatibility for "danger" variant
+- v1.1.0: updated ConfirmDialog to use Button isLoading prop instead of manual loading state
+- v1.1.0: fixed infinite loop in useCache hook - removed cache from fetchData dependencies (cache methods are stable), prevents infinite re-renders causing pages to load forever
+- v1.1.0: standardized loading UI - replaced spinner circles with Skeleton components in coverage and schedule pages for consistent UX across all pages

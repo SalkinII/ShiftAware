@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X } from "lucide-react";
 import { Card } from "./Card";
 import { Button } from "./Button";
 import { cn } from "@/lib/utils";
@@ -171,19 +171,12 @@ export function ConfirmDialog({
           </Button>
           <Button
             ref={confirmButtonRef}
-            variant={variant === "destructive" ? "danger" : "primary"}
+            variant={variant === "destructive" ? "destructive" : "primary"}
             onClick={handleConfirm}
-            disabled={isLoading}
+            isLoading={isLoading}
             className="min-w-[100px]"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              confirmText
-            )}
+            {confirmText}
           </Button>
         </div>
       </Card>

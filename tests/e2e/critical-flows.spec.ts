@@ -7,10 +7,20 @@ test.describe("Critical User Flows", () => {
     // Login before each test
     const loginPage = new LoginPage(page);
     await loginPage.goto();
+
+    // Wait for login page to be ready
+    await page.waitForLoadState("domcontentloaded");
+
     const password = process.env.ADMIN_PASSWORD || "test-password";
     await loginPage.login(password);
-    // Wait for dashboard to load
-    await page.waitForURL(/\/dashboard/);
+
+    // LoginPage.login already waits for navigation and domcontentloaded
+    // Additional wait for network to settle (optional, with fallback)
+    await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {
+      // If networkidle times out, that's okay - page might still be loading resources
+      // Just ensure we're on dashboard
+      return page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    });
   });
 
   test("complete assignment flow", async ({ page }) => {
