@@ -27,6 +27,7 @@ const navItems = [
 const adminItems = [
   { label: "Team Members", href: "/admin/members", icon: Users },
   { label: "Shift Config", href: "/admin/shifts", icon: Clock },
+  { label: "Templates", href: "/admin/shifts/templates", icon: Clock },
   { label: "Assignment Control", href: "/admin/assignments", icon: Settings2 },
   { label: "Audit Log", href: "/admin/audit", icon: History },
 ];
