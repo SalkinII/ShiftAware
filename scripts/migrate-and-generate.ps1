@@ -10,13 +10,19 @@ Write-Host ""
 
 # Step 1: Check if dev server might be running
 Write-Host "Step 1: Checking for running dev server..." -ForegroundColor Yellow
-$devProcess = Get-Process -Name node -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -like "*next dev*" -or $_.CommandLine -like "*npm run dev*"
+$nodeProcesses = Get-Process -Name node -ErrorAction SilentlyContinue
+$devServerRunning = $false
+
+if ($nodeProcesses) {
+    # Check if port 3000 is in use (dev server typically uses this)
+    $port3000 = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+    if ($port3000) {
+        $devServerRunning = $true
+        Write-Host "⚠️  WARNING: Port 3000 is in use (dev server likely running)" -ForegroundColor Red
+    }
 }
 
-if ($devProcess) {
-    Write-Host "⚠️  WARNING: Dev server appears to be running!" -ForegroundColor Red
-    Write-Host "   Process ID: $($devProcess.Id)" -ForegroundColor Red
+if ($devServerRunning) {
     Write-Host "   Please stop the dev server (Ctrl+C) before running migrations." -ForegroundColor Yellow
     Write-Host "   This prevents file lock issues during Prisma client generation." -ForegroundColor Yellow
     Write-Host ""
@@ -25,6 +31,8 @@ if ($devProcess) {
         Write-Host "Aborted." -ForegroundColor Red
         exit 1
     }
+} else {
+    Write-Host "✅ No dev server detected" -ForegroundColor Green
 }
 
 # Step 2: Run migration
@@ -44,20 +52,18 @@ try {
 Write-Host ""
 Write-Host "Step 3: Verifying Prisma client..." -ForegroundColor Yellow
 try {
-    # Try to import and check for new models
-    $testScript = @"
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
-const hasShiftTemplate = 'shiftTemplate' in prisma;
-console.log(hasShiftTemplate ? 'OK' : 'MISSING');
-prisma.\$disconnect();
-"@
-    
-    $testScript | npx tsx --stdin
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "⚠️  Warning: Could not verify Prisma client" -ForegroundColor Yellow
+    # Check if generated client file exists
+    $clientPath = "node_modules\.prisma\client\index.d.ts"
+    if (Test-Path $clientPath) {
+        $clientContent = Get-Content $clientPath -Raw
+        if ($clientContent -match "shiftTemplate") {
+            Write-Host "✅ Prisma client includes new models" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Warning: New models may not be in generated client" -ForegroundColor Yellow
+            Write-Host "   Run 'npx prisma generate' manually if needed" -ForegroundColor Yellow
+        }
     } else {
-        Write-Host "✅ Prisma client verified" -ForegroundColor Green
+        Write-Host "⚠️  Warning: Prisma client not found at expected path" -ForegroundColor Yellow
     }
 } catch {
     Write-Host "⚠️  Warning: Client verification skipped" -ForegroundColor Yellow
