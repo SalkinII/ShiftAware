@@ -71,8 +71,19 @@ export default function TemplatesPage() {
     key: "shift-templates",
     fetchFn: async () => {
       const res = await fetch("/api/shifts/templates");
-      if (!res.ok) throw new Error("Failed to fetch templates");
-      return res.json();
+      if (!res.ok) {
+        let errorMessage = "Failed to fetch templates";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          errorMessage = `${errorMessage}: ${res.status} ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+      const data = await res.json();
+      // createSuccessResponse wraps data, so unwrap if needed
+      return Array.isArray(data) ? data : data.data || data;
     },
   });
 
