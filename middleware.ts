@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE = "authenticated";
+const ROLE_COOKIE = "user_role";
 
 function isPublicRoute(pathname: string): boolean {
   return (
@@ -17,14 +18,19 @@ function isApiRoute(pathname: string): boolean {
   return pathname.startsWith("/api/");
 }
 
+function isAdminRoute(pathname: string): boolean {
+  return pathname.startsWith("/admin");
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const authenticated = request.cookies.get(AUTH_COOKIE)?.value === "true";
+  const userRole = request.cookies.get(ROLE_COOKIE)?.value;
 
   if (isPublicRoute(pathname)) {
     if (authenticated && pathname === "/login") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/app/dashboard", request.url));
     }
     return NextResponse.next();
   }
@@ -36,6 +42,11 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // RBAC: non-admins cannot access /admin/* routes
+  if (isAdminRoute(pathname) && userRole !== "admin") {
+    return NextResponse.redirect(new URL("/app/dashboard", request.url));
   }
 
   return NextResponse.next();

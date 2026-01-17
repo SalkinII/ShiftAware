@@ -22,7 +22,8 @@ export async function POST(request: Request) {
       );
     }
 
-    await createSession();
+    // Admin password grants admin role
+    await createSession(true);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Login error:", error);

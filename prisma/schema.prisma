@@ -73,6 +73,7 @@ model TeamMember {
   genderRole      String
   capabilities    Role[]
   isActive        Boolean         @default(true)
+  isAdmin         Boolean         @default(false)
 
   preferences ShiftPreference[]
   assignments Assignment[]
@@ -182,6 +183,8 @@ model EventConfig {
   algorithmWeights   Json
   balanceThresholds  Json
   autoAssignUnfilled Boolean @default(true)
+  bufferDaysBefore   Int     @default(1)
+  bufferDaysAfter    Int     @default(1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

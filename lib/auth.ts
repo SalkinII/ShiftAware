@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
  * - Plain ADMIN_PASSWORD env variable (no hashing)
  * - Simple authenticated cookie (no signing)
  * - Configurable session timeout (default 60 minutes)
+ * - Role-based access with isAdmin cookie
  */
 
 const AUTH_COOKIE_NAME = "authenticated";
+const ROLE_COOKIE_NAME = "user_role";
 const DEFAULT_TTL_SECONDS = Number(process.env.SESSION_TIMEOUT_MINUTES ?? "60") * 60;
 
 /**
@@ -27,19 +29,26 @@ export async function verifyLogin(password: string): Promise<boolean> {
 /**
  * Create authenticated session cookie.
  * Sets simple "authenticated" cookie with httpOnly flag.
+ * Optionally sets admin role cookie.
  */
-export async function createSession(): Promise<void> {
+export async function createSession(isAdmin: boolean = false): Promise<void> {
   const cookieStore = await cookies();
   const expiresAt = new Date(Date.now() + DEFAULT_TTL_SECONDS * 1000);
-  
-  cookieStore.set(AUTH_COOKIE_NAME, "true", {
+
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     maxAge: DEFAULT_TTL_SECONDS,
     expires: expiresAt,
     path: "/",
-  });
+  };
+
+  cookieStore.set(AUTH_COOKIE_NAME, "true", cookieOptions);
+
+  if (isAdmin) {
+    cookieStore.set(ROLE_COOKIE_NAME, "admin", cookieOptions);
+  }
 }
 
 /**
@@ -56,11 +65,25 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
- * Destroy authenticated session by deleting cookie.
+ * Check if current user has admin role.
+ */
+export async function isAdmin(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const roleCookie = cookieStore.get(ROLE_COOKIE_NAME);
+    return roleCookie?.value === "admin";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Destroy authenticated session by deleting cookies.
  */
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE_NAME);
+  cookieStore.delete(ROLE_COOKIE_NAME);
 }
 
 /**
