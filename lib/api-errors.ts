@@ -144,3 +144,19 @@ export function createConflictResponse(
     { status: 409 },
   );
 }
+
+/**
+ * Create a standardized forbidden response (403)
+ */
+export function createForbiddenResponse(
+  message = "Forbidden",
+): NextResponse<ApiErrorResponse> {
+  return NextResponse.json(
+    {
+      error: "Forbidden",
+      message,
+      code: "FORBIDDEN",
+    },
+    { status: 403 },
+  );
+}

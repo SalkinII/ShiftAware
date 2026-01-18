@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -92,11 +93,13 @@ export default function ShiftsPage() {
         }
         throw new Error(errorMessage);
       }
-      return res.json();
+      const json = await res.json();
+      return unwrapApiResponse<Shift[]>(json);
     },
   });
 
-  const shifts = cachedShifts || [];
+  // Defensive: ensure shifts is always an array
+  const shifts = Array.isArray(cachedShifts) ? cachedShifts : [];
   const loading = shiftsLoading;
 
   // Show error toast if fetch fails

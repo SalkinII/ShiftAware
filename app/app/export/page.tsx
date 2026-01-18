@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { Download, FileText, Users, Calendar } from "lucide-react";
 // PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
 
@@ -82,7 +83,8 @@ export default function ExportPage() {
     fetchFn: async () => {
       const res = await fetch("/api/shifts");
       if (!res.ok) throw new Error("Failed to fetch shifts");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Shift[]>(data);
     },
   });
 

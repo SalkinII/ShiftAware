@@ -56,10 +56,7 @@ export function EmojiPicker({
       }
       return acc;
     },
-    {} as Record<
-      string,
-      (typeof ANIMAL_EMOJI_CATEGORIES)[keyof typeof ANIMAL_EMOJI_CATEGORIES]
-    >,
+    {} as Record<string, { id: string; emoji: string; name: string; reserved: boolean }[]>,
   );
 
   const handleSelect = (emoji: string, reserved: boolean) => {
