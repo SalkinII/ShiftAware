@@ -16,6 +16,8 @@ import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
 import { useCurrentEvent } from "@/lib/hooks/useCurrentEvent";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { isAdminClient } from "@/lib/auth-client";
+import { EMOJI_ADMIN, EMOJI_DEFAULT_USER } from "@/lib/constants/emojis";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -41,6 +43,7 @@ interface Stats {
 export default function DashboardPage() {
   const toast = useToast();
   const { event: currentEvent, loading: eventLoading } = useCurrentEvent();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState<Stats>({
     totalMembers: 0,
     totalShifts: 0,
@@ -51,6 +54,11 @@ export default function DashboardPage() {
     totalAssignments: 0,
   });
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
+
+  // Check admin role on mount
+  useEffect(() => {
+    setIsAdmin(isAdminClient());
+  }, []);
 
   // Use cache for events, members, and shifts
   const {
@@ -240,11 +248,11 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center text-4xl shadow-sm border border-primary-200">
-            🦊
+            {isAdmin ? EMOJI_ADMIN : EMOJI_DEFAULT_USER}
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-              Welcome back, Admin
+              Welcome back{isAdmin ? ", Admin" : ""}
             </h1>
             <p className="text-gray-500 font-medium">
               Here&apos;s what&apos;s happening with{" "}
