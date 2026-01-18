@@ -130,7 +130,7 @@ function LoginForm() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            Powered by ShiftAware · MIT License 2026
+            Apache 2.0 License 2026
           </p>
         </div>
       </div>
