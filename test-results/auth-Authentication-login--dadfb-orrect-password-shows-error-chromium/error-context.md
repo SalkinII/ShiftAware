@@ -6,7 +6,7 @@
     - generic [ref=e4]:
       - generic [ref=e5]: 🌟
       - heading "ShiftAware" [level=1] [ref=e6]
-      - paragraph [ref=e7]: Starlight Meadow Festival 2026
+      - paragraph [ref=e7]: Open Source Shift Planner
     - generic [ref=e10]:
       - heading "Welcome back" [level=2] [ref=e11]
       - paragraph [ref=e12]: Please enter the event password to access the system
@@ -22,14 +22,14 @@
             - img [ref=e23]
             - textbox "Event Password" [ref=e26]:
               - /placeholder: Enter password
-              - text: test-password
+              - text: wrong-password
         - button "Sign In" [ref=e27]:
           - text: Sign In
           - img [ref=e28]
       - generic [ref=e30]:
         - img [ref=e31]
         - paragraph [ref=e34]: Privacy-First Scheduling
-    - paragraph [ref=e36]: Powered by ShiftAware · MIT License 2026
+    - paragraph [ref=e36]: Apache 2.0 License 2026
   - status [ref=e37]:
     - generic [ref=e38]:
       - img [ref=e40]

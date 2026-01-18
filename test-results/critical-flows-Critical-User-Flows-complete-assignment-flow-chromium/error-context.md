@@ -4,31 +4,23 @@
 - generic [active] [ref=e1]:
   - generic [ref=e3]:
     - generic [ref=e4]:
-      - generic [ref=e5]: 🌟
-      - heading "ShiftAware" [level=1] [ref=e6]
-      - paragraph [ref=e7]: Starlight Meadow Festival 2026
-    - generic [ref=e10]:
-      - heading "Welcome back" [level=2] [ref=e11]
-      - paragraph [ref=e12]: Please enter the event password to access the system
-      - generic [ref=e13]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: Event Password
-          - generic [ref=e16]:
-            - img [ref=e17]
-            - textbox "Event Password" [ref=e20]:
-              - /placeholder: Enter password
-              - text: test-password
-        - button [disabled] [ref=e21]
-      - generic [ref=e23]:
-        - img [ref=e24]
-        - paragraph [ref=e27]: Privacy-First Scheduling
-    - paragraph [ref=e29]: Powered by ShiftAware · MIT License 2026
-  - status [ref=e30]:
-    - generic [ref=e31]:
-      - img [ref=e33]
-      - generic [ref=e35]:
+      - heading "404" [level=1] [ref=e5]
+      - heading "Page Not Found" [level=2] [ref=e6]
+      - paragraph [ref=e7]: The page you're looking for doesn't exist or has been moved.
+    - generic [ref=e8]:
+      - link "Go to Dashboard" [ref=e9] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e10]
+        - text: Go to Dashboard
+      - button "Go Back" [ref=e13]:
+        - img [ref=e14]
+        - text: Go Back
+  - status [ref=e16]:
+    - generic [ref=e17]:
+      - img [ref=e19]
+      - generic [ref=e21]:
         - text: Static route
-        - button "Hide static indicator" [ref=e36] [cursor=pointer]:
-          - img [ref=e37]
-  - alert [ref=e40]
+        - button "Hide static indicator" [ref=e22] [cursor=pointer]:
+          - img [ref=e23]
+  - alert [ref=e26]
 ```
