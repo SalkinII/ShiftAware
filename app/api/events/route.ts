@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       await tx.auditLog.create({
         data: {
           action: "CREATE",
-          entityType: "Event",
+          entityType: "EVENT",
           entityId: newEvent.id,
           details: { name, startDate, endDate },
         },

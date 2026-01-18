@@ -188,8 +188,8 @@ export default function FestivalSetupPage() {
     );
   }
 
-  // Create Event Form Component
-  const CreateEventForm = () => (
+  // Create Event Form - inlined to prevent focus loss on re-render
+  const createEventFormJSX = (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <Calendar className="w-5 h-5 text-primary-500" />
@@ -319,10 +319,10 @@ export default function FestivalSetupPage() {
                 Create your first event to start planning shifts and schedules.
               </p>
             </div>
-            <CreateEventForm />
+            {createEventFormJSX}
           </div>
         ) : (
-          <CreateEventForm />
+          createEventFormJSX
         )}
       </div>
     );

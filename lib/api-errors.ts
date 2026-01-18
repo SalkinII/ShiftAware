@@ -8,6 +8,21 @@ export interface ApiErrorResponse {
   code?: string;
 }
 
+export interface ApiSuccessResponse<T> {
+  data: T;
+}
+
+/**
+ * Utility to unwrap API response data from { data: ... } format
+ * Handles both wrapped and unwrapped formats for backwards compatibility
+ */
+export function unwrapApiResponse<T>(response: T | ApiSuccessResponse<T>): T {
+  if (response && typeof response === "object" && "data" in response) {
+    return (response as ApiSuccessResponse<T>).data;
+  }
+  return response as T;
+}
+
 /**
  * Standardized API error response format
  */
@@ -60,12 +75,13 @@ export function createErrorResponse(
 
 /**
  * Create a standardized success response
+ * Wraps data in { data: ... } format for consistency
  */
 export function createSuccessResponse<T>(
   data: T,
   status = 200,
-): NextResponse<T> {
-  return NextResponse.json(data, { status });
+): NextResponse<{ data: T }> {
+  return NextResponse.json({ data }, { status });
 }
 
 /**

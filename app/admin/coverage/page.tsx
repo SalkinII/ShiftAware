@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { format } from "date-fns";
 import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,8 @@ export default function CoverageDashboard() {
     fetchFn: async () => {
       const res = await fetch("/api/shifts");
       if (!res.ok) throw new Error("Failed to fetch shifts");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<any[]>(data);
     },
   });
 
@@ -67,7 +69,8 @@ export default function CoverageDashboard() {
     fetchFn: async () => {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Failed to fetch members");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<TeamMember[]>(data);
     },
   });
 

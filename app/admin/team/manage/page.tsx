@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmojiPicker } from "@/components/ui/EmojiPicker";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { ExperienceLevel, Role } from "@prisma/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -75,7 +76,8 @@ export default function MembersPage() {
     fetchFn: async () => {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Failed to fetch members");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<TeamMember[]>(data);
     },
   });
 

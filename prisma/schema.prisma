@@ -63,6 +63,7 @@ enum EntityType {
   ASSIGNMENT
   PREFERENCE
   CONFIG
+  EVENT
 }
 
 model TeamMember {

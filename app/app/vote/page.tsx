@@ -5,6 +5,7 @@ import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
 import { useCurrentEvent } from "@/lib/hooks/useCurrentEvent";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import {
   Sparkles,
   Calendar,
@@ -50,7 +51,8 @@ export default function PreferencesPage() {
     fetchFn: async () => {
       const res = await fetch("/api/shifts");
       if (!res.ok) throw new Error("Failed to fetch shifts");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Shift[]>(data);
     },
   });
 
@@ -63,7 +65,8 @@ export default function PreferencesPage() {
     fetchFn: async () => {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Failed to fetch members");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<{ id: string; alias: string }[]>(data);
     },
   });
 

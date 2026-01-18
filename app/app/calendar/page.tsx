@@ -33,6 +33,7 @@ import { TemplatePalette } from "@/components/features/TemplatePalette/TemplateP
 import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import dynamic from "next/dynamic";
@@ -190,7 +191,7 @@ export default function SchedulePage() {
       const res = await fetch("/api/shifts");
       if (!res.ok) throw new Error("Failed to fetch shifts");
       const data = await res.json();
-      return data;
+      return unwrapApiResponse<Shift[]>(data);
     },
   });
 
@@ -201,7 +202,7 @@ export default function SchedulePage() {
       const res = await fetch("/api/events/current");
       if (!res.ok) throw new Error("Failed to fetch current event");
       const data = await res.json();
-      return data.data;
+      return unwrapApiResponse<EventWithConfig>(data);
     },
   });
 
@@ -246,9 +247,11 @@ export default function SchedulePage() {
         (earliestDate: string | undefined, shift: Shift) => {
           const start = shift.startTime.split("T")[0];
           if (!earliestDate) return start;
-          return new Date(start) < new Date(earliestDate) ? start : earliestDate;
+          return new Date(start) < new Date(earliestDate)
+            ? start
+            : earliestDate;
         },
-        undefined as string | undefined
+        undefined as string | undefined,
       );
       setCurrentEventDate(earliest);
     }
@@ -455,7 +458,9 @@ export default function SchedulePage() {
 
     try {
       // Build shift times from modified data
-      const [startHours, startMins] = modifiedData.startTime.split(":").map(Number);
+      const [startHours, startMins] = modifiedData.startTime
+        .split(":")
+        .map(Number);
       const [endHours, endMins] = modifiedData.endTime.split(":").map(Number);
 
       const startTime = new Date(modifiedData.date);
@@ -465,7 +470,8 @@ export default function SchedulePage() {
       endTime.setHours(endHours, endMins, 0, 0);
 
       // Calculate duration in minutes
-      const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+      const durationMinutes =
+        (endTime.getTime() - startTime.getTime()) / (1000 * 60);
 
       // Create shift directly with modified values
       const res = await fetch("/api/shifts", {
@@ -485,12 +491,14 @@ export default function SchedulePage() {
       });
 
       if (res.ok) {
-        toast.success(`Shift created from template "${modifySlotDialog.template.name}"`);
+        toast.success(
+          `Shift created from template "${modifySlotDialog.template.name}"`,
+        );
         refetchShifts();
         window.dispatchEvent(
           new CustomEvent("shiftaware:cache-invalidate", {
             detail: { keys: ["shifts", "shifts*"] },
-          })
+          }),
         );
         // Check for conflicts after creating shift
         const hasConflicts = await checkConflicts();
