@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,6 +13,7 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAdminClient } from "@/lib/auth-client";
 
 const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
@@ -25,6 +26,11 @@ const navItems = [
 
 export function UserSidebar() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setIsAdmin(isAdminClient());
+  }, []);
 
   return (
     <nav className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto hidden lg:block scrollbar-hide">
@@ -68,15 +74,17 @@ export function UserSidebar() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-gray-100">
-          <Link
-            href="/admin/festival/setup"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
-          >
-            <Settings className="w-5 h-5" />
-            <span>Admin Panel</span>
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="pt-4 border-t border-gray-100">
+            <Link
+              href="/admin/festival/setup"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+            >
+              <Settings className="w-5 h-5" />
+              <span>Admin Panel</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50/50">
