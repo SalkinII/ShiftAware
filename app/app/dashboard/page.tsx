@@ -232,17 +232,6 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/schedule">
-            <Button
-              variant="secondary"
-              className="flex items-center gap-2 bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-            >
-              <Calendar className="w-4 h-4" />
-              View Schedule
-            </Button>
-          </Link>
-        </div>
       </div>
 
       {/* Stats Grid */}

@@ -57,14 +57,6 @@ interface EventWithConfig {
 }
 
 // PDF export will be lazy-loaded on demand (heavy library - jspdf ~200KB)
-// Lazy load ConflictWizard
-const ConflictWizard = dynamic(
-  () =>
-    import("@/components/features/ConflictWizard/ConflictWizard").then(
-      (mod) => mod.ConflictWizard,
-    ),
-  { ssr: false },
-);
 
 type CoverageState = "full" | "partial" | "empty";
 
@@ -125,7 +117,6 @@ export default function SchedulePage() {
   const [activeShiftDrag, setActiveShiftDrag] = useState<Shift | null>(null);
   const [showTemplatePalette, setShowTemplatePalette] = useState(false);
   const [conflictCount, setConflictCount] = useState<number | null>(null);
-  const [showConflictWizard, setShowConflictWizard] = useState(false);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
   const [dragOverInfo, setDragOverInfo] = useState<{
     date: string | null;
@@ -743,19 +734,6 @@ export default function SchedulePage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {conflictCount !== null && conflictCount > 0 && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowConflictWizard(true)}
-                  className="flex items-center gap-2"
-                >
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  <span>
-                    {conflictCount} Conflict{conflictCount !== 1 ? "s" : ""}
-                  </span>
-                </Button>
-              )}
               <Button
                 variant="secondary"
                 size="sm"
@@ -1252,15 +1230,6 @@ export default function SchedulePage() {
           )}
         </div>
       </DndContext>
-
-      {/* Conflict Wizard */}
-      <ConflictWizard
-        isOpen={showConflictWizard}
-        onClose={() => {
-          setShowConflictWizard(false);
-          checkConflicts(); // Refresh conflict count after wizard closes
-        }}
-      />
     </>
   );
 }
