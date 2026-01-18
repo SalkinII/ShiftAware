@@ -24,9 +24,9 @@ test.describe("Critical User Flows", () => {
   });
 
   test("complete assignment flow", async ({ page }) => {
-    // 1. Navigate to Members page
-    await page.goto("/admin/members");
-    await expect(page).toHaveURL(/\/admin\/members/);
+    // 1. Navigate to Team Manage page (formerly Members)
+    await page.goto("/admin/team/manage");
+    await expect(page).toHaveURL(/\/admin\/team\/manage/);
 
     // 2. Create a member (if form is visible)
     const createButton = page.locator(
@@ -41,9 +41,9 @@ test.describe("Critical User Flows", () => {
       await page.waitForTimeout(1000);
     }
 
-    // 3. Navigate to Shifts page
-    await page.goto("/admin/shifts");
-    await expect(page).toHaveURL(/\/admin\/shifts/);
+    // 3. Navigate to Shifts Schedule page
+    await page.goto("/admin/shifts/schedule");
+    await expect(page).toHaveURL(/\/admin\/shifts\/schedule/);
 
     // 4. Create a shift (if form is visible)
     const addShiftButton = page.locator(
@@ -61,9 +61,9 @@ test.describe("Critical User Flows", () => {
       }
     }
 
-    // 5. Navigate to Preferences page
-    await page.goto("/preferences");
-    await expect(page).toHaveURL(/\/preferences/);
+    // 5. Navigate to Vote page (formerly Preferences)
+    await page.goto("/app/vote");
+    await expect(page).toHaveURL(/\/app\/vote/);
 
     // 6. Enter preferences (select shifts on calendar)
     // This is complex - just verify page loads for now
@@ -71,7 +71,7 @@ test.describe("Critical User Flows", () => {
       .toBeVisible()
       .catch(() => {
         // If no specific text, just check page loaded
-        expect(page.url()).toContain("/preferences");
+        expect(page.url()).toContain("/app/vote");
       });
 
     // 7. Navigate to Dashboard and run algorithm
@@ -88,21 +88,21 @@ test.describe("Critical User Flows", () => {
       await page.waitForTimeout(2000);
     }
 
-    // 9. Navigate to Schedule page
-    await page.goto("/schedule");
-    await expect(page).toHaveURL(/\/schedule/);
+    // 9. Navigate to Calendar page (formerly Schedule)
+    await page.goto("/app/calendar");
+    await expect(page).toHaveURL(/\/app\/calendar/);
 
-    // 10. Verify schedule displays
-    await expect(page.locator("text=/schedule|shift|timeline/i").first())
+    // 10. Verify calendar displays
+    await expect(page.locator("text=/schedule|shift|timeline|calendar/i").first())
       .toBeVisible({ timeout: 5000 })
       .catch(() => {
-        // Schedule might be empty, just verify page loaded
-        expect(page.url()).toContain("/schedule");
+        // Calendar might be empty, just verify page loaded
+        expect(page.url()).toContain("/app/calendar");
       });
 
     // 11. Navigate to Export page
-    await page.goto("/export");
-    await expect(page).toHaveURL(/\/export/);
+    await page.goto("/app/export");
+    await expect(page).toHaveURL(/\/app\/export/);
 
     // 12. Verify export options are available
     const exportButton = page.locator(
@@ -112,7 +112,7 @@ test.describe("Critical User Flows", () => {
       .toBeVisible({ timeout: 3000 })
       .catch(() => {
         // Export might not be available, just verify page loaded
-        expect(page.url()).toContain("/export");
+        expect(page.url()).toContain("/app/export");
       });
   });
 
@@ -151,21 +151,22 @@ test.describe("Critical User Flows", () => {
   });
 
   test("navigation between pages works", async ({ page }) => {
+    // Updated routes for v1.2 structure
     const pages = [
-      "/dashboard",
-      "/admin/members",
-      "/admin/shifts",
-      "/admin/assignments",
+      "/app/dashboard",
+      "/app/calendar",
+      "/app/vote",
+      "/app/export",
+      "/admin/team/manage",
+      "/admin/shifts/schedule",
+      "/admin/allocation",
       "/admin/audit",
       "/admin/coverage",
-      "/preferences",
-      "/schedule",
-      "/export",
     ];
 
     for (const path of pages) {
       await page.goto(path);
-      await expect(page).toHaveURL(new RegExp(path.replace("/", "\\/")));
+      await expect(page).toHaveURL(new RegExp(path.replace(/\//g, "\\/")));
       // Small delay to ensure page loads
       await page
         .waitForLoadState("networkidle", { timeout: 5000 })
