@@ -13,6 +13,26 @@ import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 
+// Helper functions for duration conversion
+function minutesToHHMM(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+}
+
+function hhmmToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function formatDuration(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 interface ShiftTemplate {
   id: string;
   name: string;
@@ -44,7 +64,7 @@ export default function TemplatesPage() {
   const [formData, setFormData] = useState<{
     name: string;
     type: ShiftType;
-    durationMinutes: number;
+    duration: string; // HH:MM format for input
     startTime: string;
     priority: ShiftPriority;
     desirabilityScore: number;
@@ -54,7 +74,7 @@ export default function TemplatesPage() {
   }>({
     name: "",
     type: "MOBILE_TEAM_1",
-    durationMinutes: 360,
+    duration: "06:00", // 6 hours default
     startTime: "08:00",
     priority: "CORE",
     desirabilityScore: 3,
@@ -96,10 +116,18 @@ export default function TemplatesPage() {
         : "/api/shifts/templates";
       const method = editingId ? "PUT" : "POST";
 
+      // Convert duration from HH:MM to minutes for API
+      const payload = {
+        ...formData,
+        durationMinutes: hhmmToMinutes(formData.duration),
+      };
+      // Remove the duration string field (API expects durationMinutes)
+      const { duration, ...apiData } = payload;
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       });
 
       if (res.ok) {
@@ -131,7 +159,7 @@ export default function TemplatesPage() {
     setFormData({
       name: "",
       type: "MOBILE_TEAM_1" as ShiftType,
-      durationMinutes: 360,
+      duration: "06:00",
       startTime: "08:00",
       priority: "CORE" as ShiftPriority,
       desirabilityScore: 3,
@@ -145,7 +173,7 @@ export default function TemplatesPage() {
     setFormData({
       name: template.name,
       type: template.type,
-      durationMinutes: template.durationMinutes,
+      duration: minutesToHHMM(template.durationMinutes),
       startTime: template.startTime,
       priority: template.priority,
       desirabilityScore: template.desirabilityScore,
@@ -276,13 +304,13 @@ export default function TemplatesPage() {
               />
 
               <Input
-                label="Duration (minutes)"
-                type="number"
-                value={formData.durationMinutes}
+                label="Duration (HH:MM)"
+                type="time"
+                value={formData.duration}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    durationMinutes: parseInt(e.target.value) || 0,
+                    duration: e.target.value,
                   })
                 }
                 required
@@ -367,7 +395,8 @@ export default function TemplatesPage() {
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 <span>
-                  {template.startTime} ({template.durationMinutes} min)
+                  {template.startTime} •{" "}
+                  {formatDuration(template.durationMinutes)}
                 </span>
               </div>
               <div>Capacity: {template.capacity}</div>
