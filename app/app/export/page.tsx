@@ -56,7 +56,8 @@ export default function ExportPage() {
     fetchFn: async () => {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Failed to fetch members");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Member[]>(data);
     },
   });
 
@@ -69,7 +70,8 @@ export default function ExportPage() {
     fetchFn: async () => {
       const res = await fetch("/api/events");
       if (!res.ok) throw new Error("Failed to fetch events");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Event[]>(data);
     },
   });
 

@@ -141,10 +141,13 @@ export default function ShiftsPage() {
     try {
       const eventsRes = await fetch("/api/events");
       if (eventsRes.ok) {
-        const eventsData = await eventsRes.json();
-        setEvents(eventsData);
-        if (eventsData.length > 0 && !formData.eventId) {
-          setFormData({ ...formData, eventId: eventsData[0].id });
+        const json = await eventsRes.json();
+        const eventsData = unwrapApiResponse<Event[]>(json);
+        // Defensive check
+        const safeEvents = Array.isArray(eventsData) ? eventsData : [];
+        setEvents(safeEvents);
+        if (safeEvents.length > 0 && !formData.eventId) {
+          setFormData({ ...formData, eventId: safeEvents[0].id });
         }
       }
     } catch (error) {

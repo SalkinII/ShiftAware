@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -102,8 +103,7 @@ export default function TemplatesPage() {
         throw new Error(errorMessage);
       }
       const data = await res.json();
-      // createSuccessResponse wraps data, so unwrap if needed
-      return Array.isArray(data) ? data : data.data || data;
+      return unwrapApiResponse<ShiftTemplate[]>(data);
     },
   });
 
