@@ -1,0 +1,121 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('http://localhost:3000/login?from=%2F');
+  await page.getByText('error').click(); // What is this?
+  await page.getByText('Hydration failed because the').click(); // why?
+  await page.getByText('- A server/client branch `if').click();
+  await page.locator('pre').click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('textbox', { name: 'Event Password' }).click();
+  await page.getByRole('textbox', { name: 'Event Password' }).fill('Admin123!');
+  await page.getByText('🌟').click(); // Put a sloth emoji here
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.getByRole('button', { name: 'Notifications' }).click(); // this doesn't do anything
+  await page.getByRole('button', { name: 'Settings' }).click(); // this either. we should get rid of stuff that doesn't do anything. And also clean up code after it while not breaking things!
+  await page.getByRole('button', { name: 'Manage Team 30 members active' }).click(); // I'm in the user view.
+  await page.getByRole('button', { name: 'Go Back' }).click();
+  await page.getByRole('button', { name: 'Review Gaps 8 needs attention' }).click(); // this is sensible as a user view so they can see what is not taken. But otherwise this is more of an admin view
+  await page.getByRole('link', { name: '← Back to User View' }).click();
+  await page.getByRole('heading', { name: 'Starlight Meadow Festival' }).click(); // again where does that come from? I can't set that up yet. I'll come to that later
+  await page.getByRole('heading', { name: 'Upcoming Events' }).click();
+  await page.getByRole('link', { name: 'Admin Panel' }).click();
+  await page.getByRole('link', { name: 'Festival Setup' }).click(); // here: I would like to be able to plan an event or a team from scratch. Just define the dates and times. The name. Make templates for it or use ones that are there already but being assign them to that event (bundle them for it). Have a complete rota as templates ready to populate calendar.
+  await page.getByText('No events found. Create an').click(); // how does that populate?
+  await page.getByRole('heading', { name: 'Festival Setup' }).click();
+  await page.getByText('Festival SetupConfigure event dates, buffers, and algorithm settingsNo events').click();
+  await page.getByRole('link', { name: 'Team Manage' }).click(); // I don't seem to be able to delete people. just inactivate.
+  // Also another thing. I might want to edit/extend attributes for people. for example you made the label M_NB in the database. what does that mean? there is Male, there is FLINTA and there is NB. But there might be other identities. I want to be flexible. same holds true for other attributes. This is all very rigid.
+  await page.getByRole('button', { name: 'Delete 1234' }).click(); 
+  await page.getByRole('button', { name: 'Deactivate' }).click(); // The Button doesn't show anything
+  await page.getByRole('button', { name: 'Heatmap' }).click();
+  await page.getByRole('button', { name: 'Badger - EXECUTIVE: Partial' }).first().click(); // This is all very spaced out. We could do a screenshot. Also it is all clickable but I do not understand what it the purpouse is. For example assigning the person to a shift via clicking on the heatmap would be sensible. The workflow would be: First assignment done automatically. Then deleting specific people from shifts. seeing who is eligible. then assigning them to the shift. Also it is all very yellow. So I would thinK: Green: can be assigned. Yellow has potential conflict (needs to be specified in a rule view - we'll come to that). red: has shift at that time already, is not eligible, all male shift
+  await page.getByRole('button', { name: 'Bunny - EXECUTIVE: Partial' }).first().click();
+  await page.getByRole('button', { name: 'Fawn - MOBILE_TEAM_1: Partial' }).nth(1).click();
+  await page.getByRole('button', { name: 'Fox - MOBILE_TEAM_1: Unavailable' }).click();
+  await page.getByRole('link', { name: 'Shift Templates' }).click();
+  await page.getByRole('button', { name: 'New Template' }).click();
+  await page.getByRole('textbox', { name: 'Start Time*' }).click(); // why does a template need a start time? Workflow would be: A calendar view that takes templates by drag and drop depending on the time where dropped. This is an admin tool! I wouldn't need that in the user view. they don't need to use templates to populate a schedule. Then we can populate successive shifts. They could even snap into place. then we can edit them by clicking onto them. That way we could locate all shifts to a combined view. 
+  await page.getByRole('spinbutton', { name: 'Duration (minutes)*' }).click(); // why would we define the shift duration in minutes? It is hours. If you want we can do HH:MM format. but why minutes?
+  await page.getByRole('spinbutton', { name: 'Duration (minutes)*' }).fill('359');
+  await page.getByLabel('Shift Type*').selectOption('EXECUTIVE');
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page.getByRole('button', { name: 'New Template' }).click();
+  await page.getByLabel('Shift Type*').selectOption('EXECUTIVE');
+  await page.getByRole('textbox', { name: 'Template Name*' }).click();
+  await page.getByRole('textbox', { name: 'Template Name*' }).fill('Schichtleitung');
+  await page.getByRole('spinbutton', { name: 'Duration (minutes)*' }).click();
+  await page.getByRole('textbox', { name: 'Start Time*' }).click();
+  await page.getByRole('textbox', { name: 'Start Time*' }).fill('12:00'); // If I have a start time and a duration which should be assigned on template creation (but editable in the instance of that class) we could prepopulate the duration. We could then change the endtime if needed. But that way it would be much easier to handle.
+  await page.getByRole('button', { name: 'Create Template' }).click();
+  await page.getByRole('link', { name: '← Back to User View' }).click();
+  await page.getByRole('link', { name: 'Calendar' }).click();
+  await page.getByRole('button', { name: 'Templates' }).click();
+  await page.getByRole('button', { name: 'Schichtleitung 12:00 (6h)' }).click();
+  await page.getByRole('button', { name: 'Schichtleitung 12:00 (6h)' }).click();
+  await page.getByRole('button', { name: 'Bereich 08:00 (8h) EXECUTIVE' }).click();
+  await page.getByRole('button', { name: 'Schichtleitung 12:00 (6h)' }).click();
+  await page.getByText('Jan 12 - Jan 18,').click(); // so this is on the setup of an event again. I now still have all those shifts in January. But ideally I could identify core and buffer times for an event. I would then always fall back to those core days in the calendar view. And that way I wouldn't need to always fast forward to the actual festival date.
+  await page.getByRole('button', { name: 'Next week' }).click();
+  await page.locator('.absolute > .transition-colors').click();
+  await page.getByRole('button', { name: 'Previous week' }).click();
+  await page.getByRole('button', { name: 'Day', exact: true }).click();
+  await page.getByText('Monday, January 12, 2026Today').click(); // This date should hover with the scroll so I always see it. We had that as a feature request in the past.
+  await page.locator('.timeline-container').click();
+  await page.getByRole('button', { name: 'Previous day' }).click();
+  await page.getByRole('button', { name: 'Previous day' }).click();
+  await page.getByRole('button', { name: 'Previous day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).dblclick();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-06-19');
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Week' }).click();
+  await page.getByRole('button', { name: 'Day', exact: true }).click();
+  await page.getByText('Monday, June 22,').click();
+  await page.getByRole('textbox', { name: 'Jump to date' }).fill('2026-06-26');
+  await page.getByRole('button', { name: 'Previous day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Next day' }).click();
+  await page.getByRole('button', { name: 'Zelt 18:00 (6h) STATIONARY •' }).click();
+  await page.getByRole('link', { name: 'Vote' }).click();
+  await page.getByRole('link', { name: 'Admin Panel' }).click();
+  await page.getByRole('link', { name: 'Shift Schedule' }).click();
+  await page.getByRole('combobox').selectOption('Starlight Meadow Festival 2026');
+  await page.getByRole('link', { name: 'Allocation' }).click();
+  await page.locator('div').filter({ hasText: 'Select EventAll' }).nth(4).click();
+  page.once('dialog', dialog => {
+    console.log(`Dialog message: ${dialog.message()}`);
+    dialog.dismiss().catch(() => {});
+  });
+  await page.getByRole('button', { name: 'Run Assignment Algorithm' }).click(); // ok so this is a big thing. this also relates to the display of the algo statement on the dashboard. I have never understood what you set up there from the get go. We would think that setting up an algo, or just basically doing the distribution manually would be reflected in the display on the dashboard flexibly. there are algo scores that even can be populated. but having a black box that assigns stuff is definitely not what we want. 
+  await page.getByRole('button', { name: 'Swap View' }).click();
+  await page.getByRole('button', { name: 'Calendar' }).click();
+  await page.getByLabel('Date').selectOption('2026-06-27');
+  await page.getByLabel('Date').selectOption('2026-06-28');
+  await page.getByText('assignedcap 2').nth(1).click();
+  await page.getByRole('button', { name: 'Drag shift to reschedule' }).nth(1).click(); // this is what I want as an admin to organise the shifts for an event. 
+  await page.getByRole('button', { name: 'Drag shift to reschedule' }).first().click(); // also this lane could be maximized according to our design principles. But that's what we want to see here.
+  await page.getByText('assigned').first().click();
+  await page.getByRole('link', { name: 'Coverage Gaps' }).click();
+  await page.getByRole('link', { name: 'Publish' }).click(); // once I have set up everything I would publish to the user view where they log in their wishes. Then we would assign shifts as admin and publish again into calendar view also centred around core dates. Then we can edit manually. all being logged in the flow.
+  await page.locator('div').filter({ hasText: /^Publish workflow - coming soon$/ }).click();
+});
