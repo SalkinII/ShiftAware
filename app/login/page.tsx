@@ -49,7 +49,7 @@ function LoginForm() {
             ShiftAware
           </h1>
           <p className="text-gray-500 font-medium mt-2">
-            Starlight Meadow Festival 2026
+            Open Source Shift Planner
           </p>
         </div>
 

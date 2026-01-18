@@ -3,7 +3,7 @@
  * Tests end-to-end workflows that span multiple API endpoints and components
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
 const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3000";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "test-password";

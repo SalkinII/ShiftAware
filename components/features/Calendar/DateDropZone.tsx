@@ -9,6 +9,7 @@ interface DateDropZoneProps {
   className?: string;
   children?: React.ReactNode;
   as?: "div" | "th" | "td";
+  style?: React.CSSProperties;
 }
 
 export function DateDropZone({
@@ -16,6 +17,7 @@ export function DateDropZone({
   className,
   children,
   as = "div",
+  style,
 }: DateDropZoneProps) {
   const dateStr = format(date, "yyyy-MM-dd");
   const { isOver, setNodeRef } = useDroppable({
@@ -80,6 +82,7 @@ export function DateDropZone({
     <div
       ref={setNodeRef}
       className={cn(baseClasses, "relative")}
+      style={style}
       title={isOver ? `Drop here: ${dateDisplay} ${timeDisplay}` : undefined}
     >
       {children}

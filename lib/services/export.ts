@@ -222,7 +222,6 @@ export function exportScheduleToPDF(
   // Footer (optimized: calculate text once, reuse)
   const pageCount = (doc as any).internal.getNumberOfPages();
   const footerText = `Page {page} of ${pageCount} - Privacy-first shift management`;
-  const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
   for (let i = 1; i <= pageCount; i++) {
