@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Plus,
   Clock,
@@ -35,7 +35,8 @@ interface Shift {
   priority: ShiftPriority;
   desirabilityScore: number;
   capacity: number;
-  event: { name: string };
+  eventId: string;
+  event: { id: string; name: string };
   requiredRoles: { role: Role; count: number }[];
 }
 
@@ -47,6 +48,7 @@ interface Event {
 export default function ShiftsPage() {
   const toast = useToast();
   const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -99,7 +101,14 @@ export default function ShiftsPage() {
   });
 
   // Defensive: ensure shifts is always an array
-  const shifts = Array.isArray(cachedShifts) ? cachedShifts : [];
+  const allShifts = Array.isArray(cachedShifts) ? cachedShifts : [];
+
+  // Filter shifts by selected event
+  const shifts = useMemo(() => {
+    if (selectedEventId === "all") return allShifts;
+    return allShifts.filter((s) => s.eventId === selectedEventId);
+  }, [allShifts, selectedEventId]);
+
   const loading = shiftsLoading;
 
   // Show error toast if fetch fails
@@ -444,10 +453,16 @@ export default function ShiftsPage() {
                   Filter by Event
                 </span>
               </div>
-              <select className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20">
-                <option>All Events</option>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20"
+              >
+                <option value="all">All Events</option>
                 {events.map((e) => (
-                  <option key={e.id}>{e.name}</option>
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
                 ))}
               </select>
             </Card>
