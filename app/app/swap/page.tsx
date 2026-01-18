@@ -3,6 +3,7 @@
 import React, { useCallback } from "react";
 import { SwapInterface } from "@/components/features/SwapInterface/SwapInterface";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { useToast } from "@/components/ui/Toast";
 
 interface Assignment {
@@ -39,7 +40,7 @@ export default function SwapPage() {
       const res = await fetch("/api/assignments");
       if (!res.ok) throw new Error("Failed to fetch assignments");
       const data = await res.json();
-      return data.data || data || [];
+      return unwrapApiResponse<Assignment[]>(data);
     },
   });
 

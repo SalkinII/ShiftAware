@@ -31,6 +31,8 @@ interface CalendarViewProps {
   onShiftDelete?: (shiftId: string) => void;
   onShiftAssign?: (shiftId: string) => void;
   onShiftSwap?: (shiftId: string) => void;
+  /** When true, enables drag-drop editing. Default: auto-detect from edit handlers */
+  isEditable?: boolean;
 }
 
 type CoverageState = "full" | "partial" | "empty";
@@ -81,10 +83,21 @@ const CalendarView = ({
   onShiftDelete,
   onShiftAssign,
   onShiftSwap,
+  isEditable,
 }: CalendarViewProps) => {
+  // Auto-detect editability from handlers if not explicitly set
+  const canEdit =
+    isEditable ??
+    (onShiftEdit !== undefined ||
+      onShiftDelete !== undefined ||
+      onShiftAssign !== undefined ||
+      onShiftSwap !== undefined);
+  // Ensure shifts is always an array
+  const safeShifts = Array.isArray(shifts) ? shifts : [];
+
   const tasks = useMemo(
     () =>
-      shifts.map((shift) => ({
+      safeShifts.map((shift) => ({
         id: shift.id,
         text: shift.type.replace("_", " "),
         start: new Date(shift.startTime),
@@ -100,7 +113,7 @@ const CalendarView = ({
         capacity: shift.capacity,
         assignments: shift.assignments || [],
       })),
-    [shifts],
+    [safeShifts],
   );
 
   const baseDate = useMemo(() => {
@@ -112,7 +125,7 @@ const CalendarView = ({
 
   const dayStarts = useMemo(() => {
     const dates = new Set<string>();
-    shifts.forEach((shift) => {
+    safeShifts.forEach((shift) => {
       dates.add(shift.startTime.split("T")[0]);
     });
     if (startDate) {
@@ -123,19 +136,19 @@ const CalendarView = ({
       return [startOfDay(baseDate)];
     }
     return sorted.map((date) => startOfDay(new Date(date)));
-  }, [shifts, startDate, baseDate]);
+  }, [safeShifts, startDate, baseDate]);
 
   // Calculate date range from all shifts, not just baseDate
   const allShiftDates = useMemo(() => {
     const dates = new Set<string>();
-    shifts.forEach((shift) => {
+    safeShifts.forEach((shift) => {
       dates.add(shift.startTime.split("T")[0]);
     });
     if (startDate) {
       dates.add(startDate);
     }
     return Array.from(dates).sort();
-  }, [shifts, startDate]);
+  }, [safeShifts, startDate]);
 
   const minDate = useMemo(() => {
     if (allShiftDates.length > 0) {
@@ -176,11 +189,11 @@ const CalendarView = ({
 
   const sortedShifts = useMemo(
     () =>
-      [...shifts].sort(
+      [...safeShifts].sort(
         (a, b) =>
           new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
       ),
-    [shifts],
+    [safeShifts],
   );
 
   // Memoize sorted shifts for grid view to avoid re-sorting multiple times
@@ -215,7 +228,7 @@ const CalendarView = ({
 
   const members = useMemo(() => {
     const memberMap = new Map<string, any>();
-    shifts.forEach((shift) => {
+    safeShifts.forEach((shift) => {
       shift.assignments?.forEach((a: any) => {
         if (a.teamMember) {
           memberMap.set(a.teamMember.id, a.teamMember);
@@ -225,7 +238,7 @@ const CalendarView = ({
     return Array.from(memberMap.values()).sort((a, b) =>
       a.alias.localeCompare(b.alias),
     );
-  }, [shifts]);
+  }, [safeShifts]);
 
   const getCoverage = useCallback((shift: any): CoverageState => {
     const filled = shift.assignments?.length || 0;
@@ -437,6 +450,7 @@ const CalendarView = ({
     onShiftAssign?: (shiftId: string) => void;
     onShiftSwap?: (shiftId: string) => void;
     onShiftDelete?: (shiftId: string) => void;
+    canEdit: boolean;
   };
 
   const TimelineRow = memo(
@@ -455,6 +469,7 @@ const CalendarView = ({
       onShiftAssign,
       onShiftSwap,
       onShiftDelete,
+      canEdit,
     }: TimelineRowProps) => {
       const shift = shifts[index];
       const start = new Date(shift.startTime);
@@ -462,6 +477,31 @@ const CalendarView = ({
       const filled = shift.assignments?.length || 0;
       const capacity = shift.capacity || 0;
       const status = getCoverage(shift);
+
+      // Build tooltip content
+      const tooltipLines: string[] = [];
+      tooltipLines.push(`${shift.type.replace("_", " ")}`);
+      tooltipLines.push(`${format(start, "MMM d, HH:mm")} - ${format(end, "HH:mm")}`);
+      tooltipLines.push(`─────────────────────`);
+      tooltipLines.push(`Coverage: ${filled}/${capacity} (${status === "full" ? "Complete" : status === "partial" ? "Partial" : "Needs staff"})`);
+      if (shift.priority) {
+        tooltipLines.push(`Priority: ${shift.priority}`);
+      }
+      if (shift.assignments && shift.assignments.length > 0) {
+        tooltipLines.push(`─────────────────────`);
+        tooltipLines.push("Assigned:");
+        shift.assignments.slice(0, 5).forEach((a: any) => {
+          const memberName = a.teamMember?.alias || "Unknown";
+          tooltipLines.push(`  • ${memberName}`);
+        });
+        if (shift.assignments.length > 5) {
+          tooltipLines.push(`  ...and ${shift.assignments.length - 5} more`);
+        }
+      } else {
+        tooltipLines.push(`─────────────────────`);
+        tooltipLines.push("No assignments yet");
+      }
+      const shiftTooltip = tooltipLines.join("\n");
 
       // Calculate position relative to startBound
       // Note: We display shifts aligned to 15-minute intervals visually,
@@ -563,30 +603,35 @@ const CalendarView = ({
               className={`timeline-bar ${status} ${selectedShiftIds.has(shift.id) ? "is-selected" : ""}`}
               ref={setNodeRef}
               style={barStyle}
+              title={shiftTooltip}
             >
               <div className="timeline-bar__label">
-                <span
-                  {...attributes}
-                  {...listeners}
-                  className="inline-flex items-center cursor-grab active:cursor-grabbing opacity-80"
-                  aria-label="Drag shift to reschedule"
-                  title="Drag shift to reschedule"
-                >
-                  <GripVertical className="w-3 h-3" />
-                </span>
+                {canEdit && (
+                  <span
+                    {...attributes}
+                    {...listeners}
+                    className="inline-flex items-center cursor-grab active:cursor-grabbing opacity-80"
+                    aria-label="Drag shift to reschedule"
+                    title="Drag shift to reschedule"
+                  >
+                    <GripVertical className="w-3 h-3" />
+                  </span>
+                )}
                 <span>{filled} assigned</span>
                 <span className="timeline-bar__capacity">cap {capacity}</span>
               </div>
-              <div className="timeline-bar__actions">
-                <ShiftCardActions
-                  shiftId={shift.id}
-                  onViewDetails={handleViewDetailsClick}
-                  onEdit={handleEditClick}
-                  onAssignMember={handleAssignClick}
-                  onSwap={handleSwapClick}
-                  onDelete={handleDeleteClick}
-                />
-              </div>
+              {canEdit && (
+                <div className="timeline-bar__actions">
+                  <ShiftCardActions
+                    shiftId={shift.id}
+                    onViewDetails={handleViewDetailsClick}
+                    onEdit={handleEditClick}
+                    onAssignMember={handleAssignClick}
+                    onSwap={handleSwapClick}
+                    onDelete={handleDeleteClick}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -634,6 +679,7 @@ const CalendarView = ({
           onShiftAssign={onShiftAssign}
           onShiftSwap={onShiftSwap}
           onShiftDelete={onShiftDelete}
+          canEdit={canEdit}
         />
       );
     };
@@ -674,9 +720,9 @@ const CalendarView = ({
                 ))}
               </div>
             )}
-            {/* Date display navigation - Day and Week views */}
+            {/* Date display navigation - Day and Week views - Sticky header */}
             {(viewType === "Day" || viewType === "Week") && onDateChange && (
-              <div className="mb-4 flex items-center justify-center">
+              <div className="sticky top-0 z-30 mb-4 py-3 flex items-center justify-center bg-white/95 backdrop-blur-sm border-b border-gray-100">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
                   {/* Previous button */}
                   <button

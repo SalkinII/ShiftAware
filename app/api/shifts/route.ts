@@ -25,8 +25,19 @@ export async function GET(request: Request) {
         event: true,
         requiredRoles: true,
         assignments: {
-          include: {
-            teamMember: true,
+          select: {
+            id: true,
+            role: true,
+            assignmentType: true,
+            algorithmScore: true,
+            notes: true,
+            teamMember: {
+              select: {
+                id: true,
+                alias: true,
+                avatarId: true,
+              },
+            },
           },
         },
         _count: {

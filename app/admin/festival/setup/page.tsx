@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { useToast } from "@/components/ui/Toast";
+import { Plus, Calendar } from "lucide-react";
 
 interface Event {
   id: string;
@@ -33,6 +34,14 @@ interface EventWithConfig {
   _count?: { shifts: number };
 }
 
+interface NewEventForm {
+  name: string;
+  startDate: string;
+  endDate: string;
+  bufferDaysBefore: number;
+  bufferDaysAfter: number;
+}
+
 export default function FestivalSetupPage() {
   const [events, setEvents] = useState<EventWithConfig[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -46,6 +55,15 @@ export default function FestivalSetupPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newEvent, setNewEvent] = useState<NewEventForm>({
+    name: "",
+    startDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 33), "yyyy-MM-dd"),
+    bufferDaysBefore: 7,
+    bufferDaysAfter: 3,
+  });
   const toast = useToast();
 
   // Fetch all events on mount
@@ -94,6 +112,49 @@ export default function FestivalSetupPage() {
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
+  async function handleCreateEvent() {
+    if (!newEvent.name.trim()) {
+      toast.error("Event name is required");
+      return;
+    }
+    if (new Date(newEvent.endDate) < new Date(newEvent.startDate)) {
+      toast.error("End date must be after start date");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEvent),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setEvents((prev) => [data.data, ...prev]);
+        setSelectedEventId(data.data.id);
+        setShowCreateForm(false);
+        setNewEvent({
+          name: "",
+          startDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
+          endDate: format(addDays(new Date(), 33), "yyyy-MM-dd"),
+          bufferDaysBefore: 7,
+          bufferDaysAfter: 3,
+        });
+        toast.success("Event created successfully!");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to create event");
+      }
+    } catch (error) {
+      console.error("Create error:", error);
+      toast.error("Failed to create event");
+    } finally {
+      setCreating(false);
+    }
+  }
+
   async function handleSave() {
     if (!selectedEventId) return;
 
@@ -127,7 +188,116 @@ export default function FestivalSetupPage() {
     );
   }
 
-  if (events.length === 0) {
+  // Create Event Form - inlined to prevent focus loss on re-render
+  const createEventFormJSX = (
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <Calendar className="w-5 h-5 text-primary-500" />
+        Create New Event
+      </h2>
+      <div className="space-y-4 max-w-lg">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Name *
+          </label>
+          <input
+            type="text"
+            value={newEvent.name}
+            onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
+            placeholder="e.g., Summer Festival 2026"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Core Start Date *
+            </label>
+            <input
+              type="date"
+              value={newEvent.startDate}
+              onChange={(e) =>
+                setNewEvent({ ...newEvent, startDate: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Core End Date *
+            </label>
+            <input
+              type="date"
+              value={newEvent.endDate}
+              onChange={(e) =>
+                setNewEvent({ ...newEvent, endDate: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Buffer Days Before
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="30"
+              value={newEvent.bufferDaysBefore}
+              onChange={(e) =>
+                setNewEvent({
+                  ...newEvent,
+                  bufferDaysBefore: parseInt(e.target.value) || 0,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Setup/preparation days</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Buffer Days After
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="30"
+              value={newEvent.bufferDaysAfter}
+              onChange={(e) =>
+                setNewEvent({
+                  ...newEvent,
+                  bufferDaysAfter: parseInt(e.target.value) || 0,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Teardown/cleanup days</p>
+          </div>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={handleCreateEvent}
+            disabled={creating}
+            className="px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:ring-4 focus:ring-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {creating ? "Creating..." : "Create Event"}
+          </button>
+          {events.length > 0 && (
+            <button
+              onClick={() => setShowCreateForm(false)}
+              className="px-4 py-2 text-gray-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (events.length === 0 || showCreateForm) {
     return (
       <div className="space-y-6">
         <div>
@@ -136,20 +306,44 @@ export default function FestivalSetupPage() {
             Configure event dates, buffers, and algorithm settings
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-          <p className="text-gray-500">No events found. Create an event first.</p>
-        </div>
+        {events.length === 0 ? (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-primary-50 to-white rounded-xl border border-primary-100 p-8 text-center">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-primary-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Events Yet
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Create your first event to start planning shifts and schedules.
+              </p>
+            </div>
+            {createEventFormJSX}
+          </div>
+        ) : (
+          createEventFormJSX
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Festival Setup</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Configure event dates, buffers, and algorithm settings
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Festival Setup</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Configure event dates, buffers, and algorithm settings
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Event
+        </button>
       </div>
 
       {/* Event Selector */}
@@ -183,14 +377,19 @@ export default function FestivalSetupPage() {
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
                   Event Name
                 </label>
-                <p className="text-gray-900 font-medium">{selectedEvent.name}</p>
+                <p className="text-gray-900 font-medium">
+                  {selectedEvent.name}
+                </p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
                   Start Date
                 </label>
                 <p className="text-gray-900">
-                  {format(new Date(selectedEvent.startDate), "EEEE, MMMM d, yyyy")}
+                  {format(
+                    new Date(selectedEvent.startDate),
+                    "EEEE, MMMM d, yyyy",
+                  )}
                 </p>
               </div>
               <div>
@@ -198,7 +397,10 @@ export default function FestivalSetupPage() {
                   End Date
                 </label>
                 <p className="text-gray-900">
-                  {format(new Date(selectedEvent.endDate), "EEEE, MMMM d, yyyy")}
+                  {format(
+                    new Date(selectedEvent.endDate),
+                    "EEEE, MMMM d, yyyy",
+                  )}
                 </p>
               </div>
             </div>
@@ -210,8 +412,8 @@ export default function FestivalSetupPage() {
               Calendar Buffer Days
             </h2>
             <p className="text-sm text-gray-500 mb-4">
-              Buffer days extend the calendar view before and after the event for
-              setup/teardown shifts.
+              Buffer days extend the calendar view before and after the event
+              for setup/teardown shifts.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-md">
               <div>

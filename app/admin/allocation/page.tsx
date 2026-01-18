@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { format } from "date-fns";
 import {
   RefreshCw,
@@ -76,7 +77,8 @@ export default function AssignmentsPage() {
     fetchFn: async () => {
       const res = await fetch("/api/events");
       if (!res.ok) throw new Error("Failed to fetch events");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Event[]>(data);
     },
   });
 
@@ -90,7 +92,8 @@ export default function AssignmentsPage() {
     fetchFn: async () => {
       const res = await fetch("/api/assignments");
       if (!res.ok) throw new Error("Failed to fetch assignments");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Assignment[]>(data);
     },
   });
 

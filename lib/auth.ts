@@ -10,33 +10,48 @@ import { cookies } from "next/headers";
 
 const AUTH_COOKIE_NAME = "authenticated";
 const ROLE_COOKIE_NAME = "user_role";
-const DEFAULT_TTL_SECONDS = Number(process.env.SESSION_TIMEOUT_MINUTES ?? "60") * 60;
+const DEFAULT_TTL_SECONDS =
+  Number(process.env.SESSION_TIMEOUT_MINUTES ?? "60") * 60;
 
 /**
- * Verify login password against ADMIN_PASSWORD env variable.
- * Per plan: direct string comparison (low-risk scope).
+ * Verify login password against ADMIN_PASSWORD or USER_PASSWORD env variable.
+ * Returns: { valid: true, isAdmin: true } for admin password
+ *          { valid: true, isAdmin: false } for user password
+ *          { valid: false } for invalid password
  */
-export async function verifyLogin(password: string): Promise<boolean> {
+export async function verifyLogin(
+  password: string,
+): Promise<{ valid: boolean; isAdmin: boolean }> {
   const adminPassword = process.env.ADMIN_PASSWORD;
-  
+  const userPassword = process.env.USER_PASSWORD;
+
   if (!adminPassword) {
     throw new Error("ADMIN_PASSWORD environment variable is not set");
   }
-  
-  return password === adminPassword;
+
+  // Check admin password first
+  if (password === adminPassword) {
+    return { valid: true, isAdmin: true };
+  }
+
+  // Check user password (falls back to admin password if not set)
+  if (userPassword && password === userPassword) {
+    return { valid: true, isAdmin: false };
+  }
+
+  return { valid: false, isAdmin: false };
 }
 
 /**
  * Create authenticated session cookie.
  * Sets simple "authenticated" cookie with httpOnly flag.
- * Optionally sets admin role cookie.
+ * Sets role cookie (readable by client for UI purposes).
  */
 export async function createSession(isAdmin: boolean = false): Promise<void> {
   const cookieStore = await cookies();
   const expiresAt = new Date(Date.now() + DEFAULT_TTL_SECONDS * 1000);
 
-  const cookieOptions = {
-    httpOnly: true,
+  const baseCookieOptions = {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     maxAge: DEFAULT_TTL_SECONDS,
@@ -44,11 +59,17 @@ export async function createSession(isAdmin: boolean = false): Promise<void> {
     path: "/",
   };
 
-  cookieStore.set(AUTH_COOKIE_NAME, "true", cookieOptions);
+  // Auth cookie is httpOnly for security
+  cookieStore.set(AUTH_COOKIE_NAME, "true", {
+    ...baseCookieOptions,
+    httpOnly: true,
+  });
 
-  if (isAdmin) {
-    cookieStore.set(ROLE_COOKIE_NAME, "admin", cookieOptions);
-  }
+  // Role cookie is NOT httpOnly so client JS can read it for UI
+  cookieStore.set(ROLE_COOKIE_NAME, isAdmin ? "admin" : "user", {
+    ...baseCookieOptions,
+    httpOnly: false,
+  });
 }
 
 /**
@@ -93,4 +114,3 @@ export async function destroySession(): Promise<void> {
 export function validateSessionCookie(value?: string): boolean {
   return value === "true";
 }
-

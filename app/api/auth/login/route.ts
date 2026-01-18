@@ -9,28 +9,29 @@ export async function POST(request: Request) {
     if (!password || typeof password !== "string") {
       return NextResponse.json(
         { error: "Password is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const isValid = await verifyLogin(password);
+    const result = await verifyLogin(password);
 
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid password" },
-        { status: 401 }
-      );
+    if (!result.valid) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }
 
-    // Admin password grants admin role
-    await createSession(true);
-    return NextResponse.json({ success: true });
+    // Create session with appropriate role
+    await createSession(result.isAdmin);
+    return NextResponse.json({
+      success: true,
+      isAdmin: result.isAdmin,
+    });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 },
     );
   }
 }
-

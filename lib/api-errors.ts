@@ -8,6 +8,34 @@ export interface ApiErrorResponse {
   code?: string;
 }
 
+export interface ApiSuccessResponse<T> {
+  data: T;
+}
+
+/**
+ * Utility to unwrap API response data from { data: ... } format
+ * Handles both wrapped and unwrapped formats for backwards compatibility
+ */
+export function unwrapApiResponse<T>(response: unknown): T {
+  // Handle null/undefined
+  if (response === null || response === undefined) {
+    return response as T;
+  }
+
+  // Handle wrapped format { data: ... }
+  if (
+    typeof response === "object" &&
+    response !== null &&
+    "data" in response &&
+    !Array.isArray(response)
+  ) {
+    return (response as ApiSuccessResponse<T>).data;
+  }
+
+  // Return as-is (already unwrapped or is the data itself)
+  return response as T;
+}
+
 /**
  * Standardized API error response format
  */
@@ -60,12 +88,13 @@ export function createErrorResponse(
 
 /**
  * Create a standardized success response
+ * Wraps data in { data: ... } format for consistency
  */
 export function createSuccessResponse<T>(
   data: T,
   status = 200,
-): NextResponse<T> {
-  return NextResponse.json(data, { status });
+): NextResponse<{ data: T }> {
+  return NextResponse.json({ data }, { status });
 }
 
 /**
@@ -113,5 +142,21 @@ export function createConflictResponse(
       code: "CONFLICT",
     },
     { status: 409 },
+  );
+}
+
+/**
+ * Create a standardized forbidden response (403)
+ */
+export function createForbiddenResponse(
+  message = "Forbidden",
+): NextResponse<ApiErrorResponse> {
+  return NextResponse.json(
+    {
+      error: "Forbidden",
+      message,
+      code: "FORBIDDEN",
+    },
+    { status: 403 },
   );
 }

@@ -1,21 +1,38 @@
 "use client";
 
-import React, { useState } from "react";
-import { LogOut, Settings, Bell, Menu, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useToast } from "@/components/ui/Toast";
+import { isAdminClient } from "@/lib/auth-client";
+import {
+  useCurrentEvent,
+  formatEventDateRange,
+} from "@/lib/hooks/useCurrentEvent";
+import {
+  EMOJI_ADMIN,
+  EMOJI_DEFAULT_USER,
+  EMOJI_APP_LOGO,
+} from "@/lib/constants/emojis";
 
 interface HeaderProps {
   alias?: string;
   avatarEmoji?: string;
 }
 
-export function Header({ alias = "Admin", avatarEmoji = "🐺" }: HeaderProps) {
+export function Header({ alias, avatarEmoji }: HeaderProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const toast = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setIsAdmin(isAdminClient());
+  }, []);
+
+  // Role-based defaults: Admin=🐻, User=🦥
+  const displayAlias = alias ?? (isAdmin ? "Admin" : "Team Member");
+  const displayEmoji =
+    avatarEmoji ?? (isAdmin ? EMOJI_ADMIN : EMOJI_DEFAULT_USER);
 
   const handleLogout = async () => {
     try {
@@ -47,59 +64,39 @@ export function Header({ alias = "Admin", avatarEmoji = "🐺" }: HeaderProps) {
           </button>
 
           <div className="bg-primary-500 p-1.5 rounded-lg text-white">
-            <span className="text-xl">🌟</span>
+            <span className="text-xl">{EMOJI_APP_LOGO}</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">
             ShiftAware
           </h1>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              toast.info("Notifications feature coming soon");
-            }}
-            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative"
-            aria-label="Notifications"
-            title="Notifications (coming soon)"
-          >
-            <Bell className="w-5 h-5" />
-            {/* Notification badge removed - feature not implemented yet */}
-          </button>
-
-          <div className="h-8 w-px bg-gray-200 mx-1"></div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-2xl shadow-inner border border-primary-100">
-                {avatarEmoji}
-              </div>
-              <div className="hidden md:block">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">
-                  {alias}
-                </p>
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
-                  Administrator
-                </p>
-              </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-2xl shadow-inner border border-primary-100">
+              {displayEmoji}
             </div>
-
-            <div className="flex items-center gap-1 ml-2">
-              <button
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Settings"
+            <div className="hidden md:block">
+              <p className="text-sm font-semibold text-gray-900 leading-tight">
+                {displayAlias}
+              </p>
+              <p
+                className={`text-[10px] uppercase tracking-wider font-medium ${
+                  isAdmin ? "text-red-500" : "text-gray-500"
+                }`}
               >
-                <Settings className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+                {isAdmin ? "Administrator" : "Team Member"}
+              </p>
             </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
@@ -120,7 +117,7 @@ export function Header({ alias = "Admin", avatarEmoji = "🐺" }: HeaderProps) {
   );
 }
 
-// Mobile sidebar component
+// Mobile sidebar component - route-aware like desktop sidebars
 function MobileSidebar({
   isOpen,
   onClose,
@@ -128,23 +125,42 @@ function MobileSidebar({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { event, loading: eventLoading } = useCurrentEvent();
 
-  const navItems = [
-    { label: "Dashboard", href: "/dashboard", icon: "📊" },
-    { label: "My Preferences", href: "/preferences", icon: "📅" },
-    { label: "Schedule View", href: "/schedule", icon: "📆" },
-    { label: "Coverage Gaps", href: "/admin/coverage", icon: "⚠️" },
-    { label: "Export", href: "/export", icon: "📥" },
+  useEffect(() => {
+    setIsAdmin(isAdminClient());
+  }, []);
+
+  // Determine if we're in admin section
+  const isInAdminSection = pathname.startsWith("/admin");
+
+  // User navigation items (matching UserSidebar)
+  const userNavItems = [
+    { label: "Dashboard", href: "/app/dashboard", icon: "📊" },
+    { label: "Calendar", href: "/app/calendar", icon: "📆" },
+    { label: "Vote", href: "/app/vote", icon: "🗳️" },
+    { label: "Swap", href: "/app/swap", icon: "🔄" },
+    { label: "Export", href: "/app/export", icon: "📥" },
+    { label: "Profile", href: "/app/profile", icon: "👤" },
   ];
 
-  const adminItems = [
-    { label: "Team Members", href: "/admin/members", icon: "👥" },
-    { label: "Shift Config", href: "/admin/shifts", icon: "⏰" },
-    { label: "Assignment Control", href: "/admin/assignments", icon: "⚙️" },
+  // Admin navigation items (matching AdminSidebar)
+  const adminNavItems = [
+    { label: "Festival Setup", href: "/admin/festival/setup", icon: "⚙️" },
+    { label: "Team Manage", href: "/admin/team/manage", icon: "👥" },
+    { label: "Shift Templates", href: "/admin/shifts/templates", icon: "⏰" },
+    { label: "Shift Schedule", href: "/admin/shifts/schedule", icon: "📅" },
+    { label: "Allocation", href: "/admin/allocation", icon: "🎯" },
+    { label: "Coverage Gaps", href: "/admin/coverage", icon: "⚠️" },
+    { label: "Publish", href: "/admin/publish", icon: "📤" },
     { label: "Audit Log", href: "/admin/audit", icon: "📜" },
   ];
+
+  // Choose items based on current section
+  const navItems = isInAdminSection ? adminNavItems : userNavItems;
+  const sectionLabel = isInAdminSection ? "Administration" : "Main Navigation";
 
   return (
     <aside
@@ -155,14 +171,16 @@ function MobileSidebar({
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}
     >
-      <div className="p-4 space-y-8">
+      {/* pb-36 accounts for the fixed bottom card height */}
+      <div className="p-4 pb-36 space-y-8">
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">
-            Main Navigation
+            {sectionLabel}
           </p>
           <div className="space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
@@ -189,54 +207,68 @@ function MobileSidebar({
           </div>
         </div>
 
-        <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">
-            Administration
-          </p>
-          <div className="space-y-1">
-            {adminItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium 
-                    transition-all
-                    ${
-                      isActive
-                        ? "bg-primary-50 text-primary-700 shadow-sm border border-primary-100"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }
-                  `}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500"></div>
-                  )}
-                </Link>
-              );
-            })}
+        {/* Context switch: Admin Panel link (user section) or Back to User View (admin section) */}
+        {isAdmin && !isInAdminSection && (
+          <div className="pt-4 border-t border-gray-100">
+            <Link
+              href="/admin/festival/setup"
+              onClick={onClose}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+            >
+              <span className="text-xl">⚙️</span>
+              <span>Admin Panel</span>
+            </Link>
           </div>
-        </div>
+        )}
+
+        {isInAdminSection && (
+          <div className="pt-4 border-t border-gray-100">
+            <Link
+              href="/app/dashboard"
+              onClick={onClose}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+            >
+              <span className="text-xl">←</span>
+              <span>Back to User View</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50/50">
-        <div className="p-4 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg">
+        <div
+          className={`p-4 rounded-xl text-white shadow-lg ${
+            isInAdminSection
+              ? "bg-gradient-to-br from-red-500 to-red-600"
+              : "bg-gradient-to-br from-primary-500 to-primary-600"
+          }`}
+        >
           <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
-            Current Event
+            {isInAdminSection ? "Admin Mode" : "Current Event"}
           </p>
-          <p className="text-sm font-semibold truncate">
-            Starlight Meadow 2026
-          </p>
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-              Planning
-            </span>
-            <span className="text-[10px] opacity-80 italic">Jun 26-29</span>
-          </div>
+          {isInAdminSection ? (
+            <p className="text-sm font-semibold truncate">
+              Full Access Enabled
+            </p>
+          ) : eventLoading ? (
+            <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
+          ) : event ? (
+            <>
+              <p className="text-sm font-semibold truncate">{event.name}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 capitalize">
+                  {event.status.toLowerCase().replace("_", " ")}
+                </span>
+                <span className="text-[10px] opacity-80 italic">
+                  {formatEventDateRange(event.startDate, event.endDate)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm font-semibold truncate opacity-70">
+              No event
+            </p>
+          )}
         </div>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Plus,
   Clock,
@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,8 @@ interface Shift {
   priority: ShiftPriority;
   desirabilityScore: number;
   capacity: number;
-  event: { name: string };
+  eventId: string;
+  event: { id: string; name: string };
   requiredRoles: { role: Role; count: number }[];
 }
 
@@ -46,6 +48,7 @@ interface Event {
 export default function ShiftsPage() {
   const toast = useToast();
   const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -92,11 +95,20 @@ export default function ShiftsPage() {
         }
         throw new Error(errorMessage);
       }
-      return res.json();
+      const json = await res.json();
+      return unwrapApiResponse<Shift[]>(json);
     },
   });
 
-  const shifts = cachedShifts || [];
+  // Defensive: ensure shifts is always an array
+  const allShifts = Array.isArray(cachedShifts) ? cachedShifts : [];
+
+  // Filter shifts by selected event
+  const shifts = useMemo(() => {
+    if (selectedEventId === "all") return allShifts;
+    return allShifts.filter((s) => s.eventId === selectedEventId);
+  }, [allShifts, selectedEventId]);
+
   const loading = shiftsLoading;
 
   // Show error toast if fetch fails
@@ -138,10 +150,13 @@ export default function ShiftsPage() {
     try {
       const eventsRes = await fetch("/api/events");
       if (eventsRes.ok) {
-        const eventsData = await eventsRes.json();
-        setEvents(eventsData);
-        if (eventsData.length > 0 && !formData.eventId) {
-          setFormData({ ...formData, eventId: eventsData[0].id });
+        const json = await eventsRes.json();
+        const eventsData = unwrapApiResponse<Event[]>(json);
+        // Defensive check
+        const safeEvents = Array.isArray(eventsData) ? eventsData : [];
+        setEvents(safeEvents);
+        if (safeEvents.length > 0 && !formData.eventId) {
+          setFormData({ ...formData, eventId: safeEvents[0].id });
         }
       }
     } catch (error) {
@@ -438,10 +453,16 @@ export default function ShiftsPage() {
                   Filter by Event
                 </span>
               </div>
-              <select className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20">
-                <option>All Events</option>
+              <select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+                className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20"
+              >
+                <option value="all">All Events</option>
                 {events.map((e) => (
-                  <option key={e.id}>{e.name}</option>
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
                 ))}
               </select>
             </Card>

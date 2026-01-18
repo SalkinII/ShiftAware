@@ -33,11 +33,14 @@ test.describe("Authentication", () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
-    await loginPage.login("wrong-password");
-
-    // Should stay on login page or show error
-    const url = page.url();
-    if (url.includes("/login")) {
+    // LoginPage.login throws when login fails, so wrap in try-catch
+    try {
+      await loginPage.login("wrong-password");
+      // If we get here, login unexpectedly succeeded
+      throw new Error("Login should have failed with wrong password");
+    } catch (e) {
+      // Expected - login failed, now verify we're still on login page with error
+      expect(page.url()).toContain("/login");
       // Error message should be visible
       await expect(loginPage.errorMessage.first())
         .toBeVisible({ timeout: 2000 })

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
+import { useCurrentEvent } from "@/lib/hooks/useCurrentEvent";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import {
   Sparkles,
   Calendar,
@@ -31,6 +33,7 @@ interface Shift {
 
 export default function PreferencesPage() {
   const toast = useToast();
+  const { event: currentEvent } = useCurrentEvent();
   const [selectedShifts, setSelectedShifts] = useState<Map<string, number>>(
     new Map(),
   );
@@ -48,7 +51,8 @@ export default function PreferencesPage() {
     fetchFn: async () => {
       const res = await fetch("/api/shifts");
       if (!res.ok) throw new Error("Failed to fetch shifts");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<Shift[]>(data);
     },
   });
 
@@ -61,7 +65,8 @@ export default function PreferencesPage() {
     fetchFn: async () => {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Failed to fetch members");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<{ id: string; alias: string }[]>(data);
     },
   });
 
@@ -235,7 +240,7 @@ export default function PreferencesPage() {
           <p className="text-gray-500 font-medium flex items-center gap-2">
             Select your ideal slots for{" "}
             <span className="text-primary-600 font-bold uppercase tracking-tighter">
-              Starlight Meadow 2026
+              {currentEvent?.name || "your event"}
             </span>
           </p>
         </div>

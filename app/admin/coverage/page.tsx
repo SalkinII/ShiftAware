@@ -1,24 +1,15 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { format } from "date-fns";
-import { RefreshCw, Users, Lightbulb, AlertTriangle } from "lucide-react";
+import { RefreshCw, Users, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
-
-// Lazy load ConflictWizard (admin-only feature, heavy component)
-const ConflictWizard = dynamic(
-  () =>
-    import("@/components/features/ConflictWizard/ConflictWizard").then(
-      (mod) => mod.ConflictWizard,
-    ),
-  { ssr: false },
-);
 
 interface CoverageGap {
   id: string;
@@ -36,12 +27,12 @@ interface TeamMember {
   id: string;
   alias: string;
   avatarId: string;
+  isActive: boolean;
   assignments: any[];
   preferences: any[];
 }
 
 export default function CoverageDashboard() {
-  const [showConflictWizard, setShowConflictWizard] = useState(false);
   const [showAvailabilityHeatmap, setShowAvailabilityHeatmap] = useState(false);
 
   // Use cache for shifts and members
@@ -54,7 +45,8 @@ export default function CoverageDashboard() {
     fetchFn: async () => {
       const res = await fetch("/api/shifts");
       if (!res.ok) throw new Error("Failed to fetch shifts");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<any[]>(data);
     },
   });
 
@@ -67,7 +59,8 @@ export default function CoverageDashboard() {
     fetchFn: async () => {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Failed to fetch members");
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<TeamMember[]>(data);
     },
   });
 
@@ -127,14 +120,20 @@ export default function CoverageDashboard() {
     await Promise.all([refetchShifts(), refetchMembers()]);
   }
 
-  const quickFillRecommendations = useMemo(() => {
+  // Filter to only active members for coverage calculations
+  const activeMembers = useMemo(() => {
     if (!cachedMembers) return [];
+    return cachedMembers.filter((m) => m.isActive);
+  }, [cachedMembers]);
+
+  const quickFillRecommendations = useMemo(() => {
+    if (activeMembers.length === 0) return [];
     return gaps
       .filter((gap) => gap.currentCount === 0)
       .slice(0, 5)
       .map((gap) => {
         const needed = gap.capacity - gap.currentCount;
-        const availableMembers = cachedMembers.filter((member) => {
+        const availableMembers = activeMembers.filter((member) => {
           // Check if member has preferences for this shift
           const hasPreference = member.preferences?.some(
             (p: any) => p.shiftId === gap.id,
@@ -160,7 +159,7 @@ export default function CoverageDashboard() {
           recommendedMembers: availableMembers.slice(0, needed),
         };
       });
-  }, [gaps, cachedMembers]);
+  }, [gaps, activeMembers]);
 
   if (loading) {
     return (
@@ -195,14 +194,6 @@ export default function CoverageDashboard() {
             View Availability
           </Button>
           <Button
-            variant="secondary"
-            onClick={() => setShowConflictWizard(true)}
-            className="flex items-center gap-2"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            Resolve Conflicts
-          </Button>
-          <Button
             variant="primary"
             onClick={loadData}
             className="flex items-center gap-2"
@@ -212,11 +203,6 @@ export default function CoverageDashboard() {
           </Button>
         </div>
       </div>
-
-      <ConflictWizard
-        isOpen={showConflictWizard}
-        onClose={() => setShowConflictWizard(false)}
-      />
 
       {showAvailabilityHeatmap && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">

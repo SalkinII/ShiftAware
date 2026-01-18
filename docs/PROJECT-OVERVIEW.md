@@ -77,26 +77,32 @@ Core models: `Event`, `EventConfig`, `TeamMember`, `ShiftTemplate`, `ScheduledSh
 - No real names in main system (pseudonyms only)
 - All writes logged to AuditLog
 
-## v1.2 Implementation Status (2026-01-17)
+## Current Status (v1.4 - 2026-01-18)
 
-### Completed
-1. ✅ Route restructure: `/admin/*` and `/app/*` separation
-2. ✅ RBAC: `isAdmin` field + middleware protection
-3. ✅ Festival config page: `/admin/festival/setup`
-4. ✅ Calendar anchoring: Uses `event.startDate - bufferDaysBefore`
-5. ✅ Modify Slot dialog: Template drag-drop opens review dialog
+### Completed Features
+- ✅ Route structure: `/admin/*` (protected) and `/app/*` (user)
+- ✅ RBAC: Admin/User roles via cookies + middleware
+- ✅ Festival config: `/admin/festival/setup` with buffer days
+- ✅ Calendar: Timeline/Grid views, drag-drop templates (admin only)
+- ✅ User calendar: Read-only view at `/app/calendar`
+- ✅ Profile page: Settings persistence, role display
+- ✅ Algorithm transparency: Dashboard shows assignment engine status
+- ✅ Rich tooltips: Heatmap and calendar shift details
+- ✅ API consistency: All responses wrapped in `{ data: ... }`
 
-### Pre-existing Issues (not from v1.2)
-- `CalendarView.tsx:874` - DateDropZone style prop type error
-- `lib/services/export.ts` - pageWidth variable redeclaration
-- `tests/integration.test.ts` - Missing Jest types
+### Key Patterns
+- **API responses**: Always `{ data: ... }`, use `unwrapApiResponse()` in clients
+- **Auth check (client)**: `isAdminClient()` from `lib/auth-client.ts`
+- **Settings**: localStorage key `shiftaware:user-settings`
+- **Assignments**: `assignmentType` enum: ALGORITHM, MANUAL, RANDOM, SWAP
 
 ## API Endpoints (Key)
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /api/events/current` | Get active event with config |
-| `GET/PUT /api/events/[id]/config` | Event configuration CRUD |
-| `POST /api/shifts` | Create shift directly |
-| `POST /api/shifts/templates/[id]/schedule` | Schedule template to date |
-| `POST /api/assignments/swap` | Swap two assignments |
+| `GET /api/events/current` | Active event with config |
+| `POST /api/events` | Create event (EntityType: EVENT) |
+| `GET /api/shifts` | Shifts with assignments, includes `assignmentType` |
+| `POST /api/shifts/templates/[id]/schedule` | Schedule template |
+| `GET /api/members/availability` | Heatmap data |
+| `POST /api/auth/logout` | End session |
