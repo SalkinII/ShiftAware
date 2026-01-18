@@ -189,22 +189,55 @@ export function AvailabilityHeatmap({
     status: AvailabilityStatus,
   ) => {
     const lines: string[] = [];
-    lines.push(`${member.alias} - ${shift.type}`);
-    lines.push(`Status: ${getStatusLabel(status.status)}`);
-    if (status.hasPreference) {
-      lines.push("✓ Has preference");
-    }
+
+    // Header with member and shift info
+    lines.push(`${member.alias} (${member.experienceLevel})`);
+    lines.push(`${shift.type.replace("_", " ")} • ${format(new Date(shift.startTime), "MMM d, HH:mm")}`);
+    lines.push("─".repeat(20));
+
+    // Status with explanation
     if (status.isAssigned) {
-      lines.push("✓ Assigned to this shift");
+      lines.push("✓ ASSIGNED to this shift");
+    } else {
+      switch (status.status) {
+        case "available":
+          lines.push("✓ AVAILABLE - Can be assigned");
+          if (status.hasPreference) {
+            lines.push("   • Member requested this shift");
+          }
+          break;
+        case "partial":
+          lines.push("⚠ PARTIAL - Has constraints:");
+          if (status.hasConflict) {
+            lines.push(`   • Conflict with ${status.details?.conflictShiftIds?.length || 0} shift(s)`);
+          }
+          if (!status.meetsRequirements && status.details?.missingRoles) {
+            lines.push(`   • Missing: ${status.details.missingRoles.join(", ")}`);
+          }
+          if (!status.hasPreference) {
+            lines.push("   • No preference submitted");
+          }
+          break;
+        case "unavailable":
+          lines.push("✗ UNAVAILABLE:");
+          if (status.hasConflict) {
+            lines.push(`   • Scheduled conflict`);
+          }
+          if (!status.meetsRequirements && status.details?.missingRoles) {
+            lines.push(`   • Missing required role(s)`);
+          }
+          break;
+        case "neutral":
+          lines.push("○ NEUTRAL - No preference data");
+          break;
+      }
     }
-    if (status.hasConflict) {
-      lines.push(
-        `⚠ Has ${status.details?.conflictShiftIds?.length || 0} conflicting assignment(s)`,
-      );
-    }
-    if (!status.meetsRequirements && status.details?.missingRoles) {
-      lines.push(`⚠ Missing roles: ${status.details.missingRoles.join(", ")}`);
-    }
+
+    // Capacity info
+    const assignedCount = shift.capacity; // This would ideally show current vs max
+    lines.push("─".repeat(20));
+    lines.push(`Shift capacity: ${shift.capacity}`);
+
     return lines.join("\n");
   };
 

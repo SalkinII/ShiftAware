@@ -478,6 +478,31 @@ const CalendarView = ({
       const capacity = shift.capacity || 0;
       const status = getCoverage(shift);
 
+      // Build tooltip content
+      const tooltipLines: string[] = [];
+      tooltipLines.push(`${shift.type.replace("_", " ")}`);
+      tooltipLines.push(`${format(start, "MMM d, HH:mm")} - ${format(end, "HH:mm")}`);
+      tooltipLines.push(`─────────────────────`);
+      tooltipLines.push(`Coverage: ${filled}/${capacity} (${status === "full" ? "Complete" : status === "partial" ? "Partial" : "Needs staff"})`);
+      if (shift.priority) {
+        tooltipLines.push(`Priority: ${shift.priority}`);
+      }
+      if (shift.assignments && shift.assignments.length > 0) {
+        tooltipLines.push(`─────────────────────`);
+        tooltipLines.push("Assigned:");
+        shift.assignments.slice(0, 5).forEach((a: any) => {
+          const memberName = a.teamMember?.alias || "Unknown";
+          tooltipLines.push(`  • ${memberName}`);
+        });
+        if (shift.assignments.length > 5) {
+          tooltipLines.push(`  ...and ${shift.assignments.length - 5} more`);
+        }
+      } else {
+        tooltipLines.push(`─────────────────────`);
+        tooltipLines.push("No assignments yet");
+      }
+      const shiftTooltip = tooltipLines.join("\n");
+
       // Calculate position relative to startBound
       // Note: We display shifts aligned to 15-minute intervals visually,
       // but use actual times for calculation
@@ -578,6 +603,7 @@ const CalendarView = ({
               className={`timeline-bar ${status} ${selectedShiftIds.has(shift.id) ? "is-selected" : ""}`}
               ref={setNodeRef}
               style={barStyle}
+              title={shiftTooltip}
             >
               <div className="timeline-bar__label">
                 {canEdit && (
