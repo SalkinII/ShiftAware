@@ -116,7 +116,7 @@ export async function POST(request: Request) {
           action: "CREATE",
           entityType: "EVENT",
           entityId: newEvent.id,
-          details: { name, startDate, endDate },
+          after: { name, startDate, endDate },
         },
       });
 
