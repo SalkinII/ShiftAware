@@ -11,7 +11,8 @@ import {
   Search,
   UserCircle2,
   Shield,
-  Trash2,
+  UserX,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -157,6 +158,31 @@ export default function MembersPage() {
       console.error("Failed to delete member:", error);
       toast.error("Failed to delete member. Please try again.");
       setDeleteDialog((prev) => ({ ...prev, isLoading: false }));
+    }
+  }
+
+  async function handleReactivateMember(memberId: string) {
+    try {
+      const res = await fetch(`/api/members/${memberId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true }),
+      });
+
+      if (res.ok) {
+        toast.success("Member reactivated successfully");
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["members", "members*"] },
+          }),
+        );
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Failed to reactivate member");
+      }
+    } catch (error) {
+      console.error("Failed to reactivate member:", error);
+      toast.error("Failed to reactivate member. Please try again.");
     }
   }
 
@@ -443,18 +469,30 @@ export default function MembersPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {!member.isActive && (
-                          <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Inactive
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Inactive
+                            </span>
+                            <button
+                              onClick={() => handleReactivateMember(member.id)}
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                              aria-label={`Reactivate ${member.alias}`}
+                              title="Reactivate member"
+                            >
+                              <UserCheck className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
-                        <button
-                          onClick={() => handleDeleteMember(member.id)}
-                          className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          aria-label={`Delete ${member.alias}`}
-                          title="Delete member"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {member.isActive && (
+                          <button
+                            onClick={() => handleDeleteMember(member.id)}
+                            className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            aria-label={`Deactivate ${member.alias}`}
+                            title="Deactivate member"
+                          >
+                            <UserX className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
 

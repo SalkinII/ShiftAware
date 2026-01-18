@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { LogOut, Settings, Bell, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
@@ -54,52 +54,28 @@ export function Header({ alias = "Admin", avatarEmoji = "🐺" }: HeaderProps) {
           </h1>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              toast.info("Notifications feature coming soon");
-            }}
-            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative"
-            aria-label="Notifications"
-            title="Notifications (coming soon)"
-          >
-            <Bell className="w-5 h-5" />
-            {/* Notification badge removed - feature not implemented yet */}
-          </button>
-
-          <div className="h-8 w-px bg-gray-200 mx-1"></div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-2xl shadow-inner border border-primary-100">
-                {avatarEmoji}
-              </div>
-              <div className="hidden md:block">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">
-                  {alias}
-                </p>
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
-                  Administrator
-                </p>
-              </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-2xl shadow-inner border border-primary-100">
+              {avatarEmoji}
             </div>
-
-            <div className="flex items-center gap-1 ml-2">
-              <button
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Settings"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+            <div className="hidden md:block">
+              <p className="text-sm font-semibold text-gray-900 leading-tight">
+                {alias}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
+                Administrator
+              </p>
             </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
