@@ -34,7 +34,7 @@ export function UserSidebar() {
 
   return (
     <nav className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto hidden lg:block scrollbar-hide">
-      <div className="p-4 space-y-8">
+      <div className="p-4 pb-36 space-y-8">
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">
             Main Navigation
@@ -53,7 +53,7 @@ export function UserSidebar() {
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
                     isActive
                       ? "bg-primary-50 text-primary-700 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] border border-primary-100"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100",
                   )}
                 >
                   <Icon
@@ -61,7 +61,7 @@ export function UserSidebar() {
                       "w-5 h-5 transition-colors duration-200",
                       isActive
                         ? "text-primary-600"
-                        : "text-gray-400 group-hover:text-gray-600"
+                        : "text-gray-400 group-hover:text-gray-600",
                     )}
                   />
                   <span>{item.label}</span>

@@ -37,7 +37,7 @@ export function Sidebar() {
 
   return (
     <nav className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto hidden lg:block scrollbar-hide">
-      <div className="p-4 space-y-8">
+      <div className="p-4 pb-36 space-y-8">
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">
             Main Navigation

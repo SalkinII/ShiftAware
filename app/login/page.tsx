@@ -25,7 +25,14 @@ function LoginForm() {
       });
 
       if (res.ok) {
-        router.push(from);
+        const data = await res.json();
+        // If there's a specific redirect, use it; otherwise route by role
+        // Admin → dashboard, User → profile (to select avatar first)
+        if (from && from !== "/dashboard") {
+          router.push(from);
+        } else {
+          router.push(data.isAdmin ? "/app/dashboard" : "/app/profile");
+        }
       } else {
         const data = await res.json();
         setError(data.error || "Invalid password");
