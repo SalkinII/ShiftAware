@@ -137,7 +137,9 @@ export default function UserCalendarPage() {
   // Update shifts when cache data changes
   useEffect(() => {
     if (cachedShifts) {
-      setShifts(cachedShifts);
+      // Ensure shifts is always an array
+      const shiftsArray = Array.isArray(cachedShifts) ? cachedShifts : [];
+      setShifts(shiftsArray);
       setLoading(false);
     } else if (!cacheLoading) {
       setLoading(false);

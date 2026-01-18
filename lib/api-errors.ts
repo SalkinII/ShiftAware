@@ -16,10 +16,23 @@ export interface ApiSuccessResponse<T> {
  * Utility to unwrap API response data from { data: ... } format
  * Handles both wrapped and unwrapped formats for backwards compatibility
  */
-export function unwrapApiResponse<T>(response: T | ApiSuccessResponse<T>): T {
-  if (response && typeof response === "object" && "data" in response) {
+export function unwrapApiResponse<T>(response: unknown): T {
+  // Handle null/undefined
+  if (response === null || response === undefined) {
+    return response as T;
+  }
+
+  // Handle wrapped format { data: ... }
+  if (
+    typeof response === "object" &&
+    response !== null &&
+    "data" in response &&
+    !Array.isArray(response)
+  ) {
     return (response as ApiSuccessResponse<T>).data;
   }
+
+  // Return as-is (already unwrapped or is the data itself)
   return response as T;
 }
 

@@ -92,9 +92,12 @@ const CalendarView = ({
       onShiftDelete !== undefined ||
       onShiftAssign !== undefined ||
       onShiftSwap !== undefined);
+  // Ensure shifts is always an array
+  const safeShifts = Array.isArray(shifts) ? shifts : [];
+
   const tasks = useMemo(
     () =>
-      shifts.map((shift) => ({
+      safeShifts.map((shift) => ({
         id: shift.id,
         text: shift.type.replace("_", " "),
         start: new Date(shift.startTime),
@@ -110,7 +113,7 @@ const CalendarView = ({
         capacity: shift.capacity,
         assignments: shift.assignments || [],
       })),
-    [shifts],
+    [safeShifts],
   );
 
   const baseDate = useMemo(() => {
@@ -122,7 +125,7 @@ const CalendarView = ({
 
   const dayStarts = useMemo(() => {
     const dates = new Set<string>();
-    shifts.forEach((shift) => {
+    safeShifts.forEach((shift) => {
       dates.add(shift.startTime.split("T")[0]);
     });
     if (startDate) {
@@ -133,19 +136,19 @@ const CalendarView = ({
       return [startOfDay(baseDate)];
     }
     return sorted.map((date) => startOfDay(new Date(date)));
-  }, [shifts, startDate, baseDate]);
+  }, [safeShifts, startDate, baseDate]);
 
   // Calculate date range from all shifts, not just baseDate
   const allShiftDates = useMemo(() => {
     const dates = new Set<string>();
-    shifts.forEach((shift) => {
+    safeShifts.forEach((shift) => {
       dates.add(shift.startTime.split("T")[0]);
     });
     if (startDate) {
       dates.add(startDate);
     }
     return Array.from(dates).sort();
-  }, [shifts, startDate]);
+  }, [safeShifts, startDate]);
 
   const minDate = useMemo(() => {
     if (allShiftDates.length > 0) {
@@ -186,11 +189,11 @@ const CalendarView = ({
 
   const sortedShifts = useMemo(
     () =>
-      [...shifts].sort(
+      [...safeShifts].sort(
         (a, b) =>
           new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
       ),
-    [shifts],
+    [safeShifts],
   );
 
   // Memoize sorted shifts for grid view to avoid re-sorting multiple times
@@ -225,7 +228,7 @@ const CalendarView = ({
 
   const members = useMemo(() => {
     const memberMap = new Map<string, any>();
-    shifts.forEach((shift) => {
+    safeShifts.forEach((shift) => {
       shift.assignments?.forEach((a: any) => {
         if (a.teamMember) {
           memberMap.set(a.teamMember.id, a.teamMember);
@@ -235,7 +238,7 @@ const CalendarView = ({
     return Array.from(memberMap.values()).sort((a, b) =>
       a.alias.localeCompare(b.alias),
     );
-  }, [shifts]);
+  }, [safeShifts]);
 
   const getCoverage = useCallback((shift: any): CoverageState => {
     const filled = shift.assignments?.length || 0;
