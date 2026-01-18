@@ -33,6 +33,9 @@ interface Stats {
   totalShifts: number;
   coveredShifts: number;
   unstaffedShifts: number;
+  algorithmAssignments: number;
+  manualAssignments: number;
+  totalAssignments: number;
 }
 
 export default function DashboardPage() {
@@ -43,6 +46,9 @@ export default function DashboardPage() {
     totalShifts: 0,
     coveredShifts: 0,
     unstaffedShifts: 0,
+    algorithmAssignments: 0,
+    manualAssignments: 0,
+    totalAssignments: 0,
   });
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
 
@@ -102,11 +108,25 @@ export default function DashboardPage() {
         (s: any) => s.assignments?.length === 0,
       ).length;
 
+      // Count algorithm vs manual assignments
+      const allAssignments = cachedShifts.flatMap(
+        (s: any) => s.assignments || [],
+      );
+      const algorithmCount = allAssignments.filter(
+        (a: any) => a.assignmentType === "ALGORITHM",
+      ).length;
+      const manualCount = allAssignments.filter(
+        (a: any) => a.assignmentType === "MANUAL",
+      ).length;
+
       setStats({
         totalMembers: cachedMembers.length,
         totalShifts: cachedShifts.length,
         coveredShifts: covered,
         unstaffedShifts: unstaffed,
+        algorithmAssignments: algorithmCount,
+        manualAssignments: manualCount,
+        totalAssignments: allAssignments.length,
       });
     }
   }, [cachedEvents, cachedMembers, cachedShifts]);
@@ -442,25 +462,42 @@ export default function DashboardPage() {
 
           <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6 border-none shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary-500/10 rounded-full -mr-12 -mt-12 blur-3xl"></div>
-            <h3 className="text-lg font-bold mb-2">Algorithm Power</h3>
+            <h3 className="text-lg font-bold mb-2">Assignment Engine</h3>
             <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-              Our assignment engine balances gender, experience, and member
-              preferences automatically.
+              {stats.algorithmAssignments > 0
+                ? `${stats.algorithmAssignments} assignments made by algorithm, balancing preferences, experience, and gender.`
+                : "Run the algorithm from Allocation to auto-assign members based on preferences and balance."}
             </p>
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-6 h-6 rounded-full bg-gray-700 border-2 border-gray-800 flex items-center justify-center text-[10px]"
-                  >
-                    {["🐺", "🦊", "🐻"][i - 1]}
-                  </div>
-                ))}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {stats.algorithmAssignments > 0 ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[10px] text-green-400 font-bold uppercase tracking-wider">
+                      Algorithm Active
+                    </span>
+                  </>
+                ) : stats.manualAssignments > 0 ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                      Manual Only
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-gray-500" />
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                      Not Run
+                    </span>
+                  </>
+                )}
               </div>
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-2">
-                Smart Balancing active
-              </span>
+              {stats.totalAssignments > 0 && (
+                <span className="text-[10px] text-gray-500">
+                  {stats.totalAssignments} total
+                </span>
+              )}
             </div>
           </Card>
         </div>
