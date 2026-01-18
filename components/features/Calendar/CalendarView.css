@@ -24,6 +24,8 @@
   /* Force horizontal scrollbar */
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
+  /* Establish containing block for sticky elements */
+  position: relative;
 }
 
 .timeline-scroll--snap {
@@ -269,7 +271,7 @@
   font-weight: 700;
   box-shadow: 0 10px 20px -8px rgba(15, 23, 42, 0.25);
   transition: transform 150ms ease, box-shadow 150ms ease;
-  min-width: 200px;
+  min-width: 100px; /* Reduced from 200px for better proportionality */
   box-sizing: border-box;
   white-space: nowrap;
   overflow: visible;

@@ -31,6 +31,8 @@ interface CalendarViewProps {
   onShiftDelete?: (shiftId: string) => void;
   onShiftAssign?: (shiftId: string) => void;
   onShiftSwap?: (shiftId: string) => void;
+  /** When true, enables drag-drop editing. Default: auto-detect from edit handlers */
+  isEditable?: boolean;
 }
 
 type CoverageState = "full" | "partial" | "empty";
@@ -81,7 +83,15 @@ const CalendarView = ({
   onShiftDelete,
   onShiftAssign,
   onShiftSwap,
+  isEditable,
 }: CalendarViewProps) => {
+  // Auto-detect editability from handlers if not explicitly set
+  const canEdit =
+    isEditable ??
+    (onShiftEdit !== undefined ||
+      onShiftDelete !== undefined ||
+      onShiftAssign !== undefined ||
+      onShiftSwap !== undefined);
   const tasks = useMemo(
     () =>
       shifts.map((shift) => ({
@@ -437,6 +447,7 @@ const CalendarView = ({
     onShiftAssign?: (shiftId: string) => void;
     onShiftSwap?: (shiftId: string) => void;
     onShiftDelete?: (shiftId: string) => void;
+    canEdit: boolean;
   };
 
   const TimelineRow = memo(
@@ -455,6 +466,7 @@ const CalendarView = ({
       onShiftAssign,
       onShiftSwap,
       onShiftDelete,
+      canEdit,
     }: TimelineRowProps) => {
       const shift = shifts[index];
       const start = new Date(shift.startTime);
@@ -565,28 +577,32 @@ const CalendarView = ({
               style={barStyle}
             >
               <div className="timeline-bar__label">
-                <span
-                  {...attributes}
-                  {...listeners}
-                  className="inline-flex items-center cursor-grab active:cursor-grabbing opacity-80"
-                  aria-label="Drag shift to reschedule"
-                  title="Drag shift to reschedule"
-                >
-                  <GripVertical className="w-3 h-3" />
-                </span>
+                {canEdit && (
+                  <span
+                    {...attributes}
+                    {...listeners}
+                    className="inline-flex items-center cursor-grab active:cursor-grabbing opacity-80"
+                    aria-label="Drag shift to reschedule"
+                    title="Drag shift to reschedule"
+                  >
+                    <GripVertical className="w-3 h-3" />
+                  </span>
+                )}
                 <span>{filled} assigned</span>
                 <span className="timeline-bar__capacity">cap {capacity}</span>
               </div>
-              <div className="timeline-bar__actions">
-                <ShiftCardActions
-                  shiftId={shift.id}
-                  onViewDetails={handleViewDetailsClick}
-                  onEdit={handleEditClick}
-                  onAssignMember={handleAssignClick}
-                  onSwap={handleSwapClick}
-                  onDelete={handleDeleteClick}
-                />
-              </div>
+              {canEdit && (
+                <div className="timeline-bar__actions">
+                  <ShiftCardActions
+                    shiftId={shift.id}
+                    onViewDetails={handleViewDetailsClick}
+                    onEdit={handleEditClick}
+                    onAssignMember={handleAssignClick}
+                    onSwap={handleSwapClick}
+                    onDelete={handleDeleteClick}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -634,6 +650,7 @@ const CalendarView = ({
           onShiftAssign={onShiftAssign}
           onShiftSwap={onShiftSwap}
           onShiftDelete={onShiftDelete}
+          canEdit={canEdit}
         />
       );
     };

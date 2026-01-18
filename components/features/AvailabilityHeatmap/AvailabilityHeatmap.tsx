@@ -152,15 +152,15 @@ export function AvailabilityHeatmap({
     isAssigned: boolean,
   ) => {
     if (isAssigned) {
-      return <Check className="w-3 h-3 text-primary-600" />;
+      return <Check className="w-2.5 h-2.5 text-primary-600" />;
     }
     switch (status) {
       case "available":
-        return <UserPlus className="w-3 h-3 text-green-600" />;
+        return <UserPlus className="w-2.5 h-2.5 text-green-600" />;
       case "partial":
-        return <Minus className="w-3 h-3 text-amber-600" />;
+        return <Minus className="w-2.5 h-2.5 text-amber-600" />;
       case "unavailable":
-        return <X className="w-3 h-3 text-red-600" />;
+        return <X className="w-2.5 h-2.5 text-red-600" />;
       case "neutral":
         return null;
       default:
@@ -339,24 +339,21 @@ export function AvailabilityHeatmap({
         <table className="w-full border-collapse text-xs">
           <thead className="sticky top-0 z-20 bg-white">
             <tr>
-              <th className="sticky left-0 z-30 bg-gray-50 p-2 text-left border-b border-r border-gray-200 font-bold text-[10px] uppercase tracking-wider text-gray-500 min-w-[120px]">
+              <th className="sticky left-0 z-30 bg-gray-50 p-1.5 text-left border-b border-r border-gray-200 font-bold text-[9px] uppercase tracking-wider text-gray-500 min-w-[100px]">
                 Member
               </th>
               {shifts.map((shift) => (
                 <th
                   key={shift.id}
-                  className="p-1.5 border-b border-r border-gray-200 text-center font-semibold min-w-[70px] bg-gray-50"
+                  className="p-1 border-b border-r border-gray-200 text-center font-semibold min-w-[50px] bg-gray-50"
                   title={`${format(new Date(shift.startTime), "MMM d, HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`}
                 >
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-[9px] font-bold text-gray-600 truncate">
-                      {shift.type.replace("_", " ")}
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[8px] font-bold text-gray-600 truncate">
+                      {shift.type.replace("_", " ").slice(0, 8)}
                     </span>
-                    <span className="text-[9px] text-gray-400">
-                      {format(new Date(shift.startTime), "MMM d")}
-                    </span>
-                    <span className="text-[9px] text-gray-400">
-                      {format(new Date(shift.startTime), "HH:mm")}
+                    <span className="text-[8px] text-gray-400">
+                      {format(new Date(shift.startTime), "d/M")}
                     </span>
                   </div>
                 </th>
@@ -366,10 +363,10 @@ export function AvailabilityHeatmap({
           <tbody>
             {members.map((member, memberIndex) => (
               <tr key={member.id} className="hover:bg-gray-50/50">
-                <td className="sticky left-0 z-10 bg-white p-2 border-b border-r border-gray-200 font-medium text-gray-900">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base">{member.avatarId}</span>
-                    <span className="truncate max-w-[80px]">
+                <td className="sticky left-0 z-10 bg-white p-1 border-b border-r border-gray-200 font-medium text-gray-900 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm">{member.avatarId}</span>
+                    <span className="truncate max-w-[60px]">
                       {member.alias}
                     </span>
                   </div>
@@ -385,17 +382,17 @@ export function AvailabilityHeatmap({
                   return (
                     <td
                       key={`${member.id}-${shift.id}`}
-                      className="p-0.5 border-b border-r border-gray-100 text-center"
+                      className="p-0 border-b border-r border-gray-100 text-center"
                     >
                       <div
                         className={cn(
-                          "w-7 h-7 mx-auto rounded border cursor-pointer transition-all flex items-center justify-center",
+                          "w-5 h-5 mx-auto rounded border cursor-pointer transition-all flex items-center justify-center",
                           getStatusColor(status.status, status.isAssigned),
                           isHovered &&
-                            "ring-2 ring-primary-500 ring-offset-1 scale-110",
+                            "ring-2 ring-primary-500 ring-offset-1 scale-125",
                           status.status === "available" &&
                             !status.isAssigned &&
-                            "hover:scale-110",
+                            "hover:scale-125",
                         )}
                         onMouseEnter={() =>
                           setHoveredCell({
