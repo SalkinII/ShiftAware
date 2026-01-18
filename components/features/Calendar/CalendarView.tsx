@@ -674,9 +674,9 @@ const CalendarView = ({
                 ))}
               </div>
             )}
-            {/* Date display navigation - Day and Week views */}
+            {/* Date display navigation - Day and Week views - Sticky header */}
             {(viewType === "Day" || viewType === "Week") && onDateChange && (
-              <div className="mb-4 flex items-center justify-center">
+              <div className="sticky top-0 z-30 mb-4 py-3 flex items-center justify-center bg-white/95 backdrop-blur-sm border-b border-gray-100">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
                   {/* Previous button */}
                   <button
