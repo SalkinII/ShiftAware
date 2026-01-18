@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { Download, Search, RefreshCw, RotateCcw } from "lucide-react";
 import { AuditAction, EntityType } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { unwrapApiResponse } from "@/lib/api-errors";
 
 interface AuditLog {
   id: string;
@@ -77,15 +78,25 @@ export default function AuditLogPage() {
 
       const res = await fetch(`/api/audit?${params}`);
       if (res.ok) {
-        const data = await res.json();
+        const json = await res.json();
+        const data = unwrapApiResponse<{
+          logs: AuditLog[];
+          total: number;
+          hasMore: boolean;
+        }>(json);
+        // Defensive: ensure logs is always an array
+        const safeLogs = Array.isArray(data.logs) ? data.logs : [];
         if (reset) {
-          setLogs(data.logs);
+          setLogs(safeLogs);
           setOffset(0);
         } else {
-          setLogs((prev) => [...prev, ...data.logs]);
+          setLogs((prev) => {
+            const safePrev = Array.isArray(prev) ? prev : [];
+            return [...safePrev, ...safeLogs];
+          });
         }
-        setTotal(data.total);
-        setHasMore(data.hasMore);
+        setTotal(data.total ?? 0);
+        setHasMore(data.hasMore ?? false);
       }
     } catch (error) {
       console.error("Failed to load audit logs:", error);
@@ -110,6 +121,8 @@ export default function AuditLogPage() {
   }
 
   function handleExportCSV() {
+    // Defensive: ensure filteredLogs is always an array
+    const safeFilteredLogs = Array.isArray(filteredLogs) ? filteredLogs : [];
     const headers = [
       "Timestamp",
       "Action",
@@ -119,7 +132,7 @@ export default function AuditLogPage() {
       "Reason",
       "IP Address",
     ];
-    const rows = filteredLogs.map((log) => [
+    const rows = safeFilteredLogs.map((log) => [
       format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss"),
       log.action,
       log.entityType,
@@ -142,7 +155,9 @@ export default function AuditLogPage() {
   }
 
   const filteredLogs = useMemo(() => {
-    let result = logs;
+    // Defensive: ensure logs is always an array
+    const safeLogs = Array.isArray(logs) ? logs : [];
+    let result = safeLogs;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
