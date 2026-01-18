@@ -50,7 +50,7 @@ function LoginForm() {
         {/* Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-500 to-primary-600 text-white text-4xl mb-6 shadow-xl shadow-primary-500/20 ring-4 ring-white">
-            🌟
+            🦥
           </div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
             ShiftAware

@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonCard } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
+import { useCurrentEvent } from "@/lib/hooks/useCurrentEvent";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -35,6 +36,7 @@ interface Stats {
 
 export default function DashboardPage() {
   const toast = useToast();
+  const { event: currentEvent, loading: eventLoading } = useCurrentEvent();
   const [stats, setStats] = useState<Stats>({
     totalMembers: 0,
     totalShifts: 0,
@@ -83,7 +85,8 @@ export default function DashboardPage() {
     },
   });
 
-  const loading = eventsLoading || membersLoading || shiftsLoading;
+  const loading =
+    eventsLoading || membersLoading || shiftsLoading || eventLoading;
 
   // Calculate stats when data changes
   useEffect(() => {
@@ -220,7 +223,8 @@ export default function DashboardPage() {
               Welcome back, Admin
             </h1>
             <p className="text-gray-500 font-medium">
-              Here&apos;s what&apos;s happening with Starlight Meadow Festival
+              Here&apos;s what&apos;s happening with{" "}
+              {currentEvent?.name || "your festival"}
             </p>
           </div>
         </div>
@@ -419,7 +423,9 @@ export default function DashboardPage() {
                     <p className="font-bold text-gray-900 text-sm">
                       Manage Team
                     </p>
-                    <p className="text-xs text-gray-500">30 members active</p>
+                    <p className="text-xs text-gray-500">
+                      {stats.totalMembers} members active
+                    </p>
                   </div>
                 </button>
               </Link>

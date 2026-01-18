@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdminClient } from "@/lib/auth-client";
+import {
+  useCurrentEvent,
+  formatEventDateRange,
+} from "@/lib/hooks/useCurrentEvent";
 
 const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
@@ -27,6 +31,7 @@ const navItems = [
 export function UserSidebar() {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const { event, loading: eventLoading } = useCurrentEvent();
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
@@ -92,15 +97,25 @@ export function UserSidebar() {
           <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
             Current Event
           </p>
-          <p className="text-sm font-semibold truncate">
-            Starlight Meadow 2026
-          </p>
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-              Planning
-            </span>
-            <span className="text-[10px] opacity-80 italic">Jun 26-29</span>
-          </div>
+          {eventLoading ? (
+            <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
+          ) : event ? (
+            <>
+              <p className="text-sm font-semibold truncate">{event.name}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 capitalize">
+                  {event.status.toLowerCase().replace("_", " ")}
+                </span>
+                <span className="text-[10px] opacity-80 italic">
+                  {formatEventDateRange(event.startDate, event.endDate)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm font-semibold truncate opacity-70">
+              No event
+            </p>
+          )}
         </div>
       </div>
     </nav>

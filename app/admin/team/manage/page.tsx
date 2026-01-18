@@ -21,6 +21,7 @@ import { Select } from "@/components/ui/Select";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { EmojiPicker } from "@/components/ui/EmojiPicker";
 import { useCache } from "@/lib/cache/useCache";
 import { ExperienceLevel, Role } from "@prisma/client";
 import jsPDF from "jspdf";
@@ -543,14 +544,12 @@ export default function MembersPage() {
                       className="bg-gray-50 border-gray-100 font-medium"
                     />
                     <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        label="Avatar Emoji"
+                      <EmojiPicker
+                        label="Avatar"
                         value={formData.avatarId}
-                        onChange={(e) =>
-                          setFormData({ ...formData, avatarId: e.target.value })
+                        onChange={(emoji) =>
+                          setFormData({ ...formData, avatarId: emoji })
                         }
-                        required
-                        className="bg-gray-50 border-gray-100 text-center text-xl"
                       />
                       <Select
                         label="Exp Level"

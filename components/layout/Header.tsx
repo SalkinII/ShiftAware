@@ -5,9 +5,15 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAdminClient } from "@/lib/auth-client";
-
-// Reserved emojis are defined in lib/validations/team-member.ts
-// 🐻 = Admin, 🦥 = Default/Unassigned user
+import {
+  useCurrentEvent,
+  formatEventDateRange,
+} from "@/lib/hooks/useCurrentEvent";
+import {
+  EMOJI_ADMIN,
+  EMOJI_DEFAULT_USER,
+  EMOJI_APP_LOGO,
+} from "@/lib/constants/emojis";
 
 interface HeaderProps {
   alias?: string;
@@ -25,7 +31,8 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
 
   // Role-based defaults: Admin=🐻, User=🦥
   const displayAlias = alias ?? (isAdmin ? "Admin" : "Team Member");
-  const displayEmoji = avatarEmoji ?? (isAdmin ? "🐻" : "🦥");
+  const displayEmoji =
+    avatarEmoji ?? (isAdmin ? EMOJI_ADMIN : EMOJI_DEFAULT_USER);
 
   const handleLogout = async () => {
     try {
@@ -57,7 +64,7 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
           </button>
 
           <div className="bg-primary-500 p-1.5 rounded-lg text-white">
-            <span className="text-xl">🌟</span>
+            <span className="text-xl">{EMOJI_APP_LOGO}</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">
             ShiftAware
@@ -120,6 +127,7 @@ function MobileSidebar({
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const { event, loading: eventLoading } = useCurrentEvent();
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
@@ -238,16 +246,28 @@ function MobileSidebar({
           <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
             {isInAdminSection ? "Admin Mode" : "Current Event"}
           </p>
-          <p className="text-sm font-semibold truncate">
-            {isInAdminSection ? "Full Access Enabled" : "Starlight Meadow 2026"}
-          </p>
-          {!isInAdminSection && (
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-                Planning
-              </span>
-              <span className="text-[10px] opacity-80 italic">Jun 26-29</span>
-            </div>
+          {isInAdminSection ? (
+            <p className="text-sm font-semibold truncate">
+              Full Access Enabled
+            </p>
+          ) : eventLoading ? (
+            <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
+          ) : event ? (
+            <>
+              <p className="text-sm font-semibold truncate">{event.name}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 capitalize">
+                  {event.status.toLowerCase().replace("_", " ")}
+                </span>
+                <span className="text-[10px] opacity-80 italic">
+                  {formatEventDateRange(event.startDate, event.endDate)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm font-semibold truncate opacity-70">
+              No event
+            </p>
           )}
         </div>
       </div>

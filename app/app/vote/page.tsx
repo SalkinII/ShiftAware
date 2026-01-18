@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
+import { useCurrentEvent } from "@/lib/hooks/useCurrentEvent";
 import {
   Sparkles,
   Calendar,
@@ -31,6 +32,7 @@ interface Shift {
 
 export default function PreferencesPage() {
   const toast = useToast();
+  const { event: currentEvent } = useCurrentEvent();
   const [selectedShifts, setSelectedShifts] = useState<Map<string, number>>(
     new Map(),
   );
@@ -235,7 +237,7 @@ export default function PreferencesPage() {
           <p className="text-gray-500 font-medium flex items-center gap-2">
             Select your ideal slots for{" "}
             <span className="text-primary-600 font-bold uppercase tracking-tighter">
-              Starlight Meadow 2026
+              {currentEvent?.name || "your event"}
             </span>
           </p>
         </div>
