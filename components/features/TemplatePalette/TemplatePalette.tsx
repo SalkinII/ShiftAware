@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Clock, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
@@ -80,7 +80,8 @@ export function TemplatePalette() {
     fetchFn: async () => {
       const res = await fetch("/api/shifts/templates");
       if (!res.ok) throw new Error("Failed to fetch templates");
-      return res.json();
+      const json = await res.json();
+      return unwrapApiResponse<ShiftTemplate[]>(json);
     },
   });
 

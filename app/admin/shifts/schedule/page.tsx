@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+} from "@dnd-kit/core";
 import {
   Plus,
   Clock,
@@ -10,6 +19,8 @@ import {
   ChevronRight,
   Filter,
   List,
+  Zap,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -20,11 +31,13 @@ import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
+import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { calculateSnapPosition, findShiftEndTimes } from "@/lib/utils/snap";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
-import { format } from "date-fns";
+import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import CalendarView from "@/components/features/Calendar/CalendarView";
 
@@ -47,6 +60,14 @@ interface Event {
   name: string;
 }
 
+interface DraggedTemplate {
+  id: string;
+  name: string;
+  type: ShiftType;
+  durationMinutes: number;
+  startTime: string;
+}
+
 export default function ShiftsPage() {
   const toast = useToast();
   const [events, setEvents] = useState<Event[]>([]);
@@ -54,6 +75,7 @@ export default function ShiftsPage() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [activeTemplate, setActiveTemplate] = useState<DraggedTemplate | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     shiftId: string | null;
@@ -155,6 +177,123 @@ export default function ShiftsPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // DnD sensors for template drag-drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  // Track active dragged template for DragOverlay
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    const activeData = active.data.current;
+
+    if (activeData?.type === "template") {
+      setActiveTemplate(activeData.template);
+    }
+  }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveTemplate(null);
+  }, []);
+
+  // Handle template drop onto calendar with snap
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      setActiveTemplate(null); // Clear overlay
+
+      const { active, over } = event;
+
+      if (!over) return;
+
+      // Check if dropping a template onto a date
+      const activeData = active.data.current;
+      const overData = over.data.current;
+
+      if (activeData?.type !== "template" || overData?.type !== "date") {
+        return;
+      }
+
+      const template = activeData.template;
+      const dropDate = overData.date; // YYYY-MM-DD format
+
+      // Get the event ID (use selected or first available)
+      const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+      if (!targetEventId) {
+        toast.error("Please select an event first");
+        return;
+      }
+
+      // Calculate base drop time from template's default start time
+      const [hours, minutes] = template.startTime.split(":").map(Number);
+      const baseDropTime = new Date(`${dropDate}T${template.startTime}:00`);
+
+      // Get existing shift end times for this lane (shift type)
+      const shiftEndTimes = findShiftEndTimes(
+        shifts.filter((s) => s.startTime.split("T")[0] === dropDate),
+        template.type
+      );
+
+      // Calculate snap position
+      const { snapped, time: startTime } = calculateSnapPosition(
+        baseDropTime,
+        shiftEndTimes,
+        30 // 30 minute snap threshold
+      );
+
+      // Calculate end time based on template duration
+      const endTime = addMinutes(startTime, template.durationMinutes);
+
+      // Show feedback
+      if (snapped) {
+        toast.info(`Snapped to end of previous ${template.type.replace("_", " ")} shift`);
+      }
+
+      // Create the shift
+      try {
+        const payload = {
+          eventId: targetEventId,
+          type: template.type,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          durationMinutes: template.durationMinutes,
+          priority: template.priority,
+          desirabilityScore: 3,
+          capacity: template.capacity,
+          requiredRoles: [{ role: "TEAM_MEMBER", count: template.capacity }],
+        };
+
+        const res = await fetch("/api/shifts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          toast.success(
+            `Created ${template.type.replace("_", " ")} shift at ${format(startTime, "HH:mm")}`
+          );
+          // Invalidate cache
+          window.dispatchEvent(
+            new CustomEvent("shiftaware:cache-invalidate", {
+              detail: { keys: ["shifts", "shifts*"] },
+            })
+          );
+        } else {
+          const errorData = await res.json();
+          toast.error(errorData.error || "Failed to create shift");
+        }
+      } catch (error) {
+        console.error("Failed to create shift from template:", error);
+        toast.error("Failed to create shift");
+      }
+    },
+    [selectedEventId, events, shifts, toast]
+  );
 
   async function loadEvents() {
     try {
@@ -409,7 +548,29 @@ export default function ShiftsPage() {
   };
 
   return (
-    <>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      {/* Drag overlay for templates */}
+      <DragOverlay>
+        {activeTemplate ? (
+          <div className="bg-white rounded-xl shadow-2xl p-4 border-2 border-primary-500 min-w-[200px] opacity-90">
+            <div className="font-bold text-gray-900">{activeTemplate.name}</div>
+            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+              <Clock className="w-3 h-3" />
+              <span>
+                {activeTemplate.startTime} ({Math.round(activeTemplate.durationMinutes / 60)}h)
+              </span>
+            </div>
+            <div className="text-xs text-primary-500 mt-1">
+              {activeTemplate.type.replace("_", " ")}
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
         onClose={() => {
@@ -519,6 +680,7 @@ export default function ShiftsPage() {
                     viewType="Week"
                     showAssignments={true}
                     eventRange={eventRange}
+                    isEditable={false}
                     onShiftDelete={handleDeleteShift}
                     onShiftClick={(shiftId: string) => {
                       const shift = shifts.find((s) => s.id === shiftId);
@@ -852,6 +1014,49 @@ export default function ShiftsPage() {
                   </Button>
                 </form>
               </Card>
+            ) : viewMode === "calendar" ? (
+              <div className="space-y-6">
+                <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Zap className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest opacity-80">
+                      Drag & Drop
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed opacity-90">
+                    Drag templates onto the calendar to create shifts.
+                    They&apos;ll snap to the end of existing shifts for seamless succession.
+                  </p>
+                </Card>
+                <TemplatePalette />
+                <Card className="bg-white border-none shadow-sm p-4">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                    Shift Count
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span className="text-gray-600">M1:</span>
+                      <span className="font-bold">{shifts.filter((s) => s.type === "MOBILE_TEAM_1").length}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                      <span className="text-gray-600">M2:</span>
+                      <span className="font-bold">{shifts.filter((s) => s.type === "MOBILE_TEAM_2").length}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-success-500"></div>
+                      <span className="text-gray-600">ST:</span>
+                      <span className="font-bold">{shifts.filter((s) => s.type === "STATIONARY").length}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-accent-500"></div>
+                      <span className="text-gray-600">EX:</span>
+                      <span className="font-bold">{shifts.filter((s) => s.type === "EXECUTIVE").length}</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             ) : (
               <div className="space-y-6">
                 <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
@@ -913,6 +1118,6 @@ export default function ShiftsPage() {
           </div>
         </div>
       </div>
-    </>
+    </DndContext>
   );
 }
