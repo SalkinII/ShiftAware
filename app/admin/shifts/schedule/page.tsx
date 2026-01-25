@@ -9,6 +9,7 @@ import {
   Tag,
   ChevronRight,
   Filter,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -25,6 +26,7 @@ import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import CalendarView from "@/components/features/Calendar/CalendarView";
 
 interface Shift {
   id: string;
@@ -49,6 +51,7 @@ export default function ShiftsPage() {
   const toast = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -108,6 +111,13 @@ export default function ShiftsPage() {
     if (selectedEventId === "all") return allShifts;
     return allShifts.filter((s) => s.eventId === selectedEventId);
   }, [allShifts, selectedEventId]);
+
+  // Calculate event range for calendar view
+  const eventRange = useMemo(() => {
+    if (shifts.length === 0) return undefined;
+    const dates = shifts.map((s) => s.startTime.split("T")[0]).sort();
+    return { start: dates[0], end: dates[dates.length - 1] };
+  }, [shifts]);
 
   const loading = shiftsLoading;
 
@@ -446,28 +456,81 @@ export default function ShiftsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-sm p-4 flex items-center justify-between">
+            <Card className="shadow-sm p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-gray-400" />
                 <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                   Filter by Event
                 </span>
               </div>
-              <select
-                value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
-                className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20"
-              >
-                <option value="all">All Events</option>
-                {events.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-3">
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                  className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20"
+                >
+                  <option value="all">All Events</option>
+                  {events.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "p-2 transition-colors",
+                      viewMode === "list"
+                        ? "bg-primary-500 text-white"
+                        : "bg-white text-gray-400 hover:text-gray-600"
+                    )}
+                    title="List view"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("calendar")}
+                    className={cn(
+                      "p-2 transition-colors",
+                      viewMode === "calendar"
+                        ? "bg-primary-500 text-white"
+                        : "bg-white text-gray-400 hover:text-gray-600"
+                    )}
+                    title="Calendar view"
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </Card>
 
-            <div className="space-y-4">
+            {viewMode === "calendar" ? (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                {shifts.length === 0 ? (
+                  <div className="p-12 text-center text-gray-400">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium">No shifts to display</p>
+                    <p className="text-sm">Create shifts using the form or select a different event</p>
+                  </div>
+                ) : (
+                  <CalendarView
+                    shifts={shifts}
+                    viewType="Week"
+                    showAssignments={true}
+                    eventRange={eventRange}
+                    onShiftDelete={handleDeleteShift}
+                    onShiftClick={(shiftId: string) => {
+                      const shift = shifts.find((s) => s.id === shiftId);
+                      if (shift) {
+                        toast.info(`${shift.type.replace("_", " ")} - ${shift.event.name}`);
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
               {shifts.map((shift) => (
                 <Card
                   key={shift.id}
@@ -582,7 +645,8 @@ export default function ShiftsPage() {
                   </div>
                 </Card>
               ))}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
