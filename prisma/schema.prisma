@@ -25,6 +25,8 @@ enum ShiftType {
   MOBILE_TEAM_2
   STATIONARY
   EXECUTIVE
+  BUFFER
+  EXTENDED
 }
 
 enum ShiftPriority {
