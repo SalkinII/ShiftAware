@@ -93,3 +93,36 @@ export function getSnapTargets(
     }))
     .filter((target) => !isNaN(target.endTime.getTime()));
 }
+
+/**
+ * Calculate time from relative x position within a day column
+ *
+ * @param relativeX - Position as fraction (0-1) across the column
+ * @param dayStart - Start of the day (00:00)
+ * @param dayEnd - End of the day (24:00 / next day 00:00)
+ * @returns Calculated time
+ */
+export function calculateTimeFromPosition(
+  relativeX: number,
+  dayStart: Date,
+  dayEnd: Date
+): Date {
+  const clampedX = Math.max(0, Math.min(1, relativeX));
+  const totalMs = dayEnd.getTime() - dayStart.getTime();
+  const offsetMs = clampedX * totalMs;
+  return new Date(dayStart.getTime() + offsetMs);
+}
+
+/**
+ * Round a time to the nearest interval
+ *
+ * @param time - Time to round
+ * @param intervalMinutes - Interval in minutes (e.g., 15)
+ * @returns Rounded time
+ */
+export function roundToInterval(time: Date, intervalMinutes: number): Date {
+  const ms = time.getTime();
+  const intervalMs = intervalMinutes * 60 * 1000;
+  const rounded = Math.round(ms / intervalMs) * intervalMs;
+  return new Date(rounded);
+}
