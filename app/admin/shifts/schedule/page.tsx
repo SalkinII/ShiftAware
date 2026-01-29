@@ -40,6 +40,7 @@ import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import CalendarView from "@/components/features/Calendar/CalendarView";
+import { LaneCalendarView } from "@/components/features/LaneCalendar";
 
 interface Shift {
   id: string;
@@ -204,92 +205,151 @@ export default function ShiftsPage() {
   // Handle template drop onto calendar with snap
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
-      setActiveTemplate(null); // Clear overlay
+      setActiveTemplate(null);
 
       const { active, over } = event;
-
       if (!over) return;
 
-      // Check if dropping a template onto a date
       const activeData = active.data.current;
       const overData = over.data.current;
 
-      if (activeData?.type !== "template" || overData?.type !== "date") {
-        return;
-      }
+      // Handle lane drops (new)
+      if (activeData?.type === "template" && overData?.type === "lane") {
+        const template = activeData.template;
+        const { date: dropDate, laneType, dayStart, dayEnd, snapTargets } = overData;
 
-      const template = activeData.template;
-      const dropDate = overData.date; // YYYY-MM-DD format
-
-      // Get the event ID (use selected or first available)
-      const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
-      if (!targetEventId) {
-        toast.error("Please select an event first");
-        return;
-      }
-
-      // Calculate base drop time from template's default start time
-      const [hours, minutes] = template.startTime.split(":").map(Number);
-      const baseDropTime = new Date(`${dropDate}T${template.startTime}:00`);
-
-      // Get existing shift end times for this lane (shift type)
-      const shiftEndTimes = findShiftEndTimes(
-        shifts.filter((s) => s.startTime.split("T")[0] === dropDate),
-        template.type
-      );
-
-      // Calculate snap position
-      const { snapped, time: startTime } = calculateSnapPosition(
-        baseDropTime,
-        shiftEndTimes,
-        30 // 30 minute snap threshold
-      );
-
-      // Calculate end time based on template duration
-      const endTime = addMinutes(startTime, template.durationMinutes);
-
-      // Show feedback
-      if (snapped) {
-        toast.info(`Snapped to end of previous ${template.type.replace("_", " ")} shift`);
-      }
-
-      // Create the shift
-      try {
-        const payload = {
-          eventId: targetEventId,
-          type: template.type,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-          durationMinutes: template.durationMinutes,
-          priority: template.priority,
-          desirabilityScore: 3,
-          capacity: template.capacity,
-          requiredRoles: [{ role: "TEAM_MEMBER", count: template.capacity }],
-        };
-
-        const res = await fetch("/api/shifts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (res.ok) {
-          toast.success(
-            `Created ${template.type.replace("_", " ")} shift at ${format(startTime, "HH:mm")}`
-          );
-          // Invalidate cache
-          window.dispatchEvent(
-            new CustomEvent("shiftaware:cache-invalidate", {
-              detail: { keys: ["shifts", "shifts*"] },
-            })
-          );
-        } else {
-          const errorData = await res.json();
-          toast.error(errorData.error || "Failed to create shift");
+        const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+        if (!targetEventId) {
+          toast.error("Please select an event first");
+          return;
         }
-      } catch (error) {
-        console.error("Failed to create shift from template:", error);
-        toast.error("Failed to create shift");
+
+        // Get pointer position for time calculation
+        const overNode = document.querySelector(`[data-testid="lane-drop-${dropDate}-${laneType}"]`);
+        if (!overNode) return;
+
+        const rect = overNode.getBoundingClientRect();
+        const dropX = event.delta?.x
+          ? rect.left + rect.width / 2 + event.delta.x
+          : rect.left + rect.width / 2;
+        const relativeX = (dropX - rect.left) / rect.width;
+
+        // Calculate time from position
+        const { calculateTimeFromPosition, roundToInterval, calculateSnapPosition } = await import("@/lib/utils/snap");
+        const rawTime = calculateTimeFromPosition(relativeX, new Date(dayStart), new Date(dayEnd));
+        const roundedTime = roundToInterval(rawTime, 15);
+        const { snapped, time: startTime } = calculateSnapPosition(roundedTime, snapTargets, 30);
+
+        const endTime = addMinutes(startTime, template.durationMinutes);
+
+        if (snapped) {
+          toast.info(`Snapped to ${format(startTime, "HH:mm")}`);
+        }
+
+        try {
+          const payload = {
+            eventId: targetEventId,
+            type: laneType,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            durationMinutes: template.durationMinutes,
+            priority: template.priority,
+            desirabilityScore: 3,
+            capacity: template.capacity,
+            requiredRoles: [{ role: "TEAM_MEMBER", count: template.capacity }],
+          };
+
+          const res = await fetch("/api/shifts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            toast.success(`Created ${laneType.replace(/_/g, " ")} shift at ${format(startTime, "HH:mm")}`);
+            window.dispatchEvent(
+              new CustomEvent("shiftaware:cache-invalidate", {
+                detail: { keys: ["shifts", "shifts*"] },
+              })
+            );
+          } else {
+            const errorData = await res.json();
+            toast.error(errorData.error || "Failed to create shift");
+          }
+        } catch (error) {
+          console.error("Failed to create shift:", error);
+          toast.error("Failed to create shift");
+        }
+        return;
+      }
+
+      // Keep legacy date drop handling for backwards compatibility
+      if (activeData?.type === "template" && overData?.type === "date") {
+        const template = activeData.template;
+        const dropDate = overData.date;
+
+        const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+        if (!targetEventId) {
+          toast.error("Please select an event first");
+          return;
+        }
+
+        const [hours, minutes] = template.startTime.split(":").map(Number);
+        const baseDropTime = new Date(`${dropDate}T${template.startTime}:00`);
+
+        const shiftEndTimes = findShiftEndTimes(
+          shifts.filter((s) => s.startTime.split("T")[0] === dropDate),
+          template.type
+        );
+
+        const { snapped, time: startTime } = calculateSnapPosition(
+          baseDropTime,
+          shiftEndTimes,
+          30
+        );
+
+        const endTime = addMinutes(startTime, template.durationMinutes);
+
+        if (snapped) {
+          toast.info(`Snapped to end of previous ${template.type.replace("_", " ")} shift`);
+        }
+
+        try {
+          const payload = {
+            eventId: targetEventId,
+            type: template.type,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            durationMinutes: template.durationMinutes,
+            priority: template.priority,
+            desirabilityScore: 3,
+            capacity: template.capacity,
+            requiredRoles: [{ role: "TEAM_MEMBER", count: template.capacity }],
+          };
+
+          const res = await fetch("/api/shifts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            toast.success(
+              `Created ${template.type.replace("_", " ")} shift at ${format(startTime, "HH:mm")}`
+            );
+            window.dispatchEvent(
+              new CustomEvent("shiftaware:cache-invalidate", {
+                detail: { keys: ["shifts", "shifts*"] },
+              })
+            );
+          } else {
+            const errorData = await res.json();
+            toast.error(errorData.error || "Failed to create shift");
+          }
+        } catch (error) {
+          console.error("Failed to create shift from template:", error);
+          toast.error("Failed to create shift");
+        }
       }
     },
     [selectedEventId, events, shifts, toast]
@@ -672,22 +732,14 @@ export default function ShiftsPage() {
                   <div className="p-12 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p className="font-medium">No shifts to display</p>
-                    <p className="text-sm">Create shifts using the form or select a different event</p>
+                    <p className="text-sm">Create shifts using the form or drag templates from the sidebar</p>
                   </div>
                 ) : (
-                  <CalendarView
+                  <LaneCalendarView
                     shifts={shifts}
-                    viewType="Week"
-                    showAssignments={true}
-                    eventRange={eventRange}
-                    isEditable={false}
-                    onShiftDelete={handleDeleteShift}
-                    onShiftClick={(shiftId: string) => {
-                      const shift = shifts.find((s) => s.id === shiftId);
-                      if (shift) {
-                        toast.info(`${shift.type.replace("_", " ")} - ${shift.event.name}`);
-                      }
-                    }}
+                    startDate={eventRange ? new Date(eventRange.start) : new Date()}
+                    endDate={eventRange ? new Date(eventRange.end) : new Date()}
+                    activeTemplate={activeTemplate}
                   />
                 )}
               </div>
