@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from "@/lib/utils";
 import { getLaneColor } from "@/lib/types/lane";
 import { ResizeHandle } from './ResizeHandle';
+import { ShiftEditPopover } from './ShiftEditPopover';
 
 interface ShiftBlockProps {
   shift: {
@@ -79,7 +80,7 @@ export function ShiftBlock({ shift, dayStart, dayEnd, isDraggable = false, onSav
     transform: CSS.Translate.toString(transform),
   };
 
-  return (
+  const shiftElement = (
     <div
       ref={setNodeRef}
       className={cn(
@@ -111,4 +112,18 @@ export function ShiftBlock({ shift, dayStart, dayEnd, isDraggable = false, onSav
       </span>
     </div>
   );
+
+  if (isDraggable && onSave && onDelete) {
+    return (
+      <ShiftEditPopover
+        shift={shift}
+        onSave={onSave}
+        onDelete={onDelete}
+      >
+        {shiftElement}
+      </ShiftEditPopover>
+    );
+  }
+
+  return shiftElement;
 }
