@@ -86,11 +86,11 @@ export function LaneCalendarView({
             key={format(day, "yyyy-MM-dd")}
             className="p-3 text-center border-l border-gray-100"
           >
-            <div className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
-              {format(day, "EEE")}
-            </div>
             <div className="text-sm font-bold text-gray-700">
-              {format(day, "MMM d")}
+              {format(day, "dd.MM.yyyy")}
+            </div>
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
+              {format(day, "EEEE")}
             </div>
           </div>
         ))}
