@@ -226,6 +226,7 @@ model ShiftTemplate {
   id                String        @id @default(cuid())
   name              String
   type              ShiftType
+  allowedLanes      ShiftType[]   @default([]) // Lanes this template can be dropped into
   durationMinutes   Int
   startTime         String // "08:00" - time only, no date
   priority          ShiftPriority @default(CORE)
