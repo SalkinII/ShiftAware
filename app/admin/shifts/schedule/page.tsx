@@ -36,6 +36,7 @@ import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { calculateSnapPosition, findShiftEndTimes } from "@/lib/utils/snap";
+import { isValidLaneDrop } from "@/lib/utils/lane-validation";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -217,6 +218,12 @@ export default function ShiftsPage() {
       if (activeData?.type === "template" && overData?.type === "lane") {
         const template = activeData.template;
         const { date: dropDate, laneType, dayStart, dayEnd, snapTargets } = overData;
+
+        // Validate drop - silent rejection if invalid
+        const targetLane = laneType as ShiftType;
+        if (!isValidLaneDrop(template, targetLane)) {
+          return; // Silent rejection - no toast, no shift created
+        }
 
         const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
         if (!targetEventId) {
