@@ -1,10 +1,12 @@
 "use client";
 
-import { format, differenceInMinutes, startOfDay } from "date-fns";
+import { useState, useCallback } from 'react';
+import { format, differenceInMinutes, addMinutes, subMinutes } from "date-fns";
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from "@/lib/utils";
 import { getLaneColor } from "@/lib/types/lane";
+import { ResizeHandle } from './ResizeHandle';
 
 interface ShiftBlockProps {
   shift: {
@@ -28,8 +30,12 @@ export function ShiftBlock({ shift, dayStart, dayEnd, isDraggable = false, onSav
     data: { type: 'shift', shift },
     disabled: !isDraggable,
   });
-  const start = new Date(shift.startTime);
-  const end = new Date(shift.endTime);
+
+  const [tempStart, setTempStart] = useState<Date | null>(null);
+  const [tempEnd, setTempEnd] = useState<Date | null>(null);
+
+  const start = tempStart || new Date(shift.startTime);
+  const end = tempEnd || new Date(shift.endTime);
   const color = getLaneColor(shift.type);
 
   // Calculate position as percentage of day
@@ -39,6 +45,28 @@ export function ShiftBlock({ shift, dayStart, dayEnd, isDraggable = false, onSav
 
   const left = (startMinutes / totalMinutes) * 100;
   const width = ((endMinutes - startMinutes) / totalMinutes) * 100;
+  const pixelsPerMinute = 1; // Approximate, adjust based on actual container width
+
+  const handleResizeStart = useCallback((deltaMinutes: number) => {
+    const newStart = addMinutes(tempStart || new Date(shift.startTime), deltaMinutes);
+    setTempStart(newStart);
+  }, [tempStart, shift.startTime]);
+
+  const handleResizeEnd = useCallback((deltaMinutes: number) => {
+    const newEnd = addMinutes(tempEnd || new Date(shift.endTime), deltaMinutes);
+    setTempEnd(newEnd);
+  }, [tempEnd, shift.endTime]);
+
+  const handleResizeComplete = useCallback(() => {
+    if (tempStart || tempEnd) {
+      onSave?.({
+        startTime: tempStart || undefined,
+        endTime: tempEnd || undefined,
+      });
+      setTempStart(null);
+      setTempEnd(null);
+    }
+  }, [tempStart, tempEnd, onSave]);
 
   const filled = shift.assignments?.length ?? 0;
   const isFull = filled >= shift.capacity;
@@ -55,13 +83,29 @@ export function ShiftBlock({ shift, dayStart, dayEnd, isDraggable = false, onSav
     <div
       ref={setNodeRef}
       className={cn(
-        "absolute top-1 bottom-1 rounded-md shadow-sm flex items-center px-2 text-white text-xs font-medium overflow-hidden",
+        "absolute top-1 bottom-1 rounded-md shadow-sm flex items-center px-2 text-white text-xs font-medium overflow-hidden relative",
         isDraggable && "cursor-grab active:cursor-grabbing"
       )}
       style={style}
       {...(isDraggable ? { ...attributes, ...listeners } : {})}
       title={`${shift.type.replace(/_/g, " ")}\n${format(start, "HH:mm")} - ${format(end, "HH:mm")}\n${filled}/${shift.capacity} assigned`}
     >
+      {isDraggable && (
+        <>
+          <ResizeHandle
+            position="left"
+            onResize={handleResizeStart}
+            onResizeEnd={handleResizeComplete}
+            pixelsPerMinute={pixelsPerMinute}
+          />
+          <ResizeHandle
+            position="right"
+            onResize={handleResizeEnd}
+            onResizeEnd={handleResizeComplete}
+            pixelsPerMinute={pixelsPerMinute}
+          />
+        </>
+      )}
       <span className="truncate">
         {format(start, "HH:mm")} - {format(end, "HH:mm")}
       </span>
