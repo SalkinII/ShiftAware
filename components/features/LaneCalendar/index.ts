@@ -1,4 +1,9 @@
+export { LaneCalendarView } from './LaneCalendarView';
+export { TimeRuler } from './TimeRuler';
+export { ViewModeControls } from './ViewModeControls';
+export { ScrollableCalendar } from './ScrollableCalendar';
+export { ShiftEditPopover } from './ShiftEditPopover';
+export { ResizeHandle } from './ResizeHandle';
 export { LaneDropZone } from "./LaneDropZone";
 export { ShiftBlock } from "./ShiftBlock";
 export { DragPreview } from "./DragPreview";
-export { LaneCalendarView } from "./LaneCalendarView";
