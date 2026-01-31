@@ -5,7 +5,13 @@
  * to create seamless succession in the calendar view.
  */
 
-import { differenceInMinutes } from "date-fns";
+import { differenceInMinutes, addMinutes } from "date-fns";
+
+export interface SnapResult {
+  time: Date;
+  snapped: boolean;
+  snapTarget?: Date;
+}
 
 /**
  * Find all end times for shifts in a specific lane (shift type)
@@ -125,4 +131,31 @@ export function roundToInterval(time: Date, intervalMinutes: number): Date {
   const intervalMs = intervalMinutes * 60 * 1000;
   const rounded = Math.round(ms / intervalMs) * intervalMs;
   return new Date(rounded);
+}
+
+/**
+ * Snap to nearest shift end if within threshold
+ * Enhanced version with explicit SnapResult interface
+ */
+export function snapToShiftEnd(
+  dropTime: Date,
+  shiftEndTimes: Date[],
+  thresholdMinutes: number = 30
+): SnapResult {
+  let closestEnd: Date | null = null;
+  let closestDistance = Infinity;
+
+  for (const endTime of shiftEndTimes) {
+    const distance = Math.abs(differenceInMinutes(dropTime, endTime));
+    if (distance <= thresholdMinutes && distance < closestDistance) {
+      closestDistance = distance;
+      closestEnd = endTime;
+    }
+  }
+
+  if (closestEnd) {
+    return { time: closestEnd, snapped: true, snapTarget: closestEnd };
+  }
+
+  return { time: dropTime, snapped: false };
 }
