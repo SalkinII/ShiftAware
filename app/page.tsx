@@ -5,7 +5,7 @@ export default async function RootPage() {
   const authenticated = await isAuthenticated();
   
   if (authenticated) {
-    redirect("/app/dashboard");
+    redirect("/app/identity");
   } else {
     redirect("/login");
   }
