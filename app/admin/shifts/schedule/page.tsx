@@ -214,6 +214,15 @@ export default function ShiftsPage() {
       const activeData = active.data.current;
       const overData = over.data.current;
 
+      // Handle shift repositioning
+      if (activeData?.type === 'shift') {
+        const shift = activeData.shift;
+        // TODO: Calculate new position from drop coordinates and update via API
+        // This will be implemented when integrating with the actual calendar grid
+        console.log('Shift drag detected:', shift);
+        return;
+      }
+
       // Handle lane drops (new)
       if (activeData?.type === "template" && overData?.type === "lane") {
         const template = activeData.template;
@@ -524,6 +533,36 @@ export default function ShiftsPage() {
     });
   }
 
+  async function handleUpdateShift(shiftId: string, updates: { startTime?: Date; endTime?: Date; capacity?: number }) {
+    try {
+      const payload: any = {};
+      if (updates.startTime) payload.startTime = updates.startTime.toISOString();
+      if (updates.endTime) payload.endTime = updates.endTime.toISOString();
+      if (updates.capacity !== undefined) payload.capacity = updates.capacity;
+
+      const res = await fetch(`/api/shifts/${shiftId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success("Shift updated successfully");
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["shifts", "shifts*"] },
+          })
+        );
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Failed to update shift");
+      }
+    } catch (error) {
+      console.error("Failed to update shift:", error);
+      toast.error("Failed to update shift");
+    }
+  }
+
   async function confirmDelete() {
     if (!deleteDialog.shiftId) return;
 
@@ -747,6 +786,9 @@ export default function ShiftsPage() {
                     startDate={eventRange ? new Date(eventRange.start) : new Date()}
                     endDate={eventRange ? new Date(eventRange.end) : new Date()}
                     activeTemplate={activeTemplate}
+                    isEditable={true}
+                    onShiftUpdate={handleUpdateShift}
+                    onShiftDelete={handleDeleteShift}
                   />
                 )}
               </div>

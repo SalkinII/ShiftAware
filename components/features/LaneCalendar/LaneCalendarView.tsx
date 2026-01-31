@@ -27,6 +27,9 @@ interface LaneCalendarViewProps {
     durationMinutes: number;
   } | null;
   className?: string;
+  isEditable?: boolean;
+  onShiftUpdate?: (id: string, data: { startTime?: Date; endTime?: Date; capacity?: number }) => void;
+  onShiftDelete?: (id: string) => void;
 }
 
 export function LaneCalendarView({
@@ -35,6 +38,9 @@ export function LaneCalendarView({
   endDate,
   activeTemplate,
   className,
+  isEditable = false,
+  onShiftUpdate,
+  onShiftDelete,
 }: LaneCalendarViewProps) {
   // Generate array of days
   const days = useMemo(() => {
@@ -131,6 +137,9 @@ export function LaneCalendarView({
                     shift={shift}
                     dayStart={dayStart}
                     dayEnd={dayEnd}
+                    isDraggable={isEditable}
+                    onSave={(updates) => onShiftUpdate?.(shift.id, updates)}
+                    onDelete={() => onShiftDelete?.(shift.id)}
                   />
                 ))}
               </LaneDropZone>

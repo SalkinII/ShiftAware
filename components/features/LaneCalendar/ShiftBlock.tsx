@@ -1,6 +1,8 @@
 "use client";
 
 import { format, differenceInMinutes, startOfDay } from "date-fns";
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { cn } from "@/lib/utils";
 import { getLaneColor } from "@/lib/types/lane";
 
@@ -15,9 +17,17 @@ interface ShiftBlockProps {
   };
   dayStart: Date;
   dayEnd: Date;
+  isDraggable?: boolean;
+  onSave?: (updates: { startTime?: Date; endTime?: Date; capacity?: number }) => void;
+  onDelete?: () => void;
 }
 
-export function ShiftBlock({ shift, dayStart, dayEnd }: ShiftBlockProps) {
+export function ShiftBlock({ shift, dayStart, dayEnd, isDraggable = false, onSave, onDelete }: ShiftBlockProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `shift-${shift.id}`,
+    data: { type: 'shift', shift },
+    disabled: !isDraggable,
+  });
   const start = new Date(shift.startTime);
   const end = new Date(shift.endTime);
   const color = getLaneColor(shift.type);
@@ -33,15 +43,23 @@ export function ShiftBlock({ shift, dayStart, dayEnd }: ShiftBlockProps) {
   const filled = shift.assignments?.length ?? 0;
   const isFull = filled >= shift.capacity;
 
+  const style = {
+    left: `${left}%`,
+    width: `${Math.max(width, 5)}%`,
+    backgroundColor: color,
+    opacity: isDragging ? 0.5 : (isFull ? 1 : 0.75),
+    transform: CSS.Translate.toString(transform),
+  };
+
   return (
     <div
-      className="absolute top-1 bottom-1 rounded-md shadow-sm flex items-center px-2 text-white text-xs font-medium overflow-hidden"
-      style={{
-        left: `${left}%`,
-        width: `${Math.max(width, 5)}%`,
-        backgroundColor: color,
-        opacity: isFull ? 1 : 0.75,
-      }}
+      ref={setNodeRef}
+      className={cn(
+        "absolute top-1 bottom-1 rounded-md shadow-sm flex items-center px-2 text-white text-xs font-medium overflow-hidden",
+        isDraggable && "cursor-grab active:cursor-grabbing"
+      )}
+      style={style}
+      {...(isDraggable ? { ...attributes, ...listeners } : {})}
       title={`${shift.type.replace(/_/g, " ")}\n${format(start, "HH:mm")} - ${format(end, "HH:mm")}\n${filled}/${shift.capacity} assigned`}
     >
       <span className="truncate">
