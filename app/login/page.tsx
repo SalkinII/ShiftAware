@@ -11,7 +11,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "/dashboard";
+  const from = searchParams.get("from") || "/app/identity";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +28,7 @@ function LoginForm() {
       if (res.ok) {
         const data = await res.json();
         // If there's a specific redirect, use it; otherwise go to identity selection
-        if (from && from !== "/dashboard") {
+        if (from && from !== "/app/identity") {
           router.push(from);
         } else {
           router.push("/app/identity");
