@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
 
   if (isPublicRoute(pathname)) {
     if (authenticated && pathname === "/login") {
-      return NextResponse.redirect(new URL("/app/dashboard", request.url));
+      return NextResponse.redirect(new URL("/app/identity", request.url));
     }
     return NextResponse.next();
   }
@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
 
   // RBAC: non-admins cannot access /admin/* routes
   if (isAdminRoute(pathname) && userRole !== "admin") {
-    return NextResponse.redirect(new URL("/app/dashboard", request.url));
+    return NextResponse.redirect(new URL("/app/calendar", request.url));
   }
 
   return NextResponse.next();
