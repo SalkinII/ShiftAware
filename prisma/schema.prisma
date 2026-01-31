@@ -68,6 +68,13 @@ enum EntityType {
   EVENT
 }
 
+enum AttributeType {
+  BOOLEAN
+  SELECT
+  MULTISELECT
+  TEXT
+}
+
 model TeamMember {
   id              String          @id @default(cuid())
   alias           String          @unique
@@ -81,6 +88,7 @@ model TeamMember {
   preferences ShiftPreference[]
   assignments Assignment[]
   auditLogs   AuditLog[]
+  attributes  TeamMemberAttribute[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,9 +103,10 @@ model Event {
   endDate   DateTime
   status    EventStatus @default(PLANNING)
 
-  shifts          Shift[]
-  config          EventConfig?
-  scheduledShifts ScheduledShift[]
+  shifts               Shift[]
+  config               EventConfig?
+  scheduledShifts      ScheduledShift[]
+  attributeDefinitions EventAttributeDefinition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -265,4 +274,39 @@ model ScheduledShift {
 
   @@index([eventId, date])
   @@index([templateId])
+}
+
+model EventAttributeDefinition {
+  id       String        @id @default(cuid())
+  eventId  String
+  event    Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name     String // e.g., "can_drive"
+  label    String // e.g., "Can Drive"
+  type     AttributeType
+  options  String[] // For SELECT/MULTISELECT
+  required Boolean       @default(false)
+
+  teamMemberAttributes TeamMemberAttribute[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, name])
+  @@index([eventId])
+}
+
+model TeamMemberAttribute {
+  id           String                   @id @default(cuid())
+  memberId     String
+  member       TeamMember               @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  definitionId String
+  definition   EventAttributeDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  value        String // JSON-encoded value
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, definitionId])
+  @@index([memberId])
+  @@index([definitionId])
 }
