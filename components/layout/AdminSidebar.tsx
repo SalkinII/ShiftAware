@@ -16,17 +16,13 @@ import {
 import { cn } from "@/lib/utils";
 
 const adminItems = [
-  { label: "Festival Setup", href: "/admin/festival/setup", icon: Settings },
-  { label: "Team Manage", href: "/admin/team/manage", icon: Users },
-  { label: "Shift Templates", href: "/admin/shifts/templates", icon: Clock },
+  { label: "Event Setup", href: "/admin/setup", icon: Settings },
+  { label: "Team Management", href: "/admin/team", icon: Users },
   {
     label: "Shift Schedule",
     href: "/admin/shifts/schedule",
     icon: CalendarDays,
   },
-  { label: "Allocation", href: "/admin/allocation", icon: Settings2 },
-  { label: "Coverage Gaps", href: "/admin/coverage", icon: AlertTriangle },
-  { label: "Publish", href: "/admin/publish", icon: Send },
   { label: "Audit Log", href: "/admin/audit", icon: History },
 ];
 
