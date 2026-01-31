@@ -707,18 +707,27 @@ export default function ShiftsPage() {
               Define and manage event shift requirements
             </p>
           </div>
-          <Button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
-          >
-            {showForm ? (
-              "Cancel"
-            ) : (
-              <>
-                <Plus className="w-4 h-4" /> Define New Shift
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => toast.success("Shifts published to team members")}
+              className="flex items-center gap-2"
+            >
+              <Zap className="w-4 h-4" /> Publish Shifts
+            </Button>
+            <Button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
+            >
+              {showForm ? (
+                "Cancel"
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" /> Define New Shift
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
