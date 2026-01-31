@@ -4,12 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  CalendarCheck,
   CalendarDays,
   Download,
-  Repeat,
-  User,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,12 +16,8 @@ import {
 } from "@/lib/hooks/useCurrentEvent";
 
 const navItems = [
-  { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
   { label: "Calendar", href: "/app/calendar", icon: CalendarDays },
-  { label: "Vote", href: "/app/vote", icon: CalendarCheck },
-  { label: "Swap", href: "/app/swap", icon: Repeat },
   { label: "Export", href: "/app/export", icon: Download },
-  { label: "Profile", href: "/app/profile", icon: User },
 ];
 
 export function UserSidebar() {
@@ -82,7 +74,7 @@ export function UserSidebar() {
         {isAdmin && (
           <div className="pt-4 border-t border-gray-100">
             <Link
-              href="/admin/festival/setup"
+              href="/admin/setup"
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
             >
               <Settings className="w-5 h-5" />

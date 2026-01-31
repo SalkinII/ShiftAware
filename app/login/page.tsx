@@ -27,12 +27,11 @@ function LoginForm() {
 
       if (res.ok) {
         const data = await res.json();
-        // If there's a specific redirect, use it; otherwise route by role
-        // Admin → dashboard, User → profile (to select avatar first)
+        // If there's a specific redirect, use it; otherwise go to identity selection
         if (from && from !== "/dashboard") {
           router.push(from);
         } else {
-          router.push(data.isAdmin ? "/app/dashboard" : "/app/profile");
+          router.push("/app/identity");
         }
       } else {
         const data = await res.json();
