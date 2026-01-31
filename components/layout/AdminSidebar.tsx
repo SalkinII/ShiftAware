@@ -6,11 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Settings,
   Users,
-  Clock,
-  Settings2,
   History,
-  AlertTriangle,
-  Send,
   CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
