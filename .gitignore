@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/data/
 
 #IDE
 .cursor/
@@ -28,7 +30,6 @@
 *.pem
 /.idea
 .context/
-CLAUDE.md
 agents/
 .claude/
 .worktrees/
