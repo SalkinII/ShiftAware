@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Users, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/lib/utils';
+import { DistributionSettings } from './components/DistributionSettings';
 
 type TabType = 'members' | 'allocation';
 
@@ -60,31 +61,7 @@ export default function TeamPage() {
           </Card>
         )}
 
-        {activeTab === 'allocation' && (
-          <Card className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Allocation & Distribution Settings
-            </h2>
-            <p className="text-gray-500 mb-6">
-              Configure shift allocation algorithm settings, distribution weights, and
-              fairness parameters. Run the allocation algorithm and publish assignments.
-            </p>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-bold text-gray-900 mb-2">Distribution Weights</h3>
-                <div className="text-sm text-gray-500">
-                  Adjust how much the algorithm prioritizes fairness vs. preferences
-                </div>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-bold text-gray-900 mb-2">Allocation Status</h3>
-                <div className="text-sm text-gray-500">
-                  View current allocation status and publish assignments to team members
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
+        {activeTab === 'allocation' && <DistributionSettings />}
       </div>
     </div>
   );
