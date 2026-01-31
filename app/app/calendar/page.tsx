@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import CalendarView from "@/components/features/Calendar/CalendarView";
+import { MyShiftsList } from "./components/MyShiftsList";
 import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
@@ -85,6 +86,7 @@ const coverageLegend: Record<
 export default function UserCalendarPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
+  const [calendarView, setCalendarView] = useState<'my-shifts' | 'full-schedule'>('my-shifts');
   const [viewType, setViewType] = useState<"Day" | "Week" | "Grid">("Week");
   const [currentEventDate, setCurrentEventDate] = useState<string>();
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
@@ -275,6 +277,29 @@ export default function UserCalendarPage() {
     setSelectedShift(shift || null);
   }
 
+  function handleVoteWant(shiftId: string) {
+    // TODO: Implement preference voting API call
+    console.log('Vote WANT for shift:', shiftId);
+    // Would call: POST /api/preferences { shiftId, preference: 'WANT' }
+  }
+
+  function handleVoteDontWant(shiftId: string) {
+    // TODO: Implement preference voting API call
+    console.log('Vote DON\'T WANT for shift:', shiftId);
+    // Would call: POST /api/preferences { shiftId, preference: 'DONT_WANT' }
+  }
+
+  function handleRequestSwap(assignmentId: string) {
+    // TODO: Implement swap request API call
+    console.log('Request swap for assignment:', assignmentId);
+    // Would call: POST /api/assignments/swap { assignmentId }
+  }
+
+  // Get current user ID from localStorage (set during identity selection)
+  const userId = typeof window !== 'undefined'
+    ? localStorage.getItem('selectedMemberId') || ''
+    : '';
+
   if (loading && shifts.length === 0) {
     return (
       <div className="space-y-6">
@@ -297,21 +322,48 @@ export default function UserCalendarPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">
-            {(["Day", "Week", "Grid"] as const).map((option) => (
-              <button
-                key={option}
-                onClick={() => setViewType(option)}
-                className={cn(
-                  "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
-                  viewType === option
-                    ? "bg-primary-500 text-white shadow-md"
-                    : "text-gray-400 hover:text-gray-600",
-                )}
-              >
-                {option}
-              </button>
-            ))}
+            <button
+              onClick={() => setCalendarView('my-shifts')}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
+                calendarView === 'my-shifts'
+                  ? "bg-primary-500 text-white shadow-md"
+                  : "text-gray-400 hover:text-gray-600",
+              )}
+            >
+              My Shifts
+            </button>
+            <button
+              onClick={() => setCalendarView('full-schedule')}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
+                calendarView === 'full-schedule'
+                  ? "bg-primary-500 text-white shadow-md"
+                  : "text-gray-400 hover:text-gray-600",
+              )}
+            >
+              Full Schedule
+            </button>
           </div>
+
+          {calendarView === 'full-schedule' && (
+            <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">
+              {(["Day", "Week", "Grid"] as const).map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setViewType(option)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
+                    viewType === option
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "text-gray-400 hover:text-gray-600",
+                  )}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
 
           <Button
             onClick={() => refetchShifts()}
@@ -323,7 +375,17 @@ export default function UserCalendarPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {calendarView === 'my-shifts' ? (
+        <MyShiftsList
+          shifts={shifts}
+          userId={userId}
+          onVoteWant={handleVoteWant}
+          onVoteDontWant={handleVoteDontWant}
+          onRequestSwap={handleRequestSwap}
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-2xl shadow-lg">
           <div className="flex items-center justify-between">
             <div>
@@ -605,6 +667,8 @@ export default function UserCalendarPage() {
             </div>
           </Card>
         </div>
+      )}
+        </>
       )}
     </div>
   );
