@@ -1,0 +1,132 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - status [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e5]
+      - generic [ref=e7]:
+        - text: Static route
+        - button "Hide static indicator" [ref=e8] [cursor=pointer]:
+          - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - banner [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]: 🐙
+        - heading "ShiftAware" [level=1] [ref=e17]
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: 🐻
+          - generic [ref=e21]:
+            - paragraph [ref=e22]: Admin
+            - paragraph [ref=e23]: Administrator
+        - button "Logout" [ref=e24]:
+          - img [ref=e25]
+    - navigation [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - paragraph [ref=e32]: Main Navigation
+          - generic [ref=e33]:
+            - link "Dashboard" [ref=e34] [cursor=pointer]:
+              - /url: /app/dashboard
+              - img [ref=e35]
+              - generic [ref=e40]: Dashboard
+            - link "Calendar" [ref=e42] [cursor=pointer]:
+              - /url: /app/calendar
+              - img [ref=e43]
+              - generic [ref=e54]: Calendar
+            - link "Vote" [ref=e55] [cursor=pointer]:
+              - /url: /app/vote
+              - img [ref=e56]
+              - generic [ref=e62]: Vote
+            - link "Swap" [ref=e63] [cursor=pointer]:
+              - /url: /app/swap
+              - img [ref=e64]
+              - generic [ref=e69]: Swap
+            - link "Export" [ref=e70] [cursor=pointer]:
+              - /url: /app/export
+              - img [ref=e71]
+              - generic [ref=e75]: Export
+            - link "Profile" [ref=e76] [cursor=pointer]:
+              - /url: /app/profile
+              - img [ref=e77]
+              - generic [ref=e80]: Profile
+        - link "Admin Panel" [ref=e82] [cursor=pointer]:
+          - /url: /admin/festival/setup
+          - img [ref=e83]
+          - generic [ref=e86]: Admin Panel
+      - generic [ref=e88]:
+        - paragraph [ref=e89]: Current Event
+        - paragraph [ref=e90]: No event
+    - main [ref=e91]:
+      - generic [ref=e93]:
+        - generic [ref=e95]:
+          - generic [ref=e96]: 🐻
+          - generic [ref=e97]:
+            - heading "Welcome back, Admin" [level=1] [ref=e98]
+            - paragraph [ref=e99]: Here's what's happening with your festival
+        - generic [ref=e100]:
+          - generic [ref=e101]:
+            - generic [ref=e102]:
+              - img [ref=e104]
+              - generic [ref=e109]: +12%
+            - paragraph [ref=e110]: Total Shifts
+            - paragraph [ref=e111]: "0"
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - img [ref=e115]
+              - generic [ref=e120]: Active
+            - paragraph [ref=e121]: Team Members
+            - paragraph [ref=e122]: "0"
+          - generic [ref=e123]:
+            - img [ref=e126]
+            - paragraph [ref=e130]: Staffing Level
+            - generic [ref=e131]:
+              - paragraph [ref=e132]: 0%
+              - paragraph [ref=e133]: 0 covered
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - img [ref=e137]
+              - generic [ref=e141]: Action Required
+            - paragraph [ref=e142]: Unstaffed
+            - paragraph [ref=e143]: "0"
+        - generic [ref=e144]:
+          - generic [ref=e146]:
+            - heading "Upcoming Events 0" [level=2] [ref=e147]:
+              - text: Upcoming Events
+              - generic [ref=e148]: "0"
+            - link "Manage all shifts" [ref=e149] [cursor=pointer]:
+              - /url: /admin/shifts
+              - text: Manage all shifts
+              - img [ref=e150]
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - heading "Quick Actions" [level=2] [ref=e154]
+              - generic [ref=e155]:
+                - link "Enter Preferences Pick your shifts" [ref=e156] [cursor=pointer]:
+                  - /url: /preferences
+                  - button "Enter Preferences Pick your shifts" [ref=e157]:
+                    - img [ref=e159]
+                    - generic [ref=e162]:
+                      - paragraph [ref=e163]: Enter Preferences
+                      - paragraph [ref=e164]: Pick your shifts
+                - link "Manage Team 0 members active" [ref=e165] [cursor=pointer]:
+                  - /url: /admin/members
+                  - button "Manage Team 0 members active" [ref=e166]:
+                    - img [ref=e168]
+                    - generic [ref=e173]:
+                      - paragraph [ref=e174]: Manage Team
+                      - paragraph [ref=e175]: 0 members active
+                - link "Review Gaps 0 needs attention" [ref=e176] [cursor=pointer]:
+                  - /url: /admin/coverage
+                  - button "Review Gaps 0 needs attention" [ref=e177]:
+                    - img [ref=e179]
+                    - generic [ref=e183]:
+                      - paragraph [ref=e184]: Review Gaps
+                      - paragraph [ref=e185]: 0 needs attention
+            - generic [ref=e186]:
+              - heading "Assignment Engine" [level=3] [ref=e188]
+              - paragraph [ref=e189]: Run the algorithm from Allocation to auto-assign members based on preferences and balance.
+              - generic [ref=e193]: Not Run
+```

@@ -1,24 +1,25 @@
 # ShiftAware - Project Overview
 
 ## Purpose
-Shift planning tool for 25-35 people with pseudonymised data, shift preferences, automatic assignment, and PDF export.
+
+Shift planning tool for small festival teams (25-35 people) with pseudonymised data, shift preferences, fair automatic assignment, and PNG export.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    Next.js 15                        │
+│                    Next.js 14                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
 │  │  /admin/*    │  │  /app/*      │  │  /api/*   │  │
-│  │  (protected) │  │  (user)      │  │  (REST)   │  │
+│  │  (admin)     │  │  (user)      │  │  (REST)   │  │
 │  └──────────────┘  └──────────────┘  └───────────┘  │
 └────────────────────────┬────────────────────────────┘
                          │
          ┌───────────────┼───────────────┐
          │               │               │
     ┌────▼────┐    ┌─────▼─────┐   ┌─────▼─────┐
-    │ Prisma  │    │ DnD-Kit   │   │ React     │
-    │ ORM     │    │ (drag)    │   │ Window    │
+    │ Prisma  │    │ DnD-Kit   │   │ Tailwind  │
+    │ ORM     │    │ (drag)    │   │ CSS       │
     └────┬────┘    └───────────┘   └───────────┘
          │
     ┌────▼────┐
@@ -27,82 +28,78 @@ Shift planning tool for 25-35 people with pseudonymised data, shift preferences,
     └─────────┘
 ```
 
+## Route Structure (v2.0)
+
+### Admin Routes
+| Route | Purpose |
+|-------|---------|
+| `/admin/setup` | Event config, shift templates, team attributes |
+| `/admin/shifts/schedule` | LaneCalendarView - drag-drop shift planning |
+| `/admin/team` | Team members + allocation + distribution logic |
+| `/admin/audit` | Audit log with rollback |
+
+### User Routes
+| Route | Purpose |
+|-------|---------|
+| `/app/identity` | Select identity (every login) |
+| `/app/calendar` | View shifts, vote preferences, request swaps |
+| `/app/export` | Download PNG (personal or full schedule) |
+
+### Auth
+| Route | Purpose |
+|-------|---------|
+| `/login` | Password-based event authentication |
+| `/` | Redirect to `/app/identity` or `/login` |
+
 ## Key Components
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| CalendarView | `/components/features/Calendar/` | Timeline/Grid shift display |
+| LaneCalendarView | `/components/features/LaneCalendar/` | Lane-based drag-drop calendar |
 | TemplatePalette | `/components/features/TemplatePalette/` | Draggable shift templates |
-| ModifySlotDialog | `/components/features/ModifySlotDialog/` | Review/edit before shift creation |
 | SwapInterface | `/components/features/SwapInterface/` | Shift swap UI |
 | AdminSidebar | `/components/layout/AdminSidebar.tsx` | Admin navigation |
 | UserSidebar | `/components/layout/UserSidebar.tsx` | User navigation |
 
-## Route Structure (Implemented v1.2)
+## LaneCalendarView Components
 
+| Component | Purpose |
+|-----------|---------|
+| `LaneCalendarView.tsx` | Main grid (lanes x days) |
+| `LaneDropZone.tsx` | Drop target with snap detection |
+| `ShiftBlock.tsx` | Shift visualization with resize/edit |
+| `DragPreview.tsx` | Real-time drag feedback |
+| `TimeRuler.tsx` | Time axis with 15-min ticks |
+| `ViewModeControls.tsx` | Day/week/custom toggle |
+| `CoverageOverlay.tsx` | Coverage heatmap layer |
+
+## Data Models
+
+| Model | Purpose |
+|-------|---------|
+| `Event` | Festival/event with dates and config |
+| `ShiftTemplate` | Reusable shift patterns with allowed lanes |
+| `Shift` | Actual shift instances |
+| `TeamMember` | Staff with dynamic attributes |
+| `Assignment` | Shift-to-member assignments |
+| `ShiftPreference` | User voting on shifts |
+| `AuditLog` | Change tracking |
+
+## Key Patterns
+
+- **API responses**: `{ data: ... }` wrapper, use `unwrapApiResponse()`
+- **Auth (client)**: `isAdminClient()` from `lib/auth-client.ts`
+- **Auth (server)**: `isAuthenticated()` from `lib/auth.ts`
+- **Cache invalidation**: `window.dispatchEvent(new CustomEvent('shiftaware:cache-invalidate'))`
+- **Snap behavior**: Templates snap to previous shift ends (30-min threshold)
+
+## Commands
+
+```bash
+npm run dev          # Start dev server (localhost:3000)
+npm run build        # Production build
+npm test             # Run unit tests
+npx playwright test  # Run E2E tests
+npx prisma studio    # Database GUI
+npx prisma migrate dev  # Run migrations
 ```
-/admin/*  (isAdmin cookie required)    /app/*  (authenticated)
-  /festival/setup                        /dashboard
-  /shifts/templates                      /calendar
-  /shifts/schedule                       /vote
-  /team/manage                           /profile
-  /allocation                            /swap
-  /coverage                              /export
-  /audit
-  /publish
-```
-
-## Data Flow
-
-1. **Festival Config** → defines date range, buffer days (`EventConfig.bufferDaysBefore/After`)
-2. **Templates** → reusable shift patterns (type, duration, capacity)
-3. **Scheduled Shifts** → templates placed on specific dates
-4. **Shifts** → actual shift instances with assignments
-5. **Preferences** → member voting on shift desirability
-6. **Assignments** → algorithm or manual placement of members
-
-## Database (Prisma)
-
-Core models: `Event`, `EventConfig`, `TeamMember`, `ShiftTemplate`, `ScheduledShift`, `Shift`, `Assignment`, `ShiftPreference`, `AuditLog`
-
-**Recent schema additions (v1.2):**
-- `TeamMember.isAdmin` - Role-based access control
-- `EventConfig.bufferDaysBefore/After` - Calendar display range
-
-## Constraints
-
-- Port: 3000 (dev)
-- DB: PostgreSQL on Docker (port 45432:5432)
-- Auth: Session cookie (`authenticated`) + role cookie (`user_role`) + middleware
-- No real names in main system (pseudonyms only)
-- All writes logged to AuditLog
-
-## Current Status (v1.4 - 2026-01-18)
-
-### Completed Features
-- ✅ Route structure: `/admin/*` (protected) and `/app/*` (user)
-- ✅ RBAC: Admin/User roles via cookies + middleware
-- ✅ Festival config: `/admin/festival/setup` with buffer days
-- ✅ Calendar: Timeline/Grid views, drag-drop templates (admin only)
-- ✅ User calendar: Read-only view at `/app/calendar`
-- ✅ Profile page: Settings persistence, role display
-- ✅ Algorithm transparency: Dashboard shows assignment engine status
-- ✅ Rich tooltips: Heatmap and calendar shift details
-- ✅ API consistency: All responses wrapped in `{ data: ... }`
-
-### Key Patterns
-- **API responses**: Always `{ data: ... }`, use `unwrapApiResponse()` in clients
-- **Auth check (client)**: `isAdminClient()` from `lib/auth-client.ts`
-- **Settings**: localStorage key `shiftaware:user-settings`
-- **Assignments**: `assignmentType` enum: ALGORITHM, MANUAL, RANDOM, SWAP
-
-## API Endpoints (Key)
-
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/events/current` | Active event with config |
-| `POST /api/events` | Create event (EntityType: EVENT) |
-| `GET /api/shifts` | Shifts with assignments, includes `assignmentType` |
-| `POST /api/shifts/templates/[id]/schedule` | Schedule template |
-| `GET /api/members/availability` | Heatmap data |
-| `POST /api/auth/logout` | End session |

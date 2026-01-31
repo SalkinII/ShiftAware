@@ -1,47 +1,44 @@
 # ShiftAware Documentation
 
-## Active Documentation
+## Quick Links
 
-| Document | Purpose | Lines |
-|----------|---------|-------|
-| [PROJECT-OVERVIEW.md](PROJECT-OVERVIEW.md) | Architecture, components, current status | ~110 |
-| [handoffs/260118_v1.4_critical_fixes_plan.md](handoffs/260118_v1.4_critical_fixes_plan.md) | Current session handoff | ~255 |
+| Document | Purpose |
+|----------|---------|
+| [PROJECT-OVERVIEW.md](PROJECT-OVERVIEW.md) | Architecture, routes, components, patterns |
+| [plans/2026-01-31-shiftaware-consolidation-design.md](plans/2026-01-31-shiftaware-consolidation-design.md) | v2.0 design decisions |
 
-## Quick Reference
+## Project Structure
 
-### Project Structure
 ```
 /app
-  /admin/*     # Admin routes (protected)
-  /app/*       # User routes
-  /api/*       # REST API
+  /admin/*     # Admin routes (4 pages)
+  /app/*       # User routes (3 pages)
+  /api/*       # REST API (25 endpoints)
 /components
-  /features/*  # CalendarView, Heatmap, etc.
+  /features/*  # LaneCalendar, TemplatePalette, etc.
   /layout/*    # Sidebars, Header
   /ui/*        # Shared UI components
 /lib
-  /services/*  # Business logic
+  /utils/*     # Snap logic, lane validation
+  /types/*     # TypeScript types
   auth.ts      # Server-side auth
   auth-client.ts # Client-side role check
-  api-errors.ts  # Error handling, unwrapApiResponse
+/prisma
+  schema.prisma # Database schema
 ```
 
-### Key Commands
+## Quick Start
+
 ```bash
-npm run dev          # Start dev server (localhost:3000)
-npm run build        # Production build
-npx prisma studio    # Database GUI
+# Install
+npm install
+
+# Database
+docker compose up db -d
+npx prisma migrate dev
+
+# Run
+npm run dev
 ```
 
-### Key Patterns
-- **API responses**: `{ data: ... }` wrapper, use `unwrapApiResponse()`
-- **Auth (client)**: `isAdminClient()` from `lib/auth-client.ts`
-- **Settings**: `localStorage.getItem("shiftaware:user-settings")`
-
-## Archived Documentation
-
-Historical planning documents are in `/docs/archive/`:
-- `ShiftAware_DevelopmentPlan/` - Original design specs (superseded by implementation)
-- `handoffs/archive/` - Previous session handoffs (v1.2, v1.3)
-
-These are kept for reference but are not maintained.
+Open [http://localhost:3000](http://localhost:3000)
