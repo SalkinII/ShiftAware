@@ -18,10 +18,27 @@ export default function IdentityPage() {
     router.push('/app/calendar');
   };
 
-  const handleCreateProfile = (profileData: any) => {
-    // In a real app, this would create the profile via API
-    console.log('Creating profile:', profileData);
-    router.push('/app/calendar');
+  const handleCreateProfile = async (profileData: any) => {
+    try {
+      const res = await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('selectedMemberId', data.data.id);
+        router.push('/app/calendar');
+      } else {
+        const error = await res.json();
+        console.error('Failed to create profile:', error);
+        alert(error.message || 'Failed to create profile');
+      }
+    } catch (error) {
+      console.error('Failed to create profile:', error);
+      alert('Failed to create profile');
+    }
   };
 
   return (

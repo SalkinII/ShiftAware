@@ -10,16 +10,16 @@ interface CreateProfileFormProps {
 
 interface ProfileData {
   alias: string;
+  avatarId: string;
   experienceLevel: string;
+  genderRole: string;
   capabilities: string[];
-  attributes: Record<string, any>;
 }
 
 const EXPERIENCE_LEVELS = [
-  { value: 'NEWBIE', label: 'Newbie' },
+  { value: 'JUNIOR', label: 'Junior' },
   { value: 'INTERMEDIATE', label: 'Intermediate' },
-  { value: 'EXPERIENCED', label: 'Experienced' },
-  { value: 'VETERAN', label: 'Veteran' },
+  { value: 'SENIOR', label: 'Senior' },
 ];
 
 const CAPABILITIES = [
@@ -31,9 +31,10 @@ const CAPABILITIES = [
 export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
   const [formData, setFormData] = useState<ProfileData>({
     alias: '',
-    experienceLevel: 'NEWBIE',
-    capabilities: [],
-    attributes: {},
+    avatarId: '😊',
+    experienceLevel: 'JUNIOR',
+    genderRole: 'unspecified',
+    capabilities: ['TEAM_MEMBER'],
   });
 
   const handleSubmit = (e: React.FormEvent) => {

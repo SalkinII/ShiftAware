@@ -71,8 +71,8 @@ export function MemberList({ onSelectMember }: MemberListProps) {
             )}
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                <User className="w-6 h-6 text-primary-600" />
+              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-2xl">
+                {member.avatarId || '👤'}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
