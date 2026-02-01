@@ -101,6 +101,13 @@ export default function UserCalendarPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [memberFilter, setMemberFilter] = useState<string>("all");
 
+  // Swap request state
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [swapFromAssignmentId, setSwapFromAssignmentId] = useState<
+    string | null
+  >(null);
+  const [availableShifts, setAvailableShifts] = useState<Shift[]>([]);
+
   const eventRange = useMemo(() => {
     if (shifts.length === 0) return null;
     const dates = shifts.map((shift) => shift.startTime.split("T")[0]).sort();
@@ -350,9 +357,78 @@ export default function UserCalendarPage() {
   }
 
   function handleRequestSwap(assignmentId: string) {
-    // TODO: Implement swap request API call
-    console.log("Request swap for assignment:", assignmentId);
-    // Would call: POST /api/assignments/swap { assignmentId }
+    setSwapFromAssignmentId(assignmentId);
+
+    // Find the assignment to get the current shift and event
+    const assignment = shifts
+      .flatMap((s) =>
+        (s.assignments || []).map((a) => ({
+          ...a,
+          shiftId: s.id,
+          eventId: s.event.id,
+          shift: s,
+        })),
+      )
+      .find((a) => a.id === assignmentId);
+
+    if (!assignment) {
+      toast.error("Assignment not found");
+      return;
+    }
+
+    // Fetch available shifts for swap (same event, different from current)
+    fetch(`/api/shifts?eventId=${assignment.eventId}`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          const allShifts = unwrapApiResponse<Shift[]>(data) || [];
+          // Filter out shifts user is already assigned to
+          const memberId =
+            typeof window !== "undefined"
+              ? localStorage.getItem("selectedMemberId")
+              : null;
+          const available = allShifts.filter(
+            (s) =>
+              s.id !== assignment.shiftId &&
+              !(s.assignments || []).some((a) => a.teamMember?.id === memberId),
+          );
+          setAvailableShifts(available);
+          setSwapModalOpen(true);
+        } else {
+          toast.error("Failed to load available shifts");
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch shifts:", error);
+        toast.error("Failed to load available shifts");
+      });
+  }
+
+  function handleSubmitSwapRequest(toShiftId: string) {
+    if (!swapFromAssignmentId) return;
+
+    fetch("/api/swap-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fromAssignmentId: swapFromAssignmentId,
+        toShiftId,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          toast.success("Swap request submitted");
+          setSwapModalOpen(false);
+          setSwapFromAssignmentId(null);
+        } else {
+          const error = await res.json();
+          toast.error(error.message || "Failed to submit swap request");
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to submit swap request:", error);
+        toast.error("Failed to submit swap request");
+      });
   }
 
   // Get current user ID from localStorage (set during identity selection)
@@ -737,6 +813,57 @@ export default function UserCalendarPage() {
                     className="bg-gray-100 text-gray-600 border-none hover:bg-gray-200 px-8 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs"
                   >
                     Close
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Swap Request Modal */}
+          {swapModalOpen && (
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+              <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden">
+                <div className="bg-primary-600 p-6 text-white">
+                  <h2 className="text-xl font-bold">Request Shift Swap</h2>
+                  <p className="text-primary-100 text-sm mt-1">
+                    Select the shift you'd like to swap to
+                  </p>
+                </div>
+                <div className="p-6 max-h-96 overflow-y-auto space-y-3">
+                  {availableShifts.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">
+                      No available shifts to swap to
+                    </p>
+                  ) : (
+                    availableShifts.map((shift) => (
+                      <button
+                        key={shift.id}
+                        onClick={() => handleSubmitSwapRequest(shift.id)}
+                        className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left"
+                      >
+                        <div className="font-bold text-gray-900">
+                          {shift.type.replace(/_/g, " ")}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {format(
+                            new Date(shift.startTime),
+                            "EEE, dd.MM.yyyy HH:mm",
+                          )}{" "}
+                          -{format(new Date(shift.endTime), "HH:mm")}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <div className="p-6 border-t border-gray-100 flex justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setSwapModalOpen(false);
+                      setSwapFromAssignmentId(null);
+                    }}
+                  >
+                    Cancel
                   </Button>
                 </div>
               </Card>
