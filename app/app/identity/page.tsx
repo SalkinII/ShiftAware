@@ -47,11 +47,36 @@ export default function IdentityPage() {
 
         // If eventId provided, create registration
         if (profileData.eventId) {
-          await fetch(`/api/events/${profileData.eventId}/registrations`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ memberId: newMemberId }),
-          });
+          const regRes = await fetch(
+            `/api/events/${profileData.eventId}/registrations`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ memberId: newMemberId }),
+            },
+          );
+
+          if (!regRes.ok) {
+            console.error("Failed to register for event");
+          }
+
+          // Save event-specific attributes
+          if (
+            profileData.attributes &&
+            Object.keys(profileData.attributes).length > 0
+          ) {
+            for (const [key, value] of Object.entries(profileData.attributes)) {
+              await fetch(`/api/members/${newMemberId}/attributes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  eventId: profileData.eventId,
+                  key,
+                  value,
+                }),
+              });
+            }
+          }
         }
 
         setSelectedMemberId(newMemberId);
