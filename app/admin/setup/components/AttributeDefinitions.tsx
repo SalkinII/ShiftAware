@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { AttributeFieldEditor } from '@/components/ui/AttributeFieldEditor';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { useToast } from '@/components/ui/Toast';
+import { unwrapApiResponse } from '@/lib/api-errors';
 
 interface AttributeDefinition {
   id: string;
@@ -15,138 +18,263 @@ interface AttributeDefinition {
   required: boolean;
 }
 
-const emptyAttribute: Omit<AttributeDefinition, 'id'> = {
-  name: '',
-  label: '',
-  type: 'BOOLEAN',
-  options: [],
-  required: false,
-};
+interface Event {
+  id: string;
+  name: string;
+}
 
 export function AttributeDefinitions() {
+  const toast = useToast();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [attributes, setAttributes] = useState<AttributeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | 'new' | null>(null);
-  const [formData, setFormData] = useState<Omit<AttributeDefinition, 'id'>>(emptyAttribute);
+  const [formData, setFormData] = useState({
+    name: '',
+    label: '',
+    type: 'BOOLEAN' as const,
+    options: [] as string[],
+    required: false,
+  });
+  const [optionsInput, setOptionsInput] = useState('');
 
-  // TODO: Load attributes from API
   useEffect(() => {
-    // Simulated API load - replace with actual API call
-    setAttributes([
-      {
-        id: '1',
-        name: 'can_drive',
-        label: 'Can Drive',
-        type: 'BOOLEAN',
-        options: [],
-        required: false,
-      },
-      {
-        id: '2',
-        name: 'shift_preference',
-        label: 'Shift Preference',
-        type: 'SELECT',
-        options: ['Morning', 'Afternoon', 'Evening', 'Night'],
-        required: false,
-      },
-    ]);
-    setLoading(false);
+    loadEvents();
   }, []);
 
-  const handleStartEdit = (attr: AttributeDefinition) => {
+  useEffect(() => {
+    if (selectedEventId) {
+      loadAttributes();
+    }
+  }, [selectedEventId]);
+
+  async function loadEvents() {
+    try {
+      const res = await fetch('/api/events');
+      if (res.ok) {
+        const data = await res.json();
+        const eventsList = unwrapApiResponse<Event[]>(data) || [];
+        setEvents(eventsList);
+        if (eventsList.length > 0) {
+          setSelectedEventId(eventsList[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load events:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadAttributes() {
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}/attributes`);
+      if (res.ok) {
+        const data = await res.json();
+        setAttributes(unwrapApiResponse<AttributeDefinition[]>(data) || []);
+      }
+    } catch (error) {
+      console.error('Failed to load attributes:', error);
+    }
+  }
+
+  function handleStartEdit(attr: AttributeDefinition) {
     setEditingId(attr.id);
     setFormData({
       name: attr.name,
       label: attr.label,
       type: attr.type,
-      options: [...attr.options],
+      options: attr.options,
       required: attr.required,
     });
-  };
+    setOptionsInput(attr.options.join(', '));
+  }
 
-  const handleStartNew = () => {
+  function handleStartNew() {
     setEditingId('new');
-    setFormData(emptyAttribute);
-  };
+    setFormData({ name: '', label: '', type: 'BOOLEAN', options: [], required: false });
+    setOptionsInput('');
+  }
 
-  const handleCancel = () => {
+  function handleCancel() {
     setEditingId(null);
-    setFormData(emptyAttribute);
-  };
+    setFormData({ name: '', label: '', type: 'BOOLEAN', options: [], required: false });
+    setOptionsInput('');
+  }
 
-  const handleSave = () => {
-    if (editingId === 'new') {
-      // TODO: Create attribute via API
-      const newAttr: AttributeDefinition = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setAttributes([...attributes, newAttr]);
-    } else if (editingId) {
-      // TODO: Update attribute via API
-      setAttributes(
-        attributes.map((attr) =>
-          attr.id === editingId ? { id: attr.id, ...formData } : attr
-        )
-      );
+  async function handleSave() {
+    if (!formData.name || !formData.label) {
+      toast.error('Name and label are required');
+      return;
     }
-    handleCancel();
-  };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this attribute? This will remove it from all team members.')) {
-      // TODO: Delete attribute via API
-      setAttributes(attributes.filter((attr) => attr.id !== id));
+    // Parse options from input - split, trim, filter empty
+    const options = optionsInput
+      .split(',')
+      .map(o => o.trim())
+      .filter(o => o.length > 0);
+
+    const payload = { ...formData, options };
+
+    try {
+      const url = editingId === 'new'
+        ? `/api/events/${selectedEventId}/attributes`
+        : `/api/events/${selectedEventId}/attributes/${editingId}`;
+
+      const method = editingId === 'new' ? 'POST' : 'PUT';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success(editingId === 'new' ? 'Attribute created' : 'Attribute updated');
+        loadAttributes();
+        handleCancel();
+      } else {
+        const error = await res.json();
+        toast.error(error.message || 'Failed to save attribute');
+      }
+    } catch (error) {
+      toast.error('Failed to save attribute');
     }
-  };
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this attribute? This will remove it from all team members.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}/attributes/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        toast.success('Attribute deleted');
+        loadAttributes();
+      } else {
+        const error = await res.json();
+        toast.error(error.message || 'Failed to delete attribute');
+      }
+    } catch (error) {
+      toast.error('Failed to delete attribute');
+    }
+  }
 
   if (loading) {
-    return <div className="text-gray-500">Loading attributes...</div>;
+    return <div className="text-gray-500">Loading...</div>;
+  }
+
+  if (events.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-gray-500">Create an event first before defining attributes.</p>
+      </Card>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Dynamic Attributes</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">Team Attributes</h3>
           <p className="text-sm text-gray-500">
-            Define custom attributes for team members. These can be used for filtering and
-            assignment logic.
+            Define custom attributes for team members for this event
           </p>
         </div>
-        {!editingId && (
-          <Button onClick={handleStartNew}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Attribute
-          </Button>
-        )}
+        <Select
+          value={selectedEventId}
+          onChange={(e) => setSelectedEventId(e.target.value)}
+          className="w-48"
+        >
+          {events.map(event => (
+            <option key={event.id} value={event.id}>{event.name}</option>
+          ))}
+        </Select>
       </div>
+
+      {!editingId && (
+        <Button onClick={handleStartNew}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Attribute
+        </Button>
+      )}
 
       {editingId && (
         <Card className="p-6 bg-gray-50">
           <h4 className="text-md font-bold text-gray-900 mb-4">
             {editingId === 'new' ? 'New Attribute' : 'Edit Attribute'}
           </h4>
-          <AttributeFieldEditor
-            value={formData}
-            onChange={setFormData}
-            onCancel={handleCancel}
-            onSave={handleSave}
-          />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Internal Name"
+                placeholder="e.g., can_drive"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value.toLowerCase().replace(/\s/g, '_') })}
+              />
+              <Input
+                label="Display Label"
+                placeholder="e.g., Can Drive"
+                value={formData.label}
+                onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Type"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+              >
+                <option value="BOOLEAN">Boolean (Yes/No)</option>
+                <option value="SELECT">Single Select</option>
+                <option value="MULTISELECT">Multi Select</option>
+                <option value="TEXT">Free Text</option>
+              </Select>
+              <div className="flex items-center gap-2 pt-6">
+                <input
+                  type="checkbox"
+                  id="required"
+                  checked={formData.required}
+                  onChange={(e) => setFormData({ ...formData, required: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="required" className="text-sm font-medium text-gray-700">Required</label>
+              </div>
+            </div>
+            {(formData.type === 'SELECT' || formData.type === 'MULTISELECT') && (
+              <Input
+                label="Options (comma-separated)"
+                placeholder="e.g., Morning, Afternoon, Evening"
+                value={optionsInput}
+                onChange={(e) => setOptionsInput(e.target.value)}
+              />
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={handleCancel}>
+                <X className="w-4 h-4 mr-1" /> Cancel
+              </Button>
+              <Button onClick={handleSave}>
+                <Save className="w-4 h-4 mr-1" /> Save
+              </Button>
+            </div>
+          </div>
         </Card>
       )}
 
       <div className="space-y-3">
         {attributes.length === 0 ? (
           <Card className="p-8 text-center">
-            <p className="text-gray-500">
-              No custom attributes defined yet. Click "Add Attribute" to create one.
-            </p>
+            <p className="text-gray-500">No attributes defined yet.</p>
           </Card>
         ) : (
           attributes.map((attr) => (
-            <Card key={attr.id} className="p-4 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex-1">
+            <Card key={attr.id} className="p-4 flex items-center justify-between">
+              <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-gray-900">{attr.label}</span>
                   {attr.required && (
@@ -154,7 +282,7 @@ export function AttributeDefinitions() {
                       REQUIRED
                     </span>
                   )}
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
                     {attr.type}
                   </span>
                 </div>
@@ -166,20 +294,10 @@ export function AttributeDefinitions() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleStartEdit(attr)}
-                  disabled={!!editingId}
-                >
+                <Button variant="ghost" size="sm" onClick={() => handleStartEdit(attr)} disabled={!!editingId}>
                   <Edit className="w-4 h-4 text-primary-600" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(attr.id)}
-                  disabled={!!editingId}
-                >
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(attr.id)} disabled={!!editingId}>
                   <Trash2 className="w-4 h-4 text-error-600" />
                 </Button>
               </div>
