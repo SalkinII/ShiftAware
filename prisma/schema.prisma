@@ -109,6 +109,7 @@ model TeamMember {
   auditLogs          AuditLog[]
   attributes         TeamMemberAttribute[]
   eventRegistrations EventRegistration[]
+  swapRequests       SwapRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -162,6 +163,27 @@ model EventTemplate {
   @@index([templateId])
 }
 
+model SwapRequest {
+  id               String       @id @default(cuid())
+  requesterId      String
+  requester        TeamMember   @relation(fields: [requesterId], references: [id])
+  fromAssignmentId String
+  fromAssignment   Assignment   @relation("SwapFrom", fields: [fromAssignmentId], references: [id])
+  toShiftId        String
+  toShift          Shift        @relation("SwapTo", fields: [toShiftId], references: [id])
+  status           SwapStatus   @default(PENDING)
+  matchedWithId    String?      @unique
+  matchedWith      SwapRequest? @relation("SwapMatch", fields: [matchedWithId], references: [id])
+  matchedBy        SwapRequest? @relation("SwapMatch")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([toShiftId])
+}
+
 model Shift {
   id      String @id @default(cuid())
   eventId String
@@ -178,8 +200,9 @@ model Shift {
   requiredRoles ShiftRole[]
   capacity      Int         @default(2)
 
-  preferences ShiftPreference[]
-  assignments Assignment[]
+  preferences    ShiftPreference[]
+  assignments    Assignment[]
+  swapRequestsTo SwapRequest[]     @relation("SwapTo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -227,6 +250,8 @@ model Assignment {
   assignmentType AssignmentType @default(ALGORITHM)
   algorithmScore Json?
   notes          String?
+
+  swapRequestsFrom SwapRequest[] @relation("SwapFrom")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
