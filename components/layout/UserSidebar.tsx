@@ -18,7 +18,6 @@ import {
 
 const navItems = [
   { label: "Calendar", href: "/app/calendar", icon: CalendarDays },
-  { label: "Export", href: "/app/export", icon: Download },
   { label: "Switch Identity", href: "/app/identity", icon: UserCircle },
 ];
 

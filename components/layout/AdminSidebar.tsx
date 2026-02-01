@@ -3,22 +3,17 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Settings,
-  Users,
-  History,
-  CalendarDays,
-} from "lucide-react";
+import { Settings, Users, History, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminItems = [
   { label: "Event Setup", href: "/admin/setup", icon: Settings },
-  { label: "Team Management", href: "/admin/team", icon: Users },
   {
     label: "Shift Schedule",
     href: "/admin/shifts/schedule",
     icon: CalendarDays,
   },
+  { label: "Team Management", href: "/admin/team", icon: Users },
   { label: "Audit Log", href: "/admin/audit", icon: History },
 ];
 
