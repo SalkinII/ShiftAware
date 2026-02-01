@@ -138,23 +138,16 @@ function MobileSidebar({
 
   // User navigation items (matching UserSidebar)
   const userNavItems = [
-    { label: "Dashboard", href: "/app/dashboard", icon: "📊" },
     { label: "Calendar", href: "/app/calendar", icon: "📆" },
-    { label: "Vote", href: "/app/vote", icon: "🗳️" },
-    { label: "Swap", href: "/app/swap", icon: "🔄" },
     { label: "Export", href: "/app/export", icon: "📥" },
-    { label: "Profile", href: "/app/profile", icon: "👤" },
+    { label: "Switch Identity", href: "/app/identity", icon: "👤" },
   ];
 
   // Admin navigation items (matching AdminSidebar)
   const adminNavItems = [
-    { label: "Festival Setup", href: "/admin/festival/setup", icon: "⚙️" },
-    { label: "Team Manage", href: "/admin/team/manage", icon: "👥" },
-    { label: "Shift Templates", href: "/admin/shifts/templates", icon: "⏰" },
+    { label: "Event Setup", href: "/admin/setup", icon: "⚙️" },
+    { label: "Team Management", href: "/admin/team", icon: "👥" },
     { label: "Shift Schedule", href: "/admin/shifts/schedule", icon: "📅" },
-    { label: "Allocation", href: "/admin/allocation", icon: "🎯" },
-    { label: "Coverage Gaps", href: "/admin/coverage", icon: "⚠️" },
-    { label: "Publish", href: "/admin/publish", icon: "📤" },
     { label: "Audit Log", href: "/admin/audit", icon: "📜" },
   ];
 
