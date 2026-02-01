@@ -3,12 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CalendarDays,
-  Download,
-  Settings,
-  UserCircle,
-} from "lucide-react";
+import { CalendarDays, Download, Settings, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdminClient } from "@/lib/auth-client";
 import {
