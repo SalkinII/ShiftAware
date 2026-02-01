@@ -128,6 +128,7 @@ model Event {
   scheduledShifts      ScheduledShift[]
   attributeDefinitions EventAttributeDefinition[]
   registrations        EventRegistration[]
+  templateAssignments  EventTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -145,6 +146,20 @@ model EventRegistration {
   @@unique([memberId, eventId])
   @@index([eventId])
   @@index([memberId])
+}
+
+model EventTemplate {
+  id         String        @id @default(cuid())
+  eventId    String
+  event      Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  templateId String
+  template   ShiftTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, templateId])
+  @@index([eventId])
+  @@index([templateId])
 }
 
 model Shift {
@@ -278,8 +293,9 @@ model ShiftTemplate {
   capacity          Int           @default(2)
   color             String? // For UI display
 
-  requiredRoles   ShiftTemplateRole[]
-  scheduledShifts ScheduledShift[]
+  requiredRoles    ShiftTemplateRole[]
+  scheduledShifts  ScheduledShift[]
+  eventAssignments EventTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
