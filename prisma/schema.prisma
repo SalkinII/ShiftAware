@@ -124,12 +124,13 @@ model Event {
   endDate   DateTime
   status    EventStatus @default(PLANNING)
 
-  shifts               Shift[]
-  config               EventConfig?
-  scheduledShifts      ScheduledShift[]
-  attributeDefinitions EventAttributeDefinition[]
-  registrations        EventRegistration[]
-  templateAssignments  EventTemplate[]
+  shifts                 Shift[]
+  config                 EventConfig?
+  scheduledShifts        ScheduledShift[]
+  attributeDefinitions   EventAttributeDefinition[]
+  registrations          EventRegistration[]
+  templateAssignments    EventTemplate[]
+  eventSpecificTemplates ShiftTemplate[]           @relation("EventSpecificTemplates")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -318,12 +319,18 @@ model ShiftTemplate {
   capacity          Int           @default(2)
   color             String? // For UI display
 
+  // Optional event for event-specific templates
+  eventId String?
+  event   Event?  @relation("EventSpecificTemplates", fields: [eventId], references: [id])
+
   requiredRoles    ShiftTemplateRole[]
   scheduledShifts  ScheduledShift[]
   eventAssignments EventTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([eventId])
 }
 
 model ShiftTemplateRole {
