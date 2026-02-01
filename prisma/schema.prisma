@@ -75,6 +75,25 @@ enum AttributeType {
   TEXT
 }
 
+enum RegistrationStatus {
+  REGISTERED
+  CONFIRMED
+  DECLINED
+}
+
+enum SwapStatus {
+  PENDING
+  MATCHED
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+enum PreferenceLevel {
+  WANT
+  DONT_WANT
+}
+
 model TeamMember {
   id              String          @id @default(cuid())
   alias           String          @unique
