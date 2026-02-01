@@ -229,7 +229,7 @@ model ShiftPreference {
   shiftId      String
   shift        Shift           @relation(fields: [shiftId], references: [id])
 
-  wantLevel PreferenceLevel
+  wantLevel PreferenceLevel @default(WANT)
   notes     String?
 
   createdAt DateTime @default(now())
