@@ -104,10 +104,11 @@ model TeamMember {
   isActive        Boolean         @default(true)
   isAdmin         Boolean         @default(false)
 
-  preferences ShiftPreference[]
-  assignments Assignment[]
-  auditLogs   AuditLog[]
-  attributes  TeamMemberAttribute[]
+  preferences        ShiftPreference[]
+  assignments        Assignment[]
+  auditLogs          AuditLog[]
+  attributes         TeamMemberAttribute[]
+  eventRegistrations EventRegistration[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -126,9 +127,24 @@ model Event {
   config               EventConfig?
   scheduledShifts      ScheduledShift[]
   attributeDefinitions EventAttributeDefinition[]
+  registrations        EventRegistration[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EventRegistration {
+  id           String             @id @default(cuid())
+  memberId     String
+  member       TeamMember         @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  eventId      String
+  event        Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status       RegistrationStatus @default(REGISTERED)
+  registeredAt DateTime           @default(now())
+
+  @@unique([memberId, eventId])
+  @@index([eventId])
+  @@index([memberId])
 }
 
 model Shift {
