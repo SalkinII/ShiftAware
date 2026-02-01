@@ -223,14 +223,14 @@ model ShiftRole {
 }
 
 model ShiftPreference {
-  id           String     @id @default(cuid())
+  id           String          @id @default(cuid())
   teamMemberId String
-  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id])
+  teamMember   TeamMember      @relation(fields: [teamMemberId], references: [id])
   shiftId      String
-  shift        Shift      @relation(fields: [shiftId], references: [id])
+  shift        Shift           @relation(fields: [shiftId], references: [id])
 
-  priority Int     @default(1)
-  notes    String?
+  wantLevel PreferenceLevel
+  notes     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
