@@ -76,9 +76,13 @@ export function TemplateManager() {
       );
       if (assignedRes.ok) {
         const data = await assignedRes.json();
-        const assigned = unwrapApiResponse<any[]>(data) || [];
+        const response = unwrapApiResponse<{
+          assigned: any[];
+          eventSpecific: any[];
+        }>(data);
+        const assignedList = response?.assigned || [];
         setAssignedTemplateIds(
-          new Set(assigned.map((a: any) => a.templateId || a.template?.id)),
+          new Set(assignedList.map((a: any) => a.id || a.templateId)),
         );
       }
     } catch (error) {
