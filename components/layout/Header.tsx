@@ -256,7 +256,7 @@ function MobileSidebar({
         {isAdmin && !isInAdminSection && (
           <div className="pt-4 border-t border-gray-100">
             <Link
-              href="/admin/festival/setup"
+              href="/admin/setup"
               onClick={onClose}
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
             >
@@ -269,7 +269,7 @@ function MobileSidebar({
         {isInAdminSection && (
           <div className="pt-4 border-t border-gray-100">
             <Link
-              href="/app/dashboard"
+              href="/app/calendar"
               onClick={onClose}
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
             >
