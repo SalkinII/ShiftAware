@@ -191,7 +191,11 @@ export function MemberListByEvent({
               Add Existing Member
             </h3>
             <div className="max-h-96 overflow-y-auto space-y-2">
-              {unregisteredMembers.length === 0 ? (
+              {allMembers.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  No members exist yet. Create members first.
+                </p>
+              ) : unregisteredMembers.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">
                   All members are already registered for this event
                 </p>
