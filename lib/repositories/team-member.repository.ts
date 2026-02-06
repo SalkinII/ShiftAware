@@ -26,7 +26,7 @@ export class TeamMemberRepository extends BaseRepository {
     try {
       return await prisma.teamMember.findMany({
         where,
-        orderBy: { name: "asc" },
+        orderBy: { alias: "asc" },
       });
     } catch (error) {
       throw this.handlePrismaError(error, "Failed to fetch members");
