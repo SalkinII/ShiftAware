@@ -35,4 +35,17 @@ export class MembersService {
   async softDeleteMember(id: string) {
     return this.repo.softDelete(id);
   }
+
+  // --- Attributes ---
+  async getAttributes(memberId: string, eventId?: string) {
+    return this.repo.getAttributes(memberId, eventId);
+  }
+
+  async findAttributeDefinition(eventId: string, name: string) {
+    return this.repo.findAttributeDefinition(eventId, name);
+  }
+
+  async upsertAttribute(memberId: string, definitionId: string, value: string) {
+    return this.repo.upsertAttribute(memberId, definitionId, value);
+  }
 }

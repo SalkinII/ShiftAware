@@ -11,6 +11,13 @@ vi.mock("@/lib/db", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    teamMemberAttribute: {
+      findMany: vi.fn(),
+      upsert: vi.fn(),
+    },
+    eventAttributeDefinition: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -223,6 +230,131 @@ describe("TeamMemberRepository", () => {
     expect(prisma.teamMember.update).toHaveBeenCalledWith({
       where: { id: "member-1" },
       data: { isActive: false },
+    });
+  });
+
+  // --- Attribute methods tests ---
+  it("should get member attributes", async () => {
+    const mockAttributes = [
+      {
+        id: "attr-1",
+        teamMemberId: "member-1",
+        definitionId: "def-1",
+        value: '{"size": "M"}',
+        definition: {
+          id: "def-1",
+          eventId: "event-1",
+          name: "T-Shirt Size",
+          type: "SELECT",
+        },
+      },
+    ];
+
+    vi.mocked(prisma.teamMemberAttribute.findMany).mockResolvedValue(
+      mockAttributes,
+    );
+
+    const result = await repo.getAttributes("member-1");
+
+    expect(result).toEqual(mockAttributes);
+    expect(prisma.teamMemberAttribute.findMany).toHaveBeenCalledWith({
+      where: { memberId: "member-1" },
+      include: { definition: true },
+    });
+  });
+
+  it("should get member attributes filtered by eventId", async () => {
+    const mockAttributes = [
+      {
+        id: "attr-1",
+        teamMemberId: "member-1",
+        definitionId: "def-1",
+        value: '{"size": "M"}',
+        definition: {
+          id: "def-1",
+          eventId: "event-1",
+          name: "T-Shirt Size",
+          type: "SELECT",
+        },
+      },
+    ];
+
+    vi.mocked(prisma.teamMemberAttribute.findMany).mockResolvedValue(
+      mockAttributes,
+    );
+
+    const result = await repo.getAttributes("member-1", "event-1");
+
+    expect(result).toEqual(mockAttributes);
+    expect(prisma.teamMemberAttribute.findMany).toHaveBeenCalledWith({
+      where: { memberId: "member-1", definition: { eventId: "event-1" } },
+      include: { definition: true },
+    });
+  });
+
+  it("should find attribute definition", async () => {
+    const mockDefinition = {
+      id: "def-1",
+      eventId: "event-1",
+      name: "Dietary Requirements",
+      type: "TEXT",
+      createdAt: new Date(),
+    };
+
+    vi.mocked(prisma.eventAttributeDefinition.findFirst).mockResolvedValue(
+      mockDefinition,
+    );
+
+    const result = await repo.findAttributeDefinition(
+      "event-1",
+      "Dietary Requirements",
+    );
+
+    expect(result).toEqual(mockDefinition);
+    expect(prisma.eventAttributeDefinition.findFirst).toHaveBeenCalledWith({
+      where: { eventId: "event-1", name: "Dietary Requirements" },
+    });
+  });
+
+  it("should upsert member attribute", async () => {
+    const mockAttribute = {
+      id: "attr-2",
+      teamMemberId: "member-1",
+      definitionId: "def-1",
+      value: '{"dietary": "vegan"}',
+      definition: {
+        id: "def-1",
+        eventId: "event-1",
+        name: "Dietary Requirements",
+        type: "TEXT",
+      },
+    };
+
+    vi.mocked(prisma.teamMemberAttribute.upsert).mockResolvedValue(
+      mockAttribute,
+    );
+
+    const result = await repo.upsertAttribute(
+      "member-1",
+      "def-1",
+      '{"dietary": "vegan"}',
+    );
+
+    expect(result).toEqual(mockAttribute);
+    expect(prisma.teamMemberAttribute.upsert).toHaveBeenCalledWith({
+      where: {
+        teamMemberId_definitionId: {
+          teamMemberId: "member-1",
+          definitionId: "def-1",
+        },
+      },
+      update: { value: '{"dietary": "vegan"}' },
+      create: {
+        teamMemberId: "member-1",
+        definitionId: "def-1",
+        value: '{"dietary": "vegan"}',
+      },
+      include: { definition: true },
     });
   });
 });

@@ -104,4 +104,48 @@ export class TeamMemberRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to soft-delete member");
     }
   }
+
+  // --- TeamMemberAttribute methods ---
+  async getAttributes(memberId: string, eventId?: string) {
+    try {
+      const where: any = { memberId };
+      if (eventId) {
+        where.definition = { eventId };
+      }
+      return await prisma.teamMemberAttribute.findMany({
+        where,
+        include: { definition: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch member attributes");
+    }
+  }
+
+  async findAttributeDefinition(eventId: string, name: string) {
+    try {
+      return await prisma.eventAttributeDefinition.findFirst({
+        where: { eventId, name },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(
+        error,
+        "Failed to find attribute definition",
+      );
+    }
+  }
+
+  async upsertAttribute(memberId: string, definitionId: string, value: string) {
+    try {
+      return await prisma.teamMemberAttribute.upsert({
+        where: {
+          teamMemberId_definitionId: { teamMemberId: memberId, definitionId },
+        },
+        update: { value },
+        create: { teamMemberId: memberId, definitionId, value },
+        include: { definition: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to upsert member attribute");
+    }
+  }
 }
