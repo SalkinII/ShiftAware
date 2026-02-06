@@ -17,14 +17,13 @@ enum ExperienceLevel {
 enum Role {
   TEAM_MEMBER
   SHIFT_LEAD
-  EXECUTIVE
+  SUPER
 }
 
 enum ShiftType {
-  MOBILE_TEAM_1
-  MOBILE_TEAM_2
+  MOBILE_TEAM
   STATIONARY
-  EXECUTIVE
+  SUPER
   BUFFER
   EXTENDED
 }

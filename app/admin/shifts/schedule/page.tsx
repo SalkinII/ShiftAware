@@ -96,7 +96,7 @@ export default function ShiftsPage() {
   });
   const [formData, setFormData] = useState({
     eventId: "",
-    type: "MOBILE_TEAM_1" as ShiftType,
+    type: "MOBILE_TEAM" as ShiftType,
     startTime: "",
     endTime: "",
     durationMinutes: 360,
@@ -504,7 +504,7 @@ export default function ShiftsPage() {
         // Reset form
         setFormData({
           eventId: events.length > 0 ? events[0].id : "",
-          type: "MOBILE_TEAM_1" as ShiftType,
+          type: "MOBILE_TEAM" as ShiftType,
           startTime: "",
           endTime: "",
           durationMinutes: 360,
@@ -697,13 +697,11 @@ export default function ShiftsPage() {
 
   const getShiftTypeColor = (type: ShiftType) => {
     switch (type) {
-      case "MOBILE_TEAM_1":
+      case "MOBILE_TEAM":
         return "bg-blue-500";
-      case "MOBILE_TEAM_2":
-        return "bg-purple-500";
       case "STATIONARY":
         return "bg-success-500";
-      case "EXECUTIVE":
+      case "SUPER":
         return "bg-accent-500";
       default:
         return "bg-gray-400";
@@ -1039,10 +1037,9 @@ export default function ShiftsPage() {
                     }
                     className="bg-gray-50 border-gray-100 font-medium"
                   >
-                    <option value="MOBILE_TEAM_1">Mobile Team 1</option>
-                    <option value="MOBILE_TEAM_2">Mobile Team 2</option>
+                    <option value="MOBILE_TEAM">Mobile Team</option>
                     <option value="STATIONARY">Stationary</option>
-                    <option value="EXECUTIVE">Executive</option>
+                    <option value="SUPER">SUPER</option>
                   </Select>
 
                   <div className="grid grid-cols-1 gap-4">
@@ -1225,17 +1222,7 @@ export default function ShiftsPage() {
                       <span className="text-gray-600">M1:</span>
                       <span className="font-bold">
                         {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM_1")
-                            .length
-                        }
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                      <span className="text-gray-600">M2:</span>
-                      <span className="font-bold">
-                        {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM_2")
+                          shifts.filter((s) => s.type === "MOBILE_TEAM")
                             .length
                         }
                       </span>
@@ -1251,7 +1238,7 @@ export default function ShiftsPage() {
                       <div className="w-2 h-2 rounded-full bg-accent-500"></div>
                       <span className="text-gray-600">EX:</span>
                       <span className="font-bold">
-                        {shifts.filter((s) => s.type === "EXECUTIVE").length}
+                        {shifts.filter((s) => s.type === "SUPER").length}
                       </span>
                     </div>
                   </div>
@@ -1285,19 +1272,7 @@ export default function ShiftsPage() {
                       </span>
                       <span className="text-sm font-black text-gray-900">
                         {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM_1")
-                            .length
-                        }
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>{" "}
-                        Mobile 2
-                      </span>
-                      <span className="text-sm font-black text-gray-900">
-                        {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM_2")
+                          shifts.filter((s) => s.type === "MOBILE_TEAM")
                             .length
                         }
                       </span>

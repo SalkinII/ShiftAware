@@ -78,7 +78,7 @@ export function DistributionSettings() {
   const handleAddRule = () => {
     const newRule: AttributeRule = {
       id: Date.now().toString(),
-      shiftType: "EXECUTIVE",
+      shiftType: "SUPER",
       attribute: "experience_level",
       operator: "EQUALS",
       value: "",
@@ -310,9 +310,8 @@ export function DistributionSettings() {
                     value={rule.shiftType}
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="EXECUTIVE">Executive</option>
-                    <option value="MOBILE_TEAM_1">Mobile Team 1</option>
-                    <option value="MOBILE_TEAM_2">Mobile Team 2</option>
+                    <option value="SUPER">SUPER</option>
+                    <option value="MOBILE_TEAM">Mobile Team</option>
                     <option value="STATIONARY">Stationary</option>
                   </select>
 
@@ -354,8 +353,8 @@ export function DistributionSettings() {
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Example: "EXECUTIVE requires experience_level = Senior" ensures only
-          senior members are assigned to executive shifts.
+          Example: "SUPER requires experience_level = Senior" ensures only
+          senior members are assigned to SUPER shifts.
         </p>
       </Card>
 

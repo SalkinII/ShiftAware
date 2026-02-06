@@ -21,14 +21,14 @@ CREATE TABLE shifts (
   id SERIAL PRIMARY KEY,
   start_time TIMESTAMP NOT NULL,
   end_time TIMESTAMP NOT NULL,
-  shift_type VARCHAR(50) NOT NULL, -- 'mobile_1', 'mobile_2', 'stationary', 'executive'
+  shift_type VARCHAR(50) NOT NULL, -- 'mobile_1', 'mobile_2', 'stationary', 'SUPER'
   priority INTEGER DEFAULT 0, -- Higher = more important (core event = highest)
   is_core_event BOOLEAN DEFAULT FALSE, -- Thursday-Monday midday
   required_people INTEGER NOT NULL, -- 1 or 2
   requires_shift_lead BOOLEAN DEFAULT FALSE, -- For stationary shift
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
-  CONSTRAINT check_shift_type CHECK (shift_type IN ('mobile_1', 'mobile_2', 'stationary', 'executive')),
+  CONSTRAINT check_shift_type CHECK (shift_type IN ('mobile_1', 'mobile_2', 'stationary', 'SUPER')),
   CONSTRAINT check_required_people CHECK (required_people IN (1, 2))
 );
 

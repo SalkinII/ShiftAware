@@ -160,7 +160,7 @@ const teamMembers = [
     avatarId: "🐺",
     experienceLevel: "SENIOR",
     genderRole: "M_NB",
-    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Bear",
@@ -174,7 +174,7 @@ const teamMembers = [
     avatarId: "🦅",
     experienceLevel: "SENIOR",
     genderRole: "M_NB",
-    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Hawk",
@@ -188,14 +188,14 @@ const teamMembers = [
     avatarId: "🦁",
     experienceLevel: "SENIOR",
     genderRole: "M_NB",
-    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Tiger",
     avatarId: "🐯",
     experienceLevel: "SENIOR",
     genderRole: "FLINTA",
-    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Falcon",
@@ -216,14 +216,14 @@ const teamMembers = [
     avatarId: "🐆",
     experienceLevel: "SENIOR",
     genderRole: "M_NB",
-    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Jaguar",
     avatarId: "🐆",
     experienceLevel: "SENIOR",
     genderRole: "FLINTA",
-    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.EXECUTIVE],
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
 ];
 
@@ -281,30 +281,12 @@ function generateShifts() {
       ],
     });
 
-    // Afternoon mobile team 1 (12pm-6pm)
+    // Afternoon Mobile Team (12pm-6pm)
     shifts.push({
       id: `shift_core_${date}_mobile1_afternoon`,
-      type: ShiftType.MOBILE_TEAM_1,
+      type: ShiftType.MOBILE_TEAM,
       startTime: `${date}T12:00:00.000Z`,
       endTime: `${date}T18:00:00.000Z`,
-      durationMinutes: 360,
-      priority: ShiftPriority.CORE,
-      desirabilityScore: 4,
-      capacity: 2,
-      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
-    });
-
-    // Evening mobile team 2 (6pm-12am, ends next day)
-    const eveningStart = new Date(`${date}T18:00:00.000Z`);
-    const eveningEnd = new Date(eveningStart);
-    eveningEnd.setDate(eveningEnd.getDate() + 1);
-    eveningEnd.setHours(0, 0, 0, 0);
-    const eveningEndDateStr = eveningEnd.toISOString().split("T")[0];
-    shifts.push({
-      id: `shift_core_${date}_mobile2_evening`,
-      type: ShiftType.MOBILE_TEAM_2,
-      startTime: `${date}T18:00:00.000Z`,
-      endTime: `${eveningEndDateStr}T00:00:00.000Z`,
       durationMinutes: 360,
       priority: ShiftPriority.CORE,
       desirabilityScore: 4,
@@ -319,7 +301,7 @@ function generateShifts() {
     const nextDateStr = nightEnd.toISOString().split("T")[0];
     shifts.push({
       id: `shift_core_${date}_night`,
-      type: ShiftType.MOBILE_TEAM_1,
+      type: ShiftType.MOBILE_TEAM,
       startTime: `${date}T00:00:00.000Z`,
       endTime: `${nextDateStr}T06:00:00.000Z`,
       durationMinutes: 360,
@@ -330,18 +312,18 @@ function generateShifts() {
     });
   });
 
-  // Executive shifts for core days
+  // SUPER shifts for core days
   coreDates.forEach(({ date }) => {
     shifts.push({
-      id: `shift_core_${date}_executive`,
-      type: ShiftType.EXECUTIVE,
+      id: `shift_core_${date}_SUPER`,
+      type: ShiftType.SUPER,
       startTime: `${date}T08:00:00.000Z`,
       endTime: `${date}T20:00:00.000Z`,
       durationMinutes: 720,
       priority: ShiftPriority.CORE,
       desirabilityScore: 3,
       capacity: 1,
-      requiredRoles: [{ role: Role.EXECUTIVE, count: 1 }],
+      requiredRoles: [{ role: Role.SUPER, count: 1 }],
     });
   });
 
@@ -370,7 +352,7 @@ function generateShifts() {
       const eveningEndDateStr = eveningEnd.toISOString().split("T")[0];
       shifts.push({
         id: `shift_buffer_${date}_evening`,
-        type: ShiftType.MOBILE_TEAM_1,
+        type: ShiftType.MOBILE_TEAM,
         startTime: `${date}T18:00:00.000Z`,
         endTime: `${eveningEndDateStr}T00:00:00.000Z`,
         durationMinutes: 360,

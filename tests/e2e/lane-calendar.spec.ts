@@ -12,10 +12,10 @@ test.describe("LaneCalendarView", () => {
     await page.goto("/admin/shifts/schedule");
     await page.click('button[title="Calendar view"]');
 
-    await expect(page.getByText("Mobile Team 1")).toBeVisible();
+    await expect(page.getByText("Mobile Team")).toBeVisible();
     await expect(page.getByText("Mobile Team 2")).toBeVisible();
     await expect(page.getByText("Stationary")).toBeVisible();
-    await expect(page.getByText("Executive")).toBeVisible();
+    await expect(page.getByText("SUPER")).toBeVisible();
     await expect(page.getByText("Extended Service")).toBeVisible();
   });
 

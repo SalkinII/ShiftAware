@@ -7,17 +7,16 @@ describe("LANE_CONFIG", () => {
   });
 
   it("should include all shift types", () => {
-    expect(LANE_CONFIG.MOBILE_TEAM_1).toBeDefined();
-    expect(LANE_CONFIG.MOBILE_TEAM_2).toBeDefined();
+    expect(LANE_CONFIG.MOBILE_TEAM).toBeDefined();
     expect(LANE_CONFIG.STATIONARY).toBeDefined();
-    expect(LANE_CONFIG.EXECUTIVE).toBeDefined();
+    expect(LANE_CONFIG.SUPER).toBeDefined();
     expect(LANE_CONFIG.EXTENDED).toBeDefined();
   });
 });
 
 describe("getLaneColor", () => {
   it("should return color for known lane", () => {
-    expect(getLaneColor("MOBILE_TEAM_1")).toBe("#0ea5e9");
+    expect(getLaneColor("MOBILE_TEAM")).toBe("#0ea5e9");
   });
 
   it("should return default for unknown lane", () => {
@@ -27,7 +26,7 @@ describe("getLaneColor", () => {
 
 describe("getLaneLabel", () => {
   it("should return friendly label", () => {
-    expect(getLaneLabel("MOBILE_TEAM_1")).toBe("Mobile Team 1");
+    expect(getLaneLabel("MOBILE_TEAM")).toBe("Mobile Team");
     expect(getLaneLabel("EXTENDED")).toBe("Extended Service");
   });
 });

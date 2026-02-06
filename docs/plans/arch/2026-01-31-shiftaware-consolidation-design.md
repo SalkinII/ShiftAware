@@ -82,7 +82,7 @@ Consolidate ShiftAware from 14 pages to 7, fix LaneCalendarView issues, and esta
 ├───────┼────────┼────────┼────────┤
 │ STATIONARY lane                   │
 ├───────┼────────┼────────┼────────┤
-│ EXECUTIVE lane                    │
+│ SUPER lane                    │
 ├───────┼────────┼────────┼────────┤
 │ EXTENDED lane                     │
 ├───────┼────────┼────────┼────────┤
@@ -169,7 +169,7 @@ Admin configures in Setup page:
 
 - Users see these fields when creating their profile
 - Admin can edit any member's attributes
-- Distribution algorithm uses attributes for matching (e.g., "EXECUTIVE requires experience = senior")
+- Distribution algorithm uses attributes for matching (e.g., "SUPER requires experience = senior")
 
 ---
 
@@ -188,7 +188,7 @@ Admin configures in Setup page:
 |---------|---------|
 | **Fairness weight** | How much to prioritize equal shift counts |
 | **Preference weight** | How much to honor "I want this" votes |
-| **Attribute rules** | e.g., "EXECUTIVE shifts require experience = senior" |
+| **Attribute rules** | e.g., "SUPER shifts require experience = senior" |
 | **Constraints** | Max shifts per person, min rest between shifts |
 
 ### Transparency for Users
@@ -230,7 +230,7 @@ Admin configures in Setup page:
 ## Template-to-Lane Validation
 
 - Each shift template defines which lane(s) it can be dropped into
-- Example: "Mobile Team" template → allowed in MOBILE_TEAM_1 or MOBILE_TEAM_2
+- Example: "Mobile Team" template → allowed in MOBILE_TEAM
 - Invalid drops are silently ignored (no toast, no shift created)
 - Shifts can be resized/repositioned after creation (template is just a starting point)
 

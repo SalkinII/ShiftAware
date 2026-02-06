@@ -868,7 +868,7 @@ export function TemplateManager() {
   const [editingId, setEditingId] = useState<string | 'new' | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'MOBILE_TEAM_1',
+    type: 'MOBILE_TEAM',
     durationMinutes: 360,
     startTime: '08:00',
     priority: 'CORE',
@@ -897,7 +897,7 @@ export function TemplateManager() {
     setEditingId('new');
     setFormData({
       name: '',
-      type: 'MOBILE_TEAM_1',
+      type: 'MOBILE_TEAM',
       durationMinutes: 360,
       startTime: '08:00',
       priority: 'CORE',
@@ -1004,7 +1004,7 @@ export function TemplateManager() {
           <div className="space-y-4">
             <Input
               label="Template Name"
-              placeholder="e.g., Mobile Team 1 - Morning"
+              placeholder="e.g., Mobile Team - Morning"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
@@ -1014,10 +1014,9 @@ export function TemplateManager() {
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
-                <option value="MOBILE_TEAM_1">Mobile Team 1</option>
-                <option value="MOBILE_TEAM_2">Mobile Team 2</option>
+                <option value="MOBILE_TEAM">Mobile Team</option>
                 <option value="STATIONARY">Stationary</option>
-                <option value="EXECUTIVE">Executive</option>
+                <option value="SUPER">SUPER</option>
               </Select>
               <Select
                 label="Priority"

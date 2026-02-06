@@ -285,7 +285,7 @@ All views use proportional time positioning - shifts appear at correct horizonta
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Mobile Team 1 • Jun 15 • 08:00-14:00                            │
+│ Mobile Team • Jun 15 • 08:00-14:00                            │
 │ ┌─────────┐ ┌─────────────┐ ┌───────────────────┐               │
 │ │ 👍 Want │ │ 👎 Don't    │ │ 🔄 Request Swap  │               │
 │ └─────────┘ └─────────────┘ └───────────────────┘               │

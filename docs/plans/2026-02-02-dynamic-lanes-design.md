@@ -12,7 +12,6 @@
 1. **Hardcoded lanes** in `lib/types/lane.ts` with fixed `LANE_CONFIG`
 2. **Enum mismatches** between schema and code:
    - Schema: `MOBILE_TEAM`, `STATIONARY`, `SHIFT_LEAD`, `SUPER`, `BUFFER`, `EXTENDED`
-   - Code uses: `MOBILE_TEAM_1`, `MOBILE_TEAM_2`, `EXECUTIVE` (invalid)
 3. **Stale data** in database showing old festivals in dropdowns
 4. **Missing link** between Shift and ShiftTemplate for lane mapping
 
@@ -107,9 +106,8 @@ enum Role {
 | Old (invalid) | New (valid) |
 |---------------|-------------|
 | `MOBILE_TEAM_1` | `MOBILE_TEAM` |
-| `MOBILE_TEAM_2` | `MOBILE_TEAM` |
 | `EXECUTIVE` | `SUPER` |
-| `Role.EXECUTIVE` | `Role.SUPER` |
+| `Role.SUPER` | `Role.SUPER` |
 
 ---
 
