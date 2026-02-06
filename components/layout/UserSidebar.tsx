@@ -3,11 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CalendarDays,
-  Download,
-  Settings,
-} from "lucide-react";
+import { CalendarDays, Download, Settings, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdminClient } from "@/lib/auth-client";
 import {
@@ -17,7 +13,7 @@ import {
 
 const navItems = [
   { label: "Calendar", href: "/app/calendar", icon: CalendarDays },
-  { label: "Export", href: "/app/export", icon: Download },
+  { label: "Switch Identity", href: "/app/identity", icon: UserCircle },
 ];
 
 export function UserSidebar() {

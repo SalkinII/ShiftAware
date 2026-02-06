@@ -5,6 +5,9 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAdminClient } from "@/lib/auth-client";
+import { EventSelector } from "@/components/ui/EventSelector";
+import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useMemberContext } from "@/lib/hooks/useMemberContext";
 import {
   useCurrentEvent,
   formatEventDateRange,
@@ -22,8 +25,19 @@ interface HeaderProps {
 
 export function Header({ alias, avatarEmoji }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const { selectedMember } = useMemberContext();
+  const isAdminRoute = pathname?.startsWith("/admin");
+  const {
+    selectedEventId,
+    selectedEvent,
+    events,
+    setSelectedEventId,
+    loading: eventsLoading,
+  } = useEventContext(isAdminRoute);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
@@ -34,10 +48,18 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
   const displayEmoji =
     avatarEmoji ?? (isAdmin ? EMOJI_ADMIN : EMOJI_DEFAULT_USER);
 
+  // Build identity display string
+  const identityDisplay = selectedMember
+    ? `${selectedMember.avatarId} ${selectedMember.alias}`
+    : null;
+
   const handleLogout = async () => {
     try {
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (res.ok) {
+        localStorage.removeItem("selectedMemberId");
+        localStorage.removeItem("selectedEventId");
+        localStorage.removeItem("adminSelectedEventId");
         router.push("/login");
       }
     } catch (error) {
@@ -71,7 +93,29 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
           </h1>
         </div>
 
+        {/* Center: Event Selector (admin only) */}
+        {isAdminRoute && !eventsLoading && (
+          <div className="hidden md:flex items-center">
+            <EventSelector
+              events={events}
+              selectedEventId={selectedEventId}
+              onSelect={setSelectedEventId}
+              placeholder="Select event..."
+            />
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
+          {/* Identity display */}
+          {identityDisplay && (
+            <Link
+              href="/app/identity"
+              className="hidden md:flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <span>{identityDisplay}</span>
+            </Link>
+          )}
+
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-2xl shadow-inner border border-primary-100">
               {displayEmoji}
@@ -112,6 +156,9 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
       <MobileSidebar
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
+        events={events}
+        selectedEventId={selectedEventId}
+        onSelectEvent={setSelectedEventId}
       />
     </>
   );
@@ -121,9 +168,15 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
 function MobileSidebar({
   isOpen,
   onClose,
+  events,
+  selectedEventId,
+  onSelectEvent,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  events: any[];
+  selectedEventId: string | null;
+  onSelectEvent: (id: string) => void;
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -138,23 +191,15 @@ function MobileSidebar({
 
   // User navigation items (matching UserSidebar)
   const userNavItems = [
-    { label: "Dashboard", href: "/app/dashboard", icon: "📊" },
     { label: "Calendar", href: "/app/calendar", icon: "📆" },
-    { label: "Vote", href: "/app/vote", icon: "🗳️" },
-    { label: "Swap", href: "/app/swap", icon: "🔄" },
-    { label: "Export", href: "/app/export", icon: "📥" },
-    { label: "Profile", href: "/app/profile", icon: "👤" },
+    { label: "Switch Identity", href: "/app/identity", icon: "👤" },
   ];
 
   // Admin navigation items (matching AdminSidebar)
   const adminNavItems = [
-    { label: "Festival Setup", href: "/admin/festival/setup", icon: "⚙️" },
-    { label: "Team Manage", href: "/admin/team/manage", icon: "👥" },
-    { label: "Shift Templates", href: "/admin/shifts/templates", icon: "⏰" },
+    { label: "Event Setup", href: "/admin/setup", icon: "⚙️" },
     { label: "Shift Schedule", href: "/admin/shifts/schedule", icon: "📅" },
-    { label: "Allocation", href: "/admin/allocation", icon: "🎯" },
-    { label: "Coverage Gaps", href: "/admin/coverage", icon: "⚠️" },
-    { label: "Publish", href: "/admin/publish", icon: "📤" },
+    { label: "Team Management", href: "/admin/team", icon: "👥" },
     { label: "Audit Log", href: "/admin/audit", icon: "📜" },
   ];
 
@@ -211,7 +256,7 @@ function MobileSidebar({
         {isAdmin && !isInAdminSection && (
           <div className="pt-4 border-t border-gray-100">
             <Link
-              href="/admin/festival/setup"
+              href="/admin/setup"
               onClick={onClose}
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
             >
@@ -224,7 +269,7 @@ function MobileSidebar({
         {isInAdminSection && (
           <div className="pt-4 border-t border-gray-100">
             <Link
-              href="/app/dashboard"
+              href="/app/calendar"
               onClick={onClose}
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
             >

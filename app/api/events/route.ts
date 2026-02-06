@@ -6,25 +6,8 @@ import {
   createUnauthorizedResponse,
   createForbiddenResponse,
 } from "@/lib/api-errors";
-import { z } from "zod";
-
-// Validation schema for creating an event
-const createEventSchema = z
-  .object({
-    name: z.string().min(1, "Event name is required").max(100),
-    startDate: z
-      .string()
-      .refine((d) => !isNaN(Date.parse(d)), "Invalid start date"),
-    endDate: z
-      .string()
-      .refine((d) => !isNaN(Date.parse(d)), "Invalid end date"),
-    bufferDaysBefore: z.number().int().min(0).max(30).default(1),
-    bufferDaysAfter: z.number().int().min(0).max(30).default(1),
-  })
-  .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
-    message: "End date must be after start date",
-    path: ["endDate"],
-  });
+import { createEventSchema } from "@/lib/validations/event";
+import { EventsService } from "@/lib/services/events.service";
 
 export async function GET() {
   try {
@@ -33,17 +16,8 @@ export async function GET() {
       return createUnauthorizedResponse();
     }
 
-    const events = await prisma.event.findMany({
-      include: {
-        config: true,
-        _count: {
-          select: {
-            shifts: true,
-          },
-        },
-      },
-      orderBy: { startDate: "desc" },
-    });
+    const service = new EventsService();
+    const events = await service.listEventsWithStats();
 
     return createSuccessResponse(events);
   } catch (error) {
@@ -78,52 +52,46 @@ export async function POST(request: Request) {
     const { name, startDate, endDate, bufferDaysBefore, bufferDaysAfter } =
       validation.data;
 
-    // Create event with config in a transaction
-    const event = await prisma.$transaction(async (tx) => {
-      const newEvent = await tx.event.create({
-        data: {
-          name,
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-          status: "PLANNING",
-        },
-      });
+    const service = new EventsService();
 
-      await tx.eventConfig.create({
-        data: {
-          eventId: newEvent.id,
-          minShiftsPerPerson: 2,
-          bufferDaysBefore,
-          bufferDaysAfter,
-          algorithmWeights: {
-            preferenceMatch: 0.35,
-            experienceBalance: 0.25,
-            workloadFairness: 0.15,
-            coreShiftCoverage: 0.05,
-          },
-          balanceThresholds: {
-            minGenderBalance: 0.3,
-            minExperienceMix: true,
-            maxConsecutiveShifts: 3,
-          },
-          autoAssignUnfilled: true,
+    // Create event with config
+    const event = await service.createEventWithConfig(
+      {
+        name,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        status: "PLANNING",
+      },
+      {
+        minShiftsPerPerson: 2,
+        bufferDaysBefore,
+        bufferDaysAfter,
+        algorithmWeights: {
+          preferenceMatch: 0.35,
+          experienceBalance: 0.25,
+          workloadFairness: 0.15,
+          coreShiftCoverage: 0.05,
         },
-      });
-
-      // Log the action
-      await tx.auditLog.create({
-        data: {
-          action: "CREATE",
-          entityType: "EVENT",
-          entityId: newEvent.id,
-          after: { name, startDate, endDate },
+        balanceThresholds: {
+          minGenderBalance: 0.3,
+          minExperienceMix: true,
+          maxConsecutiveShifts: 3,
         },
-      });
+        autoAssignUnfilled: true,
+      },
+    );
 
-      return newEvent;
+    // Log the action
+    await prisma.auditLog.create({
+      data: {
+        action: "CREATE",
+        entityType: "EVENT",
+        entityId: event.id,
+        after: { name, startDate, endDate },
+      },
     });
 
-    // Fetch the complete event with config
+    // Fetch the complete event with config and count
     const fullEvent = await prisma.event.findUnique({
       where: { id: event.id },
       include: {

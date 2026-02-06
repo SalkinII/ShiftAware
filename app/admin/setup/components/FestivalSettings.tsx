@@ -5,24 +5,165 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
+import { unwrapApiResponse } from '@/lib/api-errors';
+
+interface Event {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  config?: {
+    bufferDaysBefore: number;
+    bufferDaysAfter: number;
+  };
+}
 
 export function FestivalSettings() {
-  const [loading, setLoading] = useState(false);
   const toast = useToast();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('new');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    status: 'PLANNING',
+    startDate: '',
+    endDate: '',
+    bufferDaysBefore: 1,
+    bufferDaysAfter: 1,
+  });
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  useEffect(() => {
+    if (selectedEventId === 'new') {
+      setFormData({
+        name: '',
+        status: 'PLANNING',
+        startDate: '',
+        endDate: '',
+        bufferDaysBefore: 1,
+        bufferDaysAfter: 1,
+      });
+    } else {
+      const event = events.find(e => e.id === selectedEventId);
+      if (event) {
+        setFormData({
+          name: event.name,
+          status: event.status,
+          startDate: event.startDate.split('T')[0],
+          endDate: event.endDate.split('T')[0],
+          bufferDaysBefore: event.config?.bufferDaysBefore ?? 1,
+          bufferDaysAfter: event.config?.bufferDaysAfter ?? 1,
+        });
+      }
+    }
+  }, [selectedEventId, events]);
+
+  async function loadEvents() {
+    try {
+      const res = await fetch('/api/events');
+      if (res.ok) {
+        const data = await res.json();
+        setEvents(unwrapApiResponse<Event[]>(data) || []);
+      }
+    } catch (error) {
+      console.error('Failed to load events:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!formData.name || !formData.startDate || !formData.endDate) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        name: formData.name,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        bufferDaysBefore: formData.bufferDaysBefore,
+        bufferDaysAfter: formData.bufferDaysAfter,
+      };
+
+      const url = selectedEventId === 'new'
+        ? '/api/events'
+        : `/api/events/${selectedEventId}`;
+
+      const method = selectedEventId === 'new' ? 'POST' : 'PUT';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success(selectedEventId === 'new' ? 'Event created' : 'Event updated');
+        loadEvents();
+        if (selectedEventId === 'new') {
+          const data = await res.json();
+          setSelectedEventId(data.data?.id || 'new');
+        }
+      } else {
+        const error = await res.json();
+        toast.error(error.message || 'Failed to save event');
+      }
+    } catch (error) {
+      toast.error('Failed to save event');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="text-gray-500">Loading events...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-2">Event Configuration</h3>
         <p className="text-sm text-gray-500">
-          Manage event dates, buffer days, and assignment settings
+          Create a new event or select an existing one to edit
         </p>
+      </div>
+
+      <div className="mb-6">
+        <Select
+          label="Select Event"
+          value={selectedEventId}
+          onChange={(e) => setSelectedEventId(e.target.value)}
+        >
+          <option value="new">+ Create New Event</option>
+          {events.map(event => (
+            <option key={event.id} value={event.id}>{event.name}</option>
+          ))}
+        </Select>
       </div>
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Event Name" placeholder="e.g., Summer Festival 2026" />
-          <Select label="Status">
+          <Input
+            label="Event Name"
+            placeholder="e.g., Summer Festival 2026"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+          <Select
+            label="Status"
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+          >
             <option value="PLANNING">Planning</option>
             <option value="OPEN_FOR_PREFERENCES">Open for Preferences</option>
             <option value="ASSIGNING">Assigning</option>
@@ -31,18 +172,44 @@ export function FestivalSettings() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Start Date" type="date" />
-          <Input label="End Date" type="date" />
+          <Input
+            label="Start Date"
+            type="date"
+            value={formData.startDate}
+            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+            required
+          />
+          <Input
+            label="End Date"
+            type="date"
+            value={formData.endDate}
+            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+            required
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Buffer Days Before" type="number" min="0" defaultValue="7" />
-          <Input label="Buffer Days After" type="number" min="0" defaultValue="3" />
+          <Input
+            label="Buffer Days Before"
+            type="number"
+            min="0"
+            value={formData.bufferDaysBefore}
+            onChange={(e) => setFormData({ ...formData, bufferDaysBefore: parseInt(e.target.value) || 0 })}
+          />
+          <Input
+            label="Buffer Days After"
+            type="number"
+            min="0"
+            value={formData.bufferDaysAfter}
+            onChange={(e) => setFormData({ ...formData, bufferDaysAfter: parseInt(e.target.value) || 0 })}
+          />
         </div>
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button>Save Event Settings</Button>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : (selectedEventId === 'new' ? 'Create Event' : 'Update Event')}
+        </Button>
       </div>
     </div>
   );

@@ -7,22 +7,21 @@ describe('lane-validation', () => {
     it('returns true when template allows the target lane', () => {
       const template = {
         id: '1',
-        type: ShiftType.MOBILE_TEAM_1,
-        allowedLanes: [ShiftType.MOBILE_TEAM_1, ShiftType.MOBILE_TEAM_2],
+        type: ShiftType.MOBILE_TEAM,
+        allowedLanes: [ShiftType.MOBILE_TEAM],
       };
 
-      expect(isValidLaneDrop(template, ShiftType.MOBILE_TEAM_1)).toBe(true);
-      expect(isValidLaneDrop(template, ShiftType.MOBILE_TEAM_2)).toBe(true);
+      expect(isValidLaneDrop(template, ShiftType.MOBILE_TEAM)).toBe(true);
     });
 
     it('returns false when template does not allow the target lane', () => {
       const template = {
         id: '1',
-        type: ShiftType.MOBILE_TEAM_1,
-        allowedLanes: [ShiftType.MOBILE_TEAM_1],
+        type: ShiftType.MOBILE_TEAM,
+        allowedLanes: [ShiftType.MOBILE_TEAM],
       };
 
-      expect(isValidLaneDrop(template, ShiftType.EXECUTIVE)).toBe(false);
+      expect(isValidLaneDrop(template, ShiftType.SUPER)).toBe(false);
     });
 
     it('falls back to template type when allowedLanes is empty', () => {
@@ -33,27 +32,27 @@ describe('lane-validation', () => {
       };
 
       expect(isValidLaneDrop(template, ShiftType.STATIONARY)).toBe(true);
-      expect(isValidLaneDrop(template, ShiftType.MOBILE_TEAM_1)).toBe(false);
+      expect(isValidLaneDrop(template, ShiftType.MOBILE_TEAM)).toBe(false);
     });
   });
 
   describe('getTemplateAllowedLanes', () => {
     it('returns allowedLanes if defined', () => {
       const template = {
-        type: ShiftType.MOBILE_TEAM_1,
-        allowedLanes: [ShiftType.MOBILE_TEAM_1, ShiftType.MOBILE_TEAM_2],
+        type: ShiftType.MOBILE_TEAM,
+        allowedLanes: [ShiftType.MOBILE_TEAM],
       };
 
-      expect(getTemplateAllowedLanes(template)).toEqual([ShiftType.MOBILE_TEAM_1, ShiftType.MOBILE_TEAM_2]);
+      expect(getTemplateAllowedLanes(template)).toEqual([ShiftType.MOBILE_TEAM]);
     });
 
     it('returns [type] as fallback', () => {
       const template = {
-        type: ShiftType.EXECUTIVE,
+        type: ShiftType.SUPER,
         allowedLanes: [],
       };
 
-      expect(getTemplateAllowedLanes(template)).toEqual([ShiftType.EXECUTIVE]);
+      expect(getTemplateAllowedLanes(template)).toEqual([ShiftType.SUPER]);
     });
   });
 });

@@ -16,7 +16,34 @@ export async function GET(request: Request) {
       return createUnauthorizedResponse();
     }
 
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get("eventId");
+    const includeGlobal = searchParams.get("includeGlobal") !== "false";
+
+    let where: any = {};
+
+    if (eventId) {
+      // Get templates for specific event: assigned globals + event-specific
+      if (includeGlobal) {
+        const assignments = await prisma.eventTemplate.findMany({
+          where: { eventId },
+          select: { templateId: true },
+        });
+        const assignedIds = assignments.map((a) => a.templateId);
+
+        where = {
+          OR: [{ id: { in: assignedIds } }, { eventId: eventId }],
+        };
+      } else {
+        where = { eventId };
+      }
+    } else {
+      // Get all global templates (no eventId)
+      where = { eventId: null };
+    }
+
     const templates = await prisma.shiftTemplate.findMany({
+      where,
       include: {
         requiredRoles: true,
       },
@@ -76,6 +103,7 @@ export async function POST(request: Request) {
     const template = await prisma.shiftTemplate.create({
       data: {
         ...templateData,
+        eventId: templateData.eventId || null,
         requiredRoles: {
           create: requiredRoles,
         },

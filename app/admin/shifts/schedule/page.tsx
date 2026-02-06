@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -21,6 +21,7 @@ import {
   List,
   Zap,
   GripVertical,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -42,6 +43,7 @@ import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import CalendarView from "@/components/features/Calendar/CalendarView";
 import { LaneCalendarView } from "@/components/features/LaneCalendar";
+import html2canvas from "html2canvas";
 
 interface Shift {
   id: string;
@@ -72,12 +74,15 @@ interface DraggedTemplate {
 
 export default function ShiftsPage() {
   const toast = useToast();
+  const calendarRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [activeTemplate, setActiveTemplate] = useState<DraggedTemplate | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<DraggedTemplate | null>(
+    null,
+  );
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     shiftId: string | null;
@@ -91,7 +96,7 @@ export default function ShiftsPage() {
   });
   const [formData, setFormData] = useState({
     eventId: "",
-    type: "MOBILE_TEAM_1" as ShiftType,
+    type: "MOBILE_TEAM" as ShiftType,
     startTime: "",
     endTime: "",
     durationMinutes: 360,
@@ -186,7 +191,7 @@ export default function ShiftsPage() {
       activationConstraint: {
         distance: 8,
       },
-    })
+    }),
   );
 
   // Track active dragged template for DragOverlay
@@ -215,18 +220,24 @@ export default function ShiftsPage() {
       const overData = over.data.current;
 
       // Handle shift repositioning
-      if (activeData?.type === 'shift') {
+      if (activeData?.type === "shift") {
         const shift = activeData.shift;
         // TODO: Calculate new position from drop coordinates and update via API
         // This will be implemented when integrating with the actual calendar grid
-        console.log('Shift drag detected:', shift);
+        console.log("Shift drag detected:", shift);
         return;
       }
 
       // Handle lane drops (new)
       if (activeData?.type === "template" && overData?.type === "lane") {
         const template = activeData.template;
-        const { date: dropDate, laneType, dayStart, dayEnd, snapTargets } = overData;
+        const {
+          date: dropDate,
+          laneType,
+          dayStart,
+          dayEnd,
+          snapTargets,
+        } = overData;
 
         // Validate drop - silent rejection if invalid
         const targetLane = laneType as ShiftType;
@@ -234,14 +245,17 @@ export default function ShiftsPage() {
           return; // Silent rejection - no toast, no shift created
         }
 
-        const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+        const targetEventId =
+          selectedEventId !== "all" ? selectedEventId : events[0]?.id;
         if (!targetEventId) {
           toast.error("Please select an event first");
           return;
         }
 
         // Get pointer position for time calculation
-        const overNode = document.querySelector(`[data-testid="lane-drop-${dropDate}-${laneType}"]`);
+        const overNode = document.querySelector(
+          `[data-testid="lane-drop-${dropDate}-${laneType}"]`,
+        );
         if (!overNode) return;
 
         const rect = overNode.getBoundingClientRect();
@@ -251,10 +265,22 @@ export default function ShiftsPage() {
         const relativeX = (dropX - rect.left) / rect.width;
 
         // Calculate time from position
-        const { calculateTimeFromPosition, roundToInterval, calculateSnapPosition } = await import("@/lib/utils/snap");
-        const rawTime = calculateTimeFromPosition(relativeX, new Date(dayStart), new Date(dayEnd));
+        const {
+          calculateTimeFromPosition,
+          roundToInterval,
+          calculateSnapPosition,
+        } = await import("@/lib/utils/snap");
+        const rawTime = calculateTimeFromPosition(
+          relativeX,
+          new Date(dayStart),
+          new Date(dayEnd),
+        );
         const roundedTime = roundToInterval(rawTime, 15);
-        const { snapped, time: startTime } = calculateSnapPosition(roundedTime, snapTargets, 30);
+        const { snapped, time: startTime } = calculateSnapPosition(
+          roundedTime,
+          snapTargets,
+          30,
+        );
 
         const endTime = addMinutes(startTime, template.durationMinutes);
 
@@ -282,11 +308,13 @@ export default function ShiftsPage() {
           });
 
           if (res.ok) {
-            toast.success(`Created ${laneType.replace(/_/g, " ")} shift at ${format(startTime, "HH:mm")}`);
+            toast.success(
+              `Created ${laneType.replace(/_/g, " ")} shift at ${format(startTime, "HH:mm")}`,
+            );
             window.dispatchEvent(
               new CustomEvent("shiftaware:cache-invalidate", {
                 detail: { keys: ["shifts", "shifts*"] },
-              })
+              }),
             );
           } else {
             const errorData = await res.json();
@@ -304,7 +332,8 @@ export default function ShiftsPage() {
         const template = activeData.template;
         const dropDate = overData.date;
 
-        const targetEventId = selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+        const targetEventId =
+          selectedEventId !== "all" ? selectedEventId : events[0]?.id;
         if (!targetEventId) {
           toast.error("Please select an event first");
           return;
@@ -315,19 +344,21 @@ export default function ShiftsPage() {
 
         const shiftEndTimes = findShiftEndTimes(
           shifts.filter((s) => s.startTime.split("T")[0] === dropDate),
-          template.type
+          template.type,
         );
 
         const { snapped, time: startTime } = calculateSnapPosition(
           baseDropTime,
           shiftEndTimes,
-          30
+          30,
         );
 
         const endTime = addMinutes(startTime, template.durationMinutes);
 
         if (snapped) {
-          toast.info(`Snapped to end of previous ${template.type.replace("_", " ")} shift`);
+          toast.info(
+            `Snapped to end of previous ${template.type.replace("_", " ")} shift`,
+          );
         }
 
         try {
@@ -351,12 +382,12 @@ export default function ShiftsPage() {
 
           if (res.ok) {
             toast.success(
-              `Created ${template.type.replace("_", " ")} shift at ${format(startTime, "HH:mm")}`
+              `Created ${template.type.replace("_", " ")} shift at ${format(startTime, "HH:mm")}`,
             );
             window.dispatchEvent(
               new CustomEvent("shiftaware:cache-invalidate", {
                 detail: { keys: ["shifts", "shifts*"] },
-              })
+              }),
             );
           } else {
             const errorData = await res.json();
@@ -368,7 +399,7 @@ export default function ShiftsPage() {
         }
       }
     },
-    [selectedEventId, events, shifts, toast]
+    [selectedEventId, events, shifts, toast],
   );
 
   async function loadEvents() {
@@ -473,7 +504,7 @@ export default function ShiftsPage() {
         // Reset form
         setFormData({
           eventId: events.length > 0 ? events[0].id : "",
-          type: "MOBILE_TEAM_1" as ShiftType,
+          type: "MOBILE_TEAM" as ShiftType,
           startTime: "",
           endTime: "",
           durationMinutes: 360,
@@ -533,10 +564,14 @@ export default function ShiftsPage() {
     });
   }
 
-  async function handleUpdateShift(shiftId: string, updates: { startTime?: Date; endTime?: Date; capacity?: number }) {
+  async function handleUpdateShift(
+    shiftId: string,
+    updates: { startTime?: Date; endTime?: Date; capacity?: number },
+  ) {
     try {
       const payload: any = {};
-      if (updates.startTime) payload.startTime = updates.startTime.toISOString();
+      if (updates.startTime)
+        payload.startTime = updates.startTime.toISOString();
       if (updates.endTime) payload.endTime = updates.endTime.toISOString();
       if (updates.capacity !== undefined) payload.capacity = updates.capacity;
 
@@ -551,7 +586,7 @@ export default function ShiftsPage() {
         window.dispatchEvent(
           new CustomEvent("shiftaware:cache-invalidate", {
             detail: { keys: ["shifts", "shifts*"] },
-          })
+          }),
         );
       } else {
         const errorData = await res.json();
@@ -602,6 +637,28 @@ export default function ShiftsPage() {
     }
   }
 
+  async function handleExportCalendar() {
+    if (!calendarRef.current) return;
+
+    try {
+      const canvas = await html2canvas(calendarRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+      });
+
+      const link = document.createElement("a");
+      link.download = `shift-schedule-${format(new Date(), "yyyy-MM-dd")}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      toast.success("Schedule exported successfully");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export schedule");
+    }
+  }
+
   // Keyboard shortcuts
   useKeyboardShortcuts([
     {
@@ -640,13 +697,11 @@ export default function ShiftsPage() {
 
   const getShiftTypeColor = (type: ShiftType) => {
     switch (type) {
-      case "MOBILE_TEAM_1":
+      case "MOBILE_TEAM":
         return "bg-blue-500";
-      case "MOBILE_TEAM_2":
-        return "bg-purple-500";
       case "STATIONARY":
         return "bg-success-500";
-      case "EXECUTIVE":
+      case "SUPER":
         return "bg-accent-500";
       default:
         return "bg-gray-400";
@@ -668,7 +723,8 @@ export default function ShiftsPage() {
             <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
               <Clock className="w-3 h-3" />
               <span>
-                {activeTemplate.startTime} ({Math.round(activeTemplate.durationMinutes / 60)}h)
+                {activeTemplate.startTime} (
+                {Math.round(activeTemplate.durationMinutes / 60)}h)
               </span>
             </div>
             <div className="text-xs text-primary-500 mt-1">
@@ -708,6 +764,15 @@ export default function ShiftsPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            {viewMode === "calendar" && (
+              <Button
+                variant="secondary"
+                onClick={handleExportCalendar}
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" /> Export
+              </Button>
+            )}
             <Button
               variant="secondary"
               onClick={() => toast.success("Shifts published to team members")}
@@ -759,7 +824,7 @@ export default function ShiftsPage() {
                       "p-2 transition-colors",
                       viewMode === "list"
                         ? "bg-primary-500 text-white"
-                        : "bg-white text-gray-400 hover:text-gray-600"
+                        : "bg-white text-gray-400 hover:text-gray-600",
                     )}
                     title="List view"
                   >
@@ -771,7 +836,7 @@ export default function ShiftsPage() {
                       "p-2 transition-colors",
                       viewMode === "calendar"
                         ? "bg-primary-500 text-white"
-                        : "bg-white text-gray-400 hover:text-gray-600"
+                        : "bg-white text-gray-400 hover:text-gray-600",
                     )}
                     title="Calendar view"
                   >
@@ -782,17 +847,25 @@ export default function ShiftsPage() {
             </Card>
 
             {viewMode === "calendar" ? (
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div
+                ref={calendarRef}
+                className="bg-white rounded-xl shadow-sm overflow-hidden"
+              >
                 {shifts.length === 0 ? (
                   <div className="p-12 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p className="font-medium">No shifts to display</p>
-                    <p className="text-sm">Create shifts using the form or drag templates from the sidebar</p>
+                    <p className="text-sm">
+                      Create shifts using the form or drag templates from the
+                      sidebar
+                    </p>
                   </div>
                 ) : (
                   <LaneCalendarView
                     shifts={shifts}
-                    startDate={eventRange ? new Date(eventRange.start) : new Date()}
+                    startDate={
+                      eventRange ? new Date(eventRange.start) : new Date()
+                    }
                     endDate={eventRange ? new Date(eventRange.end) : new Date()}
                     activeTemplate={activeTemplate}
                     isEditable={true}
@@ -803,120 +876,120 @@ export default function ShiftsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-              {shifts.map((shift) => (
-                <Card
-                  key={shift.id}
-                  className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
-                >
-                  <div className="flex flex-col md:flex-row">
-                    <div
-                      className={cn(
-                        "w-2 md:w-3 shrink-0",
-                        getShiftTypeColor(shift.type),
-                      )}
-                    />
-                    <div className="flex-1 p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h3 className="text-lg font-bold text-gray-900">
-                              {shift.type.replace("_", " ")}
-                            </h3>
-                            <span
-                              className={cn(
-                                "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
-                                getPriorityColor(shift.priority),
-                              )}
-                            >
-                              {shift.priority}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
-                            <Tag className="w-3.5 h-3.5" /> {shift.event.name}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <p className="text-xl font-black text-gray-900 leading-none">
-                              {shift.capacity}
-                            </p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                              Capacity
+                {shifts.map((shift) => (
+                  <Card
+                    key={shift.id}
+                    className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
+                  >
+                    <div className="flex flex-col md:flex-row">
+                      <div
+                        className={cn(
+                          "w-2 md:w-3 shrink-0",
+                          getShiftTypeColor(shift.type),
+                        )}
+                      />
+                      <div className="flex-1 p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-1">
+                              <h3 className="text-lg font-bold text-gray-900">
+                                {shift.type.replace("_", " ")}
+                              </h3>
+                              <span
+                                className={cn(
+                                  "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
+                                  getPriorityColor(shift.priority),
+                                )}
+                              >
+                                {shift.priority}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
+                              <Tag className="w-3.5 h-3.5" /> {shift.event.name}
                             </p>
                           </div>
-                          <ShiftCardActions
-                            shiftId={shift.id}
-                            onDelete={() => handleDeleteShift(shift.id)}
-                          />
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="text-xl font-black text-gray-900 leading-none">
+                                {shift.capacity}
+                              </p>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                Capacity
+                              </p>
+                            </div>
+                            <ShiftCardActions
+                              shiftId={shift.id}
+                              onDelete={() => handleDeleteShift(shift.id)}
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-50">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                            <Clock className="w-4 h-4" />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                              <Clock className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                Timing
+                              </p>
+                              <p className="text-sm font-bold text-gray-700 leading-none">
+                                {shift.startTime && shift.endTime
+                                  ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
+                                  : "TBD"}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                              Timing
-                            </p>
-                            <p className="text-sm font-bold text-gray-700 leading-none">
-                              {shift.startTime && shift.endTime
-                                ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
-                                : "TBD"}
-                            </p>
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                              <Calendar className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                Date
+                              </p>
+                              <p className="text-sm font-bold text-gray-700 leading-none">
+                                {shift.startTime
+                                  ? format(
+                                      new Date(shift.startTime),
+                                      "MMM do, yyyy",
+                                    )
+                                  : "TBD"}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                            <Calendar className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                              Date
-                            </p>
-                            <p className="text-sm font-bold text-gray-700 leading-none">
-                              {shift.startTime
-                                ? format(
-                                    new Date(shift.startTime),
-                                    "MMM do, yyyy",
-                                  )
-                                : "TBD"}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                            <Shield className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                              Score
-                            </p>
-                            <div className="flex gap-0.5 text-accent-500">
-                              {[...Array(5)].map((_, i) => (
-                                <span
-                                  key={i}
-                                  className={cn(
-                                    "text-xs",
-                                    i >= shift.desirabilityScore &&
-                                      "text-gray-200",
-                                  )}
-                                >
-                                  ★
-                                </span>
-                              ))}
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                              <Shield className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                Score
+                              </p>
+                              <div className="flex gap-0.5 text-accent-500">
+                                {[...Array(5)].map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={cn(
+                                      "text-xs",
+                                      i >= shift.desirabilityScore &&
+                                        "text-gray-200",
+                                    )}
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                      <button className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100">
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
                     </div>
-                    <button className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100">
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
               </div>
             )}
           </div>
@@ -964,10 +1037,9 @@ export default function ShiftsPage() {
                     }
                     className="bg-gray-50 border-gray-100 font-medium"
                   >
-                    <option value="MOBILE_TEAM_1">Mobile Team 1</option>
-                    <option value="MOBILE_TEAM_2">Mobile Team 2</option>
+                    <option value="MOBILE_TEAM">Mobile Team</option>
                     <option value="STATIONARY">Stationary</option>
-                    <option value="EXECUTIVE">Executive</option>
+                    <option value="SUPER">SUPER</option>
                   </Select>
 
                   <div className="grid grid-cols-1 gap-4">
@@ -1135,7 +1207,8 @@ export default function ShiftsPage() {
                   </div>
                   <p className="text-sm leading-relaxed opacity-90">
                     Drag templates onto the calendar to create shifts.
-                    They&apos;ll snap to the end of existing shifts for seamless succession.
+                    They&apos;ll snap to the end of existing shifts for seamless
+                    succession.
                   </p>
                 </Card>
                 <TemplatePalette />
@@ -1147,22 +1220,26 @@ export default function ShiftsPage() {
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                       <span className="text-gray-600">M1:</span>
-                      <span className="font-bold">{shifts.filter((s) => s.type === "MOBILE_TEAM_1").length}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                      <span className="text-gray-600">M2:</span>
-                      <span className="font-bold">{shifts.filter((s) => s.type === "MOBILE_TEAM_2").length}</span>
+                      <span className="font-bold">
+                        {
+                          shifts.filter((s) => s.type === "MOBILE_TEAM")
+                            .length
+                        }
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-success-500"></div>
                       <span className="text-gray-600">ST:</span>
-                      <span className="font-bold">{shifts.filter((s) => s.type === "STATIONARY").length}</span>
+                      <span className="font-bold">
+                        {shifts.filter((s) => s.type === "STATIONARY").length}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-accent-500"></div>
                       <span className="text-gray-600">EX:</span>
-                      <span className="font-bold">{shifts.filter((s) => s.type === "EXECUTIVE").length}</span>
+                      <span className="font-bold">
+                        {shifts.filter((s) => s.type === "SUPER").length}
+                      </span>
                     </div>
                   </div>
                 </Card>
@@ -1191,23 +1268,11 @@ export default function ShiftsPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
-                        Mobile 1
+                        Mobile
                       </span>
                       <span className="text-sm font-black text-gray-900">
                         {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM_1")
-                            .length
-                        }
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>{" "}
-                        Mobile 2
-                      </span>
-                      <span className="text-sm font-black text-gray-900">
-                        {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM_2")
+                          shifts.filter((s) => s.type === "MOBILE_TEAM")
                             .length
                         }
                       </span>

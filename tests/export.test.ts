@@ -43,7 +43,7 @@ vi.mock("jspdf-autotable", () => ({
 const sampleShifts = [
   {
     id: "s1",
-    type: "MOBILE_TEAM_1",
+    type: "MOBILE_TEAM",
     startTime: "2026-06-26T10:00:00Z",
     endTime: "2026-06-26T12:00:00Z",
     capacity: 2,

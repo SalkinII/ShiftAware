@@ -62,10 +62,9 @@ const coverageStyles: Record<
 };
 
 const typeColors: Record<string, string> = {
-  MOBILE_TEAM_1: "var(--color-shift-mobile1, #0ea5e9)",
-  MOBILE_TEAM_2: "var(--color-shift-mobile2, #8b5cf6)",
+  MOBILE_TEAM: "var(--color-shift-mobile1, #0ea5e9)",
   STATIONARY: "var(--color-shift-stationary, #22c55e)",
-  EXECUTIVE: "var(--color-shift-executive, #f59e0b)",
+  SUPER: "var(--color-shift-SUPER, #f59e0b)",
   BUFFER: "var(--color-shift-buffer, #78716c)",
 };
 

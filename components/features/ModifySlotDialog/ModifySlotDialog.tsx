@@ -124,13 +124,11 @@ export function ModifySlotDialog({
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
               style={{
                 backgroundColor:
-                  template.type === "MOBILE_TEAM_1"
+                  template.type === "MOBILE_TEAM"
                     ? "#0ea5e9"
-                    : template.type === "MOBILE_TEAM_2"
-                      ? "#8b5cf6"
                       : template.type === "STATIONARY"
                         ? "#22c55e"
-                        : template.type === "EXECUTIVE"
+                        : template.type === "SUPER"
                           ? "#f59e0b"
                           : "#78716c",
               }}

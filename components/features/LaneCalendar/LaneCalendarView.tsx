@@ -5,6 +5,7 @@ import { format, eachDayOfInterval, startOfDay, addDays } from "date-fns";
 import { LaneDropZone } from "./LaneDropZone";
 import { ShiftBlock } from "./ShiftBlock";
 import { DragPreview } from "./DragPreview";
+import { TimeRuler } from "./TimeRuler";
 import { LANES_ORDERED, getLaneLabel, getLaneColor } from "@/lib/types/lane";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,10 @@ interface LaneCalendarViewProps {
   } | null;
   className?: string;
   isEditable?: boolean;
-  onShiftUpdate?: (id: string, data: { startTime?: Date; endTime?: Date; capacity?: number }) => void;
+  onShiftUpdate?: (
+    id: string,
+    data: { startTime?: Date; endTime?: Date; capacity?: number },
+  ) => void;
   onShiftDelete?: (id: string) => void;
 }
 
@@ -70,7 +74,9 @@ export function LaneCalendarView({
   }, [shifts, days]);
 
   return (
-    <div className={cn("bg-white rounded-xl shadow-sm overflow-hidden", className)}>
+    <div
+      className={cn("bg-white rounded-xl shadow-sm overflow-hidden", className)}
+    >
       {/* Header row with days */}
       <div
         className="grid border-b border-gray-100 bg-gray-50"
@@ -94,6 +100,28 @@ export function LaneCalendarView({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Top Time Rulers */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: `150px repeat(${days.length}, minmax(120px, 1fr))`,
+        }}
+      >
+        <div className="bg-gray-50"></div>
+        {days.map((day) => {
+          const dayStart = startOfDay(day);
+          const dayEnd = addDays(dayStart, 1);
+          return (
+            <TimeRuler
+              key={`ruler-top-${format(day, "yyyy-MM-dd")}`}
+              startTime={dayStart}
+              endTime={dayEnd}
+              position="top"
+            />
+          );
+        })}
       </div>
 
       {/* Lane rows */}
@@ -147,6 +175,28 @@ export function LaneCalendarView({
           })}
         </div>
       ))}
+
+      {/* Bottom Time Rulers */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: `150px repeat(${days.length}, minmax(120px, 1fr))`,
+        }}
+      >
+        <div className="bg-gray-50"></div>
+        {days.map((day) => {
+          const dayStart = startOfDay(day);
+          const dayEnd = addDays(dayStart, 1);
+          return (
+            <TimeRuler
+              key={`ruler-bottom-${format(day, "yyyy-MM-dd")}`}
+              startTime={dayStart}
+              endTime={dayEnd}
+              position="bottom"
+            />
+          );
+        })}
+      </div>
 
       {/* Drag preview overlay */}
       {activeTemplate && (

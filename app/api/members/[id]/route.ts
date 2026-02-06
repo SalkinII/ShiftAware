@@ -2,7 +2,9 @@ import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateTeamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
+import { MembersService } from "@/lib/services/members.service";
 import { AuditAction, EntityType } from "@prisma/client";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -10,6 +12,8 @@ import {
   createNotFoundResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
+
+const service = new MembersService();
 
 export async function GET(
   request: Request,
@@ -22,27 +26,14 @@ export async function GET(
     }
 
     const { id } = await params;
-    const member = await prisma.teamMember.findUnique({
-      where: { id },
-      include: {
-        preferences: {
-          include: { shift: true },
-          orderBy: { priority: "asc" },
-        },
-        assignments: {
-          include: { shift: true },
-          orderBy: { shift: { startTime: "asc" } },
-        },
-      },
-    });
-
-    if (!member) {
-      return createNotFoundResponse("Team member");
-    }
+    const member = await service.getMemberWithRelations(id);
 
     return createSuccessResponse(member);
   } catch (error) {
     console.error("Get member error:", error);
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Team member");
+    }
     return createErrorResponse(error, "Failed to fetch member");
   }
 }
@@ -81,10 +72,7 @@ export async function PUT(
 
     const { id, ...updateData } = validated;
     const before = { ...existing };
-    const member = await prisma.teamMember.update({
-      where: { id },
-      data: updateData,
-    });
+    const member = await service.updateMember(id, updateData);
 
     await createAuditLog({
       action: AuditAction.UPDATE,
@@ -98,6 +86,9 @@ export async function PUT(
     return createSuccessResponse(member);
   } catch (error) {
     console.error("Update member error:", error);
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Team member");
+    }
     return createErrorResponse(error, "Failed to update member");
   }
 }
@@ -113,19 +104,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const member = await prisma.teamMember.findUnique({
-      where: { id },
-    });
-
-    if (!member) {
-      return createNotFoundResponse("Team member");
-    }
+    const member = await service.getMember(id);
 
     // Soft delete by setting isActive to false
-    const deleted = await prisma.teamMember.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    const deleted = await service.softDeleteMember(id);
 
     await createAuditLog({
       action: AuditAction.DELETE,
@@ -139,6 +121,9 @@ export async function DELETE(
     return createSuccessResponse(deleted);
   } catch (error) {
     console.error("Delete member error:", error);
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Team member");
+    }
     return createErrorResponse(error, "Failed to delete member");
   }
 }

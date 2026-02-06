@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus, Trash2, Info } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Info } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { useEventContext } from "@/lib/hooks/useEventContext";
+import { unwrapApiResponse } from "@/lib/api-errors";
 
 interface AttributeRule {
   id: string;
   shiftType: string;
   attribute: string;
-  operator: 'EQUALS' | 'NOT_EQUALS' | 'CONTAINS';
+  operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS";
   value: string;
 }
 
@@ -22,36 +25,63 @@ interface DistributionConfig {
 }
 
 export function DistributionSettings() {
+  const toast = useToast();
+  const { selectedEventId } = useEventContext(true);
   const [config, setConfig] = useState<DistributionConfig>({
     fairnessWeight: 50,
     preferenceWeight: 30,
     maxShiftsPerPerson: 12,
     minRestHours: 8,
-    attributeRules: [
-      {
-        id: '1',
-        shiftType: 'EXECUTIVE',
-        attribute: 'experience_level',
-        operator: 'EQUALS',
-        value: 'Senior',
-      },
-    ],
+    attributeRules: [],
   });
 
   const [showAddRule, setShowAddRule] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  const handleWeightChange = (key: 'fairnessWeight' | 'preferenceWeight', value: number) => {
+  // Load config when event changes
+  useEffect(() => {
+    if (selectedEventId) {
+      loadConfig();
+    }
+  }, [selectedEventId]);
+
+  async function loadConfig() {
+    if (!selectedEventId) return;
+
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}/config`);
+      if (res.ok) {
+        const data = await res.json();
+        const cfg = unwrapApiResponse<any>(data);
+        if (cfg) {
+          setConfig({
+            fairnessWeight: cfg.algorithmWeights?.fairness || 50,
+            preferenceWeight: cfg.algorithmWeights?.preferences || 30,
+            maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
+            minRestHours: cfg.balanceThresholds?.minRestHours || 8,
+            attributeRules: cfg.allocationRules || [],
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load config:", error);
+    }
+  }
+
+  const handleWeightChange = (
+    key: "fairnessWeight" | "preferenceWeight",
+    value: number,
+  ) => {
     setConfig({ ...config, [key]: value });
   };
 
   const handleAddRule = () => {
     const newRule: AttributeRule = {
       id: Date.now().toString(),
-      shiftType: 'EXECUTIVE',
-      attribute: 'experience_level',
-      operator: 'EQUALS',
-      value: '',
+      shiftType: "SUPER",
+      attribute: "experience_level",
+      operator: "EQUALS",
+      value: "",
     };
     setConfig({
       ...config,
@@ -68,23 +98,86 @@ export function DistributionSettings() {
   };
 
   const handlePreview = async () => {
+    if (!selectedEventId) {
+      toast.error("Please select an event first");
+      return;
+    }
+
     setPreviewLoading(true);
-    // TODO: Call algorithm preview API
-    setTimeout(() => {
-      alert('Preview would show algorithm results here');
+    try {
+      const res = await fetch(
+        `/api/assignments?preview=true&eventId=${selectedEventId}`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        const result = unwrapApiResponse<any>(data);
+        alert(
+          `Preview: ${result.summary.totalAssignments} assignments proposed for ${result.summary.shiftsFullyCovered}/${result.summary.totalShifts} shifts`,
+        );
+      } else {
+        const error = await res.json();
+        toast.error(error.message || "Failed to preview");
+      }
+    } catch (error) {
+      toast.error("Failed to preview algorithm results");
+    } finally {
       setPreviewLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleSave = () => {
-    // TODO: Save config via API
-    alert('Distribution settings saved');
+  const handleSave = async () => {
+    if (!selectedEventId) {
+      toast.error("Please select an event first");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}/config`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          algorithmWeights: {
+            fairness: config.fairnessWeight,
+            preferences: config.preferenceWeight,
+          },
+          balanceThresholds: {
+            maxShiftsPerPerson: config.maxShiftsPerPerson,
+            minRestHours: config.minRestHours,
+          },
+          allocationRules: config.attributeRules,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Distribution settings saved");
+      } else {
+        const error = await res.json();
+        toast.error(error.message || "Failed to save settings");
+      }
+    } catch (error) {
+      toast.error("Failed to save settings");
+    }
   };
+
+  if (!selectedEventId) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        Please select an event from the header dropdown to configure allocation
+        settings.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">Distribution Logic</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">
+          Distribution Logic
+        </h3>
         <p className="text-sm text-gray-500">
           Configure how the algorithm assigns team members to shifts
         </p>
@@ -112,11 +205,14 @@ export function DistributionSettings() {
               min="0"
               max="100"
               value={config.fairnessWeight}
-              onChange={(e) => handleWeightChange('fairnessWeight', Number(e.target.value))}
+              onChange={(e) =>
+                handleWeightChange("fairnessWeight", Number(e.target.value))
+              }
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
             />
             <p className="text-xs text-gray-500 mt-1">
-              How much to prioritize equal distribution of shifts among team members
+              How much to prioritize equal distribution of shifts among team
+              members
             </p>
           </div>
 
@@ -134,7 +230,9 @@ export function DistributionSettings() {
               min="0"
               max="100"
               value={config.preferenceWeight}
-              onChange={(e) => handleWeightChange('preferenceWeight', Number(e.target.value))}
+              onChange={(e) =>
+                handleWeightChange("preferenceWeight", Number(e.target.value))
+              }
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -159,7 +257,10 @@ export function DistributionSettings() {
               max="50"
               value={config.maxShiftsPerPerson}
               onChange={(e) =>
-                setConfig({ ...config, maxShiftsPerPerson: Number(e.target.value) })
+                setConfig({
+                  ...config,
+                  maxShiftsPerPerson: Number(e.target.value),
+                })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
@@ -209,9 +310,8 @@ export function DistributionSettings() {
                     value={rule.shiftType}
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="EXECUTIVE">Executive</option>
-                    <option value="MOBILE_TEAM_1">Mobile Team 1</option>
-                    <option value="MOBILE_TEAM_2">Mobile Team 2</option>
+                    <option value="SUPER">SUPER</option>
+                    <option value="MOBILE_TEAM">Mobile Team</option>
                     <option value="STATIONARY">Stationary</option>
                   </select>
 
@@ -253,8 +353,8 @@ export function DistributionSettings() {
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Example: "EXECUTIVE requires experience_level = Senior" ensures only senior members
-          are assigned to executive shifts.
+          Example: "SUPER requires experience_level = Senior" ensures only
+          senior members are assigned to SUPER shifts.
         </p>
       </Card>
 
@@ -263,8 +363,12 @@ export function DistributionSettings() {
         <Button onClick={handleSave} variant="primary">
           Save Configuration
         </Button>
-        <Button onClick={handlePreview} variant="secondary" disabled={previewLoading}>
-          {previewLoading ? 'Previewing...' : 'Preview Results'}
+        <Button
+          onClick={handlePreview}
+          variant="secondary"
+          disabled={previewLoading}
+        >
+          {previewLoading ? "Previewing..." : "Preview Results"}
         </Button>
       </div>
     </div>

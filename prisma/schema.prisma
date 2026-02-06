@@ -17,14 +17,13 @@ enum ExperienceLevel {
 enum Role {
   TEAM_MEMBER
   SHIFT_LEAD
-  EXECUTIVE
+  SUPER
 }
 
 enum ShiftType {
-  MOBILE_TEAM_1
-  MOBILE_TEAM_2
+  MOBILE_TEAM
   STATIONARY
-  EXECUTIVE
+  SUPER
   BUFFER
   EXTENDED
 }
@@ -75,6 +74,25 @@ enum AttributeType {
   TEXT
 }
 
+enum RegistrationStatus {
+  REGISTERED
+  CONFIRMED
+  DECLINED
+}
+
+enum SwapStatus {
+  PENDING
+  MATCHED
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+enum PreferenceLevel {
+  WANT
+  DONT_WANT
+}
+
 model TeamMember {
   id              String          @id @default(cuid())
   alias           String          @unique
@@ -85,10 +103,12 @@ model TeamMember {
   isActive        Boolean         @default(true)
   isAdmin         Boolean         @default(false)
 
-  preferences ShiftPreference[]
-  assignments Assignment[]
-  auditLogs   AuditLog[]
-  attributes  TeamMemberAttribute[]
+  preferences        ShiftPreference[]
+  assignments        Assignment[]
+  auditLogs          AuditLog[]
+  attributes         TeamMemberAttribute[]
+  eventRegistrations EventRegistration[]
+  swapRequests       SwapRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,13 +123,65 @@ model Event {
   endDate   DateTime
   status    EventStatus @default(PLANNING)
 
-  shifts               Shift[]
-  config               EventConfig?
-  scheduledShifts      ScheduledShift[]
-  attributeDefinitions EventAttributeDefinition[]
+  shifts                 Shift[]
+  config                 EventConfig?
+  scheduledShifts        ScheduledShift[]
+  attributeDefinitions   EventAttributeDefinition[]
+  registrations          EventRegistration[]
+  templateAssignments    EventTemplate[]
+  eventSpecificTemplates ShiftTemplate[]           @relation("EventSpecificTemplates")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EventRegistration {
+  id           String             @id @default(cuid())
+  memberId     String
+  member       TeamMember         @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  eventId      String
+  event        Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status       RegistrationStatus @default(REGISTERED)
+  registeredAt DateTime           @default(now())
+
+  @@unique([memberId, eventId])
+  @@index([eventId])
+  @@index([memberId])
+}
+
+model EventTemplate {
+  id         String        @id @default(cuid())
+  eventId    String
+  event      Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  templateId String
+  template   ShiftTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, templateId])
+  @@index([eventId])
+  @@index([templateId])
+}
+
+model SwapRequest {
+  id               String       @id @default(cuid())
+  requesterId      String
+  requester        TeamMember   @relation(fields: [requesterId], references: [id])
+  fromAssignmentId String
+  fromAssignment   Assignment   @relation("SwapFrom", fields: [fromAssignmentId], references: [id])
+  toShiftId        String
+  toShift          Shift        @relation("SwapTo", fields: [toShiftId], references: [id])
+  status           SwapStatus   @default(PENDING)
+  matchedWithId    String?      @unique
+  matchedWith      SwapRequest? @relation("SwapMatch", fields: [matchedWithId], references: [id])
+  matchedBy        SwapRequest? @relation("SwapMatch")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([toShiftId])
 }
 
 model Shift {
@@ -128,8 +200,9 @@ model Shift {
   requiredRoles ShiftRole[]
   capacity      Int         @default(2)
 
-  preferences ShiftPreference[]
-  assignments Assignment[]
+  preferences    ShiftPreference[]
+  assignments    Assignment[]
+  swapRequestsTo SwapRequest[]     @relation("SwapTo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -149,14 +222,14 @@ model ShiftRole {
 }
 
 model ShiftPreference {
-  id           String     @id @default(cuid())
+  id           String          @id @default(cuid())
   teamMemberId String
-  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id])
+  teamMember   TeamMember      @relation(fields: [teamMemberId], references: [id])
   shiftId      String
-  shift        Shift      @relation(fields: [shiftId], references: [id])
+  shift        Shift           @relation(fields: [shiftId], references: [id])
 
-  priority Int     @default(1)
-  notes    String?
+  wantLevel PreferenceLevel @default(WANT)
+  notes     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -177,6 +250,8 @@ model Assignment {
   assignmentType AssignmentType @default(ALGORITHM)
   algorithmScore Json?
   notes          String?
+
+  swapRequestsFrom SwapRequest[] @relation("SwapFrom")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -243,11 +318,18 @@ model ShiftTemplate {
   capacity          Int           @default(2)
   color             String? // For UI display
 
-  requiredRoles   ShiftTemplateRole[]
-  scheduledShifts ScheduledShift[]
+  // Optional event for event-specific templates
+  eventId String?
+  event   Event?  @relation("EventSpecificTemplates", fields: [eventId], references: [id])
+
+  requiredRoles    ShiftTemplateRole[]
+  scheduledShifts  ScheduledShift[]
+  eventAssignments EventTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([eventId])
 }
 
 model ShiftTemplateRole {

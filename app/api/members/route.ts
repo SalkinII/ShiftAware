@@ -2,6 +2,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
+import { MembersService } from "@/lib/services/members.service";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
@@ -10,23 +11,59 @@ import {
   createConflictResponse,
 } from "@/lib/api-errors";
 
-export async function GET() {
+const service = new MembersService();
+
+export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
       return createUnauthorizedResponse();
     }
 
-    const members = await prisma.teamMember.findMany({
-      orderBy: { alias: "asc" },
-      include: {
-        _count: {
-          select: {
-            preferences: true,
-            assignments: true,
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get("eventId");
+    const includeUnregistered =
+      searchParams.get("includeUnregistered") === "true";
+
+    let where: any = { isActive: true };
+    let include: any = {};
+
+    if (eventId) {
+      if (includeUnregistered) {
+        // Return all members, mark which are registered
+        include = {
+          eventRegistrations: {
+            where: { eventId },
           },
-        },
-      },
+          attributes: {
+            where: { definition: { eventId } },
+            include: { definition: true },
+          },
+        };
+      } else {
+        // Only members registered for this event
+        where = {
+          ...where,
+          eventRegistrations: {
+            some: { eventId },
+          },
+        };
+        include = {
+          eventRegistrations: {
+            where: { eventId },
+          },
+          attributes: {
+            where: { definition: { eventId } },
+            include: { definition: true },
+          },
+        };
+      }
+    }
+
+    const members = await prisma.teamMember.findMany({
+      where,
+      include,
+      orderBy: { alias: "asc" },
     });
 
     return createSuccessResponse(members);
@@ -55,9 +92,7 @@ export async function POST(request: Request) {
       return createConflictResponse("Alias already exists");
     }
 
-    const member = await prisma.teamMember.create({
-      data: validated,
-    });
+    const member = await service.createMember(validated);
 
     await createAuditLog({
       action: AuditAction.CREATE,

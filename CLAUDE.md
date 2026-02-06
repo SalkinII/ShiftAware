@@ -108,6 +108,12 @@ blockers: [issues or "none"]
 **Paths:** Plans `/docs/plans/` | Specs `/docs/specs/` | Tests mirror source in `/tests/`
 **Commits:** `<type>(<scope>): <description>` — feat, fix, docs, refactor, test, chore
 
+## Documentation
+
+- **Architecture Guide:** `docs/ARCHITECTURE.md` - Comprehensive system overview, data flow, three-layer pattern
+- **Architecture Layers:** `docs/ARCHITECTURE-LAYERS.md` - Detailed guide to repository/service/route pattern
+- **Implementation Plans:** `docs/plans/` - Feature specs and implementation details
+
 ---
 
 ## Anti-Patterns

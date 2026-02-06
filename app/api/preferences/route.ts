@@ -1,6 +1,6 @@
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { preferencesSubmissionSchema } from "@/lib/validations/preference";
+import { preferenceSchema } from "@/lib/validations/preference";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
@@ -9,6 +9,8 @@ import {
   createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
+import { PreferencesService } from "@/lib/services/preferences.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
           include: { event: true },
         },
       },
-      orderBy: [{ teamMember: { alias: "asc" } }, { priority: "asc" }],
+      orderBy: [{ teamMember: { alias: "asc" } }],
     });
 
     return createSuccessResponse(preferences);
@@ -50,73 +52,58 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const validated = preferencesSubmissionSchema.parse(body);
+    const validated = preferenceSchema.parse(body);
 
-    // Verify team member exists
-    const member = await prisma.teamMember.findUnique({
-      where: { id: validated.teamMemberId },
+    const service = new PreferencesService();
+    const preference = await service.upsertPreference({
+      teamMemberId: validated.teamMemberId,
+      shiftId: validated.shiftId,
+      wantLevel: validated.wantLevel,
+      notes: validated.notes,
     });
 
-    if (!member) {
-      return createNotFoundResponse("Team member");
+    return createSuccessResponse(preference);
+  } catch (error) {
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Team member or shift");
+      }
+    }
+    console.error("Create preference error:", error);
+    return createErrorResponse(error, "Failed to save preference");
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
+      return createUnauthorizedResponse();
     }
 
-    // Verify all shifts exist and belong to same event
-    const shiftIds = validated.preferences.map((p) => p.shiftId);
-    const shifts = await prisma.shift.findMany({
-      where: { id: { in: shiftIds } },
-      include: { event: true },
-    });
+    const { searchParams } = new URL(request.url);
+    const teamMemberId = searchParams.get("teamMemberId");
+    const shiftId = searchParams.get("shiftId");
 
-    if (shifts.length !== shiftIds.length) {
-      return createNotFoundResponse("One or more shifts");
-    }
-
-    const eventIds = new Set(shifts.map((s) => s.eventId));
-    if (eventIds.size > 1) {
+    if (!teamMemberId || !shiftId) {
       return createErrorResponse(
-        new Error("All shifts must belong to the same event"),
-        "All shifts must belong to the same event",
+        null,
+        "teamMemberId and shiftId required",
         400,
       );
     }
 
-    // Delete existing preferences for this member
-    await prisma.shiftPreference.deleteMany({
-      where: { teamMemberId: validated.teamMemberId },
-    });
+    const service = new PreferencesService();
+    await service.deleteByCompoundKey(teamMemberId, shiftId);
 
-    // Create new preferences
-    const preferences = await prisma.$transaction(
-      validated.preferences.map((pref) =>
-        prisma.shiftPreference.create({
-          data: {
-            teamMemberId: validated.teamMemberId,
-            shiftId: pref.shiftId,
-            priority: pref.priority,
-            notes: pref.notes,
-          },
-          include: {
-            shift: {
-              include: { event: true },
-            },
-          },
-        }),
-      ),
-    );
-
-    await createAuditLog({
-      userId: validated.teamMemberId,
-      action: AuditAction.PREFERENCE_SUBMIT,
-      entityType: EntityType.PREFERENCE,
-      entityId: validated.teamMemberId,
-      after: preferences,
-      ipAddress: request.headers.get("x-forwarded-for") || undefined,
-    });
-
-    return createSuccessResponse(preferences, 201);
+    return createSuccessResponse({ deleted: true });
   } catch (error) {
-    console.error("Submit preferences error:", error);
-    return createErrorResponse(error, "Failed to submit preferences");
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Preference");
+      }
+    }
+    console.error("Delete preference error:", error);
+    return createErrorResponse(error, "Failed to delete preference");
   }
 }

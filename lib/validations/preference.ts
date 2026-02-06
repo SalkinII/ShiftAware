@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PreferenceLevel } from "@prisma/client";
 
 // More lenient ID validation: accepts CUID format or any non-empty string
 // This handles cases where IDs might not be strict CUIDs but are valid database IDs
@@ -14,9 +15,10 @@ const idSchema = z
   );
 
 export const preferenceSchema = z.object({
-  shiftId: idSchema,
-  priority: z.number().int().min(1).max(5).default(1),
-  notes: z.string().optional(),
+  teamMemberId: z.string().cuid(),
+  shiftId: z.string().cuid(),
+  wantLevel: z.nativeEnum(PreferenceLevel),
+  notes: z.string().max(500).optional(),
 });
 
 export const preferencesSubmissionSchema = z.object({

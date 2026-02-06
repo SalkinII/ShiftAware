@@ -10,6 +10,8 @@ import {
   createNotFoundResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
+import { ShiftsService } from "@/lib/services/shifts.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 
 export async function GET(
   request: Request,
@@ -74,37 +76,21 @@ export async function PUT(
     const { id, requiredRoles, ...updateData } = validated;
     const before = { ...existing };
 
-    // Update shift and roles
-    const shift = await prisma.$transaction(async (tx) => {
-      // Delete existing roles if new ones provided
-      if (requiredRoles) {
-        await tx.shiftRole.deleteMany({ where: { shiftId: id } });
-      }
+    // Prepare shift data with date conversions
+    const shiftData = {
+      ...updateData,
+      startTime: updateData.startTime
+        ? new Date(updateData.startTime)
+        : undefined,
+      endTime: updateData.endTime ? new Date(updateData.endTime) : undefined,
+    };
 
-      const updated = await tx.shift.update({
-        where: { id },
-        data: {
-          ...updateData,
-          startTime: updateData.startTime
-            ? new Date(updateData.startTime)
-            : undefined,
-          endTime: updateData.endTime
-            ? new Date(updateData.endTime)
-            : undefined,
-          ...(requiredRoles && {
-            requiredRoles: {
-              create: requiredRoles,
-            },
-          }),
-        },
-        include: {
-          requiredRoles: true,
-          event: true,
-        },
-      });
-
-      return updated;
-    });
+    const service = new ShiftsService();
+    const shift = await service.updateShiftWithRoles(
+      id,
+      shiftData,
+      requiredRoles,
+    );
 
     await createAuditLog({
       action: AuditAction.UPDATE,
@@ -117,6 +103,11 @@ export async function PUT(
 
     return createSuccessResponse(shift);
   } catch (error) {
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Shift");
+      }
+    }
     console.error("Update shift error:", error);
     return createErrorResponse(error, "Failed to update shift");
   }
@@ -142,35 +133,8 @@ export async function DELETE(
       return createNotFoundResponse("Shift");
     }
 
-    // Check if shift has assignments
-    const assignmentCount = await prisma.assignment.count({
-      where: { shiftId },
-    });
-
-    if (assignmentCount > 0) {
-      return createConflictResponse(
-        "Cannot delete shift with existing assignments",
-      );
-    }
-
-    // Delete related records first (ShiftRole, ShiftPreference)
-    // Use transaction to ensure atomicity
-    await prisma.$transaction(async (tx) => {
-      // Delete shift roles
-      await tx.shiftRole.deleteMany({
-        where: { shiftId },
-      });
-
-      // Delete shift preferences
-      await tx.shiftPreference.deleteMany({
-        where: { shiftId },
-      });
-
-      // Finally delete the shift
-      await tx.shift.delete({
-        where: { id: shiftId },
-      });
-    });
+    const service = new ShiftsService();
+    await service.cascadeDeleteShift(shiftId);
 
     await createAuditLog({
       action: AuditAction.DELETE,
@@ -182,6 +146,14 @@ export async function DELETE(
 
     return createSuccessResponse({ success: true });
   } catch (error) {
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Shift");
+      }
+      if (error.code === "CONFLICT") {
+        return createConflictResponse(error.message);
+      }
+    }
     console.error("Delete shift error:", error);
     return createErrorResponse(error, "Failed to delete shift");
   }
