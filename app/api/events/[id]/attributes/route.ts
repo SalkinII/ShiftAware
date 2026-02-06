@@ -1,5 +1,4 @@
 import { isAuthenticated, isAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -8,10 +7,14 @@ import {
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { attributeDefinitionSchema } from "@/lib/validations/attribute";
+import { EventsService } from "@/lib/services/events.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new EventsService();
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -21,29 +24,25 @@ export async function GET(
 
     const { id: eventId } = await params;
 
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-    });
+    await service.getEvent(eventId);
 
-    if (!event) {
-      return createNotFoundResponse("Event not found");
-    }
-
-    const attributes = await prisma.eventAttributeDefinition.findMany({
-      where: { eventId },
-      orderBy: { createdAt: "asc" },
-    });
+    const attributes = await service.listEventAttributes(eventId);
 
     return createSuccessResponse(attributes);
   } catch (error) {
     console.error("Get event attributes error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Event");
+    }
+
     return createErrorResponse(error, "Failed to fetch event attributes");
   }
 }
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -54,22 +53,21 @@ export async function POST(
 
     const { id: eventId } = await params;
 
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event) return createNotFoundResponse("Event not found");
+    await service.getEvent(eventId);
 
     const body = await request.json();
     const validated = attributeDefinitionSchema.parse(body);
 
-    const attribute = await prisma.eventAttributeDefinition.create({
-      data: {
-        ...validated,
-        eventId,
-      },
-    });
+    const attribute = await service.createEventAttribute(eventId, validated);
 
     return createSuccessResponse(attribute, 201);
   } catch (error) {
     console.error("Create attribute error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Event");
+    }
+
     return createErrorResponse(error, "Failed to create attribute");
   }
 }

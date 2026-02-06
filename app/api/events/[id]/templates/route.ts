@@ -8,11 +8,11 @@ import {
   createForbiddenResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { z } from "zod";
+import { assignTemplateSchema } from "@/lib/validations/event-template";
+import { EventsService } from "@/lib/services/events.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 
-const assignTemplateSchema = z.object({
-  templateId: z.string().cuid(),
-});
+const service = new EventsService();
 
 export async function GET(
   request: Request,
@@ -24,38 +24,18 @@ export async function GET(
 
     const { id: eventId } = await params;
 
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event) return createNotFoundResponse("Event not found");
+    await service.getEvent(eventId);
 
-    // Get assigned global templates
-    const assignments = await prisma.eventTemplate.findMany({
-      where: { eventId },
-      include: {
-        template: {
-          include: { requiredRoles: true },
-        },
-      },
-    });
+    const templates = await service.listEventTemplates(eventId);
 
-    // Get event-specific templates
-    const eventSpecific = await prisma.shiftTemplate.findMany({
-      where: { eventId },
-      include: { requiredRoles: true },
-    });
-
-    return createSuccessResponse({
-      assigned: assignments.map((a) => ({
-        ...a.template,
-        assignmentId: a.id,
-        isGlobal: true,
-      })),
-      eventSpecific: eventSpecific.map((t) => ({
-        ...t,
-        isGlobal: false,
-      })),
-    });
+    return createSuccessResponse(templates);
   } catch (error) {
     console.error("Get event templates error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Event");
+    }
+
     return createErrorResponse(error, "Failed to fetch templates");
   }
 }
@@ -73,8 +53,7 @@ export async function POST(
 
     const { id: eventId } = await params;
 
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event) return createNotFoundResponse("Event not found");
+    await service.getEvent(eventId);
 
     const body = await request.json();
     const validated = assignTemplateSchema.parse(body);
@@ -93,11 +72,10 @@ export async function POST(
     }
 
     // Check not already assigned
-    const existing = await prisma.eventTemplate.findUnique({
-      where: {
-        eventId_templateId: { eventId, templateId: validated.templateId },
-      },
-    });
+    const existing = await service.findEventTemplate(
+      eventId,
+      validated.templateId,
+    );
     if (existing) {
       return createErrorResponse(
         null,
@@ -106,17 +84,19 @@ export async function POST(
       );
     }
 
-    const assignment = await prisma.eventTemplate.create({
-      data: {
-        eventId,
-        templateId: validated.templateId,
-      },
-      include: { template: true },
-    });
+    const assignment = await service.assignTemplate(
+      eventId,
+      validated.templateId,
+    );
 
     return createSuccessResponse(assignment, 201);
   } catch (error) {
     console.error("Assign template error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Event");
+    }
+
     return createErrorResponse(error, "Failed to assign template");
   }
 }

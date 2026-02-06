@@ -9,6 +9,10 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { createRegistrationSchema } from "@/lib/validations/event-registration";
+import { EventsService } from "@/lib/services/events.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new EventsService();
 
 export async function GET(
   request: Request,
@@ -20,27 +24,18 @@ export async function GET(
 
     const { id: eventId } = await params;
 
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event) return createNotFoundResponse("Event not found");
+    await service.getEvent(eventId);
 
-    const registrations = await prisma.eventRegistration.findMany({
-      where: { eventId },
-      include: {
-        member: {
-          include: {
-            attributes: {
-              include: { definition: true },
-              where: { definition: { eventId } },
-            },
-          },
-        },
-      },
-      orderBy: { registeredAt: "asc" },
-    });
+    const registrations = await service.listRegistrations(eventId);
 
     return createSuccessResponse(registrations);
   } catch (error) {
     console.error("Get event registrations error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Event");
+    }
+
     return createErrorResponse(error, "Failed to fetch registrations");
   }
 }
@@ -58,8 +53,7 @@ export async function POST(
 
     const { id: eventId } = await params;
 
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event) return createNotFoundResponse("Event not found");
+    await service.getEvent(eventId);
 
     const body = await request.json();
     const validated = createRegistrationSchema.parse(body);
@@ -71,9 +65,10 @@ export async function POST(
     if (!member) return createNotFoundResponse("Member not found");
 
     // Check not already registered
-    const existing = await prisma.eventRegistration.findUnique({
-      where: { memberId_eventId: { memberId: validated.memberId, eventId } },
-    });
+    const existing = await service.findRegistration(
+      eventId,
+      validated.memberId,
+    );
     if (existing) {
       return createErrorResponse(
         null,
@@ -82,18 +77,20 @@ export async function POST(
       );
     }
 
-    const registration = await prisma.eventRegistration.create({
-      data: {
-        memberId: validated.memberId,
-        eventId,
-        status: validated.status,
-      },
-      include: { member: true },
-    });
+    const registration = await service.createRegistration(
+      eventId,
+      validated.memberId,
+      validated.status,
+    );
 
     return createSuccessResponse(registration, 201);
   } catch (error) {
     console.error("Create registration error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Event");
+    }
+
     return createErrorResponse(error, "Failed to register member");
   }
 }
