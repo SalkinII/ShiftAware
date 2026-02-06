@@ -65,4 +65,47 @@ export class PreferenceRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to delete preference");
     }
   }
+
+  async upsert(data: {
+    teamMemberId: string;
+    shiftId: string;
+    wantLevel: string;
+    notes?: string | null;
+  }) {
+    try {
+      return await prisma.shiftPreference.upsert({
+        where: {
+          teamMemberId_shiftId: {
+            teamMemberId: data.teamMemberId,
+            shiftId: data.shiftId,
+          },
+        },
+        update: {
+          wantLevel: data.wantLevel as any,
+          notes: data.notes,
+        },
+        create: {
+          teamMember: { connect: { id: data.teamMemberId } },
+          shift: { connect: { id: data.shiftId } },
+          wantLevel: data.wantLevel as any,
+          notes: data.notes,
+        },
+        include: { teamMember: true, shift: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to upsert preference");
+    }
+  }
+
+  async deleteByCompoundKey(teamMemberId: string, shiftId: string) {
+    try {
+      return await prisma.shiftPreference.delete({
+        where: {
+          teamMemberId_shiftId: { teamMemberId, shiftId },
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to delete preference");
+    }
+  }
 }

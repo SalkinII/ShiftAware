@@ -27,4 +27,17 @@ export class PreferencesService {
   async deletePreference(id: string) {
     return this.repo.delete(id);
   }
+
+  async upsertPreference(data: {
+    teamMemberId: string;
+    shiftId: string;
+    wantLevel: string;
+    notes?: string | null;
+  }) {
+    return this.repo.upsert(data);
+  }
+
+  async deleteByCompoundKey(teamMemberId: string, shiftId: string) {
+    return this.repo.deleteByCompoundKey(teamMemberId, shiftId);
+  }
 }

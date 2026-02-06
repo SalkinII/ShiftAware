@@ -10,6 +10,7 @@ vi.mock("@/lib/db", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -38,7 +39,9 @@ describe("PreferenceRepository", () => {
       updatedAt: new Date(),
     };
 
-    vi.mocked(prisma.shiftPreference.findUnique).mockResolvedValue(mockPreference);
+    vi.mocked(prisma.shiftPreference.findUnique).mockResolvedValue(
+      mockPreference,
+    );
 
     const result = await repo.findById("pref-1");
 
@@ -62,7 +65,9 @@ describe("PreferenceRepository", () => {
       },
     ];
 
-    vi.mocked(prisma.shiftPreference.findMany).mockResolvedValue(mockPreferences);
+    vi.mocked(prisma.shiftPreference.findMany).mockResolvedValue(
+      mockPreferences,
+    );
 
     const result = await repo.findAll();
 
@@ -127,5 +132,43 @@ describe("PreferenceRepository", () => {
     const result = await repo.delete("pref-1");
 
     expect(result.id).toBe("pref-1");
+  });
+
+  it("should upsert a preference by compound key", async () => {
+    const input = {
+      teamMemberId: "member-1",
+      shiftId: "shift-1",
+      wantLevel: "WANT" as const,
+      notes: "Prefer this",
+    };
+
+    const mockPreference = {
+      id: "pref-1",
+      ...input,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.mocked(prisma.shiftPreference.upsert).mockResolvedValue(mockPreference);
+
+    const result = await repo.upsert(input);
+
+    expect(result).toEqual(mockPreference);
+    expect(prisma.shiftPreference.upsert).toHaveBeenCalledWith({
+      where: {
+        teamMemberId_shiftId: {
+          teamMemberId: "member-1",
+          shiftId: "shift-1",
+        },
+      },
+      update: { wantLevel: "WANT", notes: "Prefer this" },
+      create: {
+        teamMember: { connect: { id: "member-1" } },
+        shift: { connect: { id: "shift-1" } },
+        wantLevel: "WANT",
+        notes: "Prefer this",
+      },
+      include: { teamMember: true, shift: true },
+    });
   });
 });
