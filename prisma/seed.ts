@@ -1,6 +1,7 @@
 import {
   AssignmentType,
   EventStatus,
+  PreferenceLevel,
   PrismaClient,
   Role,
   ShiftPriority,
@@ -537,12 +538,12 @@ async function seedPreferences() {
           },
         },
         update: {
-          priority: i + 1,
+          wantLevel: PreferenceLevel.WANT,
         },
         create: {
           teamMemberId: member.id,
           shiftId: allPreferred[i].id,
-          priority: i + 1,
+          wantLevel: PreferenceLevel.WANT,
         },
       });
     }
