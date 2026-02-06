@@ -631,11 +631,26 @@ const service = new MembersService(mockRepo);
 - 43 passing unit tests
 - Zero direct Prisma calls in refactored routes
 
-### Future Phases
-- Add repositories for Assignment, ShiftTemplate, etc.
-- Add transaction utilities
-- Caching layer
-- API versioning
+### Phase 3 (✅ Complete)
+- Added repositories for Assignment, ShiftTemplate, SwapRequest
+- Extended EventRepository & TeamMemberRepository with sub-entity methods
+- Algorithm orchestration in AssignmentsService
+- Swap auto-matching logic in SwapRequestsService
+- Refactored all remaining routes (templates, assignments, swap-requests, sub-routes)
+- 94 passing unit tests (repository + service layers)
+- **Zero direct Prisma calls in ANY route**
+
+### Sub-Entity Grouping Pattern
+Phase 3 introduced a pattern for managing sub-entities without file sprawl:
+- EventConfig, EventRegistration, EventTemplate, EventAttributeDefinition → **EventRepository/EventsService**
+- TeamMemberAttribute → **TeamMemberRepository/MembersService**
+
+This keeps related functionality together while maintaining the three-layer architecture.
+
+### Future Enhancements
+- Add transaction utilities for complex multi-repository operations
+- Caching layer for frequently accessed data
+- API versioning strategy
 
 ### Incremental Approach
 1. **Don't break existing code** - Routes still work with direct Prisma

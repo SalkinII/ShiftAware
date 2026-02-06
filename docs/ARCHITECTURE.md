@@ -2,7 +2,7 @@
 
 > **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
 >
-> Last updated: 2026-02-06 (Phase 1: Three-layer architecture implementation)
+> Last updated: 2026-02-06 (Phase 3: Complete service architecture - all routes refactored)
 
 ---
 
@@ -51,7 +51,7 @@
 
 ## 2. Three-Layer Architecture Pattern
 
-**Status:** ✅ Phase 1 Complete (Members, Events, Shifts, Preferences)
+**Status:** ✅ Phase 3 Complete (All entities - zero direct Prisma calls in routes)
 
 ShiftAware uses a clean three-layer architecture to separate concerns:
 
@@ -341,16 +341,19 @@ TeamMember (Global)
 
 | Entity | Repository | Service | Routes Refactored |
 |--------|-----------|---------|-------------------|
-| TeamMember | ✅ TeamMemberRepository | ✅ MembersService | ✅ /api/members/* |
-| Event | ✅ EventRepository | ✅ EventsService | ✅ /api/events/* |
+| TeamMember | ✅ TeamMemberRepository | ✅ MembersService | ✅ /api/members/* (including attributes) |
+| Event | ✅ EventRepository | ✅ EventsService | ✅ /api/events/* (including sub-routes) |
 | Shift | ✅ ShiftRepository | ✅ ShiftsService | ✅ /api/shifts/* |
 | ShiftPreference | ✅ PreferenceRepository | ✅ PreferencesService | ✅ /api/preferences/* |
-| Assignment | ❌ Not yet | ❌ Not yet | ❌ Direct Prisma |
-| ShiftTemplate | ❌ Not yet | ❌ Not yet | ❌ Direct Prisma |
+| Assignment | ✅ AssignmentRepository | ✅ AssignmentsService | ✅ /api/assignments |
+| ShiftTemplate | ✅ ShiftTemplateRepository | ✅ ShiftTemplatesService | ✅ /api/shifts/templates/* |
+| SwapRequest | ✅ SwapRequestRepository | ✅ SwapRequestsService | ✅ /api/swap-requests/* |
 
 **Phase 1 Complete:** Base repository pattern, core CRUD operations for Members, Events, Shifts, and Preferences.
 
 **Phase 2 Complete:** All core entity routes refactored to use three-layer architecture. Complex transactions (upsert, cascadeDelete, updateWithRoles) encapsulated in repositories.
+
+**Phase 3 Complete:** All remaining entities refactored. Sub-entities grouped under parent services (EventsService handles config/registrations/templates/attributes). Algorithm orchestration in AssignmentsService. Swap matching logic in SwapRequestsService. **Zero direct Prisma calls in any route.**
 
 **Future Enhancements:**
 - Refactor remaining routes (Assignment, ShiftTemplate)
@@ -424,31 +427,28 @@ export class TeamMemberRepository extends BaseRepository {
 
 ## 7. API Quick Reference
 
-### Core Endpoints (Refactored to Three-Layer)
+### All Endpoints (Three-Layer Architecture Complete)
 
 | Endpoint | Methods | Service | Repository | Status |
 |----------|---------|---------|------------|--------|
 | `/api/members` | GET, POST | MembersService | TeamMemberRepository | ✅ Complete |
 | `/api/members/{id}` | GET, PUT, DELETE | MembersService | TeamMemberRepository | ✅ Complete |
+| `/api/members/{id}/attributes` | GET, POST | MembersService | TeamMemberRepository | ✅ Complete |
 | `/api/events` | GET, POST | EventsService | EventRepository | ✅ Complete |
 | `/api/events/{id}` | GET, PUT, DELETE | EventsService | EventRepository | ✅ Complete |
+| `/api/events/{id}/config` | GET, PUT | EventsService | EventRepository | ✅ Complete |
+| `/api/events/{id}/registrations` | GET, POST | EventsService | EventRepository | ✅ Complete |
+| `/api/events/{id}/templates` | GET, POST | EventsService | EventRepository | ✅ Complete |
+| `/api/events/{id}/attributes` | GET, POST | EventsService | EventRepository | ✅ Complete |
 | `/api/shifts` | GET, POST | ShiftsService | ShiftRepository | ✅ Complete |
 | `/api/shifts/{id}` | GET, PUT, DELETE | ShiftsService | ShiftRepository | ✅ Complete |
+| `/api/shifts/templates` | GET, POST | ShiftTemplatesService | ShiftTemplateRepository | ✅ Complete |
+| `/api/shifts/templates/{id}` | GET, PUT, DELETE | ShiftTemplatesService | ShiftTemplateRepository | ✅ Complete |
+| `/api/shifts/templates/{id}/schedule` | POST | ShiftTemplatesService | ShiftTemplateRepository | ✅ Complete |
 | `/api/preferences` | GET, POST, DELETE | PreferencesService | PreferenceRepository | ✅ Complete |
-
-### Legacy Endpoints (Direct Prisma - Phase 2)
-
-| Endpoint | Methods | Purpose |
-|----------|---------|---------|
-| `/api/members/{id}/attributes` | GET, POST | Member's custom attributes |
-| `/api/events/{id}/config` | GET, PUT | Event algorithm config |
-| `/api/events/{id}/registrations` | GET, POST | Event member registrations |
-| `/api/events/{id}/templates` | GET, POST, DELETE | Assigned templates |
-| `/api/events/{id}/attributes` | GET, POST | Attribute definitions |
-| `/api/shifts/templates` | GET, POST | Shift templates |
-| `/api/shifts/templates/{id}` | PUT, DELETE | Single template CRUD |
-| `/api/assignments` | GET, POST | Assignments (POST runs algorithm) |
-| `/api/swap-requests` | GET, POST | Swap requests |
+| `/api/assignments` | GET, POST | AssignmentsService | AssignmentRepository | ✅ Complete |
+| `/api/swap-requests` | GET, POST | SwapRequestsService | SwapRequestRepository | ✅ Complete |
+| `/api/swap-requests/{id}` | GET, PUT, DELETE | SwapRequestsService | SwapRequestRepository | ✅ Complete |
 
 ### Query Parameters
 
@@ -497,26 +497,77 @@ Shift.templateId ──► find Lane where Lane.id === templateId
 
 ## 9. Algorithm Flow
 
+### Service Orchestration Pattern
+
 ```
 POST /api/assignments?eventId=X
          │
          ▼
-    ┌────────────────────────────────────────┐
-    │ 1. Load EventConfig.algorithmWeights   │
-    │ 2. Load registered members for event   │
-    │ 3. Load shifts for event               │
-    │ 4. Load preferences (WANT/DONT_WANT)   │
-    │ 5. Run weighted assignment algorithm   │
-    │ 6. Delete existing assignments         │
-    │ 7. Save new assignments                │
-    │ 8. Create audit log                    │
-    └────────────────────────────────────────┘
+    Route: auth + parse params
          │
          ▼
-    Return: { assignments, violations, scores }
+    AssignmentsService.runAllocation(eventId, preview)
+         │
+         ├── EventRepository.findById(eventId) → load config
+         ├── Load members (Prisma direct - shared query)
+         ├── Load shifts (Prisma direct - shared query)
+         ├── Parse config & weights
+         ├── runAssignmentAlgorithm() → { assignments, violations, scores }
+         │
+         ├── If preview: return results (no DB writes)
+         │
+         └── If full:
+             ├── AssignmentRepository.deleteByEvent(eventId)
+             └── AssignmentRepository.bulkCreate(assignments, scores, explanations)
+         │
+         ▼
+    Route: audit log + response
 ```
 
-**Preview mode** (`?preview=true`): Steps 1-5 only, returns proposal without saving.
+**Key Design:**
+- Algorithm orchestration lives in **AssignmentsService**
+- Repository handles batch operations (deleteByEvent, bulkCreate)
+- Route remains thin (auth, params, audit logging)
+- Preview mode skips DB writes for testing allocations
+
+### Swap Request Auto-Matching Flow
+
+```
+POST /api/swap-requests
+         │
+         ▼
+    SwapRequestsService.createSwapRequest(fromAssignmentId, toShiftId)
+         │
+         ├── Validate assignment & shift exist
+         ├── Verify same event
+         ├── SwapRequestRepository.create() → new request
+         │
+         ├── SwapRequestRepository.findMatchingRequest()
+         │    (Find complementary pending request)
+         │
+         └── If match found:
+             └── SwapRequestRepository.executeAutoMatch()
+                 (Transaction: mark both as MATCHED)
+         │
+         ▼
+    Route: return created swap request
+
+PUT /api/swap-requests/{id} (status: APPROVED)
+         │
+         ▼
+    SwapRequestsService.approveSwapRequest(id)
+         │
+         ├── Load request with match details
+         │
+         └── If status === MATCHED:
+             └── SwapRequestRepository.executeApprovedSwap()
+                 (Transaction: swap assignments + approve both requests)
+         │
+         ▼
+    Route: return updated swap request
+```
+
+**Preview mode** (`?preview=true`): Algorithm runs but skips DB writes, returns proposal for review.
 
 ---
 
@@ -547,15 +598,27 @@ app/
 ├── api/                       # API routes (Route Layer)
 │   ├── members/
 │   │   ├── route.ts          # ✅ Uses MembersService
-│   │   └── [id]/route.ts     # ✅ Uses MembersService
+│   │   ├── [id]/route.ts     # ✅ Uses MembersService
+│   │   └── [id]/attributes/  # ✅ Uses MembersService
 │   ├── events/
 │   │   ├── route.ts          # ✅ Uses EventsService
-│   │   └── [id]/route.ts     # ✅ Uses EventsService
+│   │   ├── [id]/route.ts     # ✅ Uses EventsService
+│   │   └── [id]/             # ✅ All use EventsService:
+│   │       ├── config/       #    - config
+│   │       ├── registrations/#    - registrations
+│   │       ├── templates/    #    - templates
+│   │       └── attributes/   #    - attributes
 │   ├── shifts/
 │   │   ├── route.ts          # ✅ Uses ShiftsService
-│   │   └── [id]/route.ts     # ✅ Uses ShiftsService
+│   │   ├── [id]/route.ts     # ✅ Uses ShiftsService
+│   │   └── templates/        # ✅ Uses ShiftTemplatesService
+│   │       ├── route.ts
+│   │       └── [id]/
 │   ├── preferences/          # ✅ Uses PreferencesService
-│   └── assignments/          # ❌ Direct Prisma
+│   ├── assignments/          # ✅ Uses AssignmentsService (algorithm orchestration)
+│   └── swap-requests/        # ✅ Uses SwapRequestsService (auto-matching)
+│       ├── route.ts
+│       └── [id]/route.ts
 ├── app/                       # User pages
 │   ├── identity/
 │   └── calendar/
@@ -572,23 +635,32 @@ components/
 └── ui/                        # Buttons, inputs, etc.
 
 lib/
-├── repositories/              # ✅ NEW: Repository Layer
+├── repositories/              # ✅ Repository Layer (Complete)
 │   ├── base.repository.ts    # Base class with error handling
 │   ├── team-member.repository.ts
 │   ├── event.repository.ts
 │   ├── shift.repository.ts
-│   └── preference.repository.ts
+│   ├── preference.repository.ts
+│   ├── shift-template.repository.ts  # ✅ Phase 3
+│   ├── assignment.repository.ts      # ✅ Phase 3
+│   └── swap-request.repository.ts    # ✅ Phase 3
 │
-├── services/                  # ✅ NEW: Service Layer
+├── services/                  # ✅ Service Layer (Complete)
 │   ├── members.service.ts
 │   ├── events.service.ts
 │   ├── shifts.service.ts
 │   ├── preferences.service.ts
+│   ├── shift-templates.service.ts    # ✅ Phase 3
+│   ├── assignments.service.ts        # ✅ Phase 3 (orchestration)
+│   ├── swap-requests.service.ts      # ✅ Phase 3 (auto-match)
 │   └── audit.ts              # Existing audit service
 │
 ├── types/
 │   └── lane.ts                # Lane types + deriveLanesFromTemplates()
 ├── validations/               # Zod schemas
+│   ├── event-config.ts        # ✅ Phase 3
+│   ├── event-template.ts      # ✅ Phase 3
+│   └── member-attribute.ts    # ✅ Phase 3
 ├── hooks/
 │   ├── useEventContext.ts
 │   └── useMemberContext.ts
