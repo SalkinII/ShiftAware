@@ -1,0 +1,30 @@
+import { ShiftRepository } from "@/lib/repositories/shift.repository";
+import type { Prisma } from "@prisma/client";
+
+export class ShiftsService {
+  private repo: ShiftRepository;
+
+  constructor(repo?: ShiftRepository) {
+    this.repo = repo || new ShiftRepository();
+  }
+
+  async listShifts(where?: Prisma.ShiftWhereInput) {
+    return this.repo.findAll(where);
+  }
+
+  async getShift(id: string) {
+    return this.repo.findById(id);
+  }
+
+  async createShift(data: Prisma.ShiftCreateInput) {
+    return this.repo.create(data);
+  }
+
+  async updateShift(id: string, data: Prisma.ShiftUpdateInput) {
+    return this.repo.update(id, data);
+  }
+
+  async deleteShift(id: string) {
+    return this.repo.delete(id);
+  }
+}
