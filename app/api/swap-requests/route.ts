@@ -1,13 +1,15 @@
 // app/api/swap-requests/route.ts
 import { isAuthenticated } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
-  createNotFoundResponse,
 } from "@/lib/api-errors";
 import { createSwapRequestSchema } from "@/lib/validations/swap-request";
+import { SwapRequestsService } from "@/lib/services/swap-requests.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new SwapRequestsService();
 
 export async function GET(request: Request) {
   try {
@@ -33,24 +35,16 @@ export async function GET(request: Request) {
       where.status = status;
     }
 
-    const requests = await prisma.swapRequest.findMany({
-      where,
-      include: {
-        requester: true,
-        fromAssignment: {
-          include: { shift: true },
-        },
-        toShift: true,
-        matchedWith: {
-          include: { requester: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const requests = await service.listSwapRequests(where);
 
     return createSuccessResponse(requests);
   } catch (error) {
     console.error("Get swap requests error:", error);
+
+    if (error instanceof RepositoryError) {
+      return createErrorResponse(error, error.message);
+    }
+
     return createErrorResponse(error, "Failed to fetch swap requests");
   }
 }
@@ -63,71 +57,28 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = createSwapRequestSchema.parse(body);
 
-    // Get assignment and verify ownership
-    const assignment = await prisma.assignment.findUnique({
-      where: { id: validated.fromAssignmentId },
-      include: { shift: true },
-    });
-    if (!assignment) return createNotFoundResponse("Assignment not found");
-
-    // Get target shift
-    const toShift = await prisma.shift.findUnique({
-      where: { id: validated.toShiftId },
-    });
-    if (!toShift) return createNotFoundResponse("Target shift not found");
-
-    // Verify same event
-    if (assignment.shift.eventId !== toShift.eventId) {
-      return createErrorResponse(
-        null,
-        "Cannot swap shifts between different events",
-        400,
-      );
-    }
-
-    // Create swap request
-    const swapRequest = await prisma.swapRequest.create({
-      data: {
-        requesterId: assignment.teamMemberId,
-        fromAssignmentId: validated.fromAssignmentId,
-        toShiftId: validated.toShiftId,
-      },
-      include: {
-        requester: true,
-        fromAssignment: { include: { shift: true } },
-        toShift: true,
-      },
-    });
-
-    // Check for matching swap request (someone on toShift wanting fromShift)
-    const matchingRequest = await prisma.swapRequest.findFirst({
-      where: {
-        status: "PENDING",
-        toShiftId: assignment.shiftId,
-        fromAssignment: {
-          shiftId: validated.toShiftId,
-        },
-        id: { not: swapRequest.id },
-      },
-    });
-
-    if (matchingRequest) {
-      // Auto-match!
-      await prisma.$transaction([
-        prisma.swapRequest.update({
-          where: { id: swapRequest.id },
-          data: { status: "MATCHED", matchedWithId: matchingRequest.id },
-        }),
-        prisma.swapRequest.update({
-          where: { id: matchingRequest.id },
-          data: { status: "MATCHED" },
-        }),
-      ]);
-    }
+    const swapRequest = await service.createSwapRequest(
+      validated.fromAssignmentId,
+      validated.toShiftId,
+    );
 
     return createSuccessResponse(swapRequest, 201);
   } catch (error) {
     console.error("Create swap request error:", error);
+
+    if (error instanceof Error) {
+      if (error.message.includes("not found")) {
+        return createErrorResponse(error, error.message, 404);
+      }
+      if (error.message.includes("different events")) {
+        return createErrorResponse(error, error.message, 400);
+      }
+    }
+
+    if (error instanceof RepositoryError) {
+      return createErrorResponse(error, error.message);
+    }
+
     return createErrorResponse(error, "Failed to create swap request");
   }
 }

@@ -1,6 +1,5 @@
 // app/api/swap-requests/[id]/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -9,6 +8,10 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { updateSwapRequestSchema } from "@/lib/validations/swap-request";
+import { SwapRequestsService } from "@/lib/services/swap-requests.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new SwapRequestsService();
 
 export async function GET(
   request: Request,
@@ -20,21 +23,16 @@ export async function GET(
 
     const { id } = await params;
 
-    const swapRequest = await prisma.swapRequest.findUnique({
-      where: { id },
-      include: {
-        requester: true,
-        fromAssignment: { include: { shift: true, teamMember: true } },
-        toShift: true,
-        matchedWith: { include: { requester: true } },
-      },
-    });
-
-    if (!swapRequest) return createNotFoundResponse("Swap request not found");
+    const swapRequest = await service.getSwapRequest(id);
 
     return createSuccessResponse(swapRequest);
   } catch (error) {
     console.error("Get swap request error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Swap request");
+    }
+
     return createErrorResponse(error, "Failed to fetch swap request");
   }
 }
@@ -55,63 +53,24 @@ export async function PUT(
 
     const { id } = await params;
 
-    const existing = await prisma.swapRequest.findUnique({
-      where: { id },
-      include: {
-        fromAssignment: true,
-        matchedWith: { include: { fromAssignment: true } },
-      },
-    });
-    if (!existing) return createNotFoundResponse("Swap request not found");
-
     const body = await request.json();
     const validated = updateSwapRequestSchema.parse(body);
 
-    // If approving a matched swap, execute the swap
-    if (
-      validated.status === "APPROVED" &&
-      existing.status === "MATCHED" &&
-      existing.matchedWith
-    ) {
-      await prisma.$transaction([
-        // Update assignments
-        prisma.assignment.update({
-          where: { id: existing.fromAssignmentId },
-          data: { shiftId: existing.toShiftId },
-        }),
-        prisma.assignment.update({
-          where: { id: existing.matchedWith.fromAssignmentId },
-          data: { shiftId: existing.fromAssignment.shiftId },
-        }),
-        // Update swap requests
-        prisma.swapRequest.update({
-          where: { id },
-          data: { status: "APPROVED" },
-        }),
-        prisma.swapRequest.update({
-          where: { id: existing.matchedWithId! },
-          data: { status: "APPROVED" },
-        }),
-      ]);
+    let updated;
+    if (validated.status === "APPROVED") {
+      updated = await service.approveSwapRequest(id);
     } else {
-      await prisma.swapRequest.update({
-        where: { id },
-        data: { status: validated.status },
-      });
+      updated = await service.updateSwapRequest(id, validated.status);
     }
-
-    const updated = await prisma.swapRequest.findUnique({
-      where: { id },
-      include: {
-        requester: true,
-        fromAssignment: { include: { shift: true } },
-        toShift: true,
-      },
-    });
 
     return createSuccessResponse(updated);
   } catch (error) {
     console.error("Update swap request error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Swap request");
+    }
+
     return createErrorResponse(error, "Failed to update swap request");
   }
 }
@@ -126,21 +85,21 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const existing = await prisma.swapRequest.findUnique({ where: { id } });
-    if (!existing) return createNotFoundResponse("Swap request not found");
+    const result = await service.cancelSwapRequest(id);
 
-    if (existing.status !== "PENDING") {
-      return createErrorResponse(null, "Can only cancel pending requests", 400);
-    }
-
-    await prisma.swapRequest.update({
-      where: { id },
-      data: { status: "CANCELLED" },
-    });
-
-    return createSuccessResponse({ cancelled: true });
+    return createSuccessResponse(result);
   } catch (error) {
     console.error("Cancel swap request error:", error);
+
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Swap request");
+      }
+      if (error.code === "INVALID_DATA") {
+        return createErrorResponse(error, error.message, 400);
+      }
+    }
+
     return createErrorResponse(error, "Failed to cancel swap request");
   }
 }
