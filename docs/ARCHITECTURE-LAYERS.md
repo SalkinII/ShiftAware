@@ -624,12 +624,18 @@ const service = new MembersService(mockRepo);
 - Refactored /api/members routes
 - 36 passing unit tests
 
-### Phase 2 (Planned)
-- Refactor remaining routes
+### Phase 2 (✅ Complete)
+- Refactored all core entity routes (Events, Shifts, Preferences)
+- Added complex transaction methods (upsert, cascadeDelete, updateWithRoles)
+- Removed direct Prisma calls from all core routes
+- 43 passing unit tests
+- Zero direct Prisma calls in refactored routes
+
+### Future Phases
 - Add repositories for Assignment, ShiftTemplate, etc.
-- Remove all direct Prisma calls from routes
 - Add transaction utilities
 - Caching layer
+- API versioning
 
 ### Incremental Approach
 1. **Don't break existing code** - Routes still work with direct Prisma

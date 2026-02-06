@@ -342,19 +342,20 @@ TeamMember (Global)
 | Entity | Repository | Service | Routes Refactored |
 |--------|-----------|---------|-------------------|
 | TeamMember | ✅ TeamMemberRepository | ✅ MembersService | ✅ /api/members/* |
-| Event | ✅ EventRepository | ✅ EventsService | ⚠️ Partial |
-| Shift | ✅ ShiftRepository | ✅ ShiftsService | ⚠️ Partial |
-| ShiftPreference | ✅ PreferenceRepository | ✅ PreferencesService | ⚠️ Partial |
+| Event | ✅ EventRepository | ✅ EventsService | ✅ /api/events/* |
+| Shift | ✅ ShiftRepository | ✅ ShiftsService | ✅ /api/shifts/* |
+| ShiftPreference | ✅ PreferenceRepository | ✅ PreferencesService | ✅ /api/preferences/* |
 | Assignment | ❌ Not yet | ❌ Not yet | ❌ Direct Prisma |
 | ShiftTemplate | ❌ Not yet | ❌ Not yet | ❌ Direct Prisma |
 
 **Phase 1 Complete:** Base repository pattern, core CRUD operations for Members, Events, Shifts, and Preferences.
 
-**Phase 2 (Planned):**
-- Refactor remaining routes to use services
+**Phase 2 Complete:** All core entity routes refactored to use three-layer architecture. Complex transactions (upsert, cascadeDelete, updateWithRoles) encapsulated in repositories.
+
+**Future Enhancements:**
+- Refactor remaining routes (Assignment, ShiftTemplate)
 - Add caching layer
 - API versioning
-- Transaction utilities
 - Advanced error handling
 
 ### Service Layer Patterns
@@ -429,11 +430,11 @@ export class TeamMemberRepository extends BaseRepository {
 |----------|---------|---------|------------|--------|
 | `/api/members` | GET, POST | MembersService | TeamMemberRepository | ✅ Complete |
 | `/api/members/{id}` | GET, PUT, DELETE | MembersService | TeamMemberRepository | ✅ Complete |
-| `/api/events` | GET, POST | EventsService | EventRepository | ⚠️ Partial |
-| `/api/events/{id}` | GET, PUT, DELETE | EventsService | EventRepository | ⚠️ Partial |
-| `/api/shifts` | GET, POST | ShiftsService | ShiftRepository | ⚠️ Partial |
-| `/api/shifts/{id}` | GET, PUT, DELETE | ShiftsService | ShiftRepository | ⚠️ Partial |
-| `/api/preferences` | GET, POST, DELETE | PreferencesService | PreferenceRepository | ⚠️ Partial |
+| `/api/events` | GET, POST | EventsService | EventRepository | ✅ Complete |
+| `/api/events/{id}` | GET, PUT, DELETE | EventsService | EventRepository | ✅ Complete |
+| `/api/shifts` | GET, POST | ShiftsService | ShiftRepository | ✅ Complete |
+| `/api/shifts/{id}` | GET, PUT, DELETE | ShiftsService | ShiftRepository | ✅ Complete |
+| `/api/preferences` | GET, POST, DELETE | PreferencesService | PreferenceRepository | ✅ Complete |
 
 ### Legacy Endpoints (Direct Prisma - Phase 2)
 
@@ -548,12 +549,12 @@ app/
 │   │   ├── route.ts          # ✅ Uses MembersService
 │   │   └── [id]/route.ts     # ✅ Uses MembersService
 │   ├── events/
-│   │   ├── route.ts          # ⚠️ Partial service usage
-│   │   └── [id]/route.ts     # ⚠️ Partial service usage
+│   │   ├── route.ts          # ✅ Uses EventsService
+│   │   └── [id]/route.ts     # ✅ Uses EventsService
 │   ├── shifts/
-│   │   ├── route.ts          # ⚠️ Partial service usage
-│   │   └── [id]/route.ts     # ⚠️ Partial service usage
-│   ├── preferences/          # ⚠️ Partial service usage
+│   │   ├── route.ts          # ✅ Uses ShiftsService
+│   │   └── [id]/route.ts     # ✅ Uses ShiftsService
+│   ├── preferences/          # ✅ Uses PreferencesService
 │   └── assignments/          # ❌ Direct Prisma
 ├── app/                       # User pages
 │   ├── identity/
