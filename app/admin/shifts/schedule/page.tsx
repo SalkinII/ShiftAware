@@ -1268,7 +1268,7 @@ export default function ShiftsPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
-                        Mobile 1
+                        Mobile
                       </span>
                       <span className="text-sm font-black text-gray-900">
                         {
