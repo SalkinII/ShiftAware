@@ -69,7 +69,7 @@ export class TeamMemberRepository extends BaseRepository {
         include: {
           preferences: {
             include: { shift: true },
-            orderBy: { priority: "asc" },
+            orderBy: { createdAt: "asc" },
           },
           assignments: {
             include: { shift: true },

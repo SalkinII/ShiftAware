@@ -176,8 +176,14 @@ describe("ShiftRepository", () => {
 
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => {
       const mockTx = {
-        shiftRole: { deleteMany: vi.fn() },
-        shift: { update: vi.fn().mockResolvedValue(mockResult) },
+        shiftRole: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
+        },
+        shift: {
+          update: vi.fn().mockResolvedValue(mockResult),
+          findUniqueOrThrow: vi.fn().mockResolvedValue(mockResult),
+        },
       };
       return callback(mockTx);
     });

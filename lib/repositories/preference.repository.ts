@@ -81,13 +81,13 @@ export class PreferenceRepository extends BaseRepository {
           },
         },
         update: {
-          wantLevel: data.wantLevel as any,
+          wantLevel: data.wantLevel as Prisma.PreferenceLevel,
           notes: data.notes,
         },
         create: {
           teamMember: { connect: { id: data.teamMemberId } },
           shift: { connect: { id: data.shiftId } },
-          wantLevel: data.wantLevel as any,
+          wantLevel: data.wantLevel as Prisma.PreferenceLevel,
           notes: data.notes,
         },
         include: { teamMember: true, shift: true },

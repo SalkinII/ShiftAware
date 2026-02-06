@@ -80,19 +80,29 @@ export class ShiftRepository extends BaseRepository {
 
         const updated = await tx.shift.update({
           where: { id },
-          data: {
-            ...shiftData,
-            ...(requiredRoles && {
-              requiredRoles: {
-                create: requiredRoles,
-              },
-            }),
-          },
+          data: shiftData,
           include: {
             requiredRoles: true,
             event: true,
           },
         });
+
+        // Create new roles if provided
+        if (requiredRoles) {
+          await tx.shiftRole.createMany({
+            data: requiredRoles.map((role) => ({
+              shiftId: id,
+              role: role.role as Prisma.Role,
+              count: role.count,
+            })),
+          });
+
+          // Refetch to include new roles
+          return tx.shift.findUniqueOrThrow({
+            where: { id },
+            include: { requiredRoles: true, event: true },
+          });
+        }
 
         return updated;
       });

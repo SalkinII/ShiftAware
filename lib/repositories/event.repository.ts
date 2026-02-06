@@ -97,8 +97,8 @@ export class EventRepository extends BaseRepository {
         await tx.eventConfig.create({
           data: {
             eventId: event.id,
-            ...configDefaults,
-          } as any,
+            ...(configDefaults as Prisma.EventConfigCreateWithoutEventInput),
+          },
         });
 
         return tx.event.findUniqueOrThrow({
