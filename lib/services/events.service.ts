@@ -27,4 +27,11 @@ export class EventsService {
   async deleteEvent(id: string) {
     return this.repo.delete(id);
   }
+
+  async createEventWithConfig(
+    eventData: Prisma.EventCreateInput,
+    configDefaults: Record<string, unknown>,
+  ) {
+    return this.repo.createWithConfig(eventData, configDefaults);
+  }
 }

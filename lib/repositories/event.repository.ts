@@ -65,4 +65,31 @@ export class EventRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to delete event");
     }
   }
+
+  async createWithConfig(
+    eventData: Prisma.EventCreateInput,
+    configDefaults: Record<string, unknown>,
+  ) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const event = await tx.event.create({
+          data: eventData,
+        });
+
+        await tx.eventConfig.create({
+          data: {
+            eventId: event.id,
+            ...configDefaults,
+          } as any,
+        });
+
+        return tx.event.findUniqueOrThrow({
+          where: { id: event.id },
+          include: { config: true },
+        });
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to create event with config");
+    }
+  }
 }

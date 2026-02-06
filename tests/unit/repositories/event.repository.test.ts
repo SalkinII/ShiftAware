@@ -11,6 +11,10 @@ vi.mock("@/lib/db", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    eventConfig: {
+      create: vi.fn(),
+    },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -136,5 +140,33 @@ describe("EventRepository", () => {
     const result = await repo.delete("event-1");
 
     expect(result.id).toBe("event-1");
+  });
+
+  it("should create event with config in transaction", async () => {
+    const eventData = {
+      name: "Test Event",
+      startDate: new Date("2026-06-26"),
+      endDate: new Date("2026-06-28"),
+    };
+    const configDefaults = {
+      minShiftsPerPerson: 2,
+      bufferDaysBefore: 1,
+      bufferDaysAfter: 1,
+    };
+
+    const mockResult = {
+      id: "event-new",
+      ...eventData,
+      config: { id: "config-new", eventId: "event-new", ...configDefaults },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.mocked(prisma.$transaction).mockResolvedValue(mockResult);
+
+    const result = await repo.createWithConfig(eventData, configDefaults);
+
+    expect(result).toEqual(mockResult);
+    expect(prisma.$transaction).toHaveBeenCalled();
   });
 });
