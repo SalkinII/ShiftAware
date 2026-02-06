@@ -27,4 +27,16 @@ export class ShiftsService {
   async deleteShift(id: string) {
     return this.repo.delete(id);
   }
+
+  async updateShiftWithRoles(
+    id: string,
+    shiftData: Prisma.ShiftUpdateInput,
+    requiredRoles?: Array<{ role: string; count: number }>,
+  ) {
+    return this.repo.updateWithRoles(id, shiftData, requiredRoles);
+  }
+
+  async cascadeDeleteShift(id: string) {
+    return this.repo.cascadeDelete(id);
+  }
 }

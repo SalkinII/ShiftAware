@@ -11,6 +11,10 @@ vi.mock("@/lib/db", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    assignment: {
+      count: vi.fn(),
+    },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -152,5 +156,68 @@ describe("ShiftRepository", () => {
     const result = await repo.delete("shift-1");
 
     expect(result.id).toBe("shift-1");
+  });
+
+  it("should update shift with roles in transaction", async () => {
+    const shiftData = { capacity: 3 };
+    const requiredRoles = [
+      { role: "TEAM_MEMBER", count: 2 },
+      { role: "SHIFT_LEAD", count: 1 },
+    ];
+
+    const mockResult = {
+      id: "shift-1",
+      eventId: "event-1",
+      type: "MOBILE_TEAM",
+      capacity: 3,
+      requiredRoles,
+      event: { id: "event-1", name: "Test Event" },
+    };
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => {
+      const mockTx = {
+        shiftRole: { deleteMany: vi.fn() },
+        shift: { update: vi.fn().mockResolvedValue(mockResult) },
+      };
+      return callback(mockTx);
+    });
+
+    const result = await repo.updateWithRoles(
+      "shift-1",
+      shiftData,
+      requiredRoles,
+    );
+
+    expect(result).toEqual(mockResult);
+    expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it("should cascade delete shift with checks", async () => {
+    vi.mocked(prisma.assignment.count).mockResolvedValue(0);
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => {
+      const mockTx = {
+        shiftRole: { deleteMany: vi.fn() },
+        shiftPreference: { deleteMany: vi.fn() },
+        shift: { delete: vi.fn() },
+      };
+      return callback(mockTx);
+    });
+
+    const result = await repo.cascadeDelete("shift-1");
+
+    expect(result).toEqual({ success: true });
+    expect(prisma.assignment.count).toHaveBeenCalledWith({
+      where: { shiftId: "shift-1" },
+    });
+    expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it("should throw error when cascading delete shift with assignments", async () => {
+    vi.mocked(prisma.assignment.count).mockResolvedValue(5);
+
+    await expect(repo.cascadeDelete("shift-1")).rejects.toThrow(
+      "Cannot delete shift with existing assignments",
+    );
   });
 });

@@ -65,4 +65,80 @@ export class ShiftRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to delete shift");
     }
   }
+
+  async updateWithRoles(
+    id: string,
+    shiftData: Prisma.ShiftUpdateInput,
+    requiredRoles?: Array<{ role: string; count: number }>,
+  ) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        // Delete existing roles if new ones provided
+        if (requiredRoles) {
+          await tx.shiftRole.deleteMany({ where: { shiftId: id } });
+        }
+
+        const updated = await tx.shift.update({
+          where: { id },
+          data: {
+            ...shiftData,
+            ...(requiredRoles && {
+              requiredRoles: {
+                create: requiredRoles,
+              },
+            }),
+          },
+          include: {
+            requiredRoles: true,
+            event: true,
+          },
+        });
+
+        return updated;
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to update shift with roles");
+    }
+  }
+
+  async cascadeDelete(id: string) {
+    try {
+      // First check if shift has assignments
+      const assignmentCount = await prisma.assignment.count({
+        where: { shiftId: id },
+      });
+
+      if (assignmentCount > 0) {
+        this.throwFormattedException(
+          "CONFLICT",
+          "Cannot delete shift with existing assignments",
+        );
+      }
+
+      // Delete in transaction
+      await prisma.$transaction(async (tx) => {
+        // Delete shift roles
+        await tx.shiftRole.deleteMany({
+          where: { shiftId: id },
+        });
+
+        // Delete shift preferences
+        await tx.shiftPreference.deleteMany({
+          where: { shiftId: id },
+        });
+
+        // Finally delete the shift
+        await tx.shift.delete({
+          where: { id },
+        });
+      });
+
+      return { success: true };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("assignments")) {
+        throw error;
+      }
+      throw this.handlePrismaError(error, "Failed to cascade delete shift");
+    }
+  }
 }

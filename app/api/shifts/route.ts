@@ -8,6 +8,8 @@ import {
   createSuccessResponse,
   createUnauthorizedResponse,
 } from "@/lib/api-errors";
+import { ShiftsService } from "@/lib/services/shifts.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 
 export async function GET(request: Request) {
   try {
@@ -70,18 +72,13 @@ export async function POST(request: Request) {
     // Create shift with required roles
     const { requiredRoles, ...shiftData } = validated;
 
-    const shift = await prisma.shift.create({
-      data: {
-        ...shiftData,
-        startTime: new Date(validated.startTime),
-        endTime: new Date(validated.endTime),
-        requiredRoles: {
-          create: requiredRoles,
-        },
-      },
-      include: {
-        requiredRoles: true,
-        event: true,
+    const service = new ShiftsService();
+    const shift = await service.createShift({
+      ...shiftData,
+      startTime: new Date(validated.startTime),
+      endTime: new Date(validated.endTime),
+      requiredRoles: {
+        create: requiredRoles,
       },
     });
 
@@ -95,6 +92,11 @@ export async function POST(request: Request) {
 
     return createSuccessResponse(shift, 201);
   } catch (error) {
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createErrorResponse(error, "Event not found", 404);
+      }
+    }
     console.error("Create shift error:", error);
     return createErrorResponse(error, "Failed to create shift");
   }
