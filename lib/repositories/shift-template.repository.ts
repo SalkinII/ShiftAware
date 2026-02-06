@@ -94,7 +94,7 @@ export class ShiftTemplateRepository extends BaseRepository {
           ...data,
           requiredRoles: {
             deleteMany: {},
-            create: requiredRoles,
+            create: requiredRoles as any,
           },
         },
         include: { requiredRoles: true },

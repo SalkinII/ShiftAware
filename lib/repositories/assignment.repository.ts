@@ -59,13 +59,13 @@ export class AssignmentRepository extends BaseRepository {
             data: {
               shiftId: assignment.shiftId,
               teamMemberId: assignment.teamMemberId,
-              role: assignment.role,
+              role: assignment.role as any,
               isLead: assignment.isLead || false,
-              assignmentType: assignment.assignmentType,
+              assignmentType: assignment.assignmentType as any,
               algorithmScore:
-                scores.get(
+                (scores.get(
                   `${assignment.teamMemberId}-${assignment.shiftId}`,
-                ) ?? null,
+                ) as any) ?? null,
               notes:
                 explanations.get(
                   `${assignment.teamMemberId}-${assignment.shiftId}`,

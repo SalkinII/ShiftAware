@@ -138,10 +138,10 @@ export class TeamMemberRepository extends BaseRepository {
     try {
       return await prisma.teamMemberAttribute.upsert({
         where: {
-          teamMemberId_definitionId: { teamMemberId: memberId, definitionId },
+          memberId_definitionId: { memberId, definitionId },
         },
         update: { value },
-        create: { teamMemberId: memberId, definitionId, value },
+        create: { memberId, definitionId, value },
         include: { definition: true },
       });
     } catch (error) {

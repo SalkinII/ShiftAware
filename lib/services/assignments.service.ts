@@ -95,7 +95,7 @@ export class AssignmentsService {
     await this.repo.deleteByEvent(eventId);
     const saved = await this.repo.bulkCreate(
       result.assignments,
-      result.scores,
+      result.scores as any,
       result.explanations,
     );
 
