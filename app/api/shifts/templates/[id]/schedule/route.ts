@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import {
   createUnauthorizedResponse,
@@ -7,7 +6,12 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { scheduleTemplateSchema } from "@/lib/validations/template";
-import { setHours, setMinutes, addMinutes } from "date-fns";
+import { setHours, setMinutes } from "date-fns";
+import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+import { prisma } from "@/lib/db";
+
+const service = new ShiftTemplatesService();
 
 export async function POST(
   request: Request,
@@ -23,15 +27,8 @@ export async function POST(
     const body = await request.json();
     const validated = scheduleTemplateSchema.parse({ ...body, templateId });
 
-    // Get template
-    const template = await prisma.shiftTemplate.findUnique({
-      where: { id: templateId },
-      include: { requiredRoles: true },
-    });
-
-    if (!template) {
-      return createNotFoundResponse("Template");
-    }
+    // Get template for validation
+    const template = await service.getTemplate(templateId);
 
     // Verify event exists
     const event = await prisma.event.findUnique({
@@ -46,23 +43,22 @@ export async function POST(
     const date = new Date(validated.date);
     const [hours, minutes] = template.startTime.split(":").map(Number);
     const startTime = setMinutes(setHours(date, hours), minutes);
-    const endTime = addMinutes(startTime, template.durationMinutes);
 
     // Create scheduled shift
-    const scheduledShift = await prisma.scheduledShift.create({
-      data: {
-        templateId: template.id,
-        eventId: validated.eventId,
-        date: startTime,
-      },
-    });
-
-    // Optionally create actual shift immediately
-    // For now, just return scheduled shift - conversion happens on save
+    const scheduledShift = await service.scheduleTemplate(
+      templateId,
+      validated.eventId,
+      startTime,
+    );
 
     return createSuccessResponse(scheduledShift, 201);
   } catch (error) {
     console.error("Schedule template error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Template");
+    }
+
     return createErrorResponse(error, "Failed to schedule template");
   }
 }

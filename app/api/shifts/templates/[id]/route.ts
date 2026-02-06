@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import {
   createUnauthorizedResponse,
@@ -9,6 +8,10 @@ import {
 import { shiftTemplateSchema } from "@/lib/validations/template";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new ShiftTemplatesService();
 
 export async function GET(
   request: Request,
@@ -21,20 +24,16 @@ export async function GET(
     }
 
     const { id } = await params;
-    const template = await prisma.shiftTemplate.findUnique({
-      where: { id },
-      include: {
-        requiredRoles: true,
-      },
-    });
-
-    if (!template) {
-      return createNotFoundResponse("Template");
-    }
+    const template = await service.getTemplate(id);
 
     return createSuccessResponse(template);
   } catch (error) {
     console.error("Get template error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Template");
+    }
+
     return createErrorResponse(error, "Failed to fetch template");
   }
 }
@@ -56,29 +55,14 @@ export async function PUT(
     const { requiredRoles, ...templateData } = validated;
 
     // Get existing template for audit
-    const existing = await prisma.shiftTemplate.findUnique({
-      where: { id },
-      include: { requiredRoles: true },
-    });
-
-    if (!existing) {
-      return createNotFoundResponse("Template");
-    }
+    const existing = await service.getTemplate(id);
 
     // Update template and roles
-    const template = await prisma.shiftTemplate.update({
-      where: { id },
-      data: {
-        ...templateData,
-        requiredRoles: {
-          deleteMany: {},
-          create: requiredRoles,
-        },
-      },
-      include: {
-        requiredRoles: true,
-      },
-    });
+    const template = await service.updateTemplate(
+      id,
+      templateData,
+      requiredRoles,
+    );
 
     await createAuditLog({
       action: AuditAction.UPDATE,
@@ -92,6 +76,11 @@ export async function PUT(
     return createSuccessResponse(template);
   } catch (error) {
     console.error("Update template error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Template");
+    }
+
     return createErrorResponse(error, "Failed to update template");
   }
 }
@@ -108,18 +97,9 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const existing = await prisma.shiftTemplate.findUnique({
-      where: { id },
-      include: { requiredRoles: true },
-    });
+    const existing = await service.getTemplate(id);
 
-    if (!existing) {
-      return createNotFoundResponse("Template");
-    }
-
-    await prisma.shiftTemplate.delete({
-      where: { id },
-    });
+    await service.deleteTemplate(id);
 
     await createAuditLog({
       action: AuditAction.DELETE,
@@ -132,6 +112,11 @@ export async function DELETE(
     return createSuccessResponse({ id }, 200);
   } catch (error) {
     console.error("Delete template error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Template");
+    }
+
     return createErrorResponse(error, "Failed to delete template");
   }
 }

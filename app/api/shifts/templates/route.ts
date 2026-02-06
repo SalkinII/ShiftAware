@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import {
   createUnauthorizedResponse,
@@ -8,6 +7,10 @@ import {
 import { shiftTemplateSchema } from "@/lib/validations/template";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new ShiftTemplatesService();
 
 export async function GET(request: Request) {
   try {
@@ -17,71 +20,17 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const eventId = searchParams.get("eventId");
+    const eventId = searchParams.get("eventId") || undefined;
     const includeGlobal = searchParams.get("includeGlobal") !== "false";
 
-    let where: any = {};
-
-    if (eventId) {
-      // Get templates for specific event: assigned globals + event-specific
-      if (includeGlobal) {
-        const assignments = await prisma.eventTemplate.findMany({
-          where: { eventId },
-          select: { templateId: true },
-        });
-        const assignedIds = assignments.map((a) => a.templateId);
-
-        where = {
-          OR: [{ id: { in: assignedIds } }, { eventId: eventId }],
-        };
-      } else {
-        where = { eventId };
-      }
-    } else {
-      // Get all global templates (no eventId)
-      where = { eventId: null };
-    }
-
-    const templates = await prisma.shiftTemplate.findMany({
-      where,
-      include: {
-        requiredRoles: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const templates = await service.listTemplates(eventId, includeGlobal);
 
     return createSuccessResponse(templates);
   } catch (error) {
     console.error("Get templates error:", error);
 
-    // Log full error details for debugging
-    if (error instanceof Error) {
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      if (error.stack) console.error("Error stack:", error.stack);
-    }
-
-    // Check for Prisma client missing model error (common patterns)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorName = error instanceof Error ? error.name : "";
-
-    if (
-      errorMessage.includes("shiftTemplate") ||
-      errorMessage.includes("Unknown model") ||
-      errorMessage.includes("does not exist") ||
-      errorMessage.includes("Cannot read property") ||
-      errorName === "PrismaClientKnownRequestError" ||
-      errorName === "TypeError"
-    ) {
-      const helpfulError = new Error(
-        "Prisma client not regenerated. Stop dev server, run 'npm run db:migrate-safe' or 'npx prisma generate', then restart.",
-      );
-      return createErrorResponse(
-        helpfulError,
-        "Database models not available. Please regenerate Prisma client and restart the server.",
-      );
+    if (error instanceof RepositoryError) {
+      return createErrorResponse(error, error.message);
     }
 
     return createErrorResponse(error, "Failed to fetch templates");
@@ -100,16 +49,11 @@ export async function POST(request: Request) {
 
     const { requiredRoles, ...templateData } = validated;
 
-    const template = await prisma.shiftTemplate.create({
-      data: {
-        ...templateData,
-        eventId: templateData.eventId || null,
-        requiredRoles: {
-          create: requiredRoles,
-        },
-      },
-      include: {
-        requiredRoles: true,
+    const template = await service.createTemplate({
+      ...templateData,
+      eventId: templateData.eventId || null,
+      requiredRoles: {
+        create: requiredRoles,
       },
     });
 
@@ -125,32 +69,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Create template error:", error);
 
-    // Log full error details for debugging
-    if (error instanceof Error) {
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      if (error.stack) console.error("Error stack:", error.stack);
-    }
-
-    // Check for Prisma client missing model error (common patterns)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorName = error instanceof Error ? error.name : "";
-
-    if (
-      errorMessage.includes("shiftTemplate") ||
-      errorMessage.includes("Unknown model") ||
-      errorMessage.includes("does not exist") ||
-      errorMessage.includes("Cannot read property") ||
-      errorName === "PrismaClientKnownRequestError" ||
-      errorName === "TypeError"
-    ) {
-      const helpfulError = new Error(
-        "Prisma client not regenerated. Stop dev server, run 'npm run db:migrate-safe' or 'npx prisma generate', then restart.",
-      );
-      return createErrorResponse(
-        helpfulError,
-        "Database models not available. Please regenerate Prisma client and restart the server.",
-      );
+    if (error instanceof RepositoryError) {
+      return createErrorResponse(error, error.message);
     }
 
     return createErrorResponse(error, "Failed to create template");
