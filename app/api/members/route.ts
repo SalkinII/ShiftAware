@@ -2,6 +2,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
+import { MembersService } from "@/lib/services/members.service";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
@@ -9,6 +10,8 @@ import {
   createUnauthorizedResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
+
+const service = new MembersService();
 
 export async function GET(request: Request) {
   try {
@@ -89,9 +92,7 @@ export async function POST(request: Request) {
       return createConflictResponse("Alias already exists");
     }
 
-    const member = await prisma.teamMember.create({
-      data: validated,
-    });
+    const member = await service.createMember(validated);
 
     await createAuditLog({
       action: AuditAction.CREATE,

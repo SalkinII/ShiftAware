@@ -2,7 +2,9 @@ import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateTeamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
+import { MembersService } from "@/lib/services/members.service";
 import { AuditAction, EntityType } from "@prisma/client";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -10,6 +12,8 @@ import {
   createNotFoundResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
+
+const service = new MembersService();
 
 export async function GET(
   request: Request,
@@ -43,6 +47,9 @@ export async function GET(
     return createSuccessResponse(member);
   } catch (error) {
     console.error("Get member error:", error);
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Team member");
+    }
     return createErrorResponse(error, "Failed to fetch member");
   }
 }
@@ -81,10 +88,7 @@ export async function PUT(
 
     const { id, ...updateData } = validated;
     const before = { ...existing };
-    const member = await prisma.teamMember.update({
-      where: { id },
-      data: updateData,
-    });
+    const member = await service.updateMember(id, updateData);
 
     await createAuditLog({
       action: AuditAction.UPDATE,
@@ -98,6 +102,9 @@ export async function PUT(
     return createSuccessResponse(member);
   } catch (error) {
     console.error("Update member error:", error);
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Team member");
+    }
     return createErrorResponse(error, "Failed to update member");
   }
 }

@@ -8,15 +8,15 @@ export class MembersService {
     this.repo = repo || new TeamMemberRepository();
   }
 
-  async listMembers() {
-    return this.repo.findAll();
+  async listMembers(where?: Prisma.TeamMemberWhereInput) {
+    return this.repo.findAll(where);
   }
 
   async getMember(id: string) {
     return this.repo.findById(id);
   }
 
-  async createMember(data: { name: string; emoji: string }) {
+  async createMember(data: Prisma.TeamMemberCreateInput) {
     return this.repo.create(data);
   }
 

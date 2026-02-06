@@ -28,8 +28,13 @@ describe("TeamMemberRepository", () => {
   it("should find member by ID", async () => {
     const mockMember = {
       id: "member-1",
-      name: "John",
-      emoji: "🎭",
+      alias: "john",
+      avatarId: "avatar-1",
+      experienceLevel: "INTERMEDIATE" as const,
+      genderRole: "male",
+      capabilities: ["TEAM_MEMBER" as const],
+      isActive: true,
+      isAdmin: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -46,8 +51,30 @@ describe("TeamMemberRepository", () => {
 
   it("should list all members", async () => {
     const mockMembers = [
-      { id: "m1", name: "Alice", emoji: "🎭", createdAt: new Date(), updatedAt: new Date() },
-      { id: "m2", name: "Bob", emoji: "🎪", createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: "m1",
+        alias: "alice",
+        avatarId: "avatar-1",
+        experienceLevel: "SENIOR" as const,
+        genderRole: "female",
+        capabilities: ["TEAM_MEMBER" as const],
+        isActive: true,
+        isAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "m2",
+        alias: "bob",
+        avatarId: "avatar-2",
+        experienceLevel: "JUNIOR" as const,
+        genderRole: "male",
+        capabilities: ["TEAM_MEMBER" as const],
+        isActive: true,
+        isAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ];
 
     vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers);
@@ -58,10 +85,18 @@ describe("TeamMemberRepository", () => {
   });
 
   it("should create a new member", async () => {
-    const input = { name: "Charlie", emoji: "🎨" };
+    const input = {
+      alias: "charlie",
+      avatarId: "avatar-3",
+      experienceLevel: "INTERMEDIATE" as const,
+      genderRole: "male",
+      capabilities: ["TEAM_MEMBER" as const],
+    };
     const mockMember = {
       id: "member-3",
       ...input,
+      isActive: true,
+      isAdmin: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -74,11 +109,16 @@ describe("TeamMemberRepository", () => {
   });
 
   it("should update a member", async () => {
-    const input = { name: "Updated Name" };
+    const input = { alias: "john-updated" };
     const mockMember = {
       id: "member-1",
-      ...input,
-      emoji: "🎭",
+      alias: "john-updated",
+      avatarId: "avatar-1",
+      experienceLevel: "INTERMEDIATE" as const,
+      genderRole: "male",
+      capabilities: ["TEAM_MEMBER" as const],
+      isActive: true,
+      isAdmin: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -93,8 +133,13 @@ describe("TeamMemberRepository", () => {
   it("should delete a member", async () => {
     vi.mocked(prisma.teamMember.delete).mockResolvedValue({
       id: "member-1",
-      name: "John",
-      emoji: "🎭",
+      alias: "john",
+      avatarId: "avatar-1",
+      experienceLevel: "INTERMEDIATE" as const,
+      genderRole: "male",
+      capabilities: ["TEAM_MEMBER" as const],
+      isActive: true,
+      isAdmin: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
