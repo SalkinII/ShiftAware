@@ -110,4 +110,164 @@ export class EventRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to create event with config");
     }
   }
+
+  // --- EventConfig ---
+  async getConfig(eventId: string) {
+    try {
+      return await prisma.eventConfig.findUnique({
+        where: { eventId },
+        include: {
+          event: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+              status: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch event config");
+    }
+  }
+
+  async upsertConfig(eventId: string, data: Record<string, unknown>) {
+    try {
+      return await prisma.eventConfig.upsert({
+        where: { eventId },
+        update: data as any,
+        create: { eventId, ...data } as any,
+        include: {
+          event: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+              status: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to upsert event config");
+    }
+  }
+
+  // --- EventRegistration ---
+  async listRegistrations(eventId: string) {
+    try {
+      return await prisma.eventRegistration.findMany({
+        where: { eventId },
+        include: {
+          member: {
+            include: {
+              attributes: {
+                include: { definition: true },
+                where: { definition: { eventId } },
+              },
+            },
+          },
+        },
+        orderBy: { registeredAt: "asc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch registrations");
+    }
+  }
+
+  async createRegistration(eventId: string, memberId: string, status: string) {
+    try {
+      return await prisma.eventRegistration.create({
+        data: { memberId, eventId, status: status as any },
+        include: { member: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to create registration");
+    }
+  }
+
+  async findRegistration(eventId: string, memberId: string) {
+    try {
+      return await prisma.eventRegistration.findUnique({
+        where: { memberId_eventId: { memberId, eventId } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to find registration");
+    }
+  }
+
+  // --- EventTemplate (junction) ---
+  async listEventTemplates(eventId: string) {
+    try {
+      const assignments = await prisma.eventTemplate.findMany({
+        where: { eventId },
+        include: { template: { include: { requiredRoles: true } } },
+      });
+
+      const eventSpecific = await prisma.shiftTemplate.findMany({
+        where: { eventId },
+        include: { requiredRoles: true },
+      });
+
+      return {
+        assigned: assignments.map((a) => ({
+          ...a.template,
+          assignmentId: a.id,
+          isGlobal: true,
+        })),
+        eventSpecific: eventSpecific.map((t) => ({
+          ...t,
+          isGlobal: false,
+        })),
+      };
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch event templates");
+    }
+  }
+
+  async assignTemplate(eventId: string, templateId: string) {
+    try {
+      return await prisma.eventTemplate.create({
+        data: { eventId, templateId },
+        include: { template: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to assign template");
+    }
+  }
+
+  async findEventTemplate(eventId: string, templateId: string) {
+    try {
+      return await prisma.eventTemplate.findUnique({
+        where: { eventId_templateId: { eventId, templateId } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to find event template");
+    }
+  }
+
+  // --- EventAttributeDefinition ---
+  async listEventAttributes(eventId: string) {
+    try {
+      return await prisma.eventAttributeDefinition.findMany({
+        where: { eventId },
+        orderBy: { createdAt: "asc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch event attributes");
+    }
+  }
+
+  async createEventAttribute(eventId: string, data: Record<string, unknown>) {
+    try {
+      return await prisma.eventAttributeDefinition.create({
+        data: { ...data, eventId } as any,
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to create event attribute");
+    }
+  }
 }

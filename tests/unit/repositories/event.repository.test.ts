@@ -13,6 +13,25 @@ vi.mock("@/lib/db", () => ({
     },
     eventConfig: {
       create: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    eventRegistration: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    eventTemplate: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    shiftTemplate: {
+      findMany: vi.fn(),
+    },
+    eventAttributeDefinition: {
+      findMany: vi.fn(),
+      create: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -168,5 +187,264 @@ describe("EventRepository", () => {
 
     expect(result).toEqual(mockResult);
     expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  // --- EventConfig Tests ---
+  it("should get event config", async () => {
+    const mockConfig = {
+      id: "config-1",
+      eventId: "event-1",
+      minShiftsPerPerson: 2,
+      event: {
+        id: "event-1",
+        name: "Test Event",
+        startDate: new Date("2026-06-26"),
+        endDate: new Date("2026-06-28"),
+        status: "ACTIVE",
+      },
+    };
+
+    vi.mocked(prisma.eventConfig.findUnique).mockResolvedValue(mockConfig);
+
+    const result = await repo.getConfig("event-1");
+
+    expect(result).toEqual(mockConfig);
+    expect(prisma.eventConfig.findUnique).toHaveBeenCalledWith({
+      where: { eventId: "event-1" },
+      include: {
+        event: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            status: true,
+          },
+        },
+      },
+    });
+  });
+
+  it("should upsert event config", async () => {
+    const data = { minShiftsPerPerson: 3 };
+    const mockConfig = {
+      id: "config-1",
+      eventId: "event-1",
+      minShiftsPerPerson: 3,
+      event: {
+        id: "event-1",
+        name: "Test Event",
+        startDate: new Date("2026-06-26"),
+        endDate: new Date("2026-06-28"),
+        status: "ACTIVE",
+      },
+    };
+
+    vi.mocked(prisma.eventConfig.upsert).mockResolvedValue(mockConfig);
+
+    const result = await repo.upsertConfig("event-1", data);
+
+    expect(result).toEqual(mockConfig);
+  });
+
+  // --- EventRegistration Tests ---
+  it("should list event registrations", async () => {
+    const mockRegistrations = [
+      {
+        id: "reg-1",
+        memberId: "member-1",
+        eventId: "event-1",
+        status: "CONFIRMED",
+        registeredAt: new Date(),
+        member: {
+          id: "member-1",
+          name: "John Doe",
+          attributes: [],
+        },
+      },
+    ];
+
+    vi.mocked(prisma.eventRegistration.findMany).mockResolvedValue(
+      mockRegistrations,
+    );
+
+    const result = await repo.listRegistrations("event-1");
+
+    expect(result).toEqual(mockRegistrations);
+    expect(prisma.eventRegistration.findMany).toHaveBeenCalledWith({
+      where: { eventId: "event-1" },
+      include: {
+        member: {
+          include: {
+            attributes: {
+              include: { definition: true },
+              where: { definition: { eventId: "event-1" } },
+            },
+          },
+        },
+      },
+      orderBy: { registeredAt: "asc" },
+    });
+  });
+
+  it("should create event registration", async () => {
+    const mockRegistration = {
+      id: "reg-2",
+      memberId: "member-2",
+      eventId: "event-1",
+      status: "PENDING",
+      registeredAt: new Date(),
+      member: { id: "member-2", name: "Jane Smith" },
+    };
+
+    vi.mocked(prisma.eventRegistration.create).mockResolvedValue(
+      mockRegistration,
+    );
+
+    const result = await repo.createRegistration(
+      "event-1",
+      "member-2",
+      "PENDING",
+    );
+
+    expect(result).toEqual(mockRegistration);
+  });
+
+  it("should find event registration", async () => {
+    const mockRegistration = {
+      id: "reg-1",
+      memberId: "member-1",
+      eventId: "event-1",
+      status: "CONFIRMED",
+      registeredAt: new Date(),
+    };
+
+    vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(
+      mockRegistration,
+    );
+
+    const result = await repo.findRegistration("event-1", "member-1");
+
+    expect(result).toEqual(mockRegistration);
+  });
+
+  // --- EventTemplate Tests ---
+  it("should list event templates", async () => {
+    const mockAssignments = [
+      {
+        id: "et-1",
+        eventId: "event-1",
+        templateId: "template-1",
+        template: {
+          id: "template-1",
+          name: "Global Template",
+          eventId: null,
+          requiredRoles: [],
+        },
+      },
+    ];
+
+    const mockEventSpecific = [
+      {
+        id: "template-2",
+        name: "Event Template",
+        eventId: "event-1",
+        requiredRoles: [],
+      },
+    ];
+
+    vi.mocked(prisma.eventTemplate.findMany).mockResolvedValue(mockAssignments);
+    vi.mocked(prisma.shiftTemplate.findMany).mockResolvedValue(
+      mockEventSpecific,
+    );
+
+    const result = await repo.listEventTemplates("event-1");
+
+    expect(result.assigned).toHaveLength(1);
+    expect(result.eventSpecific).toHaveLength(1);
+    expect(result.assigned[0].isGlobal).toBe(true);
+    expect(result.eventSpecific[0].isGlobal).toBe(false);
+  });
+
+  it("should assign template to event", async () => {
+    const mockAssignment = {
+      id: "et-2",
+      eventId: "event-1",
+      templateId: "template-1",
+      template: {
+        id: "template-1",
+        name: "Global Template",
+      },
+    };
+
+    vi.mocked(prisma.eventTemplate.create).mockResolvedValue(mockAssignment);
+
+    const result = await repo.assignTemplate("event-1", "template-1");
+
+    expect(result).toEqual(mockAssignment);
+  });
+
+  it("should find event template assignment", async () => {
+    const mockAssignment = {
+      id: "et-1",
+      eventId: "event-1",
+      templateId: "template-1",
+    };
+
+    vi.mocked(prisma.eventTemplate.findUnique).mockResolvedValue(
+      mockAssignment,
+    );
+
+    const result = await repo.findEventTemplate("event-1", "template-1");
+
+    expect(result).toEqual(mockAssignment);
+  });
+
+  // --- EventAttributeDefinition Tests ---
+  it("should list event attributes", async () => {
+    const mockAttributes = [
+      {
+        id: "attr-1",
+        eventId: "event-1",
+        name: "Dietary Requirements",
+        type: "TEXT",
+        createdAt: new Date(),
+      },
+    ];
+
+    vi.mocked(prisma.eventAttributeDefinition.findMany).mockResolvedValue(
+      mockAttributes,
+    );
+
+    const result = await repo.listEventAttributes("event-1");
+
+    expect(result).toEqual(mockAttributes);
+    expect(prisma.eventAttributeDefinition.findMany).toHaveBeenCalledWith({
+      where: { eventId: "event-1" },
+      orderBy: { createdAt: "asc" },
+    });
+  });
+
+  it("should create event attribute", async () => {
+    const data = {
+      name: "T-Shirt Size",
+      type: "SELECT",
+      options: ["S", "M", "L", "XL"],
+    };
+
+    const mockAttribute = {
+      id: "attr-2",
+      eventId: "event-1",
+      ...data,
+      createdAt: new Date(),
+    };
+
+    vi.mocked(prisma.eventAttributeDefinition.create).mockResolvedValue(
+      mockAttribute,
+    );
+
+    const result = await repo.createEventAttribute("event-1", data);
+
+    expect(result).toEqual(mockAttribute);
   });
 });

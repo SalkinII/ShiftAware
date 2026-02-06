@@ -38,4 +38,48 @@ export class EventsService {
   ) {
     return this.repo.createWithConfig(eventData, configDefaults);
   }
+
+  // --- Config ---
+  async getConfig(eventId: string) {
+    return this.repo.getConfig(eventId);
+  }
+
+  async upsertConfig(eventId: string, data: Record<string, unknown>) {
+    return this.repo.upsertConfig(eventId, data);
+  }
+
+  // --- Registrations ---
+  async listRegistrations(eventId: string) {
+    return this.repo.listRegistrations(eventId);
+  }
+
+  async createRegistration(eventId: string, memberId: string, status: string) {
+    return this.repo.createRegistration(eventId, memberId, status);
+  }
+
+  async findRegistration(eventId: string, memberId: string) {
+    return this.repo.findRegistration(eventId, memberId);
+  }
+
+  // --- Event Templates ---
+  async listEventTemplates(eventId: string) {
+    return this.repo.listEventTemplates(eventId);
+  }
+
+  async assignTemplate(eventId: string, templateId: string) {
+    return this.repo.assignTemplate(eventId, templateId);
+  }
+
+  async findEventTemplate(eventId: string, templateId: string) {
+    return this.repo.findEventTemplate(eventId, templateId);
+  }
+
+  // --- Attributes ---
+  async listEventAttributes(eventId: string) {
+    return this.repo.listEventAttributes(eventId);
+  }
+
+  async createEventAttribute(eventId: string, data: Record<string, unknown>) {
+    return this.repo.createEventAttribute(eventId, data);
+  }
 }
