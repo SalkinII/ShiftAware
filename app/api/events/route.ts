@@ -16,17 +16,8 @@ export async function GET() {
       return createUnauthorizedResponse();
     }
 
-    const events = await prisma.event.findMany({
-      include: {
-        config: true,
-        _count: {
-          select: {
-            shifts: true,
-          },
-        },
-      },
-      orderBy: { startDate: "desc" },
-    });
+    const service = new EventsService();
+    const events = await service.listEventsWithStats();
 
     return createSuccessResponse(events);
   } catch (error) {

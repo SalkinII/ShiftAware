@@ -12,6 +12,10 @@ export class EventsService {
     return this.repo.findAll();
   }
 
+  async listEventsWithStats() {
+    return this.repo.findAllWithStats();
+  }
+
   async getEvent(id: string) {
     return this.repo.findById(id);
   }

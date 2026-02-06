@@ -66,6 +66,24 @@ export class EventRepository extends BaseRepository {
     }
   }
 
+  async findAllWithStats() {
+    try {
+      return await prisma.event.findMany({
+        include: {
+          config: true,
+          _count: {
+            select: {
+              shifts: true,
+            },
+          },
+        },
+        orderBy: { startDate: "desc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch events with stats");
+    }
+  }
+
   async createWithConfig(
     eventData: Prisma.EventCreateInput,
     configDefaults: Record<string, unknown>,
