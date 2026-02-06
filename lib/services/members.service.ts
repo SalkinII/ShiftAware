@@ -27,4 +27,12 @@ export class MembersService {
   async deleteMember(id: string) {
     return this.repo.delete(id);
   }
+
+  async getMemberWithRelations(id: string) {
+    return this.repo.findByIdWithRelations(id);
+  }
+
+  async softDeleteMember(id: string) {
+    return this.repo.softDelete(id);
+  }
 }

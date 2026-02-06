@@ -26,23 +26,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const member = await prisma.teamMember.findUnique({
-      where: { id },
-      include: {
-        preferences: {
-          include: { shift: true },
-          orderBy: { priority: "asc" },
-        },
-        assignments: {
-          include: { shift: true },
-          orderBy: { shift: { startTime: "asc" } },
-        },
-      },
-    });
-
-    if (!member) {
-      return createNotFoundResponse("Team member");
-    }
+    const member = await service.getMemberWithRelations(id);
 
     return createSuccessResponse(member);
   } catch (error) {
@@ -120,19 +104,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const member = await prisma.teamMember.findUnique({
-      where: { id },
-    });
-
-    if (!member) {
-      return createNotFoundResponse("Team member");
-    }
+    const member = await service.getMember(id);
 
     // Soft delete by setting isActive to false
-    const deleted = await prisma.teamMember.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    const deleted = await service.softDeleteMember(id);
 
     await createAuditLog({
       action: AuditAction.DELETE,
@@ -146,6 +121,9 @@ export async function DELETE(
     return createSuccessResponse(deleted);
   } catch (error) {
     console.error("Delete member error:", error);
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Team member");
+    }
     return createErrorResponse(error, "Failed to delete member");
   }
 }

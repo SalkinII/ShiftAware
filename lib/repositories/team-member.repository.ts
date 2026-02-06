@@ -61,4 +61,47 @@ export class TeamMemberRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to delete member");
     }
   }
+
+  async findByIdWithRelations(id: string) {
+    try {
+      const member = await prisma.teamMember.findUnique({
+        where: { id },
+        include: {
+          preferences: {
+            include: { shift: true },
+            orderBy: { priority: "asc" },
+          },
+          assignments: {
+            include: { shift: true },
+            orderBy: { shift: { startTime: "asc" } },
+          },
+        },
+      });
+
+      if (!member) {
+        this.throwFormattedException("NOT_FOUND", `Member ${id} not found`);
+      }
+
+      return member;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("not found")) {
+        throw error;
+      }
+      throw this.handlePrismaError(
+        error,
+        "Failed to fetch member with relations",
+      );
+    }
+  }
+
+  async softDelete(id: string) {
+    try {
+      return await prisma.teamMember.update({
+        where: { id },
+        data: { isActive: false },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to soft-delete member");
+    }
+  }
 }

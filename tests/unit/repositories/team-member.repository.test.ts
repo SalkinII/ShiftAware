@@ -148,4 +148,81 @@ describe("TeamMemberRepository", () => {
 
     expect(result.id).toBe("member-1");
   });
+
+  it("should find member by ID with relations", async () => {
+    const mockMember = {
+      id: "member-1",
+      alias: "john",
+      avatarId: "avatar-1",
+      experienceLevel: "INTERMEDIATE" as const,
+      genderRole: "male",
+      capabilities: ["TEAM_MEMBER" as const],
+      isActive: true,
+      isAdmin: false,
+      preferences: [
+        {
+          id: "pref-1",
+          teamMemberId: "member-1",
+          shiftId: "shift-1",
+          wantLevel: "WANT",
+          shift: { id: "shift-1", type: "MOBILE_TEAM" },
+        },
+      ],
+      assignments: [
+        {
+          id: "assign-1",
+          teamMemberId: "member-1",
+          shiftId: "shift-2",
+          shift: { id: "shift-2", type: "STATIONARY" },
+        },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.mocked(prisma.teamMember.findUnique).mockResolvedValue(mockMember);
+
+    const result = await repo.findByIdWithRelations("member-1");
+
+    expect(result).toEqual(mockMember);
+    expect(prisma.teamMember.findUnique).toHaveBeenCalledWith({
+      where: { id: "member-1" },
+      include: {
+        preferences: {
+          include: { shift: true },
+          orderBy: { priority: "asc" },
+        },
+        assignments: {
+          include: { shift: true },
+          orderBy: { shift: { startTime: "asc" } },
+        },
+      },
+    });
+  });
+
+  it("should soft delete a member", async () => {
+    const mockMember = {
+      id: "member-1",
+      alias: "john",
+      avatarId: "avatar-1",
+      experienceLevel: "INTERMEDIATE" as const,
+      genderRole: "male",
+      capabilities: ["TEAM_MEMBER" as const],
+      isActive: false,
+      isAdmin: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    vi.mocked(prisma.teamMember.update).mockResolvedValue(mockMember);
+
+    const result = await repo.softDelete("member-1");
+
+    expect(result).toEqual(mockMember);
+    expect(result.isActive).toBe(false);
+    expect(prisma.teamMember.update).toHaveBeenCalledWith({
+      where: { id: "member-1" },
+      data: { isActive: false },
+    });
+  });
 });
