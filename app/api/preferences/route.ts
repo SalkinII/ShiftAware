@@ -9,6 +9,8 @@ import {
   createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
+import { PreferencesService } from "@/lib/services/preferences.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
 
 export async function GET(request: Request) {
   try {
@@ -52,28 +54,21 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = preferenceSchema.parse(body);
 
-    // Upsert - update if exists, create if not
-    const preference = await prisma.shiftPreference.upsert({
-      where: {
-        teamMemberId_shiftId: {
-          teamMemberId: validated.teamMemberId,
-          shiftId: validated.shiftId,
-        },
-      },
-      update: {
-        wantLevel: validated.wantLevel,
-        notes: validated.notes,
-      },
-      create: {
-        teamMemberId: validated.teamMemberId,
-        shiftId: validated.shiftId,
-        wantLevel: validated.wantLevel,
-        notes: validated.notes,
-      },
+    const service = new PreferencesService();
+    const preference = await service.upsertPreference({
+      teamMemberId: validated.teamMemberId,
+      shiftId: validated.shiftId,
+      wantLevel: validated.wantLevel,
+      notes: validated.notes,
     });
 
     return createSuccessResponse(preference);
   } catch (error) {
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Team member or shift");
+      }
+    }
     console.error("Create preference error:", error);
     return createErrorResponse(error, "Failed to save preference");
   }
@@ -98,14 +93,16 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await prisma.shiftPreference.delete({
-      where: {
-        teamMemberId_shiftId: { teamMemberId, shiftId },
-      },
-    });
+    const service = new PreferencesService();
+    await service.deleteByCompoundKey(teamMemberId, shiftId);
 
     return createSuccessResponse({ deleted: true });
   } catch (error) {
+    if (error instanceof RepositoryError) {
+      if (error.code === "NOT_FOUND") {
+        return createNotFoundResponse("Preference");
+      }
+    }
     console.error("Delete preference error:", error);
     return createErrorResponse(error, "Failed to delete preference");
   }
