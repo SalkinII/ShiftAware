@@ -343,14 +343,14 @@ describe("TeamMemberRepository", () => {
     expect(result).toEqual(mockAttribute);
     expect(prisma.teamMemberAttribute.upsert).toHaveBeenCalledWith({
       where: {
-        teamMemberId_definitionId: {
-          teamMemberId: "member-1",
+        memberId_definitionId: {
+          memberId: "member-1",
           definitionId: "def-1",
         },
       },
       update: { value: '{"dietary": "vegan"}' },
       create: {
-        teamMemberId: "member-1",
+        memberId: "member-1",
         definitionId: "def-1",
         value: '{"dietary": "vegan"}',
       },
