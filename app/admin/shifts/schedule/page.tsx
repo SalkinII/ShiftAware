@@ -76,7 +76,7 @@ interface DraggedTemplate {
 export default function ShiftsPage() {
   const toast = useToast();
   const calendarRef = useRef<HTMLDivElement>(null);
-  const { selectedEventId, selectedEvent, events, setSelectedEventId } = useEventContext(true);
+  const { selectedEventId, selectedEvent } = useEventContext(true);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -105,6 +105,13 @@ export default function ShiftsPage() {
     capacity: 2,
     requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
   });
+
+  // Sync formData.eventId with header event selection
+  useEffect(() => {
+    if (selectedEventId) {
+      setFormData((prev) => ({ ...prev, eventId: selectedEventId }));
+    }
+  }, [selectedEventId]);
 
   // Use cache for shifts
   const {
@@ -237,7 +244,7 @@ export default function ShiftsPage() {
           return; // Silent rejection - no toast, no shift created
         }
 
-        const targetEventId = selectedEventId || events[0]?.id;
+        const targetEventId = selectedEventId;
         if (!targetEventId) {
           toast.error("Please select an event first");
           return;
@@ -323,7 +330,7 @@ export default function ShiftsPage() {
         const template = activeData.template;
         const dropDate = overData.date;
 
-        const targetEventId = selectedEventId || events[0]?.id;
+        const targetEventId = selectedEventId;
         if (!targetEventId) {
           toast.error("Please select an event first");
           return;
@@ -389,7 +396,7 @@ export default function ShiftsPage() {
         }
       }
     },
-    [selectedEventId, events, shifts, toast],
+    [selectedEventId, shifts, toast],
   );
 
   function validateForm(): boolean {
@@ -429,6 +436,11 @@ export default function ShiftsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!selectedEventId) {
+      toast.error("Please select an event from the header first");
+      return;
+    }
 
     if (!validateForm()) {
       toast.error("Please fix the form errors before submitting");
@@ -475,7 +487,7 @@ export default function ShiftsPage() {
         );
         // Reset form
         setFormData({
-          eventId: events.length > 0 ? events[0].id : "",
+          eventId: selectedEventId || "",
           type: "MOBILE_TEAM" as ShiftType,
           startTime: "",
           endTime: "",
@@ -975,26 +987,15 @@ export default function ShiftsPage() {
                   className="space-y-5"
                   aria-label="Create new shift form"
                 >
-                  <Select
-                    label="Event Context"
-                    value={formData.eventId}
-                    onChange={(e) => {
-                      setFormData({ ...formData, eventId: e.target.value });
-                      if (formErrors.eventId) {
-                        setFormErrors({ ...formErrors, eventId: "" });
-                      }
-                    }}
-                    error={formErrors.eventId}
-                    required
-                    className="bg-gray-50 border-gray-100 font-medium"
-                  >
-                    <option value="">Select event</option>
-                    {events.map((event) => (
-                      <option key={event.id} value={event.id}>
-                        {event.name}
-                      </option>
-                    ))}
-                  </Select>
+                  {selectedEvent ? (
+                    <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
+                      Event: <span className="font-bold">{selectedEvent.name}</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-lg">
+                      Select an event from the header first
+                    </div>
+                  )}
 
                   <Select
                     label="Shift Type"
