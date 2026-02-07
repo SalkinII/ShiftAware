@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
+import { useEventContext } from '@/lib/hooks/useEventContext';
 import { unwrapApiResponse } from '@/lib/api-errors';
 
 interface AttributeDefinition {
@@ -18,17 +19,10 @@ interface AttributeDefinition {
   required: boolean;
 }
 
-interface Event {
-  id: string;
-  name: string;
-}
-
 export function AttributeDefinitions() {
   const toast = useToast();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const { selectedEventId, selectedEvent } = useEventContext(true);
   const [attributes, setAttributes] = useState<AttributeDefinition[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | 'new' | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -40,32 +34,12 @@ export function AttributeDefinitions() {
   const [optionsInput, setOptionsInput] = useState('');
 
   useEffect(() => {
-    loadEvents();
-  }, []);
-
-  useEffect(() => {
     if (selectedEventId) {
       loadAttributes();
+    } else {
+      setAttributes([]);
     }
   }, [selectedEventId]);
-
-  async function loadEvents() {
-    try {
-      const res = await fetch('/api/events');
-      if (res.ok) {
-        const data = await res.json();
-        const eventsList = unwrapApiResponse<Event[]>(data) || [];
-        setEvents(eventsList);
-        if (eventsList.length > 0) {
-          setSelectedEventId(eventsList[0].id);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load events:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function loadAttributes() {
     try {
@@ -165,14 +139,10 @@ export function AttributeDefinitions() {
     }
   }
 
-  if (loading) {
-    return <div className="text-gray-500">Loading...</div>;
-  }
-
-  if (events.length === 0) {
+  if (!selectedEventId) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-gray-500">Create an event first before defining attributes.</p>
+        <p className="text-sm text-amber-600">Select an event from the header to manage attributes.</p>
       </Card>
     );
   }
@@ -186,15 +156,11 @@ export function AttributeDefinitions() {
             Define custom attributes for team members for this event
           </p>
         </div>
-        <Select
-          value={selectedEventId}
-          onChange={(e) => setSelectedEventId(e.target.value)}
-          className="w-48"
-        >
-          {events.map(event => (
-            <option key={event.id} value={event.id}>{event.name}</option>
-          ))}
-        </Select>
+        {selectedEvent && (
+          <span className="text-sm font-bold text-gray-700 bg-gray-50 px-4 py-2 rounded-lg">
+            {selectedEvent.name}
+          </span>
+        )}
       </div>
 
       {!editingId && (
