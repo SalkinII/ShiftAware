@@ -1,13 +1,15 @@
 import { isAuthenticated } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
-  createNotFoundResponse,
 } from "@/lib/api-errors";
+import { AssignmentsService } from "@/lib/services/assignments.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new AssignmentsService();
 
 export async function POST(request: Request) {
   try {
@@ -27,103 +29,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get both assignments
-    const [a1, a2] = await Promise.all([
-      prisma.assignment.findUnique({
-        where: { id: assignment1Id },
-        include: { shift: true },
-      }),
-      prisma.assignment.findUnique({
-        where: { id: assignment2Id },
-        include: { shift: true },
-      }),
-    ]);
+    // Get original assignments for audit
+    const a1 = await service.getAssignment(assignment1Id);
+    const a2 = await service.getAssignment(assignment2Id);
 
-    if (!a1 || !a2) {
-      return createNotFoundResponse("Assignment");
-    }
+    // Perform swap
+    const [newA1, newA2] = await service.swapAssignments(
+      assignment1Id,
+      assignment2Id,
+    );
 
-    // Validate: Cannot swap if assignments are on the same shift
-    // (would violate unique constraint [shiftId, teamMemberId])
-    if (a1.shiftId === a2.shiftId) {
-      return createErrorResponse(
-        new Error("Cannot swap assignments on the same shift"),
-        "Cannot swap assignments on the same shift. Assignments must be on different shifts.",
-        400,
-      );
-    }
-
-    // Validate: Check if swap would create conflicts
-    // (member already assigned to target shift)
-    const [existingA1, existingA2] = await Promise.all([
-      prisma.assignment.findUnique({
-        where: {
-          shiftId_teamMemberId: {
-            shiftId: a1.shiftId,
-            teamMemberId: a2.teamMemberId,
-          },
-        },
-      }),
-      prisma.assignment.findUnique({
-        where: {
-          shiftId_teamMemberId: {
-            shiftId: a2.shiftId,
-            teamMemberId: a1.teamMemberId,
-          },
-        },
-      }),
-    ]);
-
-    if (existingA1 && existingA1.id !== a1.id) {
-      return createErrorResponse(
-        new Error("Member already assigned to shift"),
-        `Member is already assigned to shift ${a1.shift.type}. Cannot swap.`,
-        409,
-      );
-    }
-
-    if (existingA2 && existingA2.id !== a2.id) {
-      return createErrorResponse(
-        new Error("Member already assigned to shift"),
-        `Member is already assigned to shift ${a2.shift.type}. Cannot swap.`,
-        409,
-      );
-    }
-
-    // Perform swap in transaction
-    // Use deleteMany + create to avoid unique constraint violations during update
-    const [newA1, newA2] = await prisma.$transaction(async (tx) => {
-      // Delete existing assignments
-      await tx.assignment.deleteMany({
-        where: { id: { in: [a1.id, a2.id] } },
-      });
-
-      // Create swapped assignments
-      const createdA1 = await tx.assignment.create({
-        data: {
-          shiftId: a1.shiftId,
-          teamMemberId: a2.teamMemberId,
-          role: a1.role,
-          isLead: a1.isLead,
-          assignmentType: "SWAP",
-          notes: a1.notes,
-        },
-      });
-
-      const createdA2 = await tx.assignment.create({
-        data: {
-          shiftId: a2.shiftId,
-          teamMemberId: a1.teamMemberId,
-          role: a2.role,
-          isLead: a2.isLead,
-          assignmentType: "SWAP",
-          notes: a2.notes,
-        },
-      });
-
-      return [createdA1, createdA2];
-    });
-
+    // Create audit log
     await createAuditLog({
       action: AuditAction.MANUAL_SWAP,
       entityType: EntityType.ASSIGNMENT,
@@ -137,6 +53,19 @@ export async function POST(request: Request) {
     return createSuccessResponse({ success: true, a1: newA1, a2: newA2 });
   } catch (error: any) {
     console.error("Swap assignments error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createErrorResponse(error, error.message, 404);
+    }
+
+    if (error instanceof Error) {
+      if (error.message.includes("same shift")) {
+        return createErrorResponse(error, error.message, 400);
+      }
+      if (error.message.includes("already assigned")) {
+        return createErrorResponse(error, error.message, 409);
+      }
+    }
 
     // Handle Prisma unique constraint errors
     if (error.code === "P2002") {

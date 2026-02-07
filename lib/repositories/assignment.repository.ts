@@ -3,6 +3,37 @@ import { BaseRepository } from "./base.repository";
 import type { Prisma } from "@prisma/client";
 
 export class AssignmentRepository extends BaseRepository {
+  async findById(id: string) {
+    try {
+      const assignment = await prisma.assignment.findUnique({
+        where: { id },
+        include: {
+          shift: {
+            include: {
+              event: true,
+              requiredRoles: true,
+            },
+          },
+          teamMember: true,
+        },
+      });
+
+      if (!assignment) {
+        this.throwFormattedException(
+          "NOT_FOUND",
+          `Assignment ${id} not found`,
+        );
+      }
+
+      return assignment;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("not found")) {
+        throw error;
+      }
+      throw this.handlePrismaError(error, "Failed to fetch assignment");
+    }
+  }
+
   async findAll(where?: Prisma.AssignmentWhereInput) {
     try {
       return await prisma.assignment.findMany({
@@ -80,6 +111,57 @@ export class AssignmentRepository extends BaseRepository {
       );
     } catch (error) {
       throw this.handlePrismaError(error, "Failed to bulk create assignments");
+    }
+  }
+
+  async swapAssignments(
+    assignment1Id: string,
+    assignment2Id: string,
+    a1Data: { shiftId: string; teamMemberId: string; role: string; isLead: boolean; notes: string | null },
+    a2Data: { shiftId: string; teamMemberId: string; role: string; isLead: boolean; notes: string | null },
+  ) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        // Delete existing assignments
+        await tx.assignment.deleteMany({
+          where: { id: { in: [assignment1Id, assignment2Id] } },
+        });
+
+        // Create swapped assignments
+        const newA1 = await tx.assignment.create({
+          data: {
+            shiftId: a1Data.shiftId,
+            teamMemberId: a1Data.teamMemberId,
+            role: a1Data.role as any,
+            isLead: a1Data.isLead,
+            assignmentType: "SWAP",
+            notes: a1Data.notes,
+          },
+          include: {
+            shift: true,
+            teamMember: true,
+          },
+        });
+
+        const newA2 = await tx.assignment.create({
+          data: {
+            shiftId: a2Data.shiftId,
+            teamMemberId: a2Data.teamMemberId,
+            role: a2Data.role as any,
+            isLead: a2Data.isLead,
+            assignmentType: "SWAP",
+            notes: a2Data.notes,
+          },
+          include: {
+            shift: true,
+            teamMember: true,
+          },
+        });
+
+        return [newA1, newA2];
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to swap assignments");
     }
   }
 }

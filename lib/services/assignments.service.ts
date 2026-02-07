@@ -17,6 +17,72 @@ export class AssignmentsService {
     return this.repo.findAll(where);
   }
 
+  async getAssignment(id: string) {
+    return this.repo.findById(id);
+  }
+
+  async swapAssignments(assignment1Id: string, assignment2Id: string) {
+    // Get both assignments
+    const a1 = await this.repo.findById(assignment1Id);
+    const a2 = await this.repo.findById(assignment2Id);
+
+    // Validate: Cannot swap if assignments are on the same shift
+    if (a1.shiftId === a2.shiftId) {
+      throw new Error(
+        "Cannot swap assignments on the same shift. Assignments must be on different shifts.",
+      );
+    }
+
+    // Validate: Check if swap would create conflicts
+    const allAssignments = await this.repo.findAll();
+
+    const wouldConflict1 = allAssignments.find(
+      (a) =>
+        a.shiftId === a1.shiftId &&
+        a.teamMemberId === a2.teamMemberId &&
+        a.id !== a1.id,
+    );
+
+    const wouldConflict2 = allAssignments.find(
+      (a) =>
+        a.shiftId === a2.shiftId &&
+        a.teamMemberId === a1.teamMemberId &&
+        a.id !== a2.id,
+    );
+
+    if (wouldConflict1) {
+      throw new Error(
+        `Member is already assigned to shift ${a1.shift.type}. Cannot swap.`,
+      );
+    }
+
+    if (wouldConflict2) {
+      throw new Error(
+        `Member is already assigned to shift ${a2.shift.type}. Cannot swap.`,
+      );
+    }
+
+    // Perform swap
+    return await this.repo.swapAssignments(
+      assignment1Id,
+      assignment2Id,
+      {
+        shiftId: a1.shiftId,
+        teamMemberId: a2.teamMemberId,
+        role: a1.role,
+        isLead: a1.isLead,
+        notes: a1.notes,
+      },
+      {
+        shiftId: a2.shiftId,
+        teamMemberId: a1.teamMemberId,
+        role: a2.role,
+        isLead: a2.isLead,
+        notes: a2.notes,
+      },
+    );
+  }
+
   async runAllocation(eventId: string, preview = false) {
     // 1. Load event with config
     const event = await this.eventRepo.findById(eventId);
