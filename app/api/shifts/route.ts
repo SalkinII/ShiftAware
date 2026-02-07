@@ -1,5 +1,4 @@
 import { isAuthenticated } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { shiftSchema } from "@/lib/validations/shift";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
@@ -11,6 +10,8 @@ import {
 import { ShiftsService } from "@/lib/services/shifts.service";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
+const service = new ShiftsService();
+
 export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
@@ -21,36 +22,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
 
-    const shifts = await prisma.shift.findMany({
-      where: eventId ? { eventId } : undefined,
-      include: {
-        event: true,
-        requiredRoles: true,
-        assignments: {
-          select: {
-            id: true,
-            role: true,
-            assignmentType: true,
-            algorithmScore: true,
-            notes: true,
-            teamMember: {
-              select: {
-                id: true,
-                alias: true,
-                avatarId: true,
-              },
-            },
-          },
-        },
-        _count: {
-          select: {
-            preferences: true,
-            assignments: true,
-          },
-        },
-      },
-      orderBy: { startTime: "asc" },
-    });
+    const shifts = eventId
+      ? await service.listShiftsByEvent(eventId)
+      : await service.listShiftsWithDetails();
 
     return createSuccessResponse(shifts);
   } catch (error) {
@@ -72,7 +46,6 @@ export async function POST(request: Request) {
     // Create shift with required roles
     const { requiredRoles, ...shiftData } = validated;
 
-    const service = new ShiftsService();
     const shift = await service.createShift({
       ...shiftData,
       startTime: new Date(validated.startTime),

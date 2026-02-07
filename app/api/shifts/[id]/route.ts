@@ -13,6 +13,8 @@ import {
 import { ShiftsService } from "@/lib/services/shifts.service";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
+const service = new ShiftsService();
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -24,27 +26,12 @@ export async function GET(
     }
 
     const { id } = await params;
-    const shift = await prisma.shift.findUnique({
-      where: { id },
-      include: {
-        event: true,
-        requiredRoles: true,
-        preferences: {
-          include: { teamMember: true },
-          orderBy: { priority: "asc" },
-        },
-        assignments: {
-          include: { teamMember: true },
-        },
-      },
-    });
-
-    if (!shift) {
-      return createNotFoundResponse("Shift");
-    }
-
+    const shift = await service.getShiftWithDetails(id);
     return createSuccessResponse(shift);
   } catch (error) {
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Shift");
+    }
     console.error("Get shift error:", error);
     return createErrorResponse(error, "Failed to fetch shift");
   }
@@ -85,7 +72,6 @@ export async function PUT(
       endTime: updateData.endTime ? new Date(updateData.endTime) : undefined,
     };
 
-    const service = new ShiftsService();
     const shift = await service.updateShiftWithRoles(
       id,
       shiftData,
@@ -133,7 +119,6 @@ export async function DELETE(
       return createNotFoundResponse("Shift");
     }
 
-    const service = new ShiftsService();
     await service.cascadeDeleteShift(shiftId);
 
     await createAuditLog({
