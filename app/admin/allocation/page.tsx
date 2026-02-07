@@ -64,7 +64,7 @@ interface Event {
 
 export default function AssignmentsPage() {
   const toast = useToast();
-  const { selectedEventId, setSelectedEventId, events, loading: eventsLoading } = useEventContext(true);
+  const { selectedEventId, selectedEvent, setSelectedEventId, events, loading: eventsLoading } = useEventContext(true);
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "swap">("list");
 
@@ -74,23 +74,20 @@ export default function AssignmentsPage() {
     loading: assignmentsLoading,
     refetch: refetchAssignments,
   } = useCache<Assignment[]>({
-    key: "assignments",
+    key: selectedEventId ? `assignments-${selectedEventId}` : "assignments-none",
     fetchFn: async () => {
-      const res = await fetch("/api/assignments");
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/assignments?eventId=${selectedEventId}`);
       if (!res.ok) throw new Error("Failed to fetch assignments");
       const data = await res.json();
       return unwrapApiResponse<Assignment[]>(data);
     },
+    enabled: !!selectedEventId,
   });
 
   const loading = eventsLoading || assignmentsLoading;
 
-  // Filter assignments by selected event
-  const assignments = useMemo(() => {
-    if (!allAssignments) return [];
-    if (!selectedEventId) return allAssignments;
-    return allAssignments.filter((a) => a.shift.event.id === selectedEventId);
-  }, [allAssignments, selectedEventId]);
+  const assignments = allAssignments || [];
 
   // Listen for cache invalidation events
   useEffect(() => {
@@ -265,21 +262,17 @@ export default function AssignmentsPage() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
               <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">
-                Select Event
+                Event
               </label>
-              <select
-                value={selectedEventId || ""}
-                onChange={(e) => setSelectedEventId(e.target.value || null)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
-              >
-                <option value="">All Events</option>
-                {events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.name} ({format(new Date(event.startDate), "MMM d")} -{" "}
-                    {format(new Date(event.endDate), "MMM d")})
-                  </option>
-                ))}
-              </select>
+              {!selectedEventId ? (
+                <div className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-xl">
+                  Select an event from the header to view assignments
+                </div>
+              ) : (
+                <div className="text-sm font-semibold text-gray-700 px-4 py-3">
+                  {selectedEvent?.name || "Loading..."}
+                </div>
+              )}
             </div>
             {selectedEventId && (
               <div className="flex items-end">
