@@ -8,7 +8,9 @@ import {
   createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { createAuditLog, AuditAction, EntityType } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/services/audit";
+import { AuditAction, EntityType } from "@prisma/client";
+import { updateEventSchema } from "@/lib/validations/event";
 
 const service = new EventsService();
 
@@ -43,13 +45,23 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const event = await service.updateEvent(id, body);
+
+    const validation = updateEventSchema.safeParse({ ...body, id });
+    if (!validation.success) {
+      return createErrorResponse(
+        new Error(validation.error.errors[0].message),
+        validation.error.errors[0].message,
+        400,
+      );
+    }
+
+    const event = await service.updateEvent(id, validation.data);
 
     await createAuditLog({
       action: AuditAction.UPDATE,
       entityType: EntityType.EVENT,
       entityId: id,
-      after: body,
+      after: validation.data,
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
