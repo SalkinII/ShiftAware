@@ -226,4 +226,36 @@ describe("ShiftRepository", () => {
       "Cannot delete shift with existing assignments",
     );
   });
+
+  it("should find shifts by event with full includes", async () => {
+    const mockShifts = [{ id: "s1", eventId: "e1" }];
+    vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts as any);
+
+    const result = await repo.findByEvent("e1");
+
+    expect(vi.mocked(prisma.shift.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { eventId: "e1" },
+        orderBy: { startTime: "asc" },
+      }),
+    );
+    expect(result).toEqual(mockShifts);
+  });
+
+  it("should find all shifts with full includes", async () => {
+    const mockShifts = [{ id: "s1" }];
+    vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts as any);
+
+    const result = await repo.findAllWithDetails();
+
+    expect(vi.mocked(prisma.shift.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          event: true,
+          requiredRoles: true,
+        }),
+      }),
+    );
+    expect(result).toEqual(mockShifts);
+  });
 });

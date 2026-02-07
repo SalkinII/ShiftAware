@@ -1,8 +1,35 @@
 import { prisma } from "@/lib/db";
-import { BaseRepository } from "./base.repository";
+import { BaseRepository, RepositoryError } from "./base.repository";
 import type { Prisma } from "@prisma/client";
 
 export class ShiftRepository extends BaseRepository {
+  private readonly fullIncludes = {
+    event: true,
+    requiredRoles: true,
+    assignments: {
+      select: {
+        id: true,
+        role: true,
+        assignmentType: true,
+        algorithmScore: true,
+        notes: true,
+        teamMember: {
+          select: {
+            id: true,
+            alias: true,
+            avatarId: true,
+          },
+        },
+      },
+    },
+    _count: {
+      select: {
+        preferences: true,
+        assignments: true,
+      },
+    },
+  };
+
   async findById(id: string) {
     try {
       const shift = await prisma.shift.findUnique({
@@ -149,6 +176,58 @@ export class ShiftRepository extends BaseRepository {
         throw error;
       }
       throw this.handlePrismaError(error, "Failed to cascade delete shift");
+    }
+  }
+
+  async findByEvent(eventId: string) {
+    try {
+      return await prisma.shift.findMany({
+        where: { eventId },
+        include: this.fullIncludes,
+        orderBy: { startTime: "asc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch shifts for event");
+    }
+  }
+
+  async findAllWithDetails(where?: Prisma.ShiftWhereInput) {
+    try {
+      return await prisma.shift.findMany({
+        where,
+        include: this.fullIncludes,
+        orderBy: { startTime: "asc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch shifts");
+    }
+  }
+
+  async findByIdWithDetails(id: string) {
+    try {
+      const shift = await prisma.shift.findUnique({
+        where: { id },
+        include: {
+          event: true,
+          requiredRoles: true,
+          preferences: {
+            include: { teamMember: true },
+            orderBy: { priority: "asc" },
+          },
+          assignments: {
+            include: { teamMember: true },
+          },
+        },
+      });
+
+      if (!shift) {
+        this.throwFormattedException("NOT_FOUND", `Shift ${id} not found`);
+      }
+
+      return shift;
+    } catch (error) {
+      if (error instanceof RepositoryError) throw error;
+      throw this.handlePrismaError(error, "Failed to fetch shift");
     }
   }
 }

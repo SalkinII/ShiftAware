@@ -9,6 +9,9 @@ describe("ShiftsService", () => {
     mockRepo = {
       findById: vi.fn(),
       findAll: vi.fn(),
+      findByEvent: vi.fn(),
+      findAllWithDetails: vi.fn(),
+      findByIdWithDetails: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -92,5 +95,35 @@ describe("ShiftsService", () => {
     const result = await service.createShift(input);
 
     expect(result).toEqual(created);
+  });
+
+  it("should list shifts by event", async () => {
+    const mockShifts = [{ id: "s1", eventId: "e1" }];
+    mockRepo.findByEvent.mockResolvedValue(mockShifts);
+
+    const result = await service.listShiftsByEvent("e1");
+
+    expect(mockRepo.findByEvent).toHaveBeenCalledWith("e1");
+    expect(result).toEqual(mockShifts);
+  });
+
+  it("should list all shifts with details", async () => {
+    const mockShifts = [{ id: "s1" }];
+    mockRepo.findAllWithDetails.mockResolvedValue(mockShifts);
+
+    const result = await service.listShiftsWithDetails();
+
+    expect(mockRepo.findAllWithDetails).toHaveBeenCalled();
+    expect(result).toEqual(mockShifts);
+  });
+
+  it("should get shift by id with details", async () => {
+    const mockShift = { id: "s1", event: {} };
+    mockRepo.findByIdWithDetails.mockResolvedValue(mockShift);
+
+    const result = await service.getShiftWithDetails("s1");
+
+    expect(mockRepo.findByIdWithDetails).toHaveBeenCalledWith("s1");
+    expect(result).toEqual(mockShift);
   });
 });

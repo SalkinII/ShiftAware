@@ -39,4 +39,16 @@ export class ShiftsService {
   async cascadeDeleteShift(id: string) {
     return this.repo.cascadeDelete(id);
   }
+
+  async listShiftsByEvent(eventId: string) {
+    return this.repo.findByEvent(eventId);
+  }
+
+  async listShiftsWithDetails(where?: any) {
+    return this.repo.findAllWithDetails(where);
+  }
+
+  async getShiftWithDetails(id: string) {
+    return this.repo.findByIdWithDetails(id);
+  }
 }
