@@ -87,7 +87,7 @@ const coverageLegend: Record<
 // User Calendar View - Read-only schedule display
 export default function UserCalendarPage() {
   const toast = useToast();
-  const { events, loading: eventsLoading } = useEventContext(false);
+  const { selectedEventId, events, loading: eventsLoading } = useEventContext(false);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarView, setCalendarView] = useState<
@@ -122,13 +122,15 @@ export default function UserCalendarPage() {
     loading: cacheLoading,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
-    key: "shifts",
+    key: selectedEventId ? `calendar-shifts-${selectedEventId}` : "calendar-shifts-none",
     fetchFn: async () => {
-      const res = await fetch("/api/shifts");
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
       if (!res.ok) throw new Error("Failed to fetch shifts");
       const data = await res.json();
       return unwrapApiResponse<Shift[]>(data);
     },
+    enabled: !!selectedEventId,
   });
 
   // Derive current event from context for calendar anchoring
@@ -437,6 +439,19 @@ export default function UserCalendarPage() {
     typeof window !== "undefined"
       ? localStorage.getItem("selectedMemberId") || ""
       : "";
+
+  if (!selectedEventId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <Calendar className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 mb-2">No Event Selected</h2>
+        <p className="text-gray-500 mb-6">Go to the identity page to select your event.</p>
+        <a href="/app/identity" className="text-primary-600 font-medium hover:underline">
+          Go to Identity →
+        </a>
+      </div>
+    );
+  }
 
   if (loading && shifts.length === 0) {
     return (
