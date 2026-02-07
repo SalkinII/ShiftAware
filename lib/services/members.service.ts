@@ -12,6 +12,28 @@ export class MembersService {
     return this.repo.findAll(where);
   }
 
+  async listMembersWithEventContext(eventId: string, includeUnregistered: boolean = false) {
+    const where: any = { isActive: true };
+    const include: any = {};
+
+    if (includeUnregistered) {
+      include.eventRegistrations = { where: { eventId } };
+      include.attributes = {
+        where: { definition: { eventId } },
+        include: { definition: true },
+      };
+    } else {
+      where.eventRegistrations = { some: { eventId } };
+      include.eventRegistrations = { where: { eventId } };
+      include.attributes = {
+        where: { definition: { eventId } },
+        include: { definition: true },
+      };
+    }
+
+    return this.repo.findAllWithIncludes(where, include);
+  }
+
   async getMember(id: string) {
     return this.repo.findById(id);
   }

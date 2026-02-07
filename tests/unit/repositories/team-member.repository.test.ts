@@ -357,4 +357,47 @@ describe("TeamMemberRepository", () => {
       include: { definition: true },
     });
   });
+
+  it("should find all members with event filter", async () => {
+    const mockMembers = [{ id: "m1", alias: "alice" }];
+    vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers as any);
+
+    const result = await repo.findAll({
+      isActive: true,
+      eventRegistrations: { some: { eventId: "event-1" } },
+    });
+
+    expect(vi.mocked(prisma.teamMember.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          isActive: true,
+          eventRegistrations: { some: { eventId: "event-1" } },
+        },
+      }),
+    );
+    expect(result).toEqual(mockMembers);
+  });
+
+  it("should find all members with includes", async () => {
+    const mockMembers = [{ id: "m1", alias: "alice", eventRegistrations: [] }];
+    vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers as any);
+
+    const result = await repo.findAllWithIncludes(
+      { isActive: true },
+      {
+        eventRegistrations: { where: { eventId: "event-1" } },
+        attributes: { where: { definition: { eventId: "event-1" } }, include: { definition: true } },
+      },
+    );
+
+    expect(vi.mocked(prisma.teamMember.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { isActive: true },
+        include: expect.objectContaining({
+          eventRegistrations: { where: { eventId: "event-1" } },
+        }),
+      }),
+    );
+    expect(result).toEqual(mockMembers);
+  });
 });

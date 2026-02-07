@@ -33,6 +33,18 @@ export class TeamMemberRepository extends BaseRepository {
     }
   }
 
+  async findAllWithIncludes(where?: Prisma.TeamMemberWhereInput, include?: any) {
+    try {
+      return await prisma.teamMember.findMany({
+        where,
+        include,
+        orderBy: { alias: "asc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch members");
+    }
+  }
+
   async create(data: Prisma.TeamMemberCreateInput) {
     try {
       return await prisma.teamMember.create({ data });
