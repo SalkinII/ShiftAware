@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  useCurrentEvent,
+  useEventContext,
   formatEventDateRange,
-} from "@/lib/hooks/useCurrentEvent";
+} from "@/lib/hooks/useEventContext";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -38,7 +38,7 @@ const adminItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { event, loading: eventLoading } = useCurrentEvent();
+  const { selectedEvent: event, loading: eventLoading } = useEventContext(false);
 
   return (
     <nav className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto hidden lg:block scrollbar-hide">

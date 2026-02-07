@@ -7,9 +7,9 @@ import { CalendarDays, Download, Settings, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdminClient } from "@/lib/auth-client";
 import {
-  useCurrentEvent,
+  useEventContext,
   formatEventDateRange,
-} from "@/lib/hooks/useCurrentEvent";
+} from "@/lib/hooks/useEventContext";
 
 const navItems = [
   { label: "Calendar", href: "/app/calendar", icon: CalendarDays },
@@ -19,7 +19,7 @@ const navItems = [
 export function UserSidebar() {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
-  const { event, loading: eventLoading } = useCurrentEvent();
+  const { selectedEvent: event, loading: eventLoading } = useEventContext(false);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());

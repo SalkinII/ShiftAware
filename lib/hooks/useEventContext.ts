@@ -96,3 +96,24 @@ export function useEventContext(isAdmin: boolean = false): EventContextState {
     refreshEvents,
   };
 }
+
+/**
+ * Format event dates for display (e.g., "Jun 26-29")
+ */
+export function formatEventDateRange(
+  startDate: string,
+  endDate: string,
+): string {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay}-${endDay}`;
+  }
+  return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+}
