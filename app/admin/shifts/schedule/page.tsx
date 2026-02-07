@@ -113,16 +113,16 @@ export default function ShiftsPage() {
     error: shiftsError,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
-    key: "shifts",
+    key: selectedEventId ? `shifts-${selectedEventId}` : "shifts-none",
     fetchFn: async () => {
-      const res = await fetch("/api/shifts");
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
       if (!res.ok) {
         let errorMessage = "Failed to fetch shifts";
         try {
           const errorData = await res.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
         } catch {
-          // If response isn't JSON, use status text
           errorMessage = `${errorMessage}: ${res.status} ${res.statusText}`;
         }
         throw new Error(errorMessage);
@@ -130,16 +130,13 @@ export default function ShiftsPage() {
       const json = await res.json();
       return unwrapApiResponse<Shift[]>(json);
     },
+    enabled: !!selectedEventId,
   });
 
   // Defensive: ensure shifts is always an array
   const allShifts = Array.isArray(cachedShifts) ? cachedShifts : [];
 
-  // Filter shifts by selected event
-  const shifts = useMemo(() => {
-    if (!selectedEventId) return allShifts;
-    return allShifts.filter((s) => s.eventId === selectedEventId);
-  }, [allShifts, selectedEventId]);
+  const shifts = allShifts || [];
 
   // Calculate event range for calendar view
   const eventRange = useMemo(() => {
@@ -780,18 +777,16 @@ export default function ShiftsPage() {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <select
-                  value={selectedEventId || "all"}
-                  onChange={(e) => setSelectedEventId(e.target.value === "all" ? null : e.target.value)}
-                  className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20"
-                >
-                  <option value="all">All Events</option>
-                  {events.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-                </select>
+                {!selectedEventId && (
+                  <span className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg">
+                    Select an event from the header
+                  </span>
+                )}
+                {selectedEvent && (
+                  <span className="text-sm font-bold text-gray-700 px-4 py-2">
+                    {selectedEvent.name}
+                  </span>
+                )}
                 <div className="flex rounded-lg overflow-hidden border border-gray-200">
                   <button
                     onClick={() => setViewMode("list")}
