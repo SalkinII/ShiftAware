@@ -22,8 +22,8 @@ interface Event {
 
 export function FestivalSettings() {
   const toast = useToast();
-  const { events, loading, refreshEvents } = useEventContext(true);
-  const [selectedEventId, setSelectedEventId] = useState<string>('new');
+  const { selectedEventId, selectedEvent, events, loading, refreshEvents, setSelectedEventId } = useEventContext(true);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -36,7 +36,7 @@ export function FestivalSettings() {
   });
 
   useEffect(() => {
-    if (selectedEventId === 'new') {
+    if (isCreatingNew || !selectedEventId) {
       setFormData({
         name: '',
         status: 'PLANNING',
@@ -58,7 +58,7 @@ export function FestivalSettings() {
         });
       }
     }
-  }, [selectedEventId, events]);
+  }, [selectedEventId, events, isCreatingNew]);
 
   async function handleSave() {
     if (!formData.name || !formData.startDate || !formData.endDate) {
@@ -76,11 +76,11 @@ export function FestivalSettings() {
         bufferDaysAfter: formData.bufferDaysAfter,
       };
 
-      const url = selectedEventId === 'new'
+      const url = isCreatingNew
         ? '/api/events'
         : `/api/events/${selectedEventId}`;
 
-      const method = selectedEventId === 'new' ? 'POST' : 'PUT';
+      const method = isCreatingNew ? 'POST' : 'PUT';
 
       const res = await fetch(url, {
         method,
@@ -89,11 +89,13 @@ export function FestivalSettings() {
       });
 
       if (res.ok) {
-        toast.success(selectedEventId === 'new' ? 'Event created' : 'Event updated');
+        const resData = await res.json();
+        toast.success(isCreatingNew ? 'Event created' : 'Event updated');
         await refreshEvents();
-        if (selectedEventId === 'new') {
-          const data = await res.json();
-          setSelectedEventId(data.data?.id || 'new');
+        if (isCreatingNew) {
+          const newId = resData.data?.id;
+          if (newId) setSelectedEventId(newId);
+          setIsCreatingNew(false);
         }
       } else {
         const error = await res.json();
@@ -119,17 +121,27 @@ export function FestivalSettings() {
         </p>
       </div>
 
-      <div className="mb-6">
-        <Select
-          label="Select Event"
-          value={selectedEventId}
-          onChange={(e) => setSelectedEventId(e.target.value)}
+      <div className="mb-6 flex items-center justify-between">
+        {selectedEventId && !isCreatingNew ? (
+          <h2 className="text-lg font-semibold text-gray-900">
+            Editing: {selectedEvent?.name || "Loading..."}
+          </h2>
+        ) : !isCreatingNew ? (
+          <p className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg">
+            Select an event from the header, or create a new one
+          </p>
+        ) : (
+          <h2 className="text-lg font-semibold text-gray-900">
+            Create New Event
+          </h2>
+        )}
+        <button
+          type="button"
+          onClick={() => setIsCreatingNew(!isCreatingNew)}
+          className="text-sm font-medium text-primary-600 hover:text-primary-700"
         >
-          <option value="new">+ Create New Event</option>
-          {events.map(event => (
-            <option key={event.id} value={event.id}>{event.name}</option>
-          ))}
-        </Select>
+          {isCreatingNew ? "Cancel" : "+ New Event"}
+        </button>
       </div>
 
       <div className="space-y-4">
