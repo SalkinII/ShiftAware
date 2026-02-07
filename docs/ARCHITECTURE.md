@@ -2,7 +2,7 @@
 
 > **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
 >
-> Last updated: 2026-02-07 (Phase 3: Complete - Three-layer architecture. Phase 4: In Progress - UI-Service alignment)
+> Last updated: 2026-02-07 (Phase 3: Complete - Three-layer architecture. Phase 4: ✅ Complete - UI-Service alignment)
 
 ---
 
@@ -51,7 +51,7 @@
 
 ## 2. Three-Layer Architecture Pattern
 
-**Status:** ✅ Phase 3 Complete (Three-layer architecture). Phase 4 In Progress (UI-Service alignment).
+**Status:** ✅ Phase 3 Complete (Three-layer architecture). ✅ Phase 4 Complete (UI-Service alignment).
 
 ShiftAware uses a clean three-layer architecture to separate concerns:
 
@@ -357,7 +357,7 @@ TeamMember (Global)
 
 **Phase 3 Complete:** All remaining entities refactored. Sub-entities grouped under parent services (EventsService handles config/registrations/templates/attributes). Algorithm orchestration in AssignmentsService. Swap matching logic in SwapRequestsService. **Zero direct Prisma calls in any route.**
 
-**Phase 4 In Progress:** UI-Service alignment underway. `useEventContext` hook created and integrated into admin pages. Server-side filtering support added to API endpoints (members, shifts, assignments, audit accept query params). **Remaining:** UI pages still fetch unfiltered data and filter client-side; local event selectors not yet removed; `useCurrentEvent` not yet consolidated. See `docs/plans/2026-02-07-ui-alignment-bugfix-design.md` for completion plan. Test coverage: 167/176 passing (3 failed, 6 skipped).
+**Phase 4 ✅ Complete:** UI-Service alignment complete. `useEventContext` hook created and fully integrated. All UI pages now pass `eventId` to API endpoints. Server-side filtering implemented across all admin and user pages. Local event selectors removed. `useCurrentEvent` consolidated into `useEventContext`. Test coverage: 167/176 passing (3 pre-existing failures, 6 skipped).
 
 **Future Enhancements:**
 - Add caching layer
@@ -969,7 +969,7 @@ npm test -- --coverage
 
 ## 15. Context Management
 
-**Status:** Partially consolidated. Hooks created, UI wiring incomplete.
+**Status:** ✅ Consolidated. Complete.
 
 Two React context hooks persist user state via localStorage:
 
@@ -991,11 +991,12 @@ const {
 
 **Where used:**
 - Header: displays event selector (admin mode) ✅
-- Schedule page: reads context ✅ but still fetches unfiltered ❌ and has local dropdown ❌
-- Allocation page: reads context ✅ but still fetches unfiltered ❌ and has local selector ❌
-- FestivalSettings: reads context ✅ but has local selector ❌
+- Schedule page: reads context ✅ passes eventId to API ✅ no local dropdown ✅
+- Allocation page: reads context ✅ passes eventId to API ✅ no local selector ✅
+- FestivalSettings: reads context ✅ uses header selector + create button ✅
 - TemplateManager: reads context ✅ and passes eventId correctly ✅
-- Calendar page: reads context ✅ but fetches all shifts unfiltered ❌
+- Calendar page: reads context ✅ passes eventId to API ✅ has no-event guard ✅
+- UserSidebar, Sidebar: use useEventContext for event display ✅
 
 ### useMemberContext
 
@@ -1009,15 +1010,11 @@ const { selectedMemberId, setSelectedMemberId, selectedMember } = useMemberConte
 - Header: member identity display
 - Calendar: filter "My Shifts" by selectedMemberId
 
-### useCurrentEvent (to be removed)
-
-Still used by Header, UserSidebar, and Sidebar. Wraps `useEventContext(false)` to derive the "current" event. Planned for removal -- all usages should migrate to `useEventContext` directly.
-
 ---
 
 ## 16. Server-Side Filtering
 
-**Status:** API endpoints support filtering via query parameters. UI pages not yet wired to use them.
+**Status:** ✅ Complete. API and UI fully aligned.
 
 ### API-Level Support (Done)
 
@@ -1028,13 +1025,13 @@ Still used by Header, UserSidebar, and Sidebar. Wraps `useEventContext(false)` t
 | `/api/assignments` | `eventId` | `/api/assignments?eventId=e1` |
 | `/api/audit` | `search`, `action`, `entityType` | `/api/audit?search=john&action=UPDATE` |
 
-### UI-Level Usage (Pending)
+### UI-Level Usage (Done)
 
 | Page | Passes eventId to API? | Client-side filter? | Status |
 |------|----------------------|-------------------|--------|
-| Schedule | No | Yes (useMemo) | Needs fix |
-| Allocation | No | Yes (useMemo) | Needs fix |
-| Calendar | No | No (shows all) | Needs fix |
+| Schedule | Yes | No | ✅ Done |
+| Allocation | Yes | No | ✅ Done |
+| Calendar | Yes | No | ✅ Done |
 | MemberListByEvent | Yes | No | ✅ Done |
 | TemplateManager | Yes | No | ✅ Done |
 
@@ -1151,5 +1148,5 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 ---
 
 **Last Updated:** 2026-02-07
-**Phase:** 3 Complete, Phase 4 In Progress (UI-Service alignment)
-**Next Review:** After Phase 4 completion
+**Phase:** 3 Complete, Phase 4 ✅ Complete (UI-Service alignment)
+**Next Review:** As needed for future enhancements

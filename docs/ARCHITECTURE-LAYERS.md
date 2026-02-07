@@ -640,11 +640,13 @@ const service = new MembersService(mockRepo);
 - 167 passing unit tests (repository + service layers)
 - Core entity routes use service layer (some routes retain direct Prisma for business validation)
 
-### Phase 4 (🔄 In Progress)
-- `useEventContext` hook created and integrated into admin pages
-- Server-side filtering support added to API endpoints (query params accepted)
-- **Remaining:** UI pages not yet passing eventId to APIs; local event selectors not removed; `useCurrentEvent` not consolidated; client-side filtering still present
-- See `docs/plans/2026-02-07-ui-alignment-bugfix-design.md` for completion plan
+### Phase 4 (✅ Complete)
+- `useEventContext` hook created and fully integrated into all admin and user pages
+- Server-side filtering implemented across all pages - UI passes eventId to API
+- Local event selectors removed from all admin pages (Schedule, Allocation, FestivalSettings)
+- Client-side filtering removed - API filters data server-side
+- `useCurrentEvent` consolidated into `useEventContext` and deleted
+- 167 passing unit tests maintained throughout refactoring
 
 ### Sub-Entity Grouping Pattern
 Phase 3 introduced a pattern for managing sub-entities without file sprawl:
@@ -666,7 +668,6 @@ Services with internal direct Prisma (complex orchestration):
 - `SwapRequestsService.approveSwapRequest()` — validation queries
 
 ### Future Enhancements
-- Complete Phase 4 UI-Service alignment
 - Add transaction utilities for complex multi-repository operations
 - Caching layer for frequently accessed data
 - API versioning strategy
