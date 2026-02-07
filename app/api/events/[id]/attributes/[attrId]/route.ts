@@ -1,5 +1,4 @@
 import { isAuthenticated, isAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -8,6 +7,10 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { attributeDefinitionSchema } from "@/lib/validations/attribute";
+import { EventsService } from "@/lib/services/events.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new EventsService();
 
 export async function PUT(
   request: Request,
@@ -22,22 +25,19 @@ export async function PUT(
 
     const { id: eventId, attrId } = await params;
 
-    const existing = await prisma.eventAttributeDefinition.findFirst({
-      where: { id: attrId, eventId },
-    });
-    if (!existing) return createNotFoundResponse("Attribute not found");
-
     const body = await request.json();
     const validated = attributeDefinitionSchema.partial().parse(body);
 
-    const updated = await prisma.eventAttributeDefinition.update({
-      where: { id: attrId },
-      data: validated,
-    });
+    const updated = await service.updateEventAttribute(eventId, attrId, validated);
 
     return createSuccessResponse(updated);
   } catch (error) {
     console.error("Update attribute error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Attribute");
+    }
+
     return createErrorResponse(error, "Failed to update attribute");
   }
 }
@@ -55,16 +55,16 @@ export async function DELETE(
 
     const { id: eventId, attrId } = await params;
 
-    const existing = await prisma.eventAttributeDefinition.findFirst({
-      where: { id: attrId, eventId },
-    });
-    if (!existing) return createNotFoundResponse("Attribute not found");
-
-    await prisma.eventAttributeDefinition.delete({ where: { id: attrId } });
+    await service.deleteEventAttribute(eventId, attrId);
 
     return createSuccessResponse({ deleted: true });
   } catch (error) {
     console.error("Delete attribute error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Attribute");
+    }
+
     return createErrorResponse(error, "Failed to delete attribute");
   }
 }

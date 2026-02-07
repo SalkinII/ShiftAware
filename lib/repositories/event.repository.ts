@@ -240,6 +240,52 @@ export class EventRepository extends BaseRepository {
     }
   }
 
+  async getRegistration(eventId: string, memberId: string) {
+    try {
+      return await prisma.eventRegistration.findUnique({
+        where: { memberId_eventId: { memberId, eventId } },
+        include: {
+          member: {
+            include: {
+              attributes: {
+                include: { definition: true },
+                where: { definition: { eventId } },
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch registration");
+    }
+  }
+
+  async updateRegistration(
+    eventId: string,
+    memberId: string,
+    data: Record<string, unknown>,
+  ) {
+    try {
+      return await prisma.eventRegistration.update({
+        where: { memberId_eventId: { memberId, eventId } },
+        data: data as any,
+        include: { member: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to update registration");
+    }
+  }
+
+  async deleteRegistration(eventId: string, memberId: string) {
+    try {
+      return await prisma.eventRegistration.delete({
+        where: { memberId_eventId: { memberId, eventId } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to delete registration");
+    }
+  }
+
   // --- EventTemplate (junction) ---
   async listEventTemplates(eventId: string) {
     try {
@@ -290,6 +336,16 @@ export class EventRepository extends BaseRepository {
     }
   }
 
+  async deleteEventTemplate(eventId: string, templateId: string) {
+    try {
+      return await prisma.eventTemplate.delete({
+        where: { eventId_templateId: { eventId, templateId } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to delete event template");
+    }
+  }
+
   // --- EventAttributeDefinition ---
   async listEventAttributes(eventId: string) {
     try {
@@ -309,6 +365,41 @@ export class EventRepository extends BaseRepository {
       });
     } catch (error) {
       throw this.handlePrismaError(error, "Failed to create event attribute");
+    }
+  }
+
+  async getEventAttribute(eventId: string, attrId: string) {
+    try {
+      return await prisma.eventAttributeDefinition.findFirst({
+        where: { id: attrId, eventId },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch event attribute");
+    }
+  }
+
+  async updateEventAttribute(
+    eventId: string,
+    attrId: string,
+    data: Record<string, unknown>,
+  ) {
+    try {
+      return await prisma.eventAttributeDefinition.update({
+        where: { id: attrId },
+        data: data as any,
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to update event attribute");
+    }
+  }
+
+  async deleteEventAttribute(eventId: string, attrId: string) {
+    try {
+      return await prisma.eventAttributeDefinition.delete({
+        where: { id: attrId },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to delete event attribute");
     }
   }
 }

@@ -1,6 +1,5 @@
 // app/api/events/[id]/templates/[templateId]/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -8,6 +7,10 @@ import {
   createForbiddenResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
+import { EventsService } from "@/lib/services/events.service";
+import { RepositoryError } from "@/lib/repositories/base.repository";
+
+const service = new EventsService();
 
 export async function DELETE(
   request: Request,
@@ -22,19 +25,16 @@ export async function DELETE(
 
     const { id: eventId, templateId } = await params;
 
-    const existing = await prisma.eventTemplate.findUnique({
-      where: { eventId_templateId: { eventId, templateId } },
-    });
-    if (!existing)
-      return createNotFoundResponse("Template assignment not found");
-
-    await prisma.eventTemplate.delete({
-      where: { eventId_templateId: { eventId, templateId } },
-    });
+    await service.unassignTemplate(eventId, templateId);
 
     return createSuccessResponse({ deleted: true });
   } catch (error) {
     console.error("Unassign template error:", error);
+
+    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
+      return createNotFoundResponse("Template assignment");
+    }
+
     return createErrorResponse(error, "Failed to unassign template");
   }
 }

@@ -65,6 +65,22 @@ export class EventsService {
     return this.repo.findRegistration(eventId, memberId);
   }
 
+  async getRegistration(eventId: string, memberId: string) {
+    return this.repo.getRegistration(eventId, memberId);
+  }
+
+  async updateRegistration(
+    eventId: string,
+    memberId: string,
+    data: Record<string, unknown>,
+  ) {
+    return this.repo.updateRegistration(eventId, memberId, data);
+  }
+
+  async deleteRegistration(eventId: string, memberId: string) {
+    return this.repo.deleteRegistration(eventId, memberId);
+  }
+
   // --- Event Templates ---
   async listEventTemplates(eventId: string) {
     return this.repo.listEventTemplates(eventId);
@@ -78,6 +94,10 @@ export class EventsService {
     return this.repo.findEventTemplate(eventId, templateId);
   }
 
+  async unassignTemplate(eventId: string, templateId: string) {
+    return this.repo.deleteEventTemplate(eventId, templateId);
+  }
+
   // --- Attributes ---
   async listEventAttributes(eventId: string) {
     return this.repo.listEventAttributes(eventId);
@@ -85,5 +105,21 @@ export class EventsService {
 
   async createEventAttribute(eventId: string, data: Record<string, unknown>) {
     return this.repo.createEventAttribute(eventId, data);
+  }
+
+  async getEventAttribute(eventId: string, attrId: string) {
+    return this.repo.getEventAttribute(eventId, attrId);
+  }
+
+  async updateEventAttribute(
+    eventId: string,
+    attrId: string,
+    data: Record<string, unknown>,
+  ) {
+    return this.repo.updateEventAttribute(eventId, attrId, data);
+  }
+
+  async deleteEventAttribute(eventId: string, attrId: string) {
+    return this.repo.deleteEventAttribute(eventId, attrId);
   }
 }
