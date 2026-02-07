@@ -9,7 +9,6 @@ import { scheduleTemplateSchema } from "@/lib/validations/template";
 import { setHours, setMinutes } from "date-fns";
 import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
 import { RepositoryError } from "@/lib/repositories/base.repository";
-import { prisma } from "@/lib/db";
 
 const service = new ShiftTemplatesService();
 
@@ -29,15 +28,6 @@ export async function POST(
 
     // Get template for validation
     const template = await service.getTemplate(templateId);
-
-    // Verify event exists
-    const event = await prisma.event.findUnique({
-      where: { id: validated.eventId },
-    });
-
-    if (!event) {
-      return createNotFoundResponse("Event");
-    }
 
     // Parse date and template startTime
     const date = new Date(validated.date);

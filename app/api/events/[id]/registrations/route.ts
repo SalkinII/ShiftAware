@@ -1,6 +1,5 @@
 // app/api/events/[id]/registrations/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -57,12 +56,6 @@ export async function POST(
 
     const body = await request.json();
     const validated = createRegistrationSchema.parse(body);
-
-    // Check member exists
-    const member = await prisma.teamMember.findUnique({
-      where: { id: validated.memberId },
-    });
-    if (!member) return createNotFoundResponse("Member not found");
 
     // Check not already registered
     const existing = await service.findRegistration(

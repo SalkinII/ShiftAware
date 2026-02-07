@@ -1,6 +1,5 @@
 // app/api/events/[id]/templates/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -57,19 +56,6 @@ export async function POST(
 
     const body = await request.json();
     const validated = assignTemplateSchema.parse(body);
-
-    // Check template exists and is global
-    const template = await prisma.shiftTemplate.findUnique({
-      where: { id: validated.templateId },
-    });
-    if (!template) return createNotFoundResponse("Template not found");
-    if (template.eventId) {
-      return createErrorResponse(
-        null,
-        "Cannot assign event-specific template to another event",
-        400,
-      );
-    }
 
     // Check not already assigned
     const existing = await service.findEventTemplate(
