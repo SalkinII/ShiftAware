@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
+import { useEventContext } from '@/lib/hooks/useEventContext';
 import { unwrapApiResponse } from '@/lib/api-errors';
 
 interface Event {
@@ -21,9 +22,8 @@ interface Event {
 
 export function FestivalSettings() {
   const toast = useToast();
-  const [events, setEvents] = useState<Event[]>([]);
+  const { events, loading, refreshEvents } = useEventContext(true);
   const [selectedEventId, setSelectedEventId] = useState<string>('new');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -34,10 +34,6 @@ export function FestivalSettings() {
     bufferDaysBefore: 1,
     bufferDaysAfter: 1,
   });
-
-  useEffect(() => {
-    loadEvents();
-  }, []);
 
   useEffect(() => {
     if (selectedEventId === 'new') {
@@ -63,20 +59,6 @@ export function FestivalSettings() {
       }
     }
   }, [selectedEventId, events]);
-
-  async function loadEvents() {
-    try {
-      const res = await fetch('/api/events');
-      if (res.ok) {
-        const data = await res.json();
-        setEvents(unwrapApiResponse<Event[]>(data) || []);
-      }
-    } catch (error) {
-      console.error('Failed to load events:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSave() {
     if (!formData.name || !formData.startDate || !formData.endDate) {
@@ -108,7 +90,7 @@ export function FestivalSettings() {
 
       if (res.ok) {
         toast.success(selectedEventId === 'new' ? 'Event created' : 'Event updated');
-        loadEvents();
+        await refreshEvents();
         if (selectedEventId === 'new') {
           const data = await res.json();
           setSelectedEventId(data.data?.id || 'new');

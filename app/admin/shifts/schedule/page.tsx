@@ -35,6 +35,7 @@ import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
+import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { calculateSnapPosition, findShiftEndTimes } from "@/lib/utils/snap";
 import { isValidLaneDrop } from "@/lib/utils/lane-validation";
@@ -75,8 +76,7 @@ interface DraggedTemplate {
 export default function ShiftsPage() {
   const toast = useToast();
   const calendarRef = useRef<HTMLDivElement>(null);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>("all");
+  const { selectedEventId, selectedEvent, events, setSelectedEventId } = useEventContext(true);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -137,7 +137,7 @@ export default function ShiftsPage() {
 
   // Filter shifts by selected event
   const shifts = useMemo(() => {
-    if (selectedEventId === "all") return allShifts;
+    if (!selectedEventId) return allShifts;
     return allShifts.filter((s) => s.eventId === selectedEventId);
   }, [allShifts, selectedEventId]);
 
@@ -157,11 +157,6 @@ export default function ShiftsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shiftsError]);
-
-  useEffect(() => {
-    loadEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Listen for cache invalidation events
   useEffect(() => {
@@ -245,8 +240,7 @@ export default function ShiftsPage() {
           return; // Silent rejection - no toast, no shift created
         }
 
-        const targetEventId =
-          selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+        const targetEventId = selectedEventId || events[0]?.id;
         if (!targetEventId) {
           toast.error("Please select an event first");
           return;
@@ -332,8 +326,7 @@ export default function ShiftsPage() {
         const template = activeData.template;
         const dropDate = overData.date;
 
-        const targetEventId =
-          selectedEventId !== "all" ? selectedEventId : events[0]?.id;
+        const targetEventId = selectedEventId || events[0]?.id;
         if (!targetEventId) {
           toast.error("Please select an event first");
           return;
@@ -401,24 +394,6 @@ export default function ShiftsPage() {
     },
     [selectedEventId, events, shifts, toast],
   );
-
-  async function loadEvents() {
-    try {
-      const eventsRes = await fetch("/api/events");
-      if (eventsRes.ok) {
-        const json = await eventsRes.json();
-        const eventsData = unwrapApiResponse<Event[]>(json);
-        // Defensive check
-        const safeEvents = Array.isArray(eventsData) ? eventsData : [];
-        setEvents(safeEvents);
-        if (safeEvents.length > 0 && !formData.eventId) {
-          setFormData({ ...formData, eventId: safeEvents[0].id });
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load events:", error);
-    }
-  }
 
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
@@ -806,8 +781,8 @@ export default function ShiftsPage() {
               </div>
               <div className="flex items-center gap-3">
                 <select
-                  value={selectedEventId}
-                  onChange={(e) => setSelectedEventId(e.target.value)}
+                  value={selectedEventId || "all"}
+                  onChange={(e) => setSelectedEventId(e.target.value === "all" ? null : e.target.value)}
                   className="bg-gray-50 border-none text-sm font-bold text-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500/20"
                 >
                   <option value="all">All Events</option>

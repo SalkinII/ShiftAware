@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useCache } from "@/lib/cache/useCache";
+import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { format } from "date-fns";
 import {
@@ -63,24 +64,9 @@ interface Event {
 
 export default function AssignmentsPage() {
   const toast = useToast();
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const { selectedEventId, setSelectedEventId, events, loading: eventsLoading } = useEventContext(true);
   const [runningAlgorithm, setRunningAlgorithm] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "swap">("list");
-
-  // Use cache for events
-  const {
-    data: cachedEvents,
-    loading: eventsLoading,
-    refetch: refetchEvents,
-  } = useCache<Event[]>({
-    key: "events",
-    fetchFn: async () => {
-      const res = await fetch("/api/events");
-      if (!res.ok) throw new Error("Failed to fetch events");
-      const data = await res.json();
-      return unwrapApiResponse<Event[]>(data);
-    },
-  });
 
   // Use cache for assignments (all assignments, filtered client-side)
   const {
@@ -106,13 +92,6 @@ export default function AssignmentsPage() {
     return allAssignments.filter((a) => a.shift.event.id === selectedEventId);
   }, [allAssignments, selectedEventId]);
 
-  // Set default event on first load
-  useEffect(() => {
-    if (cachedEvents && cachedEvents.length > 0 && !selectedEventId) {
-      setSelectedEventId(cachedEvents[0].id);
-    }
-  }, [cachedEvents, selectedEventId]);
-
   // Listen for cache invalidation events
   useEffect(() => {
     const handleCacheInvalidate = (e: CustomEvent) => {
@@ -121,13 +100,10 @@ export default function AssignmentsPage() {
       if (
         keys.some(
           (k: string) =>
-            k === "events" ||
-            k.startsWith("events") ||
             k === "assignments" ||
             k.startsWith("assignments"),
         )
       ) {
-        refetchEvents();
         refetchAssignments();
       }
     };
@@ -144,10 +120,6 @@ export default function AssignmentsPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - refetch functions are stable from useCache
-
-  async function loadData() {
-    await Promise.all([refetchEvents(), refetchAssignments()]);
-  }
 
   async function runAlgorithm(eventId: string) {
     if (
@@ -296,12 +268,12 @@ export default function AssignmentsPage() {
                 Select Event
               </label>
               <select
-                value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                value={selectedEventId || ""}
+                onChange={(e) => setSelectedEventId(e.target.value || null)}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
               >
                 <option value="">All Events</option>
-                {cachedEvents?.map((event) => (
+                {events.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.name} ({format(new Date(event.startDate), "MMM d")} -{" "}
                     {format(new Date(event.endDate), "MMM d")})

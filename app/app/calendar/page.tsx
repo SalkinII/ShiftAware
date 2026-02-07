@@ -19,6 +19,7 @@ import { MyShiftsList } from "./components/MyShiftsList";
 import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
+import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 
@@ -86,6 +87,7 @@ const coverageLegend: Record<
 // User Calendar View - Read-only schedule display
 export default function UserCalendarPage() {
   const toast = useToast();
+  const { events, loading: eventsLoading } = useEventContext(false);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarView, setCalendarView] = useState<
@@ -129,16 +131,15 @@ export default function UserCalendarPage() {
     },
   });
 
-  // Fetch current event with config for calendar anchoring
-  const { data: eventData } = useCache<EventWithConfig>({
-    key: "current-event",
-    fetchFn: async () => {
-      const res = await fetch("/api/events/current");
-      if (!res.ok) throw new Error("Failed to fetch current event");
-      const data = await res.json();
-      return unwrapApiResponse<EventWithConfig>(data);
-    },
-  });
+  // Derive current event from context for calendar anchoring
+  const eventData = useMemo(() => {
+    if (events.length === 0) return null;
+    // Get the most recent event that's not completed
+    const activeEvent = events.find(e => (e as EventWithConfig).status !== "COMPLETED");
+    if (activeEvent) return activeEvent as EventWithConfig;
+    // Fallback to most recent event
+    return events[events.length - 1] as EventWithConfig;
+  }, [events]);
 
   useEffect(() => {
     const savedView = localStorage.getItem("shiftaware:user-calendar:view");

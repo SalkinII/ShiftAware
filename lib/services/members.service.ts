@@ -12,9 +12,13 @@ export class MembersService {
     return this.repo.findAll(where);
   }
 
-  async listMembersWithEventContext(eventId: string, includeUnregistered: boolean = false) {
+  async listMembersWithEventContext(eventId: string, includeUnregistered: boolean = false, search?: string) {
     const where: any = { isActive: true };
     const include: any = {};
+
+    if (search) {
+      where.alias = { contains: search, mode: "insensitive" };
+    }
 
     if (includeUnregistered) {
       include.eventRegistrations = { where: { eventId } };

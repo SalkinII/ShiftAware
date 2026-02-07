@@ -637,8 +637,14 @@ const service = new MembersService(mockRepo);
 - Algorithm orchestration in AssignmentsService
 - Swap auto-matching logic in SwapRequestsService
 - Refactored all remaining routes (templates, assignments, swap-requests, sub-routes)
-- 94 passing unit tests (repository + service layers)
-- **Zero direct Prisma calls in ANY route**
+- 167 passing unit tests (repository + service layers)
+- Core entity routes use service layer (some routes retain direct Prisma for business validation)
+
+### Phase 4 (🔄 In Progress)
+- `useEventContext` hook created and integrated into admin pages
+- Server-side filtering support added to API endpoints (query params accepted)
+- **Remaining:** UI pages not yet passing eventId to APIs; local event selectors not removed; `useCurrentEvent` not consolidated; client-side filtering still present
+- See `docs/plans/2026-02-07-ui-alignment-bugfix-design.md` for completion plan
 
 ### Sub-Entity Grouping Pattern
 Phase 3 introduced a pattern for managing sub-entities without file sprawl:
@@ -647,7 +653,20 @@ Phase 3 introduced a pattern for managing sub-entities without file sprawl:
 
 This keeps related functionality together while maintaining the three-layer architecture.
 
+### Known Mixed Patterns (Acceptable)
+Routes that use services but retain direct Prisma for business validation:
+- `app/api/members/route.ts` — alias uniqueness check
+- `app/api/members/[id]/route.ts` — existence and alias checks
+- `app/api/shifts/[id]/route.ts` — existence checks
+- `app/api/events/route.ts` — audit log creation
+
+Services with internal direct Prisma (complex orchestration):
+- `AssignmentsService.runAllocation()` — algorithm with shared queries
+- `SwapRequestsService.createSwapRequest()` — validation queries
+- `SwapRequestsService.approveSwapRequest()` — validation queries
+
 ### Future Enhancements
+- Complete Phase 4 UI-Service alignment
 - Add transaction utilities for complex multi-repository operations
 - Caching layer for frequently accessed data
 - API versioning strategy

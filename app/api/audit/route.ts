@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     const entityType = searchParams.get("entityType") as EntityType | null;
     const entityId = searchParams.get("entityId");
     const userId = searchParams.get("userId");
+    const search = searchParams.get("search");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const limit = parseInt(searchParams.get("limit") || "100");
@@ -30,6 +31,14 @@ export async function GET(request: Request) {
     if (entityType) where.entityType = entityType;
     if (entityId) where.entityId = entityId;
     if (userId) where.userId = userId;
+
+    if (search) {
+      where.OR = [
+        { reason: { contains: search, mode: "insensitive" } },
+        { entityId: { contains: search, mode: "insensitive" } },
+        { ipAddress: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     if (startDate || endDate) {
       where.createdAt = {};

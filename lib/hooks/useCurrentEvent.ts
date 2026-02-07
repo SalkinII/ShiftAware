@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
+import { useEventContext } from "./useEventContext";
 
 interface EventConfig {
   bufferDaysBefore?: number;
@@ -23,52 +24,26 @@ interface UseCurrentEventReturn {
 }
 
 /**
- * Hook to fetch the current event.
+ * Hook to get the current event.
+ * Derives from useEventContext - gets the most recent non-completed event,
+ * or fallback to the most recent event.
  * Used by sidebars and other components that need event info.
  */
 export function useCurrentEvent(): UseCurrentEventReturn {
-  const [event, setEvent] = useState<CurrentEvent | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { events, loading } = useEventContext(false);
 
-  useEffect(() => {
-    let mounted = true;
+  const event = useMemo(() => {
+    if (events.length === 0) return null;
 
-    async function fetchEvent() {
-      try {
-        const res = await fetch("/api/events/current");
-        if (!res.ok) {
-          if (res.status === 404) {
-            // No events - not an error, just empty state
-            if (mounted) {
-              setEvent(null);
-              setLoading(false);
-            }
-            return;
-          }
-          throw new Error("Failed to fetch event");
-        }
-        const data = await res.json();
-        if (mounted) {
-          setEvent(data.data);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : "Unknown error");
-          setLoading(false);
-        }
-      }
-    }
+    // Get the most recent event that's not completed
+    const activeEvent = events.find(e => e.status !== "COMPLETED");
+    if (activeEvent) return activeEvent as CurrentEvent;
 
-    fetchEvent();
+    // Fallback to most recent event
+    return events[events.length - 1] as CurrentEvent;
+  }, [events]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return { event, loading, error };
+  return { event, loading, error: null };
 }
 
 /**

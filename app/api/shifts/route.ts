@@ -21,9 +21,27 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
-    const shifts = eventId
-      ? await service.listShiftsByEvent(eventId)
+    let where: any = {};
+
+    if (eventId) {
+      where.eventId = eventId;
+    }
+
+    if (startDate || endDate) {
+      where.startTime = {};
+      if (startDate) {
+        where.startTime.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.startTime.lte = new Date(endDate);
+      }
+    }
+
+    const shifts = Object.keys(where).length > 0
+      ? await service.listShiftsWithDetails(where)
       : await service.listShiftsWithDetails();
 
     return createSuccessResponse(shifts);

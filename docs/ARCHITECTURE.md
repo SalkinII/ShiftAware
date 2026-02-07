@@ -2,7 +2,7 @@
 
 > **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
 >
-> Last updated: 2026-02-07 (Phase 3: Complete - API route inventory documented)
+> Last updated: 2026-02-07 (Phase 3: Complete - Three-layer architecture. Phase 4: In Progress - UI-Service alignment)
 
 ---
 
@@ -51,7 +51,7 @@
 
 ## 2. Three-Layer Architecture Pattern
 
-**Status:** ✅ Phase 3 Complete (All entities - zero direct Prisma calls in routes)
+**Status:** ✅ Phase 3 Complete (Three-layer architecture). Phase 4 In Progress (UI-Service alignment).
 
 ShiftAware uses a clean three-layer architecture to separate concerns:
 
@@ -64,8 +64,10 @@ ShiftAware uses a clean three-layer architecture to separate concerns:
 │  • Input validation (Zod schemas)                           │
 │  • Response formatting                                      │
 │  • Audit logging                                            │
-│  • Complex query logic (event filtering, includes)         │
-│  ✗ No direct Prisma calls                                  │
+│  • Query param extraction and filtering                    │
+│  ✓ Direct Prisma allowed for: business validation,         │
+│    audit "before" snapshots, analytical utilities          │
+│  ✗ No direct Prisma for core data operations              │
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼ delegates to
@@ -355,8 +357,9 @@ TeamMember (Global)
 
 **Phase 3 Complete:** All remaining entities refactored. Sub-entities grouped under parent services (EventsService handles config/registrations/templates/attributes). Algorithm orchestration in AssignmentsService. Swap matching logic in SwapRequestsService. **Zero direct Prisma calls in any route.**
 
+**Phase 4 In Progress:** UI-Service alignment underway. `useEventContext` hook created and integrated into admin pages. Server-side filtering support added to API endpoints (members, shifts, assignments, audit accept query params). **Remaining:** UI pages still fetch unfiltered data and filter client-side; local event selectors not yet removed; `useCurrentEvent` not yet consolidated. See `docs/plans/2026-02-07-ui-alignment-bugfix-design.md` for completion plan. Test coverage: 167/176 passing (3 failed, 6 skipped).
+
 **Future Enhancements:**
-- Refactor remaining routes (Assignment, ShiftTemplate)
 - Add caching layer
 - API versioning
 - Advanced error handling
@@ -966,33 +969,93 @@ npm test -- --coverage
 
 ## 15. Context Management
 
-Two React contexts persist user state via localStorage:
+**Status:** Partially consolidated. Hooks created, UI wiring incomplete.
+
+Two React context hooks persist user state via localStorage:
 
 ### useEventContext
 
 ```typescript
-// Admin: localStorage key = 'admin_selectedEventId'
-// User: localStorage key = 'user_selectedEventId'
+// Admin: localStorage key = 'adminSelectedEventId'
+// User: localStorage key = 'selectedEventId'
 
-const { selectedEventId, setSelectedEventId } = useEventContext(isAdmin);
+const {
+  selectedEventId,      // Current event ID or null
+  selectedEvent,        // Full event object
+  events,               // All events list
+  setSelectedEventId,   // Update selection
+  refreshEvents,        // Reload events
+  loading               // Loading state
+} = useEventContext(isAdmin);
 ```
+
+**Where used:**
+- Header: displays event selector (admin mode) ✅
+- Schedule page: reads context ✅ but still fetches unfiltered ❌ and has local dropdown ❌
+- Allocation page: reads context ✅ but still fetches unfiltered ❌ and has local selector ❌
+- FestivalSettings: reads context ✅ but has local selector ❌
+- TemplateManager: reads context ✅ and passes eventId correctly ✅
+- Calendar page: reads context ✅ but fetches all shifts unfiltered ❌
 
 ### useMemberContext
 
 ```typescript
 // localStorage key = 'selectedMemberId'
 
-const { selectedMemberId, setSelectedMemberId, memberDetails } = useMemberContext();
+const { selectedMemberId, setSelectedMemberId, selectedMember } = useMemberContext();
 ```
 
 **Where used:**
-- Header: displays event selector (admin) + member identity
-- All pages: filter data by selectedEventId
+- Header: member identity display
 - Calendar: filter "My Shifts" by selectedMemberId
+
+### useCurrentEvent (to be removed)
+
+Still used by Header, UserSidebar, and Sidebar. Wraps `useEventContext(false)` to derive the "current" event. Planned for removal -- all usages should migrate to `useEventContext` directly.
 
 ---
 
-## 16. Enums Reference
+## 16. Server-Side Filtering
+
+**Status:** API endpoints support filtering via query parameters. UI pages not yet wired to use them.
+
+### API-Level Support (Done)
+
+| Endpoint | Query Params | Example |
+|----------|-------------|---------|
+| `/api/members` | `eventId`, `includeUnregistered`, `search` | `/api/members?eventId=e1&search=alice` |
+| `/api/shifts` | `eventId`, `startDate`, `endDate` | `/api/shifts?eventId=e1&startDate=2026-06-26` |
+| `/api/assignments` | `eventId` | `/api/assignments?eventId=e1` |
+| `/api/audit` | `search`, `action`, `entityType` | `/api/audit?search=john&action=UPDATE` |
+
+### UI-Level Usage (Pending)
+
+| Page | Passes eventId to API? | Client-side filter? | Status |
+|------|----------------------|-------------------|--------|
+| Schedule | No | Yes (useMemo) | Needs fix |
+| Allocation | No | Yes (useMemo) | Needs fix |
+| Calendar | No | No (shows all) | Needs fix |
+| MemberListByEvent | Yes | No | ✅ Done |
+| TemplateManager | Yes | No | ✅ Done |
+
+### Target Pattern
+
+```typescript
+// UI passes filter criteria as query params
+const { data: shifts } = useCache({
+  key: `shifts-${selectedEventId}`,
+  fetchFn: async () => {
+    const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
+    return unwrapApiResponse(await res.json());
+  },
+  enabled: !!selectedEventId,
+});
+// No client-side filtering needed -- data arrives pre-filtered
+```
+
+---
+
+## 17. Enums Reference
 
 ### ShiftType
 `MOBILE_TEAM | STATIONARY | SHIFT_LEAD | SUPER | BUFFER | EXTENDED`
@@ -1087,6 +1150,6 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 
 ---
 
-**Last Updated:** 2026-02-06
-**Phase:** 1 (Three-layer architecture - Core entities complete)
-**Next Review:** After Phase 2 refactoring completion
+**Last Updated:** 2026-02-07
+**Phase:** 3 Complete, Phase 4 In Progress (UI-Service alignment)
+**Next Review:** After Phase 4 completion
