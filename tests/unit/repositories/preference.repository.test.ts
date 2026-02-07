@@ -171,4 +171,22 @@ describe("PreferenceRepository", () => {
       include: { teamMember: true, shift: true },
     });
   });
+
+  it("should find preferences with filters and includes", async () => {
+    const mockPrefs = [{ id: "p1", teamMemberId: "m1", shiftId: "s1" }];
+    vi.mocked(prisma.shiftPreference.findMany).mockResolvedValue(mockPrefs as any);
+
+    const result = await repo.findAllWithDetails({ teamMemberId: "m1" });
+
+    expect(vi.mocked(prisma.shiftPreference.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { teamMemberId: "m1" },
+        include: expect.objectContaining({
+          teamMember: true,
+          shift: expect.objectContaining({ include: { event: true } }),
+        }),
+      }),
+    );
+    expect(result).toEqual(mockPrefs);
+  });
 });

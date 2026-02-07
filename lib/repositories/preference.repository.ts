@@ -108,4 +108,21 @@ export class PreferenceRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to delete preference");
     }
   }
+
+  async findAllWithDetails(where?: Prisma.ShiftPreferenceWhereInput) {
+    try {
+      return await prisma.shiftPreference.findMany({
+        where,
+        include: {
+          teamMember: true,
+          shift: {
+            include: { event: true },
+          },
+        },
+        orderBy: [{ teamMember: { alias: "asc" } }],
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch preferences");
+    }
+  }
 }

@@ -40,4 +40,11 @@ export class PreferencesService {
   async deleteByCompoundKey(teamMemberId: string, shiftId: string) {
     return this.repo.deleteByCompoundKey(teamMemberId, shiftId);
   }
+
+  async listPreferencesWithDetails(filters?: { teamMemberId?: string; shiftId?: string }) {
+    const where: any = {};
+    if (filters?.teamMemberId) where.teamMemberId = filters.teamMemberId;
+    if (filters?.shiftId) where.shiftId = filters.shiftId;
+    return this.repo.findAllWithDetails(Object.keys(where).length > 0 ? where : undefined);
+  }
 }

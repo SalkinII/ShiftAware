@@ -9,6 +9,7 @@ describe("PreferencesService", () => {
     mockRepo = {
       findById: vi.fn(),
       findAll: vi.fn(),
+      findAllWithDetails: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -76,5 +77,18 @@ describe("PreferencesService", () => {
     const result = await service.createPreference(input);
 
     expect(result).toEqual(created);
+  });
+
+  it("should list preferences with details and filters", async () => {
+    const mockPreferences = [{ id: "p1", teamMemberId: "m1", shiftId: "s1" }];
+    mockRepo.findAllWithDetails.mockResolvedValue(mockPreferences);
+
+    const result = await service.listPreferencesWithDetails({ teamMemberId: "m1", shiftId: "s1" });
+
+    expect(mockRepo.findAllWithDetails).toHaveBeenCalledWith({
+      teamMemberId: "m1",
+      shiftId: "s1",
+    });
+    expect(result).toEqual(mockPreferences);
   });
 });

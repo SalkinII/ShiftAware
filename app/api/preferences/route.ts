@@ -1,8 +1,5 @@
 import { isAuthenticated } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { preferenceSchema } from "@/lib/validations/preference";
-import { createAuditLog } from "@/lib/services/audit";
-import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -12,6 +9,8 @@ import {
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
+const service = new PreferencesService();
+
 export async function GET(request: Request) {
   try {
     const authenticated = await isAuthenticated();
@@ -20,23 +19,10 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const teamMemberId = searchParams.get("teamMemberId");
-    const shiftId = searchParams.get("shiftId");
+    const teamMemberId = searchParams.get("teamMemberId") || undefined;
+    const shiftId = searchParams.get("shiftId") || undefined;
 
-    const preferences = await prisma.shiftPreference.findMany({
-      where: {
-        ...(teamMemberId && { teamMemberId }),
-        ...(shiftId && { shiftId }),
-      },
-      include: {
-        teamMember: true,
-        shift: {
-          include: { event: true },
-        },
-      },
-      orderBy: [{ teamMember: { alias: "asc" } }],
-    });
-
+    const preferences = await service.listPreferencesWithDetails({ teamMemberId, shiftId });
     return createSuccessResponse(preferences);
   } catch (error) {
     console.error("Get preferences error:", error);
@@ -54,7 +40,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = preferenceSchema.parse(body);
 
-    const service = new PreferencesService();
     const preference = await service.upsertPreference({
       teamMemberId: validated.teamMemberId,
       shiftId: validated.shiftId,
@@ -93,7 +78,6 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const service = new PreferencesService();
     await service.deleteByCompoundKey(teamMemberId, shiftId);
 
     return createSuccessResponse({ deleted: true });
