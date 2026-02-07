@@ -22,49 +22,14 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
-    const includeUnregistered =
-      searchParams.get("includeUnregistered") === "true";
+    const includeUnregistered = searchParams.get("includeUnregistered") === "true";
 
-    let where: any = { isActive: true };
-    let include: any = {};
-
+    let members;
     if (eventId) {
-      if (includeUnregistered) {
-        // Return all members, mark which are registered
-        include = {
-          eventRegistrations: {
-            where: { eventId },
-          },
-          attributes: {
-            where: { definition: { eventId } },
-            include: { definition: true },
-          },
-        };
-      } else {
-        // Only members registered for this event
-        where = {
-          ...where,
-          eventRegistrations: {
-            some: { eventId },
-          },
-        };
-        include = {
-          eventRegistrations: {
-            where: { eventId },
-          },
-          attributes: {
-            where: { definition: { eventId } },
-            include: { definition: true },
-          },
-        };
-      }
+      members = await service.listMembersWithEventContext(eventId, includeUnregistered);
+    } else {
+      members = await service.listMembers({ isActive: true });
     }
-
-    const members = await prisma.teamMember.findMany({
-      where,
-      include,
-      orderBy: { alias: "asc" },
-    });
 
     return createSuccessResponse(members);
   } catch (error) {
