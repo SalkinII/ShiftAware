@@ -195,6 +195,13 @@ describe("TeamMemberRepository", () => {
     expect(prisma.teamMember.findUnique).toHaveBeenCalledWith({
       where: { id: "member-1" },
       include: {
+        eventRegistrations: {
+          include: {
+            event: {
+              include: { config: true },
+            },
+          },
+        },
         preferences: {
           include: { shift: true },
           orderBy: { createdAt: "asc" },

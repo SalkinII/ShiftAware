@@ -79,6 +79,13 @@ export class TeamMemberRepository extends BaseRepository {
       const member = await prisma.teamMember.findUnique({
         where: { id },
         include: {
+          eventRegistrations: {
+            include: {
+              event: {
+                include: { config: true },
+              },
+            },
+          },
           preferences: {
             include: { shift: true },
             orderBy: { createdAt: "asc" },
