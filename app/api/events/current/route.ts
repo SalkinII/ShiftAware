@@ -1,10 +1,13 @@
 import { isAuthenticated } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
+  createNotFoundResponse,
 } from "@/lib/api-errors";
+import { EventsService } from "@/lib/services/events.service";
+
+const service = new EventsService();
 
 export async function GET() {
   try {
@@ -13,47 +16,13 @@ export async function GET() {
       return createUnauthorizedResponse();
     }
 
-    // Get the most recent event that's not completed
-    // If all are completed, get the most recent one
-    const event = await prisma.event.findFirst({
-      where: {
-        status: {
-          not: "COMPLETED",
-        },
-      },
-      include: {
-        config: true,
-        _count: {
-          select: {
-            shifts: true,
-          },
-        },
-      },
-      orderBy: { startDate: "asc" },
-    });
+    const event = await service.getCurrentEvent();
 
-    if (event) {
-      return createSuccessResponse(event);
+    if (!event) {
+      return createNotFoundResponse("Event");
     }
 
-    // Fallback to most recent event
-    const fallbackEvent = await prisma.event.findFirst({
-      include: {
-        config: true,
-        _count: {
-          select: {
-            shifts: true,
-          },
-        },
-      },
-      orderBy: { startDate: "desc" },
-    });
-
-    if (!fallbackEvent) {
-      return createErrorResponse(new Error("No events found"), "No events found", 404);
-    }
-
-    return createSuccessResponse(fallbackEvent);
+    return createSuccessResponse(event);
   } catch (error) {
     console.error("Get current event error:", error);
     return createErrorResponse(error, "Failed to fetch current event");

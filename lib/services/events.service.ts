@@ -16,6 +16,10 @@ export class EventsService {
     return this.repo.findAllWithStats();
   }
 
+  async getCurrentEvent() {
+    return this.repo.findCurrent();
+  }
+
   async getEvent(id: string) {
     return this.repo.findById(id);
   }

@@ -84,6 +84,47 @@ export class EventRepository extends BaseRepository {
     }
   }
 
+  async findCurrent() {
+    try {
+      // Get the most recent event that's not completed
+      const event = await prisma.event.findFirst({
+        where: {
+          status: {
+            not: "COMPLETED",
+          },
+        },
+        include: {
+          config: true,
+          _count: {
+            select: {
+              shifts: true,
+            },
+          },
+        },
+        orderBy: { startDate: "asc" },
+      });
+
+      if (event) {
+        return event;
+      }
+
+      // Fallback to most recent event
+      return await prisma.event.findFirst({
+        include: {
+          config: true,
+          _count: {
+            select: {
+              shifts: true,
+            },
+          },
+        },
+        orderBy: { startDate: "desc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch current event");
+    }
+  }
+
   async createWithConfig(
     eventData: Prisma.EventCreateInput,
     configDefaults: Record<string, unknown>,

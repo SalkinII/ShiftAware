@@ -9,6 +9,7 @@ describe("EventsService", () => {
     mockRepo = {
       findById: vi.fn(),
       findAll: vi.fn(),
+      findCurrent: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -74,5 +75,25 @@ describe("EventsService", () => {
     const result = await service.createEvent(input);
 
     expect(result).toEqual(created);
+  });
+
+  it("should get current event", async () => {
+    const mockEvent = {
+      id: "1",
+      name: "Current Event",
+      startDate: new Date("2026-06-26"),
+      endDate: new Date("2026-06-28"),
+      status: "ACTIVE",
+      config: { id: "c1", eventId: "1" },
+      _count: { shifts: 5 },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    mockRepo.findCurrent.mockResolvedValue(mockEvent);
+
+    const result = await service.getCurrentEvent();
+
+    expect(mockRepo.findCurrent).toHaveBeenCalled();
+    expect(result).toEqual(mockEvent);
   });
 });
