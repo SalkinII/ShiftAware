@@ -265,7 +265,7 @@ async function rollbackTeamMember(
             isValidExperienceLevel(before.experienceLevel)
               ? before.experienceLevel
               : undefined,
-          genderRole: before.genderRole,
+          // genderRole removed from schema — now a dynamic attribute
           capabilities: before.capabilities
             ? (before.capabilities.filter((r): r is Role =>
                 isValidRole(r),
