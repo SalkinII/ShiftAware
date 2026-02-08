@@ -14,7 +14,6 @@ export const teamMemberSchema = z.object({
       message: `Avatar emoji cannot be one of: ${RESERVED_EMOJIS.join(", ")} (reserved for system use)`,
     }),
   experienceLevel: z.nativeEnum(ExperienceLevel),
-  genderRole: z.string().min(1),
   capabilities: z.array(z.nativeEnum(Role)).min(1),
   isActive: z.boolean().optional().default(true),
 });
