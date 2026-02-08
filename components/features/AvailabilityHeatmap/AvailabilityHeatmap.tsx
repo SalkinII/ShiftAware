@@ -29,7 +29,6 @@ interface TeamMember {
   alias: string;
   avatarId: string;
   experienceLevel: string;
-  genderRole: string;
   capabilities: string[];
   isActive: boolean;
 }
