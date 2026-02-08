@@ -17,6 +17,12 @@ vi.mock("@/lib/algorithm/optimizer", () => ({
   runAssignmentAlgorithm: vi.fn(),
 }));
 
+vi.mock("@/lib/services/members.service", () => ({
+  MembersService: vi.fn().mockImplementation(() => ({
+    getAttributes: vi.fn().mockResolvedValue([]),
+  })),
+}));
+
 const { prisma } = await import("@/lib/db");
 const { runAssignmentAlgorithm } = await import("@/lib/algorithm/optimizer");
 
@@ -24,6 +30,7 @@ describe("AssignmentsService", () => {
   let service: AssignmentsService;
   let mockAssignmentRepo: any;
   let mockEventRepo: any;
+  let mockMembersService: any;
 
   beforeEach(() => {
     mockAssignmentRepo = {
@@ -36,7 +43,15 @@ describe("AssignmentsService", () => {
       findById: vi.fn(),
     };
 
-    service = new AssignmentsService(mockAssignmentRepo, mockEventRepo);
+    mockMembersService = {
+      getAttributes: vi.fn().mockResolvedValue([]),
+    };
+
+    service = new AssignmentsService(
+      mockAssignmentRepo,
+      mockEventRepo,
+      mockMembersService,
+    );
     vi.clearAllMocks();
   });
 
