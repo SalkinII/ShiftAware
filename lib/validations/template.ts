@@ -22,7 +22,7 @@ export const shiftTemplateSchema = z.object({
   desirabilityScore: z.number().int().min(1).max(5).default(3),
   capacity: z.number().int().positive().default(2),
   color: z.string().optional(),
-  eventId: z.string().cuid().optional(), // NEW: for event-specific templates
+  eventId: z.string().cuid().nullable().optional(), // NEW: for event-specific templates
   requiredRoles: z
     .array(templateRoleSchema)
     .min(1, "At least one required role is needed"),
