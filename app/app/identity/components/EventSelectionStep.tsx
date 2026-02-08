@@ -40,17 +40,18 @@ export function EventSelectionStep({
       const res = await fetch(`/api/members/${memberId}`);
       if (res.ok) {
         const data = await res.json();
-        // Extract registered events from member data
-        const registrations = data.data.eventRegistrations || [];
+        const memberData = data.data;
+        const registrations = memberData?.eventRegistrations || [];
         const registeredEvents = registrations
           .filter((r: any) => r.event)
           .map((r: any) => r.event);
         setEvents(registeredEvents);
 
-        // Auto-select if only one event
         if (registeredEvents.length === 1) {
           onEventSelected(registeredEvents[0].id);
         }
+      } else {
+        console.error("Failed to fetch member:", res.status);
       }
     } catch (error) {
       console.error("Failed to fetch registered events:", error);
