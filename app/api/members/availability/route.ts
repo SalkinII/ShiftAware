@@ -46,7 +46,6 @@ interface MemberSummary {
   alias: string;
   avatarId: string;
   experienceLevel: string;
-  genderRole: string;
   capabilities: string[];
   isActive: boolean;
 }
@@ -328,7 +327,6 @@ export async function GET(request: NextRequest) {
         alias: m.alias,
         avatarId: m.avatarId,
         experienceLevel: m.experienceLevel,
-        genderRole: m.genderRole,
         capabilities: m.capabilities,
         isActive: m.isActive,
       })),
