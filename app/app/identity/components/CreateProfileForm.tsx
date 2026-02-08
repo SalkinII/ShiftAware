@@ -27,7 +27,7 @@ interface Event {
 
 interface AttributeDefinition {
   id: string;
-  key: string;
+  name: string;
   label: string;
   type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT";
   required: boolean;
@@ -239,27 +239,27 @@ export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
                 {attr.type === "BOOLEAN" && (
                   <input
                     type="checkbox"
-                    checked={formData.attributes?.[attr.key] || false}
+                    checked={formData.attributes?.[attr.name] || false}
                     onChange={(e) =>
-                      handleAttributeChange(attr.key, e.target.checked)
+                      handleAttributeChange(attr.name, e.target.checked)
                     }
                     className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                 )}
                 {attr.type === "TEXT" && (
                   <Input
-                    value={formData.attributes?.[attr.key] || ""}
+                    value={formData.attributes?.[attr.name] || ""}
                     onChange={(e) =>
-                      handleAttributeChange(attr.key, e.target.value)
+                      handleAttributeChange(attr.name, e.target.value)
                     }
                     required={attr.required}
                   />
                 )}
                 {attr.type === "SELECT" && (
                   <select
-                    value={formData.attributes?.[attr.key] || ""}
+                    value={formData.attributes?.[attr.name] || ""}
                     onChange={(e) =>
-                      handleAttributeChange(attr.key, e.target.value)
+                      handleAttributeChange(attr.name, e.target.value)
                     }
                     required={attr.required}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -279,15 +279,15 @@ export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
                         <input
                           type="checkbox"
                           checked={(
-                            formData.attributes?.[attr.key] || []
+                            formData.attributes?.[attr.name] || []
                           ).includes(opt)}
                           onChange={(e) => {
                             const current =
-                              formData.attributes?.[attr.key] || [];
+                              formData.attributes?.[attr.name] || [];
                             const updated = e.target.checked
                               ? [...current, opt]
                               : current.filter((v: string) => v !== opt);
-                            handleAttributeChange(attr.key, updated);
+                            handleAttributeChange(attr.name, updated);
                           }}
                           className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
