@@ -1,5 +1,5 @@
 import {
-  AssignmentType,
+  AttributeType,
   EventStatus,
   PreferenceLevel,
   PrismaClient,
@@ -10,365 +10,241 @@ import {
 
 const prisma = new PrismaClient();
 
-const EVENT_ID = "event_starlight_2026";
 const EVENT_NAME = "Starlight Meadow Festival 2026";
+const EVENT_START_DATE = new Date("2026-06-11T00:00:00.000Z");
+const EVENT_END_DATE = new Date("2026-07-08T23:59:59.000Z");
+const CORE_START_DATE = new Date("2026-06-26T00:00:00.000Z");
+const CORE_END_DATE = new Date("2026-06-29T23:59:59.000Z");
 
 const teamMembers = [
   {
     alias: "Bunny",
     avatarId: "🐰",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Otter",
     avatarId: "🦦",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Chipmunk",
     avatarId: "🐿️",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Hedgehog",
     avatarId: "🦔",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Squirrel",
     avatarId: "🐿️",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Robin",
     avatarId: "🐦",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Finch",
     avatarId: "🐦",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Duckling",
     avatarId: "🦆",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Fawn",
     avatarId: "🦌",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Kitten",
     avatarId: "🐱",
-    experienceLevel: "JUNIOR",
+    experienceLevel: "JUNIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
-
   {
     alias: "Fox",
     avatarId: "🦊",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Badger",
     avatarId: "🦡",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Raccoon",
     avatarId: "🦝",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Panda",
     avatarId: "🐼",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Koala",
     avatarId: "🐨",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Owl",
     avatarId: "🦉",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Peacock",
     avatarId: "🦚",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Swan",
     avatarId: "🦢",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Deer",
     avatarId: "🦌",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER],
   },
   {
     alias: "Lynx",
     avatarId: "🐆",
-    experienceLevel: "INTERMEDIATE",
+    experienceLevel: "INTERMEDIATE" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER],
   },
-
   {
     alias: "Wolf",
     avatarId: "🐺",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Bear",
     avatarId: "🐻",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
   },
   {
     alias: "Eagle",
     avatarId: "🦅",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Hawk",
     avatarId: "🦅",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
   },
   {
     alias: "Lion",
     avatarId: "🦁",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Tiger",
     avatarId: "🐯",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Falcon",
     avatarId: "🦅",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
   },
   {
     alias: "Leopard",
     avatarId: "🐆",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
   },
   {
     alias: "Panther",
     avatarId: "🐆",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "M_NB",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
   {
     alias: "Jaguar",
     avatarId: "🐆",
-    experienceLevel: "SENIOR",
+    experienceLevel: "SENIOR" as const,
     genderRole: "FLINTA",
     capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
   },
 ];
 
-// Generate comprehensive shift data for the full event period
-function generateShifts() {
-  const shifts: Array<{
-    id: string;
-    type: ShiftType;
-    startTime: string;
-    endTime: string;
-    durationMinutes: number;
-    priority: ShiftPriority;
-    desirabilityScore: number;
-    capacity: number;
-    requiredRoles: Array<{ role: Role; count: number }>;
-  }> = [];
-
-  // Core event dates: June 26-29, 2026
-  const coreDates = [
-    { date: "2026-06-26", day: "Thursday" },
-    { date: "2026-06-27", day: "Friday" },
-    { date: "2026-06-28", day: "Saturday" },
-    { date: "2026-06-29", day: "Sunday" },
-  ];
-
-  // Buffer dates: June 11-25 and June 30 - July 8
-  const bufferDates: string[] = [];
-  for (let i = 11; i <= 25; i++) {
-    bufferDates.push(`2026-06-${i.toString().padStart(2, "0")}`);
-  }
-  for (let i = 30; i <= 30; i++) {
-    bufferDates.push(`2026-06-${i.toString().padStart(2, "0")}`);
-  }
-  for (let i = 1; i <= 8; i++) {
-    bufferDates.push(`2026-07-${i.toString().padStart(2, "0")}`);
-  }
-
-  let shiftCounter = 1;
-
-  // Core event shifts - more intensive coverage
-  coreDates.forEach(({ date }) => {
-    // Morning stationary (6am-12pm)
-    shifts.push({
-      id: `shift_core_${date}_stationary_morning`,
-      type: ShiftType.STATIONARY,
-      startTime: `${date}T06:00:00.000Z`,
-      endTime: `${date}T12:00:00.000Z`,
-      durationMinutes: 360,
-      priority: ShiftPriority.CORE,
-      desirabilityScore: 3,
-      capacity: 3,
-      requiredRoles: [
-        { role: Role.SHIFT_LEAD, count: 1 },
-        { role: Role.TEAM_MEMBER, count: 2 },
-      ],
-    });
-
-    // Afternoon Mobile Team (12pm-6pm)
-    shifts.push({
-      id: `shift_core_${date}_mobile1_afternoon`,
-      type: ShiftType.MOBILE_TEAM,
-      startTime: `${date}T12:00:00.000Z`,
-      endTime: `${date}T18:00:00.000Z`,
-      durationMinutes: 360,
-      priority: ShiftPriority.CORE,
-      desirabilityScore: 4,
-      capacity: 2,
-      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
-    });
-
-    // Night shift (12am-6am next day)
-    const nightStart = new Date(`${date}T00:00:00.000Z`);
-    const nightEnd = new Date(nightStart);
-    nightEnd.setHours(6, 0, 0, 0);
-    const nextDateStr = nightEnd.toISOString().split("T")[0];
-    shifts.push({
-      id: `shift_core_${date}_night`,
-      type: ShiftType.MOBILE_TEAM,
-      startTime: `${date}T00:00:00.000Z`,
-      endTime: `${nextDateStr}T06:00:00.000Z`,
-      durationMinutes: 360,
-      priority: ShiftPriority.CORE,
-      desirabilityScore: 1,
-      capacity: 2,
-      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
-    });
-  });
-
-  // SUPER shifts for core days
-  coreDates.forEach(({ date }) => {
-    shifts.push({
-      id: `shift_core_${date}_SUPER`,
-      type: ShiftType.SUPER,
-      startTime: `${date}T08:00:00.000Z`,
-      endTime: `${date}T20:00:00.000Z`,
-      durationMinutes: 720,
-      priority: ShiftPriority.CORE,
-      desirabilityScore: 3,
-      capacity: 1,
-      requiredRoles: [{ role: Role.SUPER, count: 1 }],
-    });
-  });
-
-  // Buffer shifts - lighter coverage
-  bufferDates.forEach((date, index) => {
-    // Every other day for buffer period
-    if (index % 2 === 0) {
-      // Morning shift
-      shifts.push({
-        id: `shift_buffer_${date}_morning`,
-        type: ShiftType.STATIONARY,
-        startTime: `${date}T08:00:00.000Z`,
-        endTime: `${date}T14:00:00.000Z`,
-        durationMinutes: 360,
-        priority: ShiftPriority.BUFFER,
-        desirabilityScore: 2,
-        capacity: 2,
-        requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
-      });
-
-      // Evening shift (6pm-12am, ends next day)
-      const eveningStart = new Date(`${date}T18:00:00.000Z`);
-      const eveningEnd = new Date(eveningStart);
-      eveningEnd.setDate(eveningEnd.getDate() + 1);
-      eveningEnd.setHours(0, 0, 0, 0);
-      const eveningEndDateStr = eveningEnd.toISOString().split("T")[0];
-      shifts.push({
-        id: `shift_buffer_${date}_evening`,
-        type: ShiftType.MOBILE_TEAM,
-        startTime: `${date}T18:00:00.000Z`,
-        endTime: `${eveningEndDateStr}T00:00:00.000Z`,
-        durationMinutes: 360,
-        priority: ShiftPriority.BUFFER,
-        desirabilityScore: 2,
-        capacity: 2,
-        requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
-      });
-    }
-  });
-
-  return shifts;
+async function resetForSeed() {
+  await prisma.assignment.deleteMany();
+  await prisma.shiftPreference.deleteMany();
+  await prisma.teamMemberAttribute.deleteMany();
+  await prisma.eventAttributeDefinition.deleteMany();
+  await prisma.eventRegistration.deleteMany();
+  await prisma.shiftRole.deleteMany();
+  await prisma.shift.deleteMany();
+  await prisma.scheduledShift.deleteMany();
+  await prisma.eventTemplate.deleteMany();
+  await prisma.shiftTemplateRole.deleteMany();
+  await prisma.shiftTemplate.deleteMany();
+  await prisma.eventConfig.deleteMany();
+  await prisma.event.deleteMany();
+  await prisma.teamMember.deleteMany();
 }
-
-const shifts = generateShifts();
 
 async function seedTeam() {
   for (const member of teamMembers) {
@@ -376,7 +252,7 @@ async function seedTeam() {
       where: { alias: member.alias },
       update: {
         avatarId: member.avatarId,
-        experienceLevel: member.experienceLevel as any,
+        experienceLevel: member.experienceLevel,
         genderRole: member.genderRole,
         capabilities: member.capabilities,
         isActive: true,
@@ -384,7 +260,7 @@ async function seedTeam() {
       create: {
         alias: member.alias,
         avatarId: member.avatarId,
-        experienceLevel: member.experienceLevel as any,
+        experienceLevel: member.experienceLevel,
         genderRole: member.genderRole,
         capabilities: member.capabilities,
       },
@@ -393,119 +269,298 @@ async function seedTeam() {
 }
 
 async function seedEvent() {
-  await prisma.event.upsert({
-    where: { id: EVENT_ID },
-    update: {
+  const event = await prisma.event.create({
+    data: {
       name: EVENT_NAME,
-      startDate: new Date("2026-06-11T00:00:00.000Z"),
-      endDate: new Date("2026-07-08T23:59:59.000Z"),
+      startDate: EVENT_START_DATE,
+      endDate: EVENT_END_DATE,
       status: EventStatus.PLANNING,
-    },
-    create: {
-      id: EVENT_ID,
-      name: EVENT_NAME,
-      startDate: new Date("2026-06-11T00:00:00.000Z"),
-      endDate: new Date("2026-07-08T23:59:59.000Z"),
-      status: EventStatus.PLANNING,
+      config: {
+        create: {
+          minShiftsPerPerson: 2,
+          algorithmWeights: {
+            preferenceMatch: 0.35,
+            experienceBalance: 0.25,
+            workloadFairness: 0.15,
+            coreShiftCoverage: 0.05,
+            genderBalance: "HARD_CONSTRAINT",
+          },
+          balanceThresholds: {
+            minGenderBalance: 0.3,
+            minExperienceMix: true,
+            maxConsecutiveShifts: 3,
+          },
+          autoAssignUnfilled: true,
+          bufferDaysBefore: 1,
+          bufferDaysAfter: 1,
+        },
+      },
     },
   });
-
-  await prisma.eventConfig.upsert({
-    where: { eventId: EVENT_ID },
-    update: {
-      minShiftsPerPerson: 2,
-      algorithmWeights: {
-        preferenceMatch: 0.35,
-        experienceBalance: 0.25,
-        workloadFairness: 0.15,
-        coreShiftCoverage: 0.05,
-        genderBalance: "HARD_CONSTRAINT",
-      },
-      balanceThresholds: {
-        minGenderBalance: 0.3,
-        minExperienceMix: true,
-        maxConsecutiveShifts: 3,
-      },
-      autoAssignUnfilled: true,
-    },
-    create: {
-      eventId: EVENT_ID,
-      minShiftsPerPerson: 2,
-      algorithmWeights: {
-        preferenceMatch: 0.35,
-        experienceBalance: 0.25,
-        workloadFairness: 0.15,
-        coreShiftCoverage: 0.05,
-        genderBalance: "HARD_CONSTRAINT",
-      },
-      balanceThresholds: {
-        minGenderBalance: 0.3,
-        minExperienceMix: true,
-        maxConsecutiveShifts: 3,
-      },
-      autoAssignUnfilled: true,
-    },
-  });
+  return event;
 }
 
-async function seedShifts() {
-  for (const shift of shifts) {
-    const record = await prisma.shift.upsert({
-      where: { id: shift.id },
-      update: {
-        eventId: EVENT_ID,
-        type: shift.type,
-        startTime: new Date(shift.startTime),
-        endTime: new Date(shift.endTime),
-        durationMinutes: shift.durationMinutes,
-        priority: shift.priority,
-        desirabilityScore: shift.desirabilityScore,
-        capacity: shift.capacity,
-        isTemplate: false,
-      },
-      create: {
-        id: shift.id,
-        eventId: EVENT_ID,
-        type: shift.type,
-        startTime: new Date(shift.startTime),
-        endTime: new Date(shift.endTime),
-        durationMinutes: shift.durationMinutes,
-        priority: shift.priority,
-        desirabilityScore: shift.desirabilityScore,
-        capacity: shift.capacity,
-        isTemplate: false,
+async function seedEventAttributeDefinitions(eventId: string) {
+  const genderDef = await prisma.eventAttributeDefinition.create({
+    data: {
+      eventId,
+      name: "gender",
+      label: "Gender",
+      type: AttributeType.SELECT,
+      options: ["FLINTA", "M_NB"],
+      required: true,
+    },
+  });
+
+  const canDriveDef = await prisma.eventAttributeDefinition.create({
+    data: {
+      eventId,
+      name: "can_drive",
+      label: "Can Drive",
+      type: AttributeType.BOOLEAN,
+      options: [],
+      required: false,
+    },
+  });
+
+  return { genderDef, canDriveDef };
+}
+
+async function seedShiftTemplates() {
+  const templates = [
+    {
+      name: "Mobile Night",
+      type: ShiftType.MOBILE_TEAM,
+      allowedLanes: [ShiftType.MOBILE_TEAM],
+      durationMinutes: 360,
+      startTime: "00:00",
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 1,
+      capacity: 2,
+      color: "#1e3a8a",
+      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+    },
+    {
+      name: "Mobile Day",
+      type: ShiftType.MOBILE_TEAM,
+      allowedLanes: [ShiftType.MOBILE_TEAM],
+      durationMinutes: 360,
+      startTime: "12:00",
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 4,
+      capacity: 2,
+      color: "#3b82f6",
+      requiredRoles: [{ role: Role.TEAM_MEMBER, count: 2 }],
+    },
+    {
+      name: "Stationary Morning",
+      type: ShiftType.STATIONARY,
+      allowedLanes: [ShiftType.STATIONARY],
+      durationMinutes: 360,
+      startTime: "06:00",
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 3,
+      capacity: 3,
+      color: "#f59e0b",
+      requiredRoles: [
+        { role: Role.SHIFT_LEAD, count: 1 },
+        { role: Role.TEAM_MEMBER, count: 2 },
+      ],
+    },
+    {
+      name: "Stationary Afternoon",
+      type: ShiftType.STATIONARY,
+      allowedLanes: [ShiftType.STATIONARY],
+      durationMinutes: 360,
+      startTime: "14:00",
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 3,
+      capacity: 3,
+      color: "#f97316",
+      requiredRoles: [
+        { role: Role.SHIFT_LEAD, count: 1 },
+        { role: Role.TEAM_MEMBER, count: 2 },
+      ],
+    },
+    {
+      name: "Super Shift",
+      type: ShiftType.SUPER,
+      allowedLanes: [ShiftType.SUPER],
+      durationMinutes: 720,
+      startTime: "08:00",
+      priority: ShiftPriority.CORE,
+      desirabilityScore: 3,
+      capacity: 1,
+      color: "#8b5cf6",
+      requiredRoles: [{ role: Role.SUPER, count: 1 }],
+    },
+  ];
+
+  const createdTemplates = [];
+  for (const template of templates) {
+    const { requiredRoles, ...templateData } = template;
+    const created = await prisma.shiftTemplate.create({
+      data: {
+        ...templateData,
+        requiredRoles: {
+          create: requiredRoles,
+        },
       },
     });
+    createdTemplates.push(created);
+  }
 
-    for (const role of shift.requiredRoles) {
-      await prisma.shiftRole.upsert({
-        where: {
-          shiftId_role: {
-            shiftId: record.id,
-            role: role.role,
-          },
-        },
-        update: { count: role.count },
-        create: {
-          shiftId: record.id,
-          role: role.role,
-          count: role.count,
-        },
-      });
-    }
+  return createdTemplates;
+}
+
+async function seedEventTemplates(eventId: string, templateIds: string[]) {
+  for (const templateId of templateIds) {
+    await prisma.eventTemplate.create({
+      data: {
+        eventId,
+        templateId,
+      },
+    });
   }
 }
 
-async function seedPreferences() {
-  // Get all members and shifts
+function isCoreDate(date: Date): boolean {
+  return date >= CORE_START_DATE && date <= CORE_END_DATE;
+}
+
+function parseTime(timeStr: string): { hours: number; minutes: number } {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return { hours, minutes };
+}
+
+async function seedShiftsFromTemplates(eventId: string, templateIds: string[]) {
+  const templates = await prisma.shiftTemplate.findMany({
+    where: { id: { in: templateIds } },
+    include: { requiredRoles: true },
+  });
+
+  const shifts = [];
+  const currentDate = new Date(EVENT_START_DATE);
+
+  while (currentDate <= EVENT_END_DATE) {
+    const dateStr = currentDate.toISOString().split("T")[0];
+    const isCore = isCoreDate(currentDate);
+    const priority = isCore ? ShiftPriority.CORE : ShiftPriority.BUFFER;
+
+    for (const template of templates) {
+      const { hours, minutes } = parseTime(template.startTime);
+      const startTime = new Date(currentDate);
+      startTime.setHours(hours, minutes, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + template.durationMinutes);
+
+      // Handle night shifts that cross midnight
+      if (endTime < startTime) {
+        endTime.setDate(endTime.getDate() + 1);
+      }
+
+      const shift = await prisma.shift.create({
+        data: {
+          eventId,
+          type: template.type,
+          startTime,
+          endTime,
+          durationMinutes: template.durationMinutes,
+          priority,
+          desirabilityScore: template.desirabilityScore,
+          capacity: template.capacity,
+          isTemplate: false,
+          requiredRoles: {
+            create: template.requiredRoles.map((tr) => ({
+              role: tr.role,
+              count: tr.count,
+            })),
+          },
+        },
+      });
+
+      shifts.push(shift);
+    }
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return shifts;
+}
+
+async function seedEventRegistrations(eventId: string) {
+  const members = await prisma.teamMember.findMany();
+  const registrations = [];
+
+  for (const member of members) {
+    const registration = await prisma.eventRegistration.create({
+      data: {
+        eventId,
+        memberId: member.id,
+        status: "REGISTERED",
+      },
+    });
+    registrations.push(registration);
+  }
+
+  return registrations;
+}
+
+async function seedTeamMemberAttributes(
+  eventId: string,
+  genderDefId: string,
+  canDriveDefId: string,
+) {
+  const members = await prisma.teamMember.findMany();
+
+  for (const member of members) {
+    // Set gender attribute from genderRole
+    await prisma.teamMemberAttribute.upsert({
+      where: {
+        memberId_definitionId: {
+          memberId: member.id,
+          definitionId: genderDefId,
+        },
+      },
+      update: {
+        value: JSON.stringify(member.genderRole),
+      },
+      create: {
+        memberId: member.id,
+        definitionId: genderDefId,
+        value: JSON.stringify(member.genderRole),
+      },
+    });
+
+    // Set can_drive attribute randomly (70% can drive)
+    const canDrive = Math.random() > 0.3;
+    await prisma.teamMemberAttribute.upsert({
+      where: {
+        memberId_definitionId: {
+          memberId: member.id,
+          definitionId: canDriveDefId,
+        },
+      },
+      update: {
+        value: JSON.stringify(canDrive),
+      },
+      create: {
+        memberId: member.id,
+        definitionId: canDriveDefId,
+        value: JSON.stringify(canDrive),
+      },
+    });
+  }
+}
+
+async function seedPreferences(eventId: string) {
   const members = await prisma.teamMember.findMany();
   const allShifts = await prisma.shift.findMany({
-    where: { eventId: EVENT_ID },
+    where: { eventId },
     orderBy: { startTime: "asc" },
   });
 
-  // Create preferences for each member
-  // Each member prefers 3-5 shifts, prioritizing core shifts
   for (const member of members) {
     const coreShifts = allShifts.filter(
       (s) => s.priority === ShiftPriority.CORE,
@@ -514,21 +569,19 @@ async function seedPreferences() {
       (s) => s.priority === ShiftPriority.BUFFER,
     );
 
-    // Each member prefers 2-3 core shifts and 1-2 buffer shifts
     const preferredCoreShifts = coreShifts
       .sort(() => Math.random() - 0.5)
-      .slice(0, Math.floor(Math.random() * 2) + 2); // 2-3 core shifts
+      .slice(0, Math.floor(Math.random() * 2) + 2);
 
     const preferredBufferShifts = bufferShifts
       .sort(() => Math.random() - 0.5)
-      .slice(0, Math.floor(Math.random() * 2) + 1); // 1-2 buffer shifts
+      .slice(0, Math.floor(Math.random() * 2) + 1);
 
     const allPreferred = [
       ...preferredCoreShifts,
       ...preferredBufferShifts,
     ].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
 
-    // Create preferences with priorities (1 = highest priority)
     for (let i = 0; i < allPreferred.length; i++) {
       await prisma.shiftPreference.upsert({
         where: {
@@ -567,27 +620,48 @@ async function seedSystemConfig() {
   });
 }
 
-async function resetForSeed() {
-  await prisma.assignment.deleteMany();
-  await prisma.shiftPreference.deleteMany();
-  await prisma.shiftRole.deleteMany();
-  await prisma.shift.deleteMany();
-  await prisma.eventConfig.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.teamMember.deleteMany();
-}
-
 async function main() {
   await resetForSeed();
+
   await seedTeam();
-  await seedEvent();
-  await seedShifts();
-  await seedPreferences();
-  await seedSystemConfig();
   console.log(`✓ Seeded ${teamMembers.length} team members`);
+
+  const event = await seedEvent();
+  console.log(`✓ Seeded event: ${event.name}`);
+
+  const { genderDef, canDriveDef } = await seedEventAttributeDefinitions(
+    event.id,
+  );
+  console.log(`✓ Seeded 2 event attribute definitions`);
+
+  const templates = await seedShiftTemplates();
+  console.log(`✓ Seeded ${templates.length} shift templates`);
+
+  await seedEventTemplates(
+    event.id,
+    templates.map((t) => t.id),
+  );
+  console.log(`✓ Seeded ${templates.length} event-template assignments`);
+
+  const shifts = await seedShiftsFromTemplates(
+    event.id,
+    templates.map((t) => t.id),
+  );
   console.log(`✓ Seeded ${shifts.length} shifts`);
+
+  const registrations = await seedEventRegistrations(event.id);
+  console.log(`✓ Seeded ${registrations.length} event registrations`);
+
+  await seedTeamMemberAttributes(event.id, genderDef.id, canDriveDef.id);
+  const attributeCount = await prisma.teamMemberAttribute.count();
+  console.log(`✓ Seeded ${attributeCount} team member attributes`);
+
+  await seedPreferences(event.id);
   const preferenceCount = await prisma.shiftPreference.count();
   console.log(`✓ Seeded ${preferenceCount} preferences`);
+
+  await seedSystemConfig();
+  console.log(`✓ Seeded system config`);
 }
 
 main()
