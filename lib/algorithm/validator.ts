@@ -74,6 +74,7 @@ export function validateGenderBalance(
   shiftId: string,
   assignments: Assignment[],
   members: Map<string, TeamMember>,
+  memberAttributes?: Map<string, Map<string, string>>,
 ): ConstraintViolation | null {
   const assignedMembers = assignments
     .map((a) => members.get(a.teamMemberId))
@@ -81,7 +82,8 @@ export function validateGenderBalance(
 
   const genderCounts = new Map<string, number>();
   assignedMembers.forEach((m) => {
-    genderCounts.set(m.genderRole, (genderCounts.get(m.genderRole) || 0) + 1);
+    const gender = memberAttributes?.get(m.id)?.get("gender") || "unknown";
+    genderCounts.set(gender, (genderCounts.get(gender) || 0) + 1);
   });
 
   const total = assignedMembers.length;

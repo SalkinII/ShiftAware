@@ -58,6 +58,7 @@ export async function runAssignmentAlgorithm(
   eventConfig: {
     minShiftsPerPerson: number;
     coreShifts: Shift[];
+    memberAttributes?: Map<string, Map<string, string>>;
     weights?: AlgorithmWeights;
   },
 ): Promise<AlgorithmResult> {
@@ -261,6 +262,7 @@ export async function runAssignmentAlgorithm(
       shift.id,
       assignments,
       membersMap,
+      eventConfig.memberAttributes,
     );
     if (genderViolation) {
       violations.push(`Shift ${shift.id}: ${genderViolation.message}`);

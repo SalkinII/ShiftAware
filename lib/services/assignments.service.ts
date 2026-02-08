@@ -1,5 +1,6 @@
 import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { MembersService } from "@/lib/services/members.service";
 import { prisma } from "@/lib/db";
 import { runAssignmentAlgorithm } from "@/lib/algorithm/optimizer";
 import type { Prisma } from "@prisma/client";
@@ -7,10 +8,16 @@ import type { Prisma } from "@prisma/client";
 export class AssignmentsService {
   private repo: AssignmentRepository;
   private eventRepo: EventRepository;
+  private membersService: MembersService;
 
-  constructor(repo?: AssignmentRepository, eventRepo?: EventRepository) {
+  constructor(
+    repo?: AssignmentRepository,
+    eventRepo?: EventRepository,
+    membersService?: MembersService,
+  ) {
     this.repo = repo || new AssignmentRepository();
     this.eventRepo = eventRepo || new EventRepository();
+    this.membersService = membersService || new MembersService();
   }
 
   async listAssignments(where?: Prisma.AssignmentWhereInput) {
@@ -140,14 +147,26 @@ export class AssignmentsService {
 
     const coreShifts = shifts.filter((s) => s.priority === "CORE");
 
-    // 5. Run algorithm
+    // 5. Load member attributes for the event
+    const memberAttributes = new Map<string, Map<string, string>>();
+    for (const member of members) {
+      const attrs = await this.membersService.getAttributes(member.id, eventId);
+      const attrMap = new Map<string, string>();
+      for (const attr of attrs) {
+        attrMap.set(attr.definition.name, JSON.parse(attr.value));
+      }
+      memberAttributes.set(member.id, attrMap);
+    }
+
+    // 6. Run algorithm
     const result = await runAssignmentAlgorithm(members as any, shifts as any, {
       minShiftsPerPerson: config.minShiftsPerPerson || 2,
       coreShifts,
       weights,
+      memberAttributes,
     });
 
-    // 6. If preview, return without saving
+    // 7. If preview, return without saving
     if (preview) {
       return {
         assignments: result.assignments,
@@ -157,7 +176,7 @@ export class AssignmentsService {
       };
     }
 
-    // 7. Clear old, save new
+    // 8. Clear old, save new
     await this.repo.deleteByEvent(eventId);
     const saved = await this.repo.bulkCreate(
       result.assignments,
