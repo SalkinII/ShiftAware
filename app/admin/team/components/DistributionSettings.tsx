@@ -118,18 +118,22 @@ export function DistributionSettings() {
 
     setPreviewLoading(true);
     try {
-      const res = await fetch(
-        `/api/assignments?preview=true&eventId=${selectedEventId}`,
-        {
-          method: "POST",
-        },
-      );
+      const res = await fetch("/api/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: selectedEventId,
+          preview: true,
+        }),
+      });
 
       if (res.ok) {
         const data = await res.json();
         const result = unwrapApiResponse<any>(data);
+        const totalAssignments = result.assignments?.length || 0;
+        const totalViolations = result.violations?.length || 0;
         alert(
-          `Preview: ${result.summary.totalAssignments} assignments proposed for ${result.summary.shiftsFullyCovered}/${result.summary.totalShifts} shifts`,
+          `Preview: ${totalAssignments} assignments proposed. ${totalViolations} constraint violations detected.`,
         );
       } else {
         const error = await res.json();
