@@ -107,10 +107,7 @@ export function TemplatePalette({ eventId }: TemplatePaletteProps) {
         <div className="text-sm text-gray-500 text-center">
           No templates yet.
           <br />
-          <a
-            href="/admin/shifts/templates"
-            className="text-primary-600 hover:underline"
-          >
+          <a href="/admin/setup" className="text-primary-600 hover:underline">
             Create templates
           </a>
         </div>
