@@ -35,7 +35,6 @@ interface TeamMember {
   alias: string;
   avatarId: string;
   experienceLevel: ExperienceLevel;
-  genderRole: string;
   capabilities: Role[];
   isActive: boolean;
 }
@@ -62,7 +61,6 @@ export default function MembersPage() {
     alias: "",
     avatarId: "🐺",
     experienceLevel: "INTERMEDIATE" as ExperienceLevel,
-    genderRole: "",
     capabilities: [] as Role[],
   });
 
@@ -256,10 +254,6 @@ export default function MembersPage() {
       errors.alias = "Alias is required";
     }
 
-    if (!formData.genderRole) {
-      errors.genderRole = "Gender role is required";
-    }
-
     if (formData.capabilities.length === 0) {
       errors.capabilities = "At least one capability is required";
     }
@@ -298,7 +292,6 @@ export default function MembersPage() {
           alias: "",
           avatarId: "🐺",
           experienceLevel: "INTERMEDIATE",
-          genderRole: "",
           capabilities: [],
         });
       } else {
@@ -464,9 +457,6 @@ export default function MembersPage() {
                             >
                               {member.experienceLevel}
                             </span>
-                            <span className="text-xs text-gray-400 font-bold uppercase tracking-tighter">
-                              • {member.genderRole}
-                            </span>
                           </div>
                         </div>
                       </div>
@@ -569,23 +559,6 @@ export default function MembersPage() {
                         <option value="SENIOR">Senior</option>
                       </Select>
                     </div>
-                    <Input
-                      label="Gender Role"
-                      placeholder="e.g. Male, Female, Non-binary"
-                      value={formData.genderRole}
-                      onChange={(e) => {
-                        setFormData({
-                          ...formData,
-                          genderRole: e.target.value,
-                        });
-                        if (formErrors.genderRole) {
-                          setFormErrors({ ...formErrors, genderRole: "" });
-                        }
-                      }}
-                      error={formErrors.genderRole}
-                      required
-                      className="bg-gray-50 border-gray-100 font-medium"
-                    />
                     <div className="space-y-3">
                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">
                         Capabilities
