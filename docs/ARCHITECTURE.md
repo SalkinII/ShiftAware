@@ -184,8 +184,9 @@ ShiftTemplate (Global)
 
 TeamMember (Global)
   ├── alias (unique identifier)
-  ├── avatarId, experienceLevel, genderRole
+  ├── avatarId, experienceLevel
   ├── capabilities (TEAM_MEMBER | SHIFT_LEAD | SUPER)
+  └── attributes (via TeamMemberAttribute) - dynamic properties like gender
   ├── EventRegistration → which events they're registered for
   └── ShiftPreference → their shift votes
 ```
