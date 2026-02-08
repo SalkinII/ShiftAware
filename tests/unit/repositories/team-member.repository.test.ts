@@ -38,7 +38,6 @@ describe("TeamMemberRepository", () => {
       alias: "john",
       avatarId: "avatar-1",
       experienceLevel: "INTERMEDIATE" as const,
-      genderRole: "male",
       capabilities: ["TEAM_MEMBER" as const],
       isActive: true,
       isAdmin: false,
@@ -75,7 +74,6 @@ describe("TeamMemberRepository", () => {
         alias: "bob",
         avatarId: "avatar-2",
         experienceLevel: "JUNIOR" as const,
-        genderRole: "male",
         capabilities: ["TEAM_MEMBER" as const],
         isActive: true,
         isAdmin: false,
@@ -96,7 +94,6 @@ describe("TeamMemberRepository", () => {
       alias: "charlie",
       avatarId: "avatar-3",
       experienceLevel: "INTERMEDIATE" as const,
-      genderRole: "male",
       capabilities: ["TEAM_MEMBER" as const],
     };
     const mockMember = {
@@ -122,7 +119,6 @@ describe("TeamMemberRepository", () => {
       alias: "john-updated",
       avatarId: "avatar-1",
       experienceLevel: "INTERMEDIATE" as const,
-      genderRole: "male",
       capabilities: ["TEAM_MEMBER" as const],
       isActive: true,
       isAdmin: false,
@@ -143,7 +139,6 @@ describe("TeamMemberRepository", () => {
       alias: "john",
       avatarId: "avatar-1",
       experienceLevel: "INTERMEDIATE" as const,
-      genderRole: "male",
       capabilities: ["TEAM_MEMBER" as const],
       isActive: true,
       isAdmin: false,
@@ -162,7 +157,6 @@ describe("TeamMemberRepository", () => {
       alias: "john",
       avatarId: "avatar-1",
       experienceLevel: "INTERMEDIATE" as const,
-      genderRole: "male",
       capabilities: ["TEAM_MEMBER" as const],
       isActive: true,
       isAdmin: false,
@@ -220,7 +214,6 @@ describe("TeamMemberRepository", () => {
       alias: "john",
       avatarId: "avatar-1",
       experienceLevel: "INTERMEDIATE" as const,
-      genderRole: "male",
       capabilities: ["TEAM_MEMBER" as const],
       isActive: false,
       isAdmin: false,
@@ -393,7 +386,10 @@ describe("TeamMemberRepository", () => {
       { isActive: true },
       {
         eventRegistrations: { where: { eventId: "event-1" } },
-        attributes: { where: { definition: { eventId: "event-1" } }, include: { definition: true } },
+        attributes: {
+          where: { definition: { eventId: "event-1" } },
+          include: { definition: true },
+        },
       },
     );
 

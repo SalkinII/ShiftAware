@@ -100,14 +100,12 @@ describe("Algorithm Validator", () => {
           "m1",
           {
             id: "m1",
-            genderRole: "MALE",
           } as TeamMember,
         ],
         [
           "m2",
           {
             id: "m2",
-            genderRole: "FEMALE",
           } as TeamMember,
         ],
       ]);
@@ -138,14 +136,12 @@ describe("Algorithm Validator", () => {
           "m1",
           {
             id: "m1",
-            genderRole: "MALE",
           } as TeamMember,
         ],
         [
           "m2",
           {
             id: "m2",
-            genderRole: "MALE",
           } as TeamMember,
         ],
       ]);
