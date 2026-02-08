@@ -7,40 +7,40 @@
        ============================================ */
     
     /* Primary - Soft Blue */
-    --color-primary-50: oklch(0.98 0.01 240);
-    --color-primary-100: oklch(0.95 0.02 240);
-    --color-primary-200: oklch(0.88 0.04 240);
-    --color-primary-300: oklch(0.78 0.08 240);
-    --color-primary-400: oklch(0.68 0.12 240);
-    --color-primary-500: oklch(0.58 0.15 240);  /* Base */
-    --color-primary-600: oklch(0.48 0.14 240);
-    --color-primary-700: oklch(0.38 0.12 240);
-    --color-primary-800: oklch(0.28 0.09 240);
-    --color-primary-900: oklch(0.18 0.06 240);
+    --color-primary-50: hsl(220, 60%, 97%);
+    --color-primary-100: hsl(220, 50%, 93%);
+    --color-primary-200: hsl(220, 45%, 86%);
+    --color-primary-300: hsl(220, 50%, 76%);
+    --color-primary-400: hsl(220, 55%, 65%);
+    --color-primary-500: hsl(220, 60%, 55%);   /* Base */
+    --color-primary-600: hsl(220, 58%, 45%);
+    --color-primary-700: hsl(220, 55%, 35%);
+    --color-primary-800: hsl(220, 50%, 25%);
+    --color-primary-900: hsl(220, 45%, 15%);
     
     /* Accent - Warm Amber */
-    --color-accent-50: oklch(0.98 0.02 85);
-    --color-accent-100: oklch(0.95 0.05 85);
-    --color-accent-200: oklch(0.90 0.10 85);
-    --color-accent-300: oklch(0.85 0.15 85);
-    --color-accent-400: oklch(0.78 0.18 85);
-    --color-accent-500: oklch(0.70 0.20 85);   /* Base */
-    --color-accent-600: oklch(0.62 0.18 85);
-    --color-accent-700: oklch(0.52 0.15 85);
-    --color-accent-800: oklch(0.42 0.12 85);
-    --color-accent-900: oklch(0.32 0.08 85);
+    --color-accent-50: hsl(40, 80%, 97%);
+    --color-accent-100: hsl(40, 70%, 93%);
+    --color-accent-200: hsl(40, 65%, 87%);
+    --color-accent-300: hsl(38, 70%, 80%);
+    --color-accent-400: hsl(38, 75%, 72%);
+    --color-accent-500: hsl(35, 75%, 63%);     /* Base */
+    --color-accent-600: hsl(35, 65%, 54%);
+    --color-accent-700: hsl(35, 55%, 44%);
+    --color-accent-800: hsl(33, 48%, 34%);
+    --color-accent-900: hsl(33, 35%, 25%);
     
     /* Success - Fresh Green */
-    --color-success-50: oklch(0.97 0.02 145);
-    --color-success-100: oklch(0.94 0.05 145);
-    --color-success-200: oklch(0.88 0.10 145);
-    --color-success-300: oklch(0.78 0.15 145);
-    --color-success-400: oklch(0.68 0.18 145);
-    --color-success-500: oklch(0.58 0.20 145);  /* Base */
-    --color-success-600: oklch(0.48 0.18 145);
-    --color-success-700: oklch(0.38 0.14 145);
-    --color-success-800: oklch(0.28 0.10 145);
-    --color-success-900: oklch(0.18 0.06 145);
+    --color-success-50: hsl(145, 60%, 96%);
+    --color-success-100: hsl(145, 55%, 92%);
+    --color-success-200: hsl(145, 50%, 85%);
+    --color-success-300: hsl(145, 50%, 74%);
+    --color-success-400: hsl(145, 52%, 63%);
+    --color-success-500: hsl(145, 55%, 52%);    /* Base */
+    --color-success-600: hsl(145, 52%, 42%);
+    --color-success-700: hsl(145, 45%, 32%);
+    --color-success-800: hsl(145, 38%, 22%);
+    --color-success-900: hsl(145, 28%, 14%);
 
 
     --color-violet-50: #edebff;
@@ -70,10 +70,10 @@
     
     /* Shift Types */
     --color-shift-mobile1: var(--color-primary-500);
-    --color-shift-mobile2: oklch(0.58 0.18 290);  /* Purple */
+    --color-shift-mobile2: hsl(285, 60%, 50%);     /* Purple */
     --color-shift-stationary: var(--color-success-500);
     --color-shift-SUPER: var(--color-accent-500);
-    --color-shift-buffer: oklch(0.55 0.01 240);    /* Neutral gray */
+    --color-shift-buffer: hsl(240, 5%, 45%);       /* Neutral gray */
     
     /* ============================================
        SPACING
@@ -146,7 +146,7 @@
     --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
     
     /* Colored shadows for shift blocks */
-    --shadow-shift-hover: 0 10px 20px -5px oklch(0.58 0.15 240 / 0.3);
+    --shadow-shift-hover: 0 10px 20px -5px hsl(220 60% 55% / 0.3);
     
     /* ============================================
        ANIMATIONS
@@ -194,11 +194,11 @@
       /* Status colors */
       --color-covered: var(--color-success-500);
       --color-understaffed: var(--color-accent-500);
-      --color-unfilled: oklch(0.58 0.20 25);  /* Red */
-      
+      --color-unfilled: hsl(10, 75%, 55%);     /* Red */
+
       /* Interactive states */
-      --color-hover: oklch(0.97 0.005 240);
-      --color-active: oklch(0.95 0.01 240);
+      --color-hover: hsl(240, 15%, 97%);
+      --color-active: hsl(240, 20%, 94%);
     }
 
     body {
