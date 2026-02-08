@@ -110,10 +110,15 @@ describe("Algorithm Validator", () => {
         ],
       ]);
 
+      const memberAttributes = new Map<string, Map<string, string>>();
+      memberAttributes.set("m1", new Map([["gender", "FINTA"]]));
+      memberAttributes.set("m2", new Map([["gender", "M"]]));
+
       const result = validateGenderBalance(
         "shift1",
         assignments as any,
         membersMap,
+        memberAttributes,
       );
 
       expect(result).toBeNull();
@@ -146,10 +151,15 @@ describe("Algorithm Validator", () => {
         ],
       ]);
 
+      const memberAttributes = new Map<string, Map<string, string>>();
+      memberAttributes.set("m1", new Map([["gender", "FINTA"]]));
+      memberAttributes.set("m2", new Map([["gender", "FINTA"]]));
+
       const result = validateGenderBalance(
         "shift1",
         assignments as any,
         membersMap,
+        memberAttributes,
       );
 
       expect(result).not.toBeNull();
