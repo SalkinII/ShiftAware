@@ -35,7 +35,7 @@ export function EventSelector({
     <div className={cn("relative", className)}>
       <select
         value={selectedEventId || ""}
-        onChange={(e) => onSelect(e.target.value)}
+        onChange={(e) => onSelect(e.target.value || null)}
         disabled={disabled}
         className={cn(
           "appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-10",

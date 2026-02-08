@@ -166,9 +166,7 @@ export default function ShiftsPage() {
   }, [eventTemplates]);
 
   // Defensive: ensure shifts is always an array
-  const allShifts = Array.isArray(cachedShifts) ? cachedShifts : [];
-
-  const shifts = allShifts || [];
+  const shifts = Array.isArray(cachedShifts) ? cachedShifts : [];
 
   // Calculate event range for calendar view
   const eventRange = useMemo(() => {

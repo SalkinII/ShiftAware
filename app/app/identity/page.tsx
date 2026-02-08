@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { User, Plus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useEventContext } from "@/lib/hooks/useEventContext";
 import { MemberList } from "./components/MemberList";
 import { CreateProfileForm } from "./components/CreateProfileForm";
 import { EventSelectionStep } from "./components/EventSelectionStep";
 
 export default function IdentityPage() {
   const router = useRouter();
+  const { setSelectedEventId: setContextEventId } = useEventContext();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showEventSelection, setShowEventSelection] = useState(false);
@@ -23,7 +25,7 @@ export default function IdentityPage() {
   const handleEventSelected = (eventId: string) => {
     if (selectedMemberId) {
       localStorage.setItem("selectedMemberId", selectedMemberId);
-      localStorage.setItem("selectedEventId", eventId);
+      setContextEventId(eventId); // Uses context setter (also writes localStorage)
       router.push("/app/calendar");
     }
   };
