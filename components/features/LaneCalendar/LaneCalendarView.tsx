@@ -6,7 +6,12 @@ import { LaneDropZone } from "./LaneDropZone";
 import { ShiftBlock } from "./ShiftBlock";
 import { DragPreview } from "./DragPreview";
 import { TimeRuler } from "./TimeRuler";
-import { LANES_ORDERED, getLaneLabel, getLaneColor } from "@/lib/types/lane";
+import {
+  LANES_ORDERED,
+  getLaneLabel,
+  getLaneColor,
+  type LaneConfig,
+} from "@/lib/types/lane";
 import { cn } from "@/lib/utils";
 
 interface Shift {
@@ -22,6 +27,7 @@ interface LaneCalendarViewProps {
   shifts: Shift[];
   startDate: Date;
   endDate: Date;
+  lanes?: LaneConfig[];
   /** Currently dragged template info (for DragPreview) */
   activeTemplate?: {
     type: string;
@@ -40,6 +46,7 @@ export function LaneCalendarView({
   shifts,
   startDate,
   endDate,
+  lanes,
   activeTemplate,
   className,
   isEditable = false,
@@ -51,11 +58,14 @@ export function LaneCalendarView({
     return eachDayOfInterval({ start: startDate, end: endDate });
   }, [startDate, endDate]);
 
+  // Use provided lanes or fall back to hardcoded defaults
+  const resolvedLanes = lanes || LANES_ORDERED;
+
   // Group shifts by lane type and date
   const shiftsByLaneAndDate = useMemo(() => {
     const grouped: Record<string, Record<string, Shift[]>> = {};
 
-    for (const lane of LANES_ORDERED) {
+    for (const lane of resolvedLanes) {
       grouped[lane.type] = {};
       for (const day of days) {
         const dateStr = format(day, "yyyy-MM-dd");
@@ -71,7 +81,7 @@ export function LaneCalendarView({
     }
 
     return grouped;
-  }, [shifts, days]);
+  }, [shifts, days, resolvedLanes]);
 
   return (
     <div
@@ -125,7 +135,7 @@ export function LaneCalendarView({
       </div>
 
       {/* Lane rows */}
-      {LANES_ORDERED.map((lane) => (
+      {resolvedLanes.map((lane) => (
         <div
           key={lane.type}
           className="grid border-b border-gray-50 last:border-b-0"

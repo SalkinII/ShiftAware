@@ -37,6 +37,7 @@ import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { calculateSnapPosition, findShiftEndTimes } from "@/lib/utils/snap";
 import { isValidLaneDrop } from "@/lib/utils/lane-validation";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
@@ -139,6 +140,30 @@ export default function ShiftsPage() {
     },
     enabled: !!selectedEventId,
   });
+
+  // Fetch templates for the selected event to derive lanes
+  const { data: eventTemplates } = useCache<any[]>({
+    key: selectedEventId
+      ? `event-templates-${selectedEventId}`
+      : "event-templates-none",
+    fetchFn: async () => {
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/events/${selectedEventId}/templates`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      const result = unwrapApiResponse<{
+        assigned: any[];
+        eventSpecific?: any[];
+      }>(json);
+      return result?.assigned || [];
+    },
+    enabled: !!selectedEventId,
+  });
+
+  // Derive lanes from templates
+  const derivedLanes = useMemo(() => {
+    return deriveLanesFromTemplates(eventTemplates || []);
+  }, [eventTemplates]);
 
   // Defensive: ensure shifts is always an array
   const allShifts = Array.isArray(cachedShifts) ? cachedShifts : [];
@@ -290,6 +315,7 @@ export default function ShiftsPage() {
           const payload = {
             eventId: targetEventId,
             type: laneType,
+            templateId: template.id,
             startTime: startTime.toISOString(),
             endTime: endTime.toISOString(),
             durationMinutes: template.durationMinutes,
@@ -362,6 +388,7 @@ export default function ShiftsPage() {
           const payload = {
             eventId: targetEventId,
             type: template.type,
+            templateId: template.id,
             startTime: startTime.toISOString(),
             endTime: endTime.toISOString(),
             durationMinutes: template.durationMinutes,
@@ -849,6 +876,7 @@ export default function ShiftsPage() {
                       eventRange ? new Date(eventRange.start) : new Date()
                     }
                     endDate={eventRange ? new Date(eventRange.end) : new Date()}
+                    lanes={derivedLanes}
                     activeTemplate={activeTemplate}
                     isEditable={true}
                     onShiftUpdate={handleUpdateShift}
@@ -1183,7 +1211,7 @@ export default function ShiftsPage() {
                     succession.
                   </p>
                 </Card>
-                <TemplatePalette />
+                <TemplatePalette eventId={selectedEventId || undefined} />
                 <Card className="bg-white border-none shadow-sm p-4">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                     Shift Count
