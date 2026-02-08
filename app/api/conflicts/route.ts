@@ -1,5 +1,8 @@
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { MembersService } from "@/lib/services/members.service";
+
+const membersService = new MembersService();
 import {
   validateShiftOverlap,
   validateShiftCapacity,
@@ -123,6 +126,25 @@ export async function GET(request: Request) {
     const shiftsMap = new Map(shifts.map((s) => [s.id, s]));
     const membersMap = new Map(members.map((m) => [m.id, m]));
 
+    // Load member attributes for gender balance checks
+    const memberAttributesMap = new Map<string, Map<string, string>>();
+    for (const member of members) {
+      try {
+        const attrs = await membersService.getAttributes(member.id);
+        const attrMap = new Map<string, string>();
+        for (const attr of attrs) {
+          try {
+            attrMap.set(attr.definition.name, JSON.parse(attr.value));
+          } catch {
+            attrMap.set(attr.definition.name, attr.value);
+          }
+        }
+        memberAttributesMap.set(member.id, attrMap);
+      } catch {
+        // Member may not have attributes — skip
+      }
+    }
+
     // Detect conflicts
     const conflicts: Conflict[] = [];
 
@@ -162,6 +184,7 @@ export async function GET(request: Request) {
         assignmentState,
         shiftsMap,
         membersMap,
+        memberAttributesMap,
       ),
     }));
 
@@ -331,6 +354,7 @@ function generateSuggestions(
   state: AssignmentState,
   shiftsMap: Map<string, ShiftWithRelations>,
   membersMap: Map<string, MemberWithRelations>,
+  memberAttributesMap: Map<string, Map<string, string>>,
 ): ResolutionSuggestion[] {
   const suggestions: ResolutionSuggestion[] = [];
 
@@ -438,12 +462,13 @@ function generateSuggestions(
           membersMap.get(id),
         );
         const currentGenders = new Set(
-          currentMembers.map((m) => m?.genderRole).filter(Boolean),
+          currentMembers.map((m) => m ? memberAttributesMap.get(m.id)?.get("gender") : undefined).filter(Boolean),
         );
 
         // Find members of opposite gender not assigned to this shift
         const oppositeGenderMembers = members.filter((m) => {
-          if (!m.genderRole || currentGenders.has(m.genderRole)) return false;
+          const memberGender = memberAttributesMap.get(m.id)?.get("gender");
+          if (!memberGender || currentGenders.has(memberGender)) return false;
           const memberShifts = state.memberShifts.get(m.id) || [];
           return !memberShifts.includes(shiftId);
         });
@@ -480,11 +505,12 @@ function generateSuggestions(
               membersMap.get(id),
             ) || [];
           const currentGenders = new Set(
-            currentMembers.map((m) => m?.genderRole).filter(Boolean),
+            currentMembers.map((m) => m ? memberAttributesMap.get(m.id)?.get("gender") : undefined).filter(Boolean),
           );
 
           const oppositeGenderMembers = members.filter((m) => {
-            if (!m.genderRole || currentGenders.has(m.genderRole)) return false;
+            const memberGender = memberAttributesMap.get(m.id)?.get("gender");
+            if (!memberGender || currentGenders.has(memberGender)) return false;
             const memberShifts = state.memberShifts.get(m.id) || [];
             return !memberShifts.includes(shiftId);
           });
