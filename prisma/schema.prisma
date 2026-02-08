@@ -98,7 +98,6 @@ model TeamMember {
   alias           String          @unique
   avatarId        String
   experienceLevel ExperienceLevel
-  genderRole      String
   capabilities    Role[]
   isActive        Boolean         @default(true)
   isAdmin         Boolean         @default(false)
