@@ -14,7 +14,6 @@ interface ProfileData {
   alias: string;
   avatarId: string;
   experienceLevel: string;
-  genderRole: string;
   capabilities: string[];
   eventId?: string;
   attributes?: Record<string, any>;
@@ -50,7 +49,6 @@ export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
     alias: "",
     avatarId: "😊",
     experienceLevel: "JUNIOR",
-    genderRole: "unspecified",
     capabilities: ["TEAM_MEMBER"],
     attributes: {},
   });
