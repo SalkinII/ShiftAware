@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { AlertCircle, CheckCircle, X, Loader2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,9 +72,13 @@ export function ConflictWizard({ isOpen, onClose }: ConflictWizardProps) {
       if (!res.ok) {
         throw new Error("Failed to scan conflicts");
       }
-      const data = await res.json();
-      setConflicts(data.conflicts || []);
-      setSummary(data.summary || null);
+      const raw = await res.json();
+      const data = unwrapApiResponse<{
+        conflicts: Conflict[];
+        summary: typeof summary;
+      }>(raw);
+      setConflicts(data?.conflicts || []);
+      setSummary(data?.summary || null);
       setCurrentConflictIndex(0);
     } catch (error) {
       console.error("Failed to scan conflicts:", error);

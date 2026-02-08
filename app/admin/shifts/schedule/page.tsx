@@ -560,7 +560,7 @@ export default function ShiftsPage() {
       if (updates.capacity !== undefined) payload.capacity = updates.capacity;
 
       const res = await fetch(`/api/shifts/${shiftId}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -989,7 +989,8 @@ export default function ShiftsPage() {
                 >
                   {selectedEvent ? (
                     <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
-                      Event: <span className="font-bold">{selectedEvent.name}</span>
+                      Event:{" "}
+                      <span className="font-bold">{selectedEvent.name}</span>
                     </div>
                   ) : (
                     <div className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-lg">
@@ -1192,10 +1193,7 @@ export default function ShiftsPage() {
                       <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                       <span className="text-gray-600">M1:</span>
                       <span className="font-bold">
-                        {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM")
-                            .length
-                        }
+                        {shifts.filter((s) => s.type === "MOBILE_TEAM").length}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1242,10 +1240,7 @@ export default function ShiftsPage() {
                         Mobile
                       </span>
                       <span className="text-sm font-black text-gray-900">
-                        {
-                          shifts.filter((s) => s.type === "MOBILE_TEAM")
-                            .length
-                        }
+                        {shifts.filter((s) => s.type === "MOBILE_TEAM").length}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">

@@ -14,6 +14,7 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import {
   ArrowLeftRight,
   GripVertical,
@@ -363,8 +364,12 @@ export function SwapInterface({
     try {
       const res = await fetch("/api/conflicts");
       if (res.ok) {
-        const data = await res.json();
-        const count = data.summary?.total || 0;
+        const raw = await res.json();
+        const data = unwrapApiResponse<{
+          conflicts: any[];
+          summary: { total: number };
+        }>(raw);
+        const count = data?.summary?.total || 0;
         setConflictCount(count);
         return count > 0;
       }

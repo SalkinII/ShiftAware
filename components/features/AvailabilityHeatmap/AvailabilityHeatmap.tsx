@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { useCache } from "@/lib/cache/useCache";
+import { unwrapApiResponse } from "@/lib/api-errors";
 import { format } from "date-fns";
 import { Loader2, UserPlus, Check, X, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -122,7 +123,8 @@ export function AvailabilityHeatmap({
             "Failed to fetch availability",
         );
       }
-      return res.json();
+      const data = await res.json();
+      return unwrapApiResponse<HeatmapData>(data);
     },
   });
 
@@ -192,7 +194,9 @@ export function AvailabilityHeatmap({
 
     // Header with member and shift info
     lines.push(`${member.alias} (${member.experienceLevel})`);
-    lines.push(`${shift.type.replace("_", " ")} • ${format(new Date(shift.startTime), "MMM d, HH:mm")}`);
+    lines.push(
+      `${shift.type.replace("_", " ")} • ${format(new Date(shift.startTime), "MMM d, HH:mm")}`,
+    );
     lines.push("─".repeat(20));
 
     // Status with explanation
@@ -209,10 +213,14 @@ export function AvailabilityHeatmap({
         case "partial":
           lines.push("⚠ PARTIAL - Has constraints:");
           if (status.hasConflict) {
-            lines.push(`   • Conflict with ${status.details?.conflictShiftIds?.length || 0} shift(s)`);
+            lines.push(
+              `   • Conflict with ${status.details?.conflictShiftIds?.length || 0} shift(s)`,
+            );
           }
           if (!status.meetsRequirements && status.details?.missingRoles) {
-            lines.push(`   • Missing: ${status.details.missingRoles.join(", ")}`);
+            lines.push(
+              `   • Missing: ${status.details.missingRoles.join(", ")}`,
+            );
           }
           if (!status.hasPreference) {
             lines.push("   • No preference submitted");
