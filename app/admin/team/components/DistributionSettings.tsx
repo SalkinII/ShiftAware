@@ -37,13 +37,35 @@ export function DistributionSettings() {
 
   const [showAddRule, setShowAddRule] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [attributeDefinitions, setAttributeDefinitions] = useState<
+    Array<{
+      id: string;
+      name: string;
+      label: string;
+      type: string;
+      options: string[];
+    }>
+  >([]);
 
   // Load config when event changes
   useEffect(() => {
     if (selectedEventId) {
       loadConfig();
+      fetchAttributeDefinitions(selectedEventId);
     }
   }, [selectedEventId]);
+
+  async function fetchAttributeDefinitions(eventId: string) {
+    try {
+      const res = await fetch(`/api/events/${eventId}/attributes`);
+      if (res.ok) {
+        const data = await res.json();
+        setAttributeDefinitions(data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch attribute definitions:", error);
+    }
+  }
 
   async function loadConfig() {
     if (!selectedEventId) return;
@@ -342,8 +364,12 @@ export function DistributionSettings() {
                     }
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="experience_level">Experience Level</option>
-                    <option value="can_drive">Can Drive</option>
+                    <option value="">Select attribute...</option>
+                    {attributeDefinitions.map((attr) => (
+                      <option key={attr.id} value={attr.name}>
+                        {attr.label}
+                      </option>
+                    ))}
                   </select>
 
                   <select
@@ -362,15 +388,44 @@ export function DistributionSettings() {
                     <option value="CONTAINS">Contains</option>
                   </select>
 
-                  <input
-                    type="text"
-                    value={rule.value}
-                    onChange={(e) =>
-                      handleUpdateRule(rule.id, "value", e.target.value)
+                  {(() => {
+                    const selectedAttr = attributeDefinitions.find(
+                      (a) => a.name === rule.attribute,
+                    );
+                    if (
+                      selectedAttr &&
+                      selectedAttr.options &&
+                      selectedAttr.options.length > 0
+                    ) {
+                      return (
+                        <select
+                          value={rule.value}
+                          onChange={(e) =>
+                            handleUpdateRule(rule.id, "value", e.target.value)
+                          }
+                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value="">Select value...</option>
+                          {selectedAttr.options.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      );
                     }
-                    placeholder="Value..."
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                    return (
+                      <input
+                        type="text"
+                        value={rule.value}
+                        onChange={(e) =>
+                          handleUpdateRule(rule.id, "value", e.target.value)
+                        }
+                        placeholder="Value..."
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                    );
+                  })()}
                 </div>
 
                 <Button
