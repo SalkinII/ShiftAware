@@ -97,6 +97,19 @@ export function DistributionSettings() {
     });
   };
 
+  const handleUpdateRule = (
+    id: string,
+    field: keyof AttributeRule,
+    value: string,
+  ) => {
+    setConfig({
+      ...config,
+      attributeRules: config.attributeRules.map((rule) =>
+        rule.id === id ? { ...rule, [field]: value } : rule,
+      ),
+    });
+  };
+
   const handlePreview = async () => {
     if (!selectedEventId) {
       toast.error("Please select an event first");
@@ -308,6 +321,9 @@ export function DistributionSettings() {
                 <div className="flex-1 grid grid-cols-4 gap-2">
                   <select
                     value={rule.shiftType}
+                    onChange={(e) =>
+                      handleUpdateRule(rule.id, "shiftType", e.target.value)
+                    }
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="SUPER">SUPER</option>
@@ -317,6 +333,9 @@ export function DistributionSettings() {
 
                   <select
                     value={rule.attribute}
+                    onChange={(e) =>
+                      handleUpdateRule(rule.id, "attribute", e.target.value)
+                    }
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="experience_level">Experience Level</option>
@@ -325,6 +344,13 @@ export function DistributionSettings() {
 
                   <select
                     value={rule.operator}
+                    onChange={(e) =>
+                      handleUpdateRule(
+                        rule.id,
+                        "operator",
+                        e.target.value as AttributeRule["operator"],
+                      )
+                    }
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="EQUALS">Equals</option>
@@ -335,6 +361,9 @@ export function DistributionSettings() {
                   <input
                     type="text"
                     value={rule.value}
+                    onChange={(e) =>
+                      handleUpdateRule(rule.id, "value", e.target.value)
+                    }
                     placeholder="Value..."
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />

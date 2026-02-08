@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { useToast } from '@/components/ui/Toast';
-import { useEventContext } from '@/lib/hooks/useEventContext';
-import { unwrapApiResponse } from '@/lib/api-errors';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { useToast } from "@/components/ui/Toast";
+import { useEventContext } from "@/lib/hooks/useEventContext";
+import { unwrapApiResponse } from "@/lib/api-errors";
 
 interface Event {
   id: string;
@@ -22,15 +22,22 @@ interface Event {
 
 export function FestivalSettings() {
   const toast = useToast();
-  const { selectedEventId, selectedEvent, events, loading, refreshEvents, setSelectedEventId } = useEventContext(true);
+  const {
+    selectedEventId,
+    selectedEvent,
+    events,
+    loading,
+    refreshEvents,
+    setSelectedEventId,
+  } = useEventContext(true);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    status: 'PLANNING',
-    startDate: '',
-    endDate: '',
+    name: "",
+    status: "PLANNING",
+    startDate: "",
+    endDate: "",
     bufferDaysBefore: 1,
     bufferDaysAfter: 1,
   });
@@ -38,21 +45,21 @@ export function FestivalSettings() {
   useEffect(() => {
     if (isCreatingNew || !selectedEventId) {
       setFormData({
-        name: '',
-        status: 'PLANNING',
-        startDate: '',
-        endDate: '',
+        name: "",
+        status: "PLANNING",
+        startDate: "",
+        endDate: "",
         bufferDaysBefore: 1,
         bufferDaysAfter: 1,
       });
     } else {
-      const event = events.find(e => e.id === selectedEventId);
+      const event = events.find((e) => e.id === selectedEventId);
       if (event) {
         setFormData({
           name: event.name,
           status: event.status,
-          startDate: event.startDate.split('T')[0],
-          endDate: event.endDate.split('T')[0],
+          startDate: event.startDate.split("T")[0],
+          endDate: event.endDate.split("T")[0],
           bufferDaysBefore: event.config?.bufferDaysBefore ?? 1,
           bufferDaysAfter: event.config?.bufferDaysAfter ?? 1,
         });
@@ -62,7 +69,7 @@ export function FestivalSettings() {
 
   async function handleSave() {
     if (!formData.name || !formData.startDate || !formData.endDate) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -70,6 +77,7 @@ export function FestivalSettings() {
     try {
       const payload = {
         name: formData.name,
+        status: formData.status,
         startDate: formData.startDate,
         endDate: formData.endDate,
         bufferDaysBefore: formData.bufferDaysBefore,
@@ -77,32 +85,33 @@ export function FestivalSettings() {
       };
 
       const url = isCreatingNew
-        ? '/api/events'
+        ? "/api/events"
         : `/api/events/${selectedEventId}`;
 
-      const method = isCreatingNew ? 'POST' : 'PUT';
+      const method = isCreatingNew ? "POST" : "PUT";
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         const resData = await res.json();
-        toast.success(isCreatingNew ? 'Event created' : 'Event updated');
+        const result = unwrapApiResponse<{ id: string }>(resData);
+        toast.success(isCreatingNew ? "Event created" : "Event updated");
         await refreshEvents();
         if (isCreatingNew) {
-          const newId = resData.data?.id;
+          const newId = result?.id;
           if (newId) setSelectedEventId(newId);
           setIsCreatingNew(false);
         }
       } else {
         const error = await res.json();
-        toast.error(error.message || 'Failed to save event');
+        toast.error(error.message || "Failed to save event");
       }
     } catch (error) {
-      toast.error('Failed to save event');
+      toast.error("Failed to save event");
     } finally {
       setSaving(false);
     }
@@ -115,7 +124,9 @@ export function FestivalSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">Event Configuration</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">
+          Event Configuration
+        </h3>
         <p className="text-sm text-gray-500">
           Create a new event or select an existing one to edit
         </p>
@@ -156,7 +167,9 @@ export function FestivalSettings() {
           <Select
             label="Status"
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, status: e.target.value })
+            }
           >
             <option value="PLANNING">Planning</option>
             <option value="OPEN_FOR_PREFERENCES">Open for Preferences</option>
@@ -170,14 +183,18 @@ export function FestivalSettings() {
             label="Start Date"
             type="date"
             value={formData.startDate}
-            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, startDate: e.target.value })
+            }
             required
           />
           <Input
             label="End Date"
             type="date"
             value={formData.endDate}
-            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, endDate: e.target.value })
+            }
             required
           />
         </div>
@@ -188,21 +205,35 @@ export function FestivalSettings() {
             type="number"
             min="0"
             value={formData.bufferDaysBefore}
-            onChange={(e) => setFormData({ ...formData, bufferDaysBefore: parseInt(e.target.value) || 0 })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                bufferDaysBefore: parseInt(e.target.value) || 0,
+              })
+            }
           />
           <Input
             label="Buffer Days After"
             type="number"
             min="0"
             value={formData.bufferDaysAfter}
-            onChange={(e) => setFormData({ ...formData, bufferDaysAfter: parseInt(e.target.value) || 0 })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                bufferDaysAfter: parseInt(e.target.value) || 0,
+              })
+            }
           />
         </div>
       </div>
 
       <div className="flex justify-end pt-4">
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : (selectedEventId === 'new' ? 'Create Event' : 'Update Event')}
+          {saving
+            ? "Saving..."
+            : selectedEventId === "new"
+              ? "Create Event"
+              : "Update Event"}
         </Button>
       </div>
     </div>
