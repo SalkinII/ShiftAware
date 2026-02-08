@@ -62,7 +62,6 @@ describe("TeamMemberRepository", () => {
         alias: "alice",
         avatarId: "avatar-1",
         experienceLevel: "SENIOR" as const,
-        genderRole: "female",
         capabilities: ["TEAM_MEMBER" as const],
         isActive: true,
         isAdmin: false,
