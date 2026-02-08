@@ -42,8 +42,7 @@ const EXPERIENCE_LEVELS = [
 
 const CAPABILITIES = [
   { value: "SHIFT_LEAD", label: "Shift Lead" },
-  { value: "DRIVER", label: "Driver" },
-  { value: "FIRST_AID", label: "First Aid" },
+  { value: "SUPER", label: "Supervisor" },
 ];
 
 export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
