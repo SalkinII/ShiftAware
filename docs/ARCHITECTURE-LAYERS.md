@@ -648,6 +648,9 @@ const service = new MembersService(mockRepo);
 - `useCurrentEvent` consolidated into `useEventContext` and deleted
 - 167 passing unit tests maintained throughout refactoring
 
+### Phase 5 (✅ Complete)
+- Bugfix sweep (2026-02-11): Card onClick, event creation minExperienceMix, gender balance memberAttributesMap, priority→wantLevel migration, duplicate attribute 409, EventSelector null type
+
 ### Sub-Entity Grouping Pattern
 Phase 3 introduced a pattern for managing sub-entities without file sprawl:
 - EventConfig, EventRegistration, EventTemplate, EventAttributeDefinition → **EventRepository/EventsService**

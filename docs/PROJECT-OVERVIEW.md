@@ -82,11 +82,12 @@ Shift planning tool for small festival teams (25-35 people) with pseudonymised d
 | `Shift` | Actual shift instances |
 | `TeamMember` | Staff with dynamic attributes |
 | `Assignment` | Shift-to-member assignments |
-| `ShiftPreference` | User voting on shifts |
+| `ShiftPreference` | User voting on shifts (wantLevel enum: WANT / DONT_WANT) |
 | `AuditLog` | Change tracking |
 
 ## Key Patterns
 
+- **ShiftPreference**: `wantLevel: WANT | DONT_WANT` enum replaced legacy numeric priority
 - **API responses**: `{ data: ... }` wrapper, use `unwrapApiResponse()`
 - **Auth (client)**: `isAdminClient()` from `lib/auth-client.ts`
 - **Auth (server)**: `isAuthenticated()` from `lib/auth.ts`

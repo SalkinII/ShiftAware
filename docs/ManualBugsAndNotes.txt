@@ -1,92 +1,15 @@
-Consider building Lane Calendar in React Flow
-Swim lanes.
-Needs to scale the time ruler
-Needs localisation on canvas.
-Canvas should maximize on screen.
-In React flow there is a node reservoir (holds templates to be dropped in lanes)
-Would need to implement guidance lanes.
-Would need to implement snap behaviour.
-Would need to implement time ruler position while dropping.
+Manual Bugs and Notes - Status after 2026-02-11 Bugfix Sweep
+============================================================
 
-Node could be clicked and changing properties on the side.
+RESOLVED (2026-02-11):
+#1: Event selection on identity page - FIXED (Card onClick prop added)
+#2: Event creation fails - FIXED (minExperienceMix: true → 1, z.record(z.number()) compliance)
+#3: Gender balance detection dead - FIXED (memberAttributesMap passed to validateGenderBalance)
+#4: priority → wantLevel migration incomplete - FIXED (audit rollback, optimizer, scorer, shift repo)
+#5: Attribute creation duplicate gives generic error - FIXED (409 with clear message)
+#6: EventSelector onSelect null type mismatch - FIXED (onSelect accepts string | null)
 
-Bugs:
-The event selection after identity still does not allow to select the event.
-
-
-On event create: Failed to save event
-
-On attribute creat: Failed to save attribute
-
-Audit last iteration:
-
-  I've cross-referenced all 8 implementation commits against ARCHITECTURE.md and ARCHITECTURE-LAYERS.md. Here's the findings:                         
-  Compliant                                                                                                                                          ┌────────────────────────────┬─────────────────────────────────────────────────────────────┬─────────┐                                           
-  │           Change           │                      Architecture Rule                      │ Verdict │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 2: Seed cleanup       │ N/A (data, not layers)                                      │ Clean   │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 3: Admin page         │ UI removes field — no layer crossings                       │ Clean   │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 4: Availability route │ Analytical utility, direct Prisma allowed (§11.5)           │ Clean   │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 6: Audit rollback     │ Route-layer Prisma for audit snapshots allowed (§2 line 69) │ Clean   │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 7: Heatmap component  │ UI-only interface change                                    │ Clean   │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 8: Test fixtures      │ Test-only                                                   │ Clean   │
-  ├────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────┤
-  │ Task 9: oklch colors       │ CSS-only                                                    │ Clean   │
-  └────────────────────────────┴─────────────────────────────────────────────────────────────┴─────────┘
-  Findings on Task 5 (Conflicts Route)
-
-  Finding 1 — MembersService usage in analytical utility: CORRECT
-  The plan says "analytical utilities keep direct Prisma for core queries but use MembersService for attribute access". We import MembersService,  
-  keep direct Prisma for members/shifts/assignments. This aligns with ARCHITECTURE-LAYERS.md §Known Mixed Patterns.
-
-  Finding 2 — N+1 query pattern: MINOR CONCERN
-  We call membersService.getAttributes(member.id) in a loop for all active members. With 30 members, that's 30 sequential DB queries. Not a blocker
-   for current scale, but worth noting.
-
-  Finding 3 — Incomplete gender balance detection: LOGIC GAP
-  This is the most significant finding. In detectGenderBalanceConflicts() (line ~304):
-
-  const violation = validateGenderBalance(shift.id, assignments, membersMap);
-  //                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  //                  Missing 4th parameter: memberAttributesMap
-
-  validateGenderBalance already supports memberAttributes as an optional 4th parameter (confirmed at lib/algorithm/validator.ts:77). Without it, it
-   defaults all genders to "unknown", so conflict detection is non-functional — no GENDER_BALANCE conflicts will ever be found. The suggestion     
-  logic we fixed will never execute because no conflicts are generated to suggest fixes for.
-
-  Finding 4 — memberAttributesMap not passed to validateGenderBalance in optimizer either
-  The optimizer at lib/algorithm/optimizer.ts:261 also calls validateGenderBalance — worth checking if it passes attributes.
-
-  Outstanding Items
-  #: 1
-  Item: detectGenderBalanceConflicts doesn't pass memberAttributesMap to validateGenderBalance
-  Severity: High — feature is non-functional
-  Category: Logic gap
-  ────────────────────────────────────────
-  #: 2
-  Item: Optimizer's validateGenderBalance call may also need memberAttributesMap
-  Severity: Medium — algorithm correctness
-  Category: Logic gap
-  ────────────────────────────────────────
-  #: 3
-  Item: N+1 query pattern in conflicts route (30 sequential queries)
-  Severity: Low — works at current scale
-  Category: Performance
-  ────────────────────────────────────────
-  #: 4
-  Item: Architecture docs Last Updated should reflect genderRole migration
-  Severity: Low — housekeeping
-  Category: Documentation
-  ────────────────────────────────────────
-  #: 5
-  Item: Pre-existing TS errors (Card onClick, priority, eventId/event)
-  Severity: Low — pre-existing
-  Category: Tech debt
-  ---
-  Want me to fix Finding 1 (the detectGenderBalanceConflicts missing parameter) now? It's a one-line change and without it the gender balance      
-  feature is dead code.
+OUTSTANDING (pre-existing, not in sweep scope):
+- Some test fixtures need schema updates (Event, ShiftTemplate, etc.)
+- AttributeDefinitions.tsx: AttributeType narrowing
+- Prisma.PreferenceLevel, Prisma.Role namespace exports (check Prisma client version)

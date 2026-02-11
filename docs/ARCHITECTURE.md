@@ -2,7 +2,7 @@
 
 > **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
 >
-> Last updated: 2026-02-07 (Phase 3: Complete - Three-layer architecture. Phase 4: ✅ Complete - UI-Service alignment)
+> Last updated: 2026-02-11 (Phase 5: Bugfix sweep — Card onClick, event creation, gender balance, priority→wantLevel migration)
 
 ---
 
@@ -848,6 +848,7 @@ try {
    ```
 
 4. **Pre-existing Errors**: Some unrelated TypeScript errors exist in codebase
+   - 2026-02-11 bugfix sweep resolved: Card onClick, event creation (minExperienceMix), gender balance (memberAttributesMap), priority→wantLevel migration
    - Focus on maintaining type safety in new three-layer code
    - Use `npx tsc --noEmit` to check types
 
@@ -1111,28 +1112,29 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 
 ---
 
-## 18. Next Steps (Phase 2)
+## 18. Next Steps
+
+### Recent (2026-02-11 Bugfix Sweep ✅)
+- Card onClick support for event selection
+- Event creation balanceThresholds (minExperienceMix numeric)
+- Gender balance detection (memberAttributesMap)
+- ShiftPreference: priority → wantLevel migration complete
 
 ### Planned Improvements
 
-1. **Complete API Refactoring**
-   - Refactor remaining routes to use services
-   - Add repositories for Assignment, ShiftTemplate, etc.
-   - Remove all direct Prisma calls from routes
-
-2. **Advanced Features**
+1. **Advanced Features**
    - Transaction management utilities
    - Caching layer (Redis or in-memory)
    - API versioning (/api/v1/)
    - Structured logging
    - Rate limiting
 
-3. **Testing Enhancements**
+2. **Testing Enhancements**
    - Integration tests for full API flows
    - E2E tests with Playwright
    - Performance benchmarks
 
-4. **Documentation**
+3. **Documentation**
    - API documentation (OpenAPI/Swagger)
    - Migration guide for breaking changes
    - Contribution guidelines
@@ -1148,6 +1150,6 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 
 ---
 
-**Last Updated:** 2026-02-07
-**Phase:** 3 Complete, Phase 4 ✅ Complete (UI-Service alignment)
+**Last Updated:** 2026-02-11
+**Phase:** Phase 5 ✅ Bugfix sweep complete
 **Next Review:** As needed for future enhancements
