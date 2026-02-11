@@ -15,7 +15,7 @@ interface Event {
 interface EventSelectorProps {
   events: Event[];
   selectedEventId: string | null;
-  onSelect: (eventId: string) => void;
+  onSelect: (eventId: string | null) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
