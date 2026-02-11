@@ -212,7 +212,7 @@ export class ShiftRepository extends BaseRepository {
           requiredRoles: true,
           preferences: {
             include: { teamMember: true },
-            orderBy: { priority: "asc" },
+            orderBy: { createdAt: "asc" },
           },
           assignments: {
             include: { teamMember: true },

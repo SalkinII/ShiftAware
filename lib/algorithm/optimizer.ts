@@ -87,7 +87,7 @@ export async function runAssignmentAlgorithm(
   // Phase 1: Assign preferred shifts
   for (const member of members) {
     const preferences = member.preferences
-      .sort((a, b) => a.priority - b.priority)
+      .filter((p) => p.wantLevel === "WANT")
       .slice(0, 10); // Limit to top 10 preferences
 
     for (const pref of preferences) {
@@ -149,7 +149,7 @@ export async function runAssignmentAlgorithm(
         state,
         member.preferences.map((p) => ({
           shiftId: p.shiftId,
-          priority: p.priority,
+          wantLevel: p.wantLevel,
         })),
         membersMap,
         weights,
@@ -157,7 +157,7 @@ export async function runAssignmentAlgorithm(
       scores.set(`${member.id}-${shift.id}`, score);
       explanations.set(
         `${member.id}-${shift.id}`,
-        `Assigned based on preference (priority ${pref.priority})`,
+        `Assigned based on preference (${pref.wantLevel})`,
       );
     }
   }
@@ -185,7 +185,7 @@ export async function runAssignmentAlgorithm(
             state,
             member.preferences.map((p) => ({
               shiftId: p.shiftId,
-              priority: p.priority,
+              wantLevel: p.wantLevel,
             })),
             membersMap,
             weights,

@@ -10,23 +10,23 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
 
 /**
  * Calculates preference score for a member-shift assignment.
- * Higher priority preferences receive higher scores.
+ * WANT preferences receive full score, DONT_WANT receives penalty.
  *
  * @param member - Team member being scored
  * @param shift - Shift being scored
- * @param preferences - Array of member preferences with shiftId and priority (1-5)
- * @returns Score from 0-100, where priority 1 = 100, priority 5 = 20
+ * @param preferences - Array of member preferences with shiftId and wantLevel
+ * @returns Score 100 for WANT, -50 for DONT_WANT, 0 if no preference
  */
 export function calculatePreferenceScore(
   member: TeamMember,
   shift: Shift,
-  preferences: { shiftId: string; priority: number }[],
+  preferences: { shiftId: string; wantLevel: string }[],
 ): number {
   const preference = preferences.find((p) => p.shiftId === shift.id);
   if (!preference) return 0;
 
-  // Higher priority = better score (priority 1 = 100, priority 5 = 20)
-  return 100 - (preference.priority - 1) * 20;
+  // WANT = full score, DONT_WANT = penalty
+  return preference.wantLevel === "WANT" ? 100 : -50;
 }
 
 /**
@@ -127,7 +127,7 @@ export function scoreAssignment(
   member: TeamMember,
   shift: Shift,
   currentState: AssignmentState,
-  preferences: { shiftId: string; priority: number }[],
+  preferences: { shiftId: string; wantLevel: string }[],
   membersMap: Map<string, TeamMember>,
   weights: AlgorithmWeights = DEFAULT_WEIGHTS,
 ): AssignmentScore {

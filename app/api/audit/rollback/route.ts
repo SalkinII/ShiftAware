@@ -55,7 +55,7 @@ type AssignmentBeforeAfter = {
 type PreferenceBeforeAfter = {
   teamMemberId?: string;
   shiftId?: string;
-  priority?: number;
+  wantLevel?: string;
   notes?: string | null;
 };
 
@@ -724,7 +724,7 @@ async function rollbackPreference(
       await tx.shiftPreference.update({
         where: { id: auditLog.entityId },
         data: {
-          priority: before.priority,
+          wantLevel: before.wantLevel as any,
           notes: before.notes,
         },
       });
@@ -740,7 +740,7 @@ async function rollbackPreference(
         !before ||
         !before.teamMemberId ||
         !before.shiftId ||
-        before.priority === undefined
+        before.wantLevel === undefined
       ) {
         throw new Error("Cannot rollback: missing required preference fields");
       }
@@ -749,7 +749,7 @@ async function rollbackPreference(
           // IDs are auto-generated, so we can't reuse the original ID
           teamMemberId: before.teamMemberId,
           shiftId: before.shiftId,
-          priority: before.priority,
+          wantLevel: before.wantLevel as any,
           notes: before.notes,
         },
       });
