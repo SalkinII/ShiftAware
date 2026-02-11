@@ -58,6 +58,18 @@ export async function POST(
     const body = await request.json();
     const validated = attributeDefinitionSchema.parse(body);
 
+    // Check for duplicate attribute name
+    const existing = await service.listEventAttributes(eventId);
+    if (existing.some((attr) => attr.name === validated.name)) {
+      return createErrorResponse(
+        new Error(
+          `Attribute "${validated.name}" already exists for this event`,
+        ),
+        `Attribute "${validated.name}" already exists for this event`,
+        409,
+      );
+    }
+
     const attribute = await service.createEventAttribute(eventId, validated);
 
     return createSuccessResponse(attribute, 201);
