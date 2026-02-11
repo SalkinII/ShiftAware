@@ -165,6 +165,7 @@ export async function GET(request: Request) {
       shifts,
       membersMap,
       assignmentState,
+      memberAttributesMap,
     );
     conflicts.push(...genderConflicts);
 
@@ -317,6 +318,7 @@ function detectGenderBalanceConflicts(
   shifts: ShiftWithRelations[],
   membersMap: Map<string, MemberWithRelations>,
   state: AssignmentState,
+  memberAttributesMap: Map<string, Map<string, string>>,
 ): Conflict[] {
   const conflicts: Conflict[] = [];
 
@@ -324,7 +326,12 @@ function detectGenderBalanceConflicts(
     const assignments = state.assignments.get(shift.id) || [];
     if (assignments.length < 2) return; // Need at least 2 members to check balance
 
-    const violation = validateGenderBalance(shift.id, assignments, membersMap);
+    const violation = validateGenderBalance(
+      shift.id,
+      assignments,
+      membersMap,
+      memberAttributesMap,
+    );
     if (violation) {
       conflicts.push({
         id: "", // Will be set later
@@ -462,7 +469,11 @@ function generateSuggestions(
           membersMap.get(id),
         );
         const currentGenders = new Set(
-          currentMembers.map((m) => m ? memberAttributesMap.get(m.id)?.get("gender") : undefined).filter(Boolean),
+          currentMembers
+            .map((m) =>
+              m ? memberAttributesMap.get(m.id)?.get("gender") : undefined,
+            )
+            .filter(Boolean),
         );
 
         // Find members of opposite gender not assigned to this shift
@@ -505,7 +516,11 @@ function generateSuggestions(
               membersMap.get(id),
             ) || [];
           const currentGenders = new Set(
-            currentMembers.map((m) => m ? memberAttributesMap.get(m.id)?.get("gender") : undefined).filter(Boolean),
+            currentMembers
+              .map((m) =>
+                m ? memberAttributesMap.get(m.id)?.get("gender") : undefined,
+              )
+              .filter(Boolean),
           );
 
           const oppositeGenderMembers = members.filter((m) => {
