@@ -7,6 +7,7 @@ interface CardProps {
   elevation?: 0 | 1 | 2 | 3 | 4 | 5;
   hover?: boolean;
   interactive?: boolean;
+  onClick?: () => void;
 }
 
 export function Card({
@@ -15,6 +16,7 @@ export function Card({
   elevation = 1,
   hover = false,
   interactive = false,
+  onClick,
 }: CardProps) {
   const elevationClasses = {
     0: "shadow-none",
@@ -27,6 +29,7 @@ export function Card({
 
   return (
     <div
+      onClick={onClick}
       className={cn(
         "rounded-lg border border-gray-200 bg-white p-3 transition-all duration-200",
         elevationClasses[elevation],
