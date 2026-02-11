@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         },
         balanceThresholds: {
           minGenderBalance: 0.3,
-          minExperienceMix: true,
+          minExperienceMix: 1,
           maxConsecutiveShifts: 3,
         },
         autoAssignUnfilled: true,
