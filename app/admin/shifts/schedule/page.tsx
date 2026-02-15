@@ -419,25 +419,10 @@ export default function ShiftsPage() {
   }
 
   async function handleExportCalendar() {
-    if (!calendarRef.current) return;
-
-    try {
-      const canvas = await html2canvas(calendarRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-        useCORS: true,
-      });
-
-      const link = document.createElement("a");
-      link.download = `shift-schedule-${format(new Date(), "yyyy-MM-dd")}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast.success("Schedule exported successfully");
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast.error("Failed to export schedule");
-    }
+    // TODO: Implement React Flow native export using getNodesBounds + getViewportForBounds
+    // React Flow v12+ has built-in methods for exporting the canvas
+    // For now, export is disabled pending React Flow export integration
+    toast.info("Export feature will be implemented with React Flow native export");
   }
 
   // Keyboard shortcuts
