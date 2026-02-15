@@ -2,7 +2,7 @@
 
 > **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
 >
-> Last updated: 2026-02-11 (Phase 5: Bugfix sweep — Card onClick, event creation, gender balance, priority→wantLevel migration)
+> Last updated: 2026-02-15 (React Flow lane calendar migration complete)
 
 ---
 
@@ -489,13 +489,22 @@ GET /api/events/{id}/templates
          lanes: Lane[]
               │
               ▼
-         <LaneCalendarView lanes={lanes} />
+         <LaneCalendarCanvas lanes={lanes} />  ← React Flow v12+
+              │
+              └──► Renders as React Flow nodes (not CSS grid)
 ```
 
 **Shift → Lane mapping:**
 ```
 Shift.templateId ──► find Lane where Lane.id === templateId
+                 ──► Position as React Flow node at (timeToX, laneIndexToY)
 ```
+
+**React Flow Implementation (2026-02-15):**
+- Lanes rendered as `LaneZoneNode` background stripes
+- Shifts rendered as `ShiftBlockNode` draggable/resizable nodes
+- Native pan/zoom, snap-to-grid, semantic zoom
+- Replaced @dnd-kit with React Flow native drag-drop
 
 ---
 
@@ -634,7 +643,25 @@ app/
 
 components/
 ├── features/
-│   └── LaneCalendar/          # Calendar components
+│   ├── LaneCalendar/          # React Flow calendar (v12+)
+│   │   ├── LaneCalendarCanvas.tsx       # Main wrapper
+│   │   ├── nodes/                       # Custom React Flow nodes
+│   │   │   ├── LaneZoneNode.tsx
+│   │   │   ├── DaySeparatorNode.tsx
+│   │   │   └── ShiftBlockNode.tsx
+│   │   ├── panels/                      # Overlay panels
+│   │   │   ├── TimeRulerPanel.tsx
+│   │   │   └── LaneLabelsColumn.tsx
+│   │   ├── hooks/                       # Calendar logic
+│   │   │   ├── useLaneNodes.ts
+│   │   │   ├── useShiftNodes.ts
+│   │   │   └── useCanvasActions.ts
+│   │   ├── utils/                       # Coordinate system
+│   │   │   ├── constants.ts
+│   │   │   └── coordinates.ts
+│   │   └── sidebar/
+│   │       └── ShiftPropertiesPanel.tsx
+│   └── TemplatePalette/       # Native HTML5 drag
 ├── layout/                    # Header, sidebars
 └── ui/                        # Buttons, inputs, etc.
 
