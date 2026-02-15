@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { type Node, useReactFlow } from "@xyflow/react";
 import { type LaneConfig } from "@/lib/types/lane";
 import {
@@ -10,7 +10,11 @@ import {
   yToLaneIndex,
   widthToDuration,
 } from "../utils/coordinates";
-import { SNAP_INTERVAL_MINUTES } from "../utils/constants";
+import {
+  SNAP_INTERVAL_MINUTES,
+  LANE_HEIGHT,
+  SNAP_PIXELS,
+} from "../utils/constants";
 import { useToast } from "@/components/ui/Toast";
 
 /** Type-safe shape for shift node data attached by useShiftNodes */
@@ -46,7 +50,7 @@ export function useCanvasActions({
   onShiftCreated,
   onShiftUpdated,
 }: UseCanvasActionsOptions) {
-  const { screenToFlowPosition, getNode } = useReactFlow();
+  const { screenToFlowPosition, getNode, getNodes } = useReactFlow();
   const toast = useToast();
 
   /**
@@ -253,10 +257,73 @@ export function useCanvasActions({
     [eventStart, eventId, onShiftUpdated, toast, getNode],
   );
 
+  const [alignmentGuides, setAlignmentGuides] = useState<number[]>([]);
+
+  /**
+   * During drag, check if the dragged shift's edges align
+   * with any other shift's edges in the same lane.
+   */
+  const handleNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (!node.id.startsWith("shift-") || !isShiftNodeData(node.data)) return;
+
+      const draggedWidth =
+        (node.style?.width as number) ??
+        (node.data as Record<string, unknown>).width ??
+        0;
+      const draggedStartX = node.position.x;
+      const draggedEndX = draggedStartX + draggedWidth;
+      const draggedLaneY = snapY(node.position.y);
+
+      const allNodes = getNodes();
+      const guides: number[] = [];
+
+      for (const other of allNodes) {
+        if (
+          other.id === node.id ||
+          !other.id.startsWith("shift-") ||
+          !isShiftNodeData(other.data)
+        )
+          continue;
+
+        // Only compare shifts in the same lane
+        if (Math.abs(other.position.y - draggedLaneY) > LANE_HEIGHT / 2)
+          continue;
+
+        const otherWidth =
+          (other.style?.width as number) ??
+          (other.data as Record<string, unknown>).width ??
+          0;
+        const otherStartX = other.position.x;
+        const otherEndX = otherStartX + otherWidth;
+
+        // Check all 4 edge combinations
+        if (Math.abs(draggedStartX - otherEndX) < SNAP_PIXELS)
+          guides.push(otherEndX);
+        if (Math.abs(draggedEndX - otherStartX) < SNAP_PIXELS)
+          guides.push(otherStartX);
+        if (Math.abs(draggedStartX - otherStartX) < SNAP_PIXELS)
+          guides.push(otherStartX);
+        if (Math.abs(draggedEndX - otherEndX) < SNAP_PIXELS)
+          guides.push(otherEndX);
+      }
+
+      setAlignmentGuides([...new Set(guides)]);
+    },
+    [getNodes],
+  );
+
+  const clearAlignmentGuides = useCallback(() => {
+    setAlignmentGuides([]);
+  }, []);
+
   return {
     handleDrop,
     handleDragOver,
     handleNodeDragStop,
     handleResizeEnd,
+    handleNodeDrag,
+    clearAlignmentGuides,
+    alignmentGuides,
   };
 }
