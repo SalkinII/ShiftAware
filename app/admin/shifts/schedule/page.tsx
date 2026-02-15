@@ -32,7 +32,6 @@ import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import CalendarView from "@/components/features/Calendar/CalendarView";
 import {
   LaneCalendarCanvas,
   type LaneCalendarCanvasHandle,
