@@ -27,6 +27,8 @@ import { TemplatePalette } from "@/components/features/TemplatePalette/TemplateP
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useEventContext } from "@/lib/hooks/useEventContext";
+import { canMutateShifts } from "@/lib/services/event-status-guard";
+import { getShiftsCacheKey } from "@/lib/cache/utils";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
@@ -70,6 +72,11 @@ export default function ShiftsPage() {
   const calendarRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<LaneCalendarCanvasHandle>(null);
   const { selectedEventId, selectedEvent } = useEventContext(true);
+  const shiftMutationLocked = selectedEvent
+    ? !canMutateShifts(
+        selectedEvent.status as import("@prisma/client").EventStatus,
+      )
+    : false;
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -111,7 +118,7 @@ export default function ShiftsPage() {
     error: shiftsError,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
-    key: selectedEventId ? `shifts-${selectedEventId}` : "shifts-none",
+    key: selectedEventId ? getShiftsCacheKey(selectedEventId) : "shifts-none",
     fetchFn: async () => {
       if (!selectedEventId) return [];
       const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
@@ -179,7 +186,7 @@ export default function ShiftsPage() {
   useEffect(() => {
     function handleCacheInvalidate(e: CustomEvent) {
       const keys = e.detail?.keys as string[] | undefined;
-      if (keys && keys.some((k) => k === "shifts" || k.startsWith("shifts*"))) {
+      if (keys && keys.some((k) => k === "shifts" || k.startsWith("shifts:"))) {
         refetchShifts();
       }
     }
@@ -281,7 +288,7 @@ export default function ShiftsPage() {
         window.dispatchEvent(
           new CustomEvent("shiftaware:cache-invalidate", {
             detail: {
-              keys: ["shifts", "shifts*", "assignments", "assignments*"],
+              keys: ["shifts", "shifts:*", "assignments", "assignments:*"],
             },
           }),
         );
@@ -369,7 +376,7 @@ export default function ShiftsPage() {
         toast.success("Shift updated successfully");
         window.dispatchEvent(
           new CustomEvent("shiftaware:cache-invalidate", {
-            detail: { keys: ["shifts", "shifts*"] },
+            detail: { keys: ["shifts", "shifts:*"] },
           }),
         );
       } else {
@@ -398,7 +405,7 @@ export default function ShiftsPage() {
         window.dispatchEvent(
           new CustomEvent("shiftaware:cache-invalidate", {
             detail: {
-              keys: ["shifts", "shifts*", "assignments", "assignments*"],
+              keys: ["shifts", "shifts:*", "assignments", "assignments:*"],
             },
           }),
         );
@@ -623,6 +630,7 @@ export default function ShiftsPage() {
                     onShiftSelected={setSelectedShiftId}
                     onShiftCreated={() => refetchShifts()}
                     onShiftUpdated={() => refetchShifts()}
+                    shiftMutationLocked={shiftMutationLocked}
                   />
                 )}
               </div>
@@ -941,7 +949,7 @@ export default function ShiftsPage() {
                     type="submit"
                     className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs mt-4"
                   >
-                    Register Shift Template
+                    Register Shift
                   </Button>
                 </form>
               </Card>
