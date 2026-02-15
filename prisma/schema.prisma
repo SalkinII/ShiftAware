@@ -195,6 +195,8 @@ model Shift {
   priority          ShiftPriority @default(CORE)
   desirabilityScore Int           @default(3)
   isTemplate        Boolean       @default(false)
+  templateId       String?
+  template         ShiftTemplate? @relation("ShiftFromTemplate", fields: [templateId], references: [id])
 
   requiredRoles ShiftRole[]
   capacity      Int         @default(2)
@@ -324,6 +326,7 @@ model ShiftTemplate {
   requiredRoles    ShiftTemplateRole[]
   scheduledShifts  ScheduledShift[]
   eventAssignments EventTemplate[]
+  createdShifts    Shift[] @relation("ShiftFromTemplate")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
