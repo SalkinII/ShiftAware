@@ -1,0 +1,75 @@
+Audit code implementation from lane calendar job.
+
+Adapt constants for panels (need to be prettier)
+Some click errors in calendar.
+Test extensively and tweak features.
+Display of hours
+
+Clean up old calendar when all done
+
+## React Flow Calendar Font Sizes (2026-02-15)
+Current font sizes in ShiftBlockNode are very small:
+- Compact view (name): text-xs (12px)
+- Full detail (name): text-xs (12px)
+- Full detail (time/capacity): text-[10px] (10px)
+
+Proposed sizes to test on different screens:
+- Compact view (name): text-base (16px) or text-lg (18px)
+- Full detail (name): text-lg (18px) or text-xl (20px)
+- Full detail (time/capacity): text-base (16px) or text-lg (18px)
+
+Location: components/features/LaneCalendar/nodes/ShiftBlockNode.tsx
+Lines: 71 (compact), 77 (name), 80 & 83 (time/capacity)
+
+Note: Need to test with actual data on different screen sizes/zoom levels before finalizing.
+
+## Template-Based Lanes (2026-02-15) - PLANNING NEEDED
+Current limitation: Shifts are grouped by type (MOBILE_TEAM/STATIONARY/SUPER) into lanes.
+Problem: Multiple shifts of the same type land in the same lane, causing overlaps.
+
+Desired behavior: Each template should get its own dedicated lane.
+Example:
+  - "Mobile Team North" → own lane
+  - "Mobile Team South" → own lane
+  - "Stationary Main" → own lane
+  - "Stationary Gate" → own lane
+(Instead of all "MOBILE_TEAM" in one lane, all "STATIONARY" in another)
+
+Current data model limitation:
+  - Shift.type field is enum (MOBILE_TEAM, STATIONARY, SUPER)
+  - Lane derivation: deriveLanesFromTemplates() groups by template.type
+  - No way to distinguish between templates of same type
+
+Proposed solution (needs planning):
+  1. Add Shift.templateId as lane discriminator (already exists, just not used for lanes)
+  2. Update deriveLanesFromTemplates() to create one lane per template (not per type)
+  3. Update coordinate mapping: yToLaneIndex needs template-based lookup
+  4. Update drag/drop handlers to map to template lanes, not type lanes
+
+React Flow supports this - just need to adjust lane generation logic.
+Requires careful planning to maintain backward compatibility.
+
+Files to review:
+  - lib/types/lane.ts (deriveLanesFromTemplates function)
+  - components/features/LaneCalendar/hooks/useLaneNodes.ts
+  - components/features/LaneCalendar/hooks/useShiftNodes.ts (laneIndexMap)
+  - components/features/LaneCalendar/hooks/useCanvasActions.ts (drop handler)
+
+## PNG Export - WIP (2026-02-15) - TODO
+Current status: Export function is stubbed out with placeholder toast message.
+Location: app/admin/shifts/schedule/page.tsx (handleExportCalendar function)
+
+Old implementation: Used html2canvas to capture calendar DOM element
+Removed: html2canvas dependency removed during React Flow migration
+
+TODO: Implement React Flow native export using:
+  - getNodesBounds() - Get bounding box of all nodes
+  - getViewportForBounds() - Calculate viewport for bounds
+  - toPng() or toSvg() from 'html-to-image' library (or similar)
+  - OR use React Flow's built-in export utilities (v12+)
+
+Reference: React Flow v12+ documentation for canvas export methods
+Consider: May need to install html-to-image or similar library for PNG generation
+
+Current behavior: Clicking export shows info toast "Export feature will be implemented with React Flow native export"
+
