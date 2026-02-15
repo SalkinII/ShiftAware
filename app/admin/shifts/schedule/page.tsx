@@ -604,36 +604,62 @@ export default function ShiftsPage() {
             </Card>
 
             {viewMode === "calendar" ? (
-              <div
-                ref={calendarRef}
-                className="bg-white rounded-xl shadow-sm overflow-hidden"
-              >
-                {!selectedEvent ? (
-                  <div className="p-12 text-center text-gray-400">
-                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium">
-                      Select an event to view the calendar
-                    </p>
-                  </div>
-                ) : (
-                  <LaneCalendarCanvas
-                    ref={canvasRef}
-                    shifts={shifts}
-                    lanes={derivedLanes}
-                    eventStart={
-                      selectedEvent ? new Date(selectedEvent.startDate) : null
-                    }
-                    eventEnd={
-                      selectedEvent ? new Date(selectedEvent.endDate) : null
-                    }
-                    eventId={selectedEventId}
-                    onShiftSelected={setSelectedShiftId}
-                    onShiftCreated={() => refetchShifts()}
-                    onShiftUpdated={() => refetchShifts()}
-                    shiftMutationLocked={shiftMutationLocked}
+              <>
+                {/* Template palette — always visible above canvas */}
+                {selectedEvent && (
+                  <TemplatePalette
+                    eventId={selectedEventId || undefined}
+                    layout="horizontal"
                   />
                 )}
-              </div>
+                {/* Lane legend */}
+                {selectedEvent && derivedLanes.length > 0 && (
+                  <div className="flex items-center gap-4 px-4 py-2 bg-white rounded-xl shadow-sm">
+                    {derivedLanes.map((lane) => (
+                      <div key={lane.id} className="flex items-center gap-1.5">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: lane.color }}
+                        />
+                        <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
+                          {lane.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Canvas */}
+                <div
+                  ref={calendarRef}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden"
+                >
+                  {!selectedEvent ? (
+                    <div className="p-12 text-center text-gray-400">
+                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p className="font-medium">
+                        Select an event to view the calendar
+                      </p>
+                    </div>
+                  ) : (
+                    <LaneCalendarCanvas
+                      ref={canvasRef}
+                      shifts={shifts}
+                      lanes={derivedLanes}
+                      eventStart={
+                        selectedEvent ? new Date(selectedEvent.startDate) : null
+                      }
+                      eventEnd={
+                        selectedEvent ? new Date(selectedEvent.endDate) : null
+                      }
+                      eventId={selectedEventId}
+                      onShiftSelected={setSelectedShiftId}
+                      onShiftCreated={() => refetchShifts()}
+                      onShiftUpdated={() => refetchShifts()}
+                      shiftMutationLocked={shiftMutationLocked}
+                    />
+                  )}
+                </div>
+              </>
             ) : (
               <div className="space-y-4">
                 {shifts.map((shift) => (
@@ -955,28 +981,27 @@ export default function ShiftsPage() {
               </Card>
             ) : viewMode === "calendar" ? (
               <div className="space-y-6">
-                {selectedShiftId ? (
+                {selectedShiftId && (
                   <ShiftPropertiesPanel
                     shiftId={selectedShiftId}
                     onClose={() => setSelectedShiftId(null)}
                     onUpdated={() => refetchShifts()}
                   />
-                ) : (
-                  <>
-                    <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Zap className="w-5 h-5" />
-                        <span className="text-xs font-bold uppercase tracking-widest opacity-80">
-                          Drag & Drop
-                        </span>
-                      </div>
-                      <p className="text-sm leading-relaxed opacity-90">
-                        Drag templates onto the calendar to create shifts.
-                        They&apos;ll snap to the 15-minute grid automatically.
-                      </p>
-                    </Card>
-                    <TemplatePalette eventId={selectedEventId || undefined} />
-                  </>
+                )}
+                {!selectedShiftId && (
+                  <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Zap className="w-5 h-5" />
+                      <span className="text-xs font-bold uppercase tracking-widest opacity-80">
+                        Drag & Drop
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed opacity-90">
+                      Drag templates from the strip above the calendar onto the
+                      canvas to create shifts. They&apos;ll snap to the
+                      15-minute grid automatically.
+                    </p>
+                  </Card>
                 )}
                 <Card className="bg-white border-none shadow-sm p-4">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
