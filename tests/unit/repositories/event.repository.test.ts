@@ -1,4 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  EventStatus,
+  RegistrationStatus,
+  AttributeType,
+  ShiftType,
+  ShiftPriority,
+} from "@prisma/client";
 import { EventRepository } from "@/lib/repositories/event.repository";
 
 // Mock the prisma client
@@ -54,6 +61,7 @@ describe("EventRepository", () => {
       name: "Summer Festival",
       startDate: new Date("2026-06-26"),
       endDate: new Date("2026-06-28"),
+      status: EventStatus.PLANNING,
       config: { id: "config-1", eventId: "event-1" },
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -77,6 +85,7 @@ describe("EventRepository", () => {
         name: "Event 1",
         startDate: new Date("2026-07-01"),
         endDate: new Date("2026-07-03"),
+        status: EventStatus.PLANNING,
         config: { id: "c1", eventId: "e1" },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -86,6 +95,7 @@ describe("EventRepository", () => {
         name: "Event 2",
         startDate: new Date("2026-06-15"),
         endDate: new Date("2026-06-17"),
+        status: EventStatus.PLANNING,
         config: { id: "c2", eventId: "e2" },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -113,6 +123,7 @@ describe("EventRepository", () => {
     const mockEvent = {
       id: "event-3",
       ...input,
+      status: EventStatus.PLANNING,
       config: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -132,6 +143,7 @@ describe("EventRepository", () => {
       name: "Updated Event Name",
       startDate: new Date("2026-06-26"),
       endDate: new Date("2026-06-28"),
+      status: EventStatus.PLANNING,
       config: { id: "config-1", eventId: "event-1" },
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -150,6 +162,7 @@ describe("EventRepository", () => {
       name: "Deleted Event",
       startDate: new Date("2026-06-26"),
       endDate: new Date("2026-06-28"),
+      status: EventStatus.PLANNING,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -176,6 +189,7 @@ describe("EventRepository", () => {
     const mockResult = {
       id: "event-new",
       ...eventData,
+      status: EventStatus.PLANNING,
       config: { id: "config-new", eventId: "event-new", ...configDefaults },
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -195,12 +209,19 @@ describe("EventRepository", () => {
       id: "config-1",
       eventId: "event-1",
       minShiftsPerPerson: 2,
+      bufferDaysBefore: 0,
+      bufferDaysAfter: 0,
+      algorithmWeights: {},
+      balanceThresholds: {},
+      autoAssignUnfilled: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       event: {
         id: "event-1",
         name: "Test Event",
         startDate: new Date("2026-06-26"),
         endDate: new Date("2026-06-28"),
-        status: "ACTIVE",
+        status: EventStatus.PLANNING,
       },
     };
 
@@ -231,12 +252,19 @@ describe("EventRepository", () => {
       id: "config-1",
       eventId: "event-1",
       minShiftsPerPerson: 3,
+      bufferDaysBefore: 0,
+      bufferDaysAfter: 0,
+      algorithmWeights: {},
+      balanceThresholds: {},
+      autoAssignUnfilled: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       event: {
         id: "event-1",
         name: "Test Event",
         startDate: new Date("2026-06-26"),
         endDate: new Date("2026-06-28"),
-        status: "ACTIVE",
+        status: EventStatus.PLANNING,
       },
     };
 
@@ -254,7 +282,7 @@ describe("EventRepository", () => {
         id: "reg-1",
         memberId: "member-1",
         eventId: "event-1",
-        status: "CONFIRMED",
+        status: RegistrationStatus.REGISTERED,
         registeredAt: new Date(),
         member: {
           id: "member-1",
@@ -292,7 +320,7 @@ describe("EventRepository", () => {
       id: "reg-2",
       memberId: "member-2",
       eventId: "event-1",
-      status: "PENDING",
+      status: RegistrationStatus.REGISTERED,
       registeredAt: new Date(),
       member: { id: "member-2", name: "Jane Smith" },
     };
@@ -304,7 +332,7 @@ describe("EventRepository", () => {
     const result = await repo.createRegistration(
       "event-1",
       "member-2",
-      "PENDING",
+      RegistrationStatus.REGISTERED,
     );
 
     expect(result).toEqual(mockRegistration);
@@ -315,7 +343,7 @@ describe("EventRepository", () => {
       id: "reg-1",
       memberId: "member-1",
       eventId: "event-1",
-      status: "CONFIRMED",
+      status: RegistrationStatus.REGISTERED,
       registeredAt: new Date(),
     };
 
@@ -335,11 +363,22 @@ describe("EventRepository", () => {
         id: "et-1",
         eventId: "event-1",
         templateId: "template-1",
+        createdAt: new Date(),
         template: {
           id: "template-1",
           name: "Global Template",
           eventId: null,
+          type: ShiftType.MOBILE_TEAM,
+          color: null,
+          startTime: "08:00",
+          capacity: 2,
+          durationMinutes: 480,
+          desirabilityScore: 3,
+          priority: ShiftPriority.CORE,
+          allowedLanes: [],
           requiredRoles: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       },
     ];
@@ -349,7 +388,17 @@ describe("EventRepository", () => {
         id: "template-2",
         name: "Event Template",
         eventId: "event-1",
+        type: ShiftType.MOBILE_TEAM,
+        color: null,
+        startTime: "08:00",
+        capacity: 2,
+        durationMinutes: 480,
+        desirabilityScore: 3,
+        priority: ShiftPriority.CORE,
+        allowedLanes: [],
         requiredRoles: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
 
@@ -371,6 +420,7 @@ describe("EventRepository", () => {
       id: "et-2",
       eventId: "event-1",
       templateId: "template-1",
+      createdAt: new Date(),
       template: {
         id: "template-1",
         name: "Global Template",
@@ -389,6 +439,7 @@ describe("EventRepository", () => {
       id: "et-1",
       eventId: "event-1",
       templateId: "template-1",
+      createdAt: new Date(),
     };
 
     vi.mocked(prisma.eventTemplate.findUnique).mockResolvedValue(
@@ -407,8 +458,12 @@ describe("EventRepository", () => {
         id: "attr-1",
         eventId: "event-1",
         name: "Dietary Requirements",
-        type: "TEXT",
+        label: "Dietary Requirements",
+        type: AttributeType.TEXT,
+        options: [],
+        required: false,
         createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
 
@@ -428,15 +483,20 @@ describe("EventRepository", () => {
   it("should create event attribute", async () => {
     const data = {
       name: "T-Shirt Size",
-      type: "SELECT",
+      type: AttributeType.SELECT,
       options: ["S", "M", "L", "XL"],
     };
 
     const mockAttribute = {
       id: "attr-2",
       eventId: "event-1",
-      ...data,
+      name: data.name,
+      label: data.name,
+      type: data.type,
+      options: data.options,
+      required: false,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     vi.mocked(prisma.eventAttributeDefinition.create).mockResolvedValue(
