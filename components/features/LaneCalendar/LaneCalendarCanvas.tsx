@@ -26,6 +26,7 @@ import "@xyflow/react/dist/style.css";
 import { type LaneConfig } from "@/lib/types/lane";
 import { LaneZoneNode } from "./nodes/LaneZoneNode";
 import { DaySeparatorNode } from "./nodes/DaySeparatorNode";
+import { HourGridNode } from "./nodes/HourGridNode";
 import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
 import { TimeRulerPanel } from "./panels/TimeRulerPanel";
 import { LaneLabelsColumn } from "./panels/LaneLabelsColumn";
@@ -43,6 +44,7 @@ import { Shield } from "lucide-react";
 
 const nodeTypes = {
   laneZone: LaneZoneNode,
+  hourGrid: HourGridNode,
   daySeparator: DaySeparatorNode,
   shiftBlock: ShiftBlockNode,
 };
