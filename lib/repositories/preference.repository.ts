@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { BaseRepository } from "./base.repository";
-import type { Prisma } from "@prisma/client";
+import { PreferenceLevel, type Prisma } from "@prisma/client";
 
 export class PreferenceRepository extends BaseRepository {
   async findById(id: string) {
@@ -81,13 +81,13 @@ export class PreferenceRepository extends BaseRepository {
           },
         },
         update: {
-          wantLevel: data.wantLevel as Prisma.PreferenceLevel,
+          wantLevel: data.wantLevel as PreferenceLevel,
           notes: data.notes,
         },
         create: {
           teamMember: { connect: { id: data.teamMemberId } },
           shift: { connect: { id: data.shiftId } },
-          wantLevel: data.wantLevel as Prisma.PreferenceLevel,
+          wantLevel: data.wantLevel as PreferenceLevel,
           notes: data.notes,
         },
         include: { teamMember: true, shift: true },
