@@ -23,13 +23,14 @@ export const TICK_HEIGHT_30MIN = 8;
 export const TICK_HEIGHT_15MIN = 6;
 
 // Day separator
-export const DAY_SEPARATOR_WIDTH = 2;
+export const DAY_SEPARATOR_WIDTH = 4;
 
 // Time ruler label widths (px) — used for skip-label collision avoidance
 export const MIN_HOUR_LABEL_WIDTH = 40; // "14:00" at 9px font ≈ 35px + padding
 export const MIN_DATE_LABEL_WIDTH = 100; // "Mon 15 Feb 00:00" ≈ 95px + padding
 
-// Node z-indices
+// Node z-indices (render order)
+export const Z_HOUR_GRID = 0;
 export const Z_LANE_ZONE = 0;
 export const Z_DAY_SEPARATOR = 1;
 export const Z_SHIFT_BLOCK = 2;
