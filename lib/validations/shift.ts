@@ -30,6 +30,7 @@ export const shiftSchemaBase = z.object({
   requiredRoles: z.array(shiftRoleSchema).min(1),
   capacity: z.number().int().positive().default(2),
   isTemplate: z.boolean().optional().default(false),
+  templateId: z.string().cuid().nullable().optional(),
 });
 
 export const shiftSchema = shiftSchemaBase
