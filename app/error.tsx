@@ -46,11 +46,11 @@ export default function Error({
             Try Again
           </button>
           <Link
-            href="/dashboard"
+            href="/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
           >
             <Home className="w-5 h-5" />
-            Go to Dashboard
+            Go Home
           </Link>
         </div>
       </div>
