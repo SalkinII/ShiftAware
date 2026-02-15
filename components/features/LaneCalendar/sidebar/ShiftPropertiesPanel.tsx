@@ -47,7 +47,9 @@ export function ShiftPropertiesPanel({
     setSaving(true);
     const start = new Date(startTime);
     const end = new Date(endTime);
-    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    const durationMinutes = Math.round(
+      (end.getTime() - start.getTime()) / 60000,
+    );
 
     const res = await fetch(`/api/shifts/${shiftId}`, {
       method: "PUT",
@@ -66,12 +68,16 @@ export function ShiftPropertiesPanel({
       toast.success("Shift updated");
       window.dispatchEvent(
         new CustomEvent("shiftaware:cache-invalidate", {
-          detail: { keys: ["shifts", "shifts*"] },
+          detail: { keys: ["shifts", "shifts:*"] },
         }),
       );
       onUpdated();
     } else {
-      toast.error("Failed to update shift");
+      if (res.status === 403) {
+        toast.error("Shifts can't be edited in the current event state");
+      } else {
+        toast.error("Failed to update shift");
+      }
     }
   };
 
@@ -83,18 +89,26 @@ export function ShiftPropertiesPanel({
       toast.success("Shift deleted");
       window.dispatchEvent(
         new CustomEvent("shiftaware:cache-invalidate", {
-          detail: { keys: ["shifts", "shifts*"] },
+          detail: { keys: ["shifts", "shifts:*"] },
         }),
       );
       onClose();
       onUpdated();
     } else {
-      toast.error("Failed to delete shift");
+      if (res.status === 403) {
+        toast.error("Shifts can't be deleted in the current event state");
+      } else {
+        toast.error("Failed to delete shift");
+      }
     }
   };
 
   if (loading) {
-    return <Card className="p-4 animate-pulse"><div className="h-40 bg-gray-100 rounded" /></Card>;
+    return (
+      <Card className="p-4 animate-pulse">
+        <div className="h-40 bg-gray-100 rounded" />
+      </Card>
+    );
   }
 
   if (!shift) {
@@ -109,8 +123,13 @@ export function ShiftPropertiesPanel({
           className="w-4 h-4 rounded"
           style={{ backgroundColor: getLaneColor(shift.type) }}
         />
-        <h3 className="font-semibold text-sm">{shift.type.replace("_", " ")}</h3>
-        <button onClick={onClose} className="ml-auto text-gray-400 hover:text-gray-600 text-xs">
+        <h3 className="font-semibold text-sm">
+          {shift.type.replace("_", " ")}
+        </h3>
+        <button
+          onClick={onClose}
+          className="ml-auto text-gray-400 hover:text-gray-600 text-xs"
+        >
           Close
         </button>
       </div>
@@ -155,7 +174,10 @@ export function ShiftPropertiesPanel({
           </div>
           <ul className="space-y-1">
             {shift.assignments.map((a: any) => (
-              <li key={a.id} className="text-xs text-gray-700 flex items-center gap-1">
+              <li
+                key={a.id}
+                className="text-xs text-gray-700 flex items-center gap-1"
+              >
                 <span>{a.teamMember?.alias || "Unknown"}</span>
                 <span className="text-gray-400">({a.role})</span>
               </li>
