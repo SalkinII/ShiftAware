@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PreferencesService } from "@/lib/services/preferences.service";
+import { PreferenceLevel } from "@prisma/client";
 
 describe("PreferencesService", () => {
   let service: PreferencesService;
@@ -60,7 +61,7 @@ describe("PreferencesService", () => {
     const input = {
       teamMember: { connect: { id: "member-1" } },
       shift: { connect: { id: "shift-1" } },
-      wantLevel: "WANT",
+      wantLevel: PreferenceLevel.WANT,
     };
     const created = {
       id: "2",
@@ -83,7 +84,10 @@ describe("PreferencesService", () => {
     const mockPreferences = [{ id: "p1", teamMemberId: "m1", shiftId: "s1" }];
     mockRepo.findAllWithDetails.mockResolvedValue(mockPreferences);
 
-    const result = await service.listPreferencesWithDetails({ teamMemberId: "m1", shiftId: "s1" });
+    const result = await service.listPreferencesWithDetails({
+      teamMemberId: "m1",
+      shiftId: "s1",
+    });
 
     expect(mockRepo.findAllWithDetails).toHaveBeenCalledWith({
       teamMemberId: "m1",

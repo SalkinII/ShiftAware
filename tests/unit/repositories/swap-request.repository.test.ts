@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SwapRequestRepository } from "@/lib/repositories/swap-request.repository";
+import { SwapStatus } from "@prisma/client";
 
 // Mock the prisma client
 vi.mock("@/lib/db", () => ({
@@ -36,12 +37,14 @@ describe("SwapRequestRepository", () => {
         requesterId: "member-1",
         fromAssignmentId: "assign-1",
         toShiftId: "shift-2",
-        status: "PENDING",
+        matchedWithId: null,
+        status: SwapStatus.PENDING,
         requester: { id: "member-1", alias: "john" },
         fromAssignment: { id: "assign-1", shift: { id: "shift-1" } },
         toShift: { id: "shift-2" },
         matchedWith: null,
         createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
 
@@ -58,7 +61,8 @@ describe("SwapRequestRepository", () => {
       requesterId: "member-1",
       fromAssignmentId: "assign-1",
       toShiftId: "shift-2",
-      status: "PENDING",
+      matchedWithId: null,
+      status: SwapStatus.PENDING,
       requester: { id: "member-1", alias: "john" },
       fromAssignment: {
         id: "assign-1",
@@ -68,6 +72,7 @@ describe("SwapRequestRepository", () => {
       toShift: { id: "shift-2" },
       matchedWith: null,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     vi.mocked(prisma.swapRequest.findUnique).mockResolvedValue(mockRequest);
@@ -89,11 +94,13 @@ describe("SwapRequestRepository", () => {
       requesterId: "member-1",
       fromAssignmentId: "assign-1",
       toShiftId: "shift-2",
-      status: "PENDING",
+      matchedWithId: null,
+      status: SwapStatus.PENDING,
       requester: { id: "member-1", alias: "john" },
       fromAssignment: { id: "assign-1", shift: { id: "shift-1" } },
       toShift: { id: "shift-2" },
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     vi.mocked(prisma.swapRequest.create).mockResolvedValue(mockRequest);
@@ -106,9 +113,13 @@ describe("SwapRequestRepository", () => {
   it("should find matching request", async () => {
     const mockMatch = {
       id: "req-match",
-      status: "PENDING",
+      status: SwapStatus.PENDING,
       toShiftId: "shift-1",
       fromAssignmentId: "assign-2",
+      matchedWithId: null,
+      requesterId: "member-1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     vi.mocked(prisma.swapRequest.findFirst).mockResolvedValue(mockMatch);

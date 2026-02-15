@@ -1,6 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ShiftsService } from "@/lib/services/shifts.service";
 
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    event: {
+      findUnique: vi
+        .fn()
+        .mockResolvedValue({ id: "event-1", status: "PLANNING" }),
+    },
+  },
+}));
+
 describe("ShiftsService", () => {
   let service: ShiftsService;
   let mockRepo: any;
@@ -72,8 +82,8 @@ describe("ShiftsService", () => {
 
   it("should create shift", async () => {
     const input = {
-      eventId: "event-1",
-      type: "MOBILE_TEAM",
+      event: { connect: { id: "event-1" } },
+      type: "MOBILE_TEAM" as const,
       startTime: new Date("2026-06-26T10:00:00Z"),
       endTime: new Date("2026-06-26T16:00:00Z"),
       durationMinutes: 360,
@@ -81,7 +91,13 @@ describe("ShiftsService", () => {
     };
     const created = {
       id: "2",
-      ...input,
+      eventId: "event-1",
+      templateId: null,
+      type: "MOBILE_TEAM" as const,
+      startTime: new Date("2026-06-26T10:00:00Z"),
+      endTime: new Date("2026-06-26T16:00:00Z"),
+      durationMinutes: 360,
+      capacity: 2,
       priority: "CORE",
       desirabilityScore: 3,
       isTemplate: false,

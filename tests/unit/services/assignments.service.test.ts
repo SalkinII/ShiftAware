@@ -4,6 +4,9 @@ import { AssignmentsService } from "@/lib/services/assignments.service";
 // Mock dependencies
 vi.mock("@/lib/db", () => ({
   prisma: {
+    event: {
+      findUnique: vi.fn(),
+    },
     teamMember: {
       findMany: vi.fn(),
     },
@@ -84,36 +87,78 @@ describe("AssignmentsService", () => {
     };
 
     const mockMembers = [
-      { id: "member-1", isActive: true, preferences: [], assignments: [] },
+      {
+        id: "member-1",
+        isActive: true,
+        preferences: [],
+        assignments: [],
+        alias: "alice",
+        avatarId: "🎭",
+        experienceLevel: "JUNIOR" as const,
+        capabilities: ["TEAM_MEMBER" as const],
+        isAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ];
 
     const mockShifts = [
       {
         id: "shift-1",
         eventId: "event-1",
-        priority: "CORE",
+        templateId: null,
+        type: "MOBILE_TEAM" as const,
+        startTime: new Date(),
+        endTime: new Date(),
+        durationMinutes: 480,
+        priority: "CORE" as const,
+        desirabilityScore: 3,
+        isTemplate: false,
+        capacity: 2,
         preferences: [],
         assignments: [],
         requiredRoles: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
 
     const mockResult = {
       assignments: [
         {
+          id: "assign-1",
           shiftId: "shift-1",
           teamMemberId: "member-1",
-          role: "TEAM_MEMBER",
+          role: "TEAM_MEMBER" as const,
           isLead: false,
-          assignmentType: "ALGORITHM",
+          assignmentType: "ALGORITHM" as const,
+          algorithmScore: 0.85,
+          notes: "Good match",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ],
-      violations: [],
-      scores: new Map([["member-1-shift-1", 0.85]]),
+      violations: [] as string[],
+      scores: new Map([
+        [
+          "member-1-shift-1",
+          {
+            preferenceMatch: 0.9,
+            experienceBalance: 0.8,
+            workloadFairness: 0.85,
+            coreShiftCoverage: 1,
+            overall: 0.85,
+          },
+        ],
+      ]),
       explanations: new Map([["member-1-shift-1", "Good match"]]),
     };
 
     mockEventRepo.findById.mockResolvedValue(mockEvent);
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({
+      id: "event-1",
+      status: "ASSIGNING",
+    });
     vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers);
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts);
     vi.mocked(runAssignmentAlgorithm).mockResolvedValue(mockResult);
@@ -136,38 +181,75 @@ describe("AssignmentsService", () => {
     };
 
     const mockMembers = [
-      { id: "member-1", isActive: true, preferences: [], assignments: [] },
+      {
+        id: "member-1",
+        isActive: true,
+        preferences: [],
+        assignments: [],
+        alias: "alice",
+        avatarId: "🎭",
+        experienceLevel: "JUNIOR" as const,
+        capabilities: ["TEAM_MEMBER" as const],
+        isAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ];
 
     const mockShifts = [
       {
         id: "shift-1",
         eventId: "event-1",
-        priority: "NORMAL",
+        templateId: null,
+        type: "MOBILE_TEAM" as const,
+        startTime: new Date(),
+        endTime: new Date(),
+        durationMinutes: 480,
+        priority: "CORE" as const,
+        desirabilityScore: 3,
+        isTemplate: false,
+        capacity: 2,
         preferences: [],
         assignments: [],
         requiredRoles: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
 
     const mockResult = {
       assignments: [
         {
+          id: "assign-1",
           shiftId: "shift-1",
           teamMemberId: "member-1",
-          role: "TEAM_MEMBER",
+          role: "TEAM_MEMBER" as const,
           isLead: false,
-          assignmentType: "ALGORITHM",
+          assignmentType: "ALGORITHM" as const,
+          algorithmScore: 0.85,
+          notes: "Good match",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ],
-      violations: [],
-      scores: new Map([["member-1-shift-1", 0.85]]),
+      violations: [] as string[],
+      scores: new Map([
+        [
+          "member-1-shift-1",
+          {
+            preferenceMatch: 0.9,
+            experienceBalance: 0.8,
+            workloadFairness: 0.85,
+            coreShiftCoverage: 1,
+            overall: 0.85,
+          },
+        ],
+      ]),
       explanations: new Map([["member-1-shift-1", "Good match"]]),
     };
 
     const mockSaved = [
       {
-        id: "assign-1",
         ...mockResult.assignments[0],
         shift: { id: "shift-1" },
         teamMember: { id: "member-1" },
@@ -175,6 +257,10 @@ describe("AssignmentsService", () => {
     ];
 
     mockEventRepo.findById.mockResolvedValue(mockEvent);
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({
+      id: "event-1",
+      status: "ASSIGNING",
+    });
     vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers);
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts);
     vi.mocked(runAssignmentAlgorithm).mockResolvedValue(mockResult);

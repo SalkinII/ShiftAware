@@ -237,14 +237,16 @@ describe("TeamMemberRepository", () => {
     const mockAttributes = [
       {
         id: "attr-1",
-        teamMemberId: "member-1",
+        memberId: "member-1",
         definitionId: "def-1",
         value: '{"size": "M"}',
+        createdAt: new Date(),
+        updatedAt: new Date(),
         definition: {
           id: "def-1",
           eventId: "event-1",
           name: "T-Shirt Size",
-          type: "SELECT",
+          type: "SELECT" as const,
         },
       },
     ];
@@ -266,14 +268,16 @@ describe("TeamMemberRepository", () => {
     const mockAttributes = [
       {
         id: "attr-1",
-        teamMemberId: "member-1",
+        memberId: "member-1",
         definitionId: "def-1",
         value: '{"size": "M"}',
+        createdAt: new Date(),
+        updatedAt: new Date(),
         definition: {
           id: "def-1",
           eventId: "event-1",
           name: "T-Shirt Size",
-          type: "SELECT",
+          type: "SELECT" as const,
         },
       },
     ];
@@ -296,8 +300,12 @@ describe("TeamMemberRepository", () => {
       id: "def-1",
       eventId: "event-1",
       name: "Dietary Requirements",
-      type: "TEXT",
+      type: "TEXT" as const,
+      label: "Dietary Requirements",
+      options: [],
+      required: false,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     vi.mocked(prisma.eventAttributeDefinition.findFirst).mockResolvedValue(
@@ -318,14 +326,16 @@ describe("TeamMemberRepository", () => {
   it("should upsert member attribute", async () => {
     const mockAttribute = {
       id: "attr-2",
-      teamMemberId: "member-1",
+      memberId: "member-1",
       definitionId: "def-1",
       value: '{"dietary": "vegan"}',
+      createdAt: new Date(),
+      updatedAt: new Date(),
       definition: {
         id: "def-1",
         eventId: "event-1",
         name: "Dietary Requirements",
-        type: "TEXT",
+        type: "TEXT" as const,
       },
     };
 

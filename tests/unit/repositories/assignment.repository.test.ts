@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
+import { Role, AssignmentType } from "@prisma/client";
 
 // Mock the prisma client
 vi.mock("@/lib/db", () => ({
@@ -30,8 +31,13 @@ describe("AssignmentRepository", () => {
         id: "assign-1",
         shiftId: "shift-1",
         teamMemberId: "member-1",
-        role: "TEAM_MEMBER",
+        role: Role.TEAM_MEMBER,
         isLead: false,
+        assignmentType: AssignmentType.ALGORITHM,
+        algorithmScore: null,
+        notes: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         shift: {
           id: "shift-1",
           event: { id: "event-1" },
@@ -108,17 +114,29 @@ describe("AssignmentRepository", () => {
     const mockSaved = [
       {
         id: "assign-1",
-        ...assignments[0],
+        shiftId: assignments[0].shiftId,
+        teamMemberId: assignments[0].teamMemberId,
+        role: Role.TEAM_MEMBER,
+        isLead: assignments[0].isLead,
+        assignmentType: AssignmentType.ALGORITHM,
         algorithmScore: 0.85,
         notes: "High preference match",
+        createdAt: new Date(),
+        updatedAt: new Date(),
         shift: { id: "shift-1" },
         teamMember: { id: "member-1" },
       },
       {
         id: "assign-2",
-        ...assignments[1],
+        shiftId: assignments[1].shiftId,
+        teamMemberId: assignments[1].teamMemberId,
+        role: Role.SHIFT_LEAD,
+        isLead: assignments[1].isLead,
+        assignmentType: AssignmentType.ALGORITHM,
         algorithmScore: 0.92,
         notes: "Experience balance",
+        createdAt: new Date(),
+        updatedAt: new Date(),
         shift: { id: "shift-2" },
         teamMember: { id: "member-2" },
       },

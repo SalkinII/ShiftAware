@@ -103,6 +103,9 @@ describe("ShiftTemplatesService", () => {
     const input = {
       name: "New Template",
       eventId: null,
+      type: "MOBILE_TEAM" as const,
+      durationMinutes: 480,
+      startTime: "08:00",
     };
     const created = {
       id: "template-3",

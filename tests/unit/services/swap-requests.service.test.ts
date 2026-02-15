@@ -73,12 +73,30 @@ describe("SwapRequestsService", () => {
       id: "assign-1",
       teamMemberId: "member-1",
       shiftId: "shift-1",
+      role: "TEAM_MEMBER" as const,
+      isLead: false,
+      assignmentType: "ALGORITHM" as const,
+      algorithmScore: null,
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       shift: { id: "shift-1", eventId: "event-1" },
     };
 
     const mockToShift = {
       id: "shift-2",
       eventId: "event-1",
+      startTime: new Date(),
+      endTime: new Date(),
+      type: "MOBILE_TEAM" as const,
+      durationMinutes: 480,
+      priority: "CORE" as const,
+      desirabilityScore: 3,
+      isTemplate: false,
+      templateId: null,
+      capacity: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const mockCreated = {
@@ -119,6 +137,12 @@ describe("SwapRequestsService", () => {
     const mockMatchedWith = {
       id: "req-2",
       fromAssignmentId: "assign-2",
+      toShiftId: "shift-2",
+      matchedWithId: null,
+      requesterId: "member-2",
+      status: "MATCHED" as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     mockRepo.findById.mockResolvedValueOnce(mockExisting);

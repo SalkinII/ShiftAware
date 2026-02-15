@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ShiftRepository } from "@/lib/repositories/shift.repository";
+import { ShiftType, ShiftPriority } from "@prisma/client";
 
 // Mock the prisma client
 vi.mock("@/lib/db", () => ({
@@ -33,11 +34,12 @@ describe("ShiftRepository", () => {
     const mockShift = {
       id: "shift-1",
       eventId: "event-1",
-      type: "MOBILE_TEAM",
+      templateId: null,
+      type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
       endTime: new Date("2026-06-26T16:00:00Z"),
       durationMinutes: 360,
-      priority: "CORE",
+      priority: ShiftPriority.CORE,
       desirabilityScore: 3,
       capacity: 2,
       isTemplate: false,
@@ -62,11 +64,12 @@ describe("ShiftRepository", () => {
       {
         id: "s1",
         eventId: "event-1",
-        type: "MOBILE_TEAM",
+        templateId: null,
+        type: ShiftType.MOBILE_TEAM,
         startTime: new Date("2026-06-26T10:00:00Z"),
         endTime: new Date("2026-06-26T16:00:00Z"),
         durationMinutes: 360,
-        priority: "CORE",
+        priority: ShiftPriority.CORE,
         desirabilityScore: 3,
         capacity: 2,
         isTemplate: false,
@@ -85,8 +88,8 @@ describe("ShiftRepository", () => {
 
   it("should create a new shift", async () => {
     const input = {
-      eventId: "event-1",
-      type: "MOBILE_TEAM",
+      event: { connect: { id: "event-1" } },
+      type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
       endTime: new Date("2026-06-26T16:00:00Z"),
       durationMinutes: 360,
@@ -94,9 +97,15 @@ describe("ShiftRepository", () => {
     };
     const mockShift = {
       id: "shift-3",
-      ...input,
-      priority: "CORE",
+      eventId: "event-1",
+      templateId: null,
+      type: ShiftType.MOBILE_TEAM,
+      startTime: new Date("2026-06-26T10:00:00Z"),
+      endTime: new Date("2026-06-26T16:00:00Z"),
+      durationMinutes: 360,
+      priority: ShiftPriority.CORE,
       desirabilityScore: 3,
+      capacity: 2,
       isTemplate: false,
       requiredRoles: [],
       createdAt: new Date(),
@@ -115,11 +124,12 @@ describe("ShiftRepository", () => {
     const mockShift = {
       id: "shift-1",
       eventId: "event-1",
-      type: "MOBILE_TEAM",
+      templateId: null,
+      type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
       endTime: new Date("2026-06-26T16:00:00Z"),
       durationMinutes: 360,
-      priority: "CORE",
+      priority: ShiftPriority.CORE,
       desirabilityScore: 3,
       capacity: 3,
       isTemplate: false,
@@ -139,14 +149,16 @@ describe("ShiftRepository", () => {
     const mockShift = {
       id: "shift-1",
       eventId: "event-1",
-      type: "MOBILE_TEAM",
+      templateId: null,
+      type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
       endTime: new Date("2026-06-26T16:00:00Z"),
       durationMinutes: 360,
-      priority: "CORE",
+      priority: ShiftPriority.CORE,
       desirabilityScore: 3,
       capacity: 2,
       isTemplate: false,
+      requiredRoles: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };

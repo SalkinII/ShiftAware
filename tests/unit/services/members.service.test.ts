@@ -21,7 +21,13 @@ describe("MembersService", () => {
 
   it("should list all members", async () => {
     const mockMembers = [
-      { id: "1", name: "Alice", emoji: "🎭", createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: "1",
+        name: "Alice",
+        emoji: "🎭",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ];
 
     mockRepo.findAll.mockResolvedValue(mockMembers);
@@ -32,7 +38,13 @@ describe("MembersService", () => {
   });
 
   it("should get member by ID", async () => {
-    const mockMember = { id: "1", name: "Alice", emoji: "🎭", createdAt: new Date(), updatedAt: new Date() };
+    const mockMember = {
+      id: "1",
+      name: "Alice",
+      emoji: "🎭",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     mockRepo.findById.mockResolvedValue(mockMember);
 
     const result = await service.getMember("1");
@@ -41,8 +53,20 @@ describe("MembersService", () => {
   });
 
   it("should create member", async () => {
-    const input = { name: "Bob", emoji: "🎪" };
-    const created = { id: "2", ...input, createdAt: new Date(), updatedAt: new Date() };
+    const input = {
+      alias: "bob",
+      avatarId: "🎪",
+      experienceLevel: "JUNIOR" as const,
+      capabilities: ["TEAM_MEMBER" as const],
+    };
+    const created = {
+      id: "2",
+      ...input,
+      isActive: true,
+      isAdmin: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
     mockRepo.create.mockResolvedValue(created);
 
@@ -55,7 +79,10 @@ describe("MembersService", () => {
     const mockMembers = [{ id: "m1", alias: "alice" }];
     mockRepo.findAll.mockResolvedValue(mockMembers);
 
-    const result = await service.listMembers({ isActive: true, eventRegistrations: { some: { eventId: "e1" } } });
+    const result = await service.listMembers({
+      isActive: true,
+      eventRegistrations: { some: { eventId: "e1" } },
+    });
 
     expect(mockRepo.findAll).toHaveBeenCalledWith({
       isActive: true,
