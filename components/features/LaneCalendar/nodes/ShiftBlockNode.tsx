@@ -69,10 +69,12 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           height: `${SHIFT_NODE_HEIGHT}px`,
           backgroundColor: color,
           opacity: isFull ? 1 : 0.8,
-          borderRadius: "6px",
-          border: selected
-            ? "2px solid #1d4ed8"
-            : `2px solid color-mix(in srgb, ${color} 70%, black)`,
+          borderRadius: `${Math.ceil(6 / zoom)}px`,
+          borderWidth: `${Math.ceil(2 / zoom)}px`,
+          borderStyle: "solid",
+          borderColor: selected
+            ? "#1d4ed8"
+            : `color-mix(in srgb, ${color} 70%, black)`,
           overflow: "hidden",
           cursor: "grab",
           display: "flex",
