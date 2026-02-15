@@ -1,12 +1,12 @@
 "use client";
 
-import { useDraggable } from "@dnd-kit/core";
 import { Clock, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useCache } from "@/lib/cache/useCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface ShiftTemplate {
   id: string;
@@ -24,31 +24,30 @@ interface TemplateItemProps {
 }
 
 function TemplateItem({ template }: TemplateItemProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: `template-${template.id}`,
-      data: {
-        type: "template",
-        template,
-      },
-    });
+  const [isDragging, setIsDragging] = useState(false);
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      }
-    : undefined;
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData(
+      "application/shiftaware-template",
+      JSON.stringify(template),
+    );
+    e.dataTransfer.effectAllowed = "copy";
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       className={cn(
         "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-50",
       )}
-      {...listeners}
-      {...attributes}
     >
       <Card elevation={1} hover className="p-3">
         <div className="flex items-start gap-2">
