@@ -64,12 +64,14 @@ export async function POST(request: Request) {
     const validated = shiftSchema.parse(body);
 
     // Create shift with required roles
-    const { requiredRoles, ...shiftData } = validated;
+    const { requiredRoles, eventId, templateId, ...shiftData } = validated;
 
     const shift = await service.createShift({
       ...shiftData,
       startTime: new Date(validated.startTime),
       endTime: new Date(validated.endTime),
+      event: { connect: { id: eventId } },
+      ...(templateId ? { template: { connect: { id: templateId } } } : {}),
       requiredRoles: {
         create: requiredRoles,
       },
