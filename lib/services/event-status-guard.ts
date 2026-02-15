@@ -14,7 +14,10 @@ export class StatusGuardError extends Error {
   }
 }
 
-const PERMISSION_MAP: Record<EventStatus, Record<GuardAction, boolean>> = {
+export const PERMISSION_MAP: Record<
+  EventStatus,
+  Record<GuardAction, boolean>
+> = {
   PLANNING: {
     SHIFT_MUTATE: true,
     PREFERENCE_MUTATE: false,
@@ -46,6 +49,14 @@ const PERMISSION_MAP: Record<EventStatus, Record<GuardAction, boolean>> = {
     REGISTRATION_MUTATE: false,
   },
 };
+
+/**
+ * Pure client-safe check — no DB call.
+ * Returns true if SHIFT_MUTATE is allowed for the given event status.
+ */
+export function canMutateShifts(status: EventStatus): boolean {
+  return PERMISSION_MAP[status]?.SHIFT_MUTATE === true;
+}
 
 export async function assertEventStatusAllows(
   eventId: string,
