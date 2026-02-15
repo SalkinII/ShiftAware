@@ -47,11 +47,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = shiftTemplateSchema.parse(body);
 
-    const { requiredRoles, ...templateData } = validated;
+    const { requiredRoles, eventId, ...templateData } = validated;
 
     const template = await service.createTemplate({
       ...templateData,
-      eventId: templateData.eventId || null,
+      ...(eventId ? { event: { connect: { id: eventId } } } : {}),
       requiredRoles: {
         create: requiredRoles,
       },
