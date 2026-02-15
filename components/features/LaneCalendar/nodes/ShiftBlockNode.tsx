@@ -1,9 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { type NodeProps, useViewport } from "@xyflow/react";
-import { NodeResizer } from "@reactflow/node-resizer";
-import "@reactflow/node-resizer/dist/style.css";
+import { type NodeProps, useViewport, NodeResizer } from "@xyflow/react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { format } from "date-fns";
 import {
