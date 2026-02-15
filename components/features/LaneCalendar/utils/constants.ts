@@ -1,7 +1,7 @@
 // Coordinate system
 export const PIXELS_PER_HOUR = 200;
-export const LANE_HEIGHT = 120;
-export const SHIFT_NODE_HEIGHT = 100;
+export const LANE_HEIGHT = 480;
+export const SHIFT_NODE_HEIGHT = 460;
 export const SHIFT_NODE_PADDING = 10;
 
 // Snap grid

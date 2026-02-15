@@ -17,7 +17,10 @@ interface TimeRulerPanelProps {
   eventEnd: Date;
 }
 
-function TimeRulerPanelComponent({ eventStart, eventEnd }: TimeRulerPanelProps) {
+function TimeRulerPanelComponent({
+  eventStart,
+  eventEnd,
+}: TimeRulerPanelProps) {
   const { zoom, x: viewportX } = useViewport();
 
   const totalHours = differenceInHours(eventEnd, eventStart) + 24;
@@ -27,7 +30,10 @@ function TimeRulerPanelComponent({ eventStart, eventEnd }: TimeRulerPanelProps) 
   const show30min = zoom > ZOOM_MINIMAL;
 
   // Only render ticks visible in viewport (performance)
-  const visibleStartHour = Math.max(0, Math.floor(-viewportX / (PIXELS_PER_HOUR * zoom)));
+  const visibleStartHour = Math.max(
+    0,
+    Math.floor(-viewportX / (PIXELS_PER_HOUR * zoom)),
+  );
   const visibleEndHour = Math.min(
     totalHours,
     Math.ceil((-viewportX + window.innerWidth) / (PIXELS_PER_HOUR * zoom)) + 1,
@@ -38,11 +44,15 @@ function TimeRulerPanelComponent({ eventStart, eventEnd }: TimeRulerPanelProps) 
   for (let h = visibleStartHour; h <= visibleEndHour; h++) {
     const xBase = h * PIXELS_PER_HOUR;
     const time = addHours(eventStart, h);
+    const isMidnight = time.getHours() === 0 && time.getMinutes() === 0;
+    const dateLabel = isMidnight ? format(time, "EEE d MMM") : "";
+    const timeLabel = format(time, "HH:mm");
+    const label = isMidnight ? `${dateLabel} ${timeLabel}` : timeLabel;
 
-    // Hour tick
+    // Hour tick (add date at midnight for multi-day context)
     ticks.push({
       x: xBase,
-      label: format(time, "HH:mm"),
+      label,
       height: TICK_HEIGHT_HOUR,
     });
 
@@ -54,7 +64,10 @@ function TimeRulerPanelComponent({ eventStart, eventEnd }: TimeRulerPanelProps) 
     if (show15min) {
       ticks.push({ x: xBase + PIXELS_PER_HOUR / 4, height: TICK_HEIGHT_15MIN });
       ticks.push({ x: xBase + PIXELS_PER_HOUR / 2, height: TICK_HEIGHT_30MIN });
-      ticks.push({ x: xBase + (PIXELS_PER_HOUR * 3) / 4, height: TICK_HEIGHT_15MIN });
+      ticks.push({
+        x: xBase + (PIXELS_PER_HOUR * 3) / 4,
+        height: TICK_HEIGHT_15MIN,
+      });
     }
   }
 
@@ -94,7 +107,11 @@ function TimeRulerPanelComponent({ eventStart, eventEnd }: TimeRulerPanelProps) 
               {tick.label && (
                 <div
                   className="text-[9px] text-gray-500 whitespace-nowrap"
-                  style={{ position: "absolute", bottom: tick.height + 2, left: 4 }}
+                  style={{
+                    position: "absolute",
+                    bottom: tick.height + 2,
+                    left: 4,
+                  }}
                 >
                   {tick.label}
                 </div>

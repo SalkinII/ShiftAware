@@ -1,6 +1,7 @@
 import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
 import { EventRepository } from "@/lib/repositories/event.repository";
 import { MembersService } from "@/lib/services/members.service";
+import { assertEventStatusAllows } from "@/lib/services/event-status-guard";
 import { prisma } from "@/lib/db";
 import { runAssignmentAlgorithm } from "@/lib/algorithm/optimizer";
 import type { Prisma } from "@prisma/client";
@@ -29,9 +30,10 @@ export class AssignmentsService {
   }
 
   async swapAssignments(assignment1Id: string, assignment2Id: string) {
-    // Get both assignments
     const a1 = await this.repo.findById(assignment1Id);
     const a2 = await this.repo.findById(assignment2Id);
+    const eventId = a1.shift.eventId;
+    await assertEventStatusAllows(eventId, "ASSIGNMENT_MUTATE");
 
     // Validate: Cannot swap if assignments are on the same shift
     if (a1.shiftId === a2.shiftId) {
@@ -91,7 +93,7 @@ export class AssignmentsService {
   }
 
   async runAllocation(eventId: string, preview = false) {
-    // 1. Load event with config
+    await assertEventStatusAllows(eventId, "ASSIGNMENT_MUTATE");
     const event = await this.eventRepo.findById(eventId);
 
     // 2. Load active members with preferences and assignments

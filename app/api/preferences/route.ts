@@ -7,6 +7,7 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { PreferencesService } from "@/lib/services/preferences.service";
+import { StatusGuardError } from "@/lib/services/event-status-guard";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
 const service = new PreferencesService();
@@ -22,7 +23,10 @@ export async function GET(request: Request) {
     const teamMemberId = searchParams.get("teamMemberId") || undefined;
     const shiftId = searchParams.get("shiftId") || undefined;
 
-    const preferences = await service.listPreferencesWithDetails({ teamMemberId, shiftId });
+    const preferences = await service.listPreferencesWithDetails({
+      teamMemberId,
+      shiftId,
+    });
     return createSuccessResponse(preferences);
   } catch (error) {
     console.error("Get preferences error:", error);
@@ -49,6 +53,9 @@ export async function POST(request: Request) {
 
     return createSuccessResponse(preference);
   } catch (error) {
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(error, error.message, 403);
+    }
     if (error instanceof RepositoryError) {
       if (error.code === "NOT_FOUND") {
         return createNotFoundResponse("Team member or shift");
@@ -82,6 +89,9 @@ export async function DELETE(request: Request) {
 
     return createSuccessResponse({ deleted: true });
   } catch (error) {
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(error, error.message, 403);
+    }
     if (error instanceof RepositoryError) {
       if (error.code === "NOT_FOUND") {
         return createNotFoundResponse("Preference");

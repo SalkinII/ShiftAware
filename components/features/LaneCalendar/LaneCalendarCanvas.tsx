@@ -1,16 +1,26 @@
 "use client";
 
-import { useCallback, useMemo, useState, useRef } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   ReactFlow,
   Controls,
   MiniMap,
-  Background,
   type Node,
   type NodeChange,
   applyNodeChanges,
   ReactFlowProvider,
+  useReactFlow,
+  getNodesBounds,
+  getViewportForBounds,
 } from "@xyflow/react";
+import { toPng } from "html-to-image";
 import "@xyflow/react/dist/style.css";
 
 import { type LaneConfig } from "@/lib/types/lane";
@@ -26,11 +36,9 @@ import {
   MIN_ZOOM,
   MAX_ZOOM,
   DEFAULT_ZOOM,
-  PIXELS_PER_HOUR,
   LANE_HEIGHT,
   SNAP_PIXELS,
 } from "./utils/constants";
-import { widthToDuration, snapX } from "./utils/coordinates";
 
 const nodeTypes = {
   laneZone: LaneZoneNode,
@@ -47,20 +55,50 @@ interface LaneCalendarCanvasProps {
   onShiftSelected?: (shiftId: string | null) => void;
   onShiftCreated?: () => void;
   onShiftUpdated?: () => void;
+  /** When true, disables drag/drop, resize; shows vote buttons on shift blocks */
+  readOnly?: boolean;
+  onVoteWant?: (shiftId: string) => void;
+  onVoteDontWant?: (shiftId: string) => void;
 }
 
-function LaneCalendarCanvasInner({
-  shifts,
-  lanes,
-  eventStart,
-  eventEnd,
-  eventId,
-  onShiftSelected,
-  onShiftCreated,
-  onShiftUpdated,
-}: LaneCalendarCanvasProps) {
+export interface LaneCalendarCanvasHandle {
+  exportToPng: () => Promise<string | null>;
+}
+
+function LaneCalendarCanvasInner(
+  {
+    shifts,
+    lanes,
+    eventStart,
+    eventEnd,
+    eventId,
+    onShiftSelected,
+    onShiftCreated,
+    onShiftUpdated,
+    readOnly = false,
+    onVoteWant,
+    onVoteDontWant,
+  }: LaneCalendarCanvasProps,
+  ref: React.Ref<LaneCalendarCanvasHandle>,
+) {
+  const flowContainerRef = useRef<HTMLDivElement>(null);
+  const { handleDrop, handleDragOver, handleNodeDragStop, handleResizeEnd } =
+    useCanvasActions({
+      lanes,
+      eventStart,
+      eventId,
+      onShiftCreated,
+      onShiftUpdated,
+    });
+
+  const { setViewport } = useReactFlow();
   const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
-  const shiftNodes = useShiftNodes(shifts, lanes, eventStart);
+  const shiftNodes = useShiftNodes(shifts, lanes, eventStart, {
+    onResizeEnd: readOnly ? undefined : handleResizeEnd,
+    readOnly,
+    onVoteWant,
+    onVoteDontWant,
+  });
 
   const [nodes, setNodes] = useState<Node[]>([]);
 
@@ -69,27 +107,9 @@ function LaneCalendarCanvasInner({
     setNodes([...laneNodes, ...shiftNodes]);
   }, [laneNodes, shiftNodes]);
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      setNodes((nds) => applyNodeChanges(changes, nds));
-
-      // Detect resize-end: when a shift node's dimensions change
-      for (const change of changes) {
-        if (change.type === "dimensions" && (change as any).id?.startsWith("shift-")) {
-          // Will be handled by onNodeDragStop or a separate resize callback
-        }
-      }
-    },
-    [],
-  );
-
-  const { handleDrop, handleDragOver, handleNodeDragStop } = useCanvasActions({
-    lanes,
-    eventStart,
-    eventId,
-    onShiftCreated,
-    onShiftUpdated,
-  });
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  }, []);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -104,6 +124,42 @@ function LaneCalendarCanvasInner({
     onShiftSelected?.(null);
   }, [onShiftSelected]);
 
+  const exportToPng = useCallback(async (): Promise<string | null> => {
+    const container = flowContainerRef.current;
+    if (!container) return null;
+    const viewport = container.querySelector(".react-flow__viewport");
+    const target = (viewport as HTMLElement) ?? container;
+    if (!target) return null;
+
+    const flowNodes = [...laneNodes, ...shiftNodes];
+    if (flowNodes.length === 0) return null;
+
+    const bounds = getNodesBounds(flowNodes);
+    const { width, height } = container.getBoundingClientRect();
+    const { x, y, zoom } = getViewportForBounds(
+      bounds,
+      width,
+      height,
+      MIN_ZOOM,
+      MAX_ZOOM,
+      0.1,
+    );
+    setViewport({ x, y, zoom });
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    try {
+      return await toPng(target, {
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+      });
+    } catch {
+      return null;
+    }
+  }, [laneNodes, shiftNodes, setViewport]);
+
+  useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
+
   if (!eventStart || !eventEnd) {
     return (
       <div className="flex items-center justify-center h-96 text-gray-400">
@@ -112,20 +168,29 @@ function LaneCalendarCanvasInner({
     );
   }
 
+  if (lanes.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96 text-gray-500">
+        No templates assigned yet. Assign templates in Setup to create lanes.
+      </div>
+    );
+  }
+
   return (
     <div className="relative" style={{ height: "70vh", minHeight: 500 }}>
       <LaneLabelsColumn lanes={lanes} />
-      <div style={{ marginLeft: 140, height: "100%" }}>
+      <div ref={flowContainerRef} style={{ marginLeft: 140, height: "100%" }}>
         <ReactFlow
           nodes={nodes}
           edges={[]}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
-          onNodeDragStop={handleNodeDragStop}
+          onNodeDragStop={readOnly ? undefined : handleNodeDragStop}
           onNodeClick={handleNodeClick}
           onPaneClick={handlePaneClick}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
+          onDrop={readOnly ? undefined : handleDrop}
+          onDragOver={readOnly ? undefined : handleDragOver}
+          nodesDraggable={!readOnly}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           defaultViewport={{ x: 0, y: 0, zoom: DEFAULT_ZOOM }}
@@ -151,13 +216,23 @@ function LaneCalendarCanvasInner({
   );
 }
 
+const LaneCalendarCanvasInnerWithRef = forwardRef(
+  LaneCalendarCanvasInner,
+) as React.ForwardRefExoticComponent<
+  LaneCalendarCanvasProps & React.RefAttributes<LaneCalendarCanvasHandle>
+>;
+
 /**
  * LaneCalendarCanvas — wrapped in ReactFlowProvider.
+ * Exposes exportToPng() via ref for PNG export.
  */
-export function LaneCalendarCanvas(props: LaneCalendarCanvasProps) {
+export const LaneCalendarCanvas = forwardRef<
+  LaneCalendarCanvasHandle,
+  LaneCalendarCanvasProps
+>(function LaneCalendarCanvas(props, ref) {
   return (
     <ReactFlowProvider>
-      <LaneCalendarCanvasInner {...props} />
+      <LaneCalendarCanvasInnerWithRef {...props} ref={ref} />
     </ReactFlowProvider>
   );
-}
+});

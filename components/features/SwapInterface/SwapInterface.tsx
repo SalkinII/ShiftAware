@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import CalendarView from "@/components/features/Calendar/CalendarView";
+import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 import { format, startOfDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -276,11 +276,17 @@ export function SwapInterface({
     filteredAssignments.forEach((assignment) => {
       if (!map.has(assignment.shiftId)) {
         const fallbackCapacity = Math.max(assignment.shift.capacity || 0, 1);
+        const start = new Date(assignment.shift.startTime);
+        const end = new Date(assignment.shift.endTime);
+        const durationMinutes = Math.round(
+          (end.getTime() - start.getTime()) / 60000,
+        );
         map.set(assignment.shiftId, {
           id: assignment.shiftId,
           type: assignment.shift.type,
           startTime: assignment.shift.startTime,
           endTime: assignment.shift.endTime,
+          durationMinutes,
           capacity: assignment.shift.capacity ?? fallbackCapacity,
           priority: assignment.shift.priority,
           event: assignment.shift.event,
@@ -295,10 +301,30 @@ export function SwapInterface({
     );
   }, [filteredAssignments]);
 
-  const calendarStartDate = useMemo(() => {
-    if (shiftsForCalendar.length === 0) return undefined;
-    const first = shiftsForCalendar[0];
-    return format(new Date(first.startTime), "yyyy-MM-dd");
+  const swapLanes = useMemo(() => {
+    if (shiftsForCalendar.length === 0) return [];
+    return [
+      {
+        id: "unassigned",
+        templateId: null as string | null,
+        label: "Assignments",
+        color: "#6b7280",
+        order: 0,
+        type: "MOBILE_TEAM",
+      },
+    ];
+  }, [shiftsForCalendar]);
+
+  const swapEventRange = useMemo(() => {
+    if (shiftsForCalendar.length === 0) return { start: null, end: null };
+    const starts = shiftsForCalendar.map((s) =>
+      new Date(s.startTime).getTime(),
+    );
+    const ends = shiftsForCalendar.map((s) => new Date(s.endTime).getTime());
+    return {
+      start: new Date(Math.min(...starts)),
+      end: new Date(Math.max(...ends)),
+    };
   }, [shiftsForCalendar]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -654,13 +680,26 @@ export function SwapInterface({
       ) : (
         <div className="space-y-4">
           <Card className="p-0 shadow-sm overflow-hidden">
-            <CalendarView
-              shifts={shiftsForCalendar}
-              viewType="Week"
-              startDate={calendarStartDate}
-              showAssignments={true}
-              onAssignmentClick={(shift) => setActiveSwapShift(shift)}
-            />
+            <div className="h-[500px] min-h-[400px]">
+              <LaneCalendarCanvas
+                shifts={shiftsForCalendar}
+                lanes={swapLanes}
+                eventStart={swapEventRange.start}
+                eventEnd={swapEventRange.end}
+                eventId={shiftsForCalendar[0]?.event?.id ?? null}
+                readOnly
+                onShiftSelected={(shiftId) => {
+                  if (shiftId) {
+                    const shift = shiftsForCalendar.find(
+                      (s) => s.id === shiftId,
+                    );
+                    setActiveSwapShift(shift ?? null);
+                  } else {
+                    setActiveSwapShift(null);
+                  }
+                }}
+              />
+            </div>
           </Card>
 
           {activeSwapShift ? (

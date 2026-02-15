@@ -14,8 +14,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
-import CalendarView from "@/components/features/Calendar/CalendarView";
+import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 import { MyShiftsList } from "./components/MyShiftsList";
+import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
@@ -87,7 +88,11 @@ const coverageLegend: Record<
 // User Calendar View - Read-only schedule display
 export default function UserCalendarPage() {
   const toast = useToast();
-  const { selectedEventId, events, loading: eventsLoading } = useEventContext(false);
+  const {
+    selectedEventId,
+    events,
+    loading: eventsLoading,
+  } = useEventContext(false);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarView, setCalendarView] = useState<
@@ -116,13 +121,50 @@ export default function UserCalendarPage() {
     return { start: dates[0], end: dates[dates.length - 1] };
   }, [shifts]);
 
+  // Fetch templates for lane derivation
+  const { data: eventTemplates } = useCache<any[]>({
+    key: selectedEventId
+      ? `event-templates-${selectedEventId}`
+      : "event-templates-none",
+    fetchFn: async () => {
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/events/${selectedEventId}/templates`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      const result = unwrapApiResponse<{ assigned?: any[] }>(json);
+      return result?.assigned ?? [];
+    },
+    enabled: !!selectedEventId,
+  });
+
+  const derivedLanes = useMemo(() => {
+    const fromTemplates = deriveLanesFromTemplates(eventTemplates ?? []);
+    if (fromTemplates.length > 0) return fromTemplates;
+    // No templates: single Unassigned lane so shifts can display
+    if (shifts.length > 0) {
+      return [
+        {
+          id: "unassigned",
+          templateId: null,
+          label: "Unassigned",
+          color: "#6b7280",
+          order: 0,
+          type: "MOBILE_TEAM",
+        },
+      ];
+    }
+    return [];
+  }, [eventTemplates, shifts.length]);
+
   // Use cache for shifts data
   const {
     data: cachedShifts,
     loading: cacheLoading,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
-    key: selectedEventId ? `calendar-shifts-${selectedEventId}` : "calendar-shifts-none",
+    key: selectedEventId
+      ? `calendar-shifts-${selectedEventId}`
+      : "calendar-shifts-none",
     fetchFn: async () => {
       if (!selectedEventId) return [];
       const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
@@ -137,7 +179,9 @@ export default function UserCalendarPage() {
   const eventData = useMemo(() => {
     if (events.length === 0) return null;
     // Get the most recent event that's not completed
-    const activeEvent = events.find(e => (e as EventWithConfig).status !== "COMPLETED");
+    const activeEvent = events.find(
+      (e) => (e as EventWithConfig).status !== "COMPLETED",
+    );
     if (activeEvent) return activeEvent as EventWithConfig;
     // Fallback to most recent event
     return events[events.length - 1] as EventWithConfig;
@@ -444,9 +488,16 @@ export default function UserCalendarPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Calendar className="w-16 h-16 text-gray-400 mb-4" />
-        <h2 className="text-xl font-bold text-gray-900 mb-2">No Event Selected</h2>
-        <p className="text-gray-500 mb-6">Go to the identity page to select your event.</p>
-        <a href="/app/identity" className="text-primary-600 font-medium hover:underline">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
+          No Event Selected
+        </h2>
+        <p className="text-gray-500 mb-6">
+          Go to the identity page to select your event.
+        </p>
+        <a
+          href="/app/identity"
+          className="text-primary-600 font-medium hover:underline"
+        >
           Go to Identity →
         </a>
       </div>
@@ -685,16 +736,22 @@ export default function UserCalendarPage() {
           </div>
 
           <Card className="p-0 shadow-xl overflow-hidden h-[calc(100vh-340px)] min-h-[600px] flex flex-col bg-white">
-            <CalendarView
-              shifts={filteredShifts}
-              viewType={viewType}
-              startDate={currentEventDate}
-              showAssignments={true}
-              onAssignmentClick={handleShiftClick}
-              onDateChange={(date) => setCurrentEventDate(date)}
-              eventRange={eventRange || undefined}
-              // No edit/delete handlers - read-only view
-            />
+            <div className="h-full min-h-[500px]">
+              <LaneCalendarCanvas
+                shifts={filteredShifts}
+                lanes={derivedLanes}
+                eventStart={eventData ? new Date(eventData.startDate) : null}
+                eventEnd={eventData ? new Date(eventData.endDate) : null}
+                eventId={selectedEventId}
+                readOnly
+                onShiftSelected={(id) => {
+                  if (id) handleShiftClick({ id });
+                  else setSelectedShift(null);
+                }}
+                onVoteWant={handleVoteWant}
+                onVoteDontWant={handleVoteDontWant}
+              />
+            </div>
           </Card>
 
           {/* Shift Details Modal - Read-only */}

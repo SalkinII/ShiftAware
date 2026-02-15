@@ -10,9 +10,12 @@ import {
 } from "../utils/constants";
 import { timeToX } from "../utils/coordinates";
 
-export function buildLaneNodes(lanes: LaneConfig[], timelineWidth: number): Node[] {
+export function buildLaneNodes(
+  lanes: LaneConfig[],
+  timelineWidth: number,
+): Node[] {
   return lanes.map((lane, index) => ({
-    id: `lane-zone-${lane.type}`,
+    id: `lane-zone-${lane.id}`,
     type: "laneZone",
     position: { x: 0, y: index * LANE_HEIGHT },
     data: {
@@ -71,7 +74,11 @@ export function useLaneNodes(
     const canvasHeight = lanes.length * LANE_HEIGHT;
 
     const laneNodes = buildLaneNodes(lanes, timelineWidth);
-    const separatorNodes = buildDaySeparatorNodes(eventStart, eventEnd, canvasHeight);
+    const separatorNodes = buildDaySeparatorNodes(
+      eventStart,
+      eventEnd,
+      canvasHeight,
+    );
 
     return [...laneNodes, ...separatorNodes];
   }, [lanes, eventStart, eventEnd]);

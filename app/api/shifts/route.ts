@@ -8,6 +8,7 @@ import {
   createUnauthorizedResponse,
 } from "@/lib/api-errors";
 import { ShiftsService } from "@/lib/services/shifts.service";
+import { StatusGuardError } from "@/lib/services/event-status-guard";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
 const service = new ShiftsService();
@@ -40,9 +41,10 @@ export async function GET(request: Request) {
       }
     }
 
-    const shifts = Object.keys(where).length > 0
-      ? await service.listShiftsWithDetails(where)
-      : await service.listShiftsWithDetails();
+    const shifts =
+      Object.keys(where).length > 0
+        ? await service.listShiftsWithDetails(where)
+        : await service.listShiftsWithDetails();
 
     return createSuccessResponse(shifts);
   } catch (error) {
@@ -83,6 +85,9 @@ export async function POST(request: Request) {
 
     return createSuccessResponse(shift, 201);
   } catch (error) {
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(error, error.message, 403);
+    }
     if (error instanceof RepositoryError) {
       if (error.code === "NOT_FOUND") {
         return createErrorResponse(error, "Event not found", 404);

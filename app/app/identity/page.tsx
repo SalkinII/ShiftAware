@@ -9,6 +9,8 @@ import { useEventContext } from "@/lib/hooks/useEventContext";
 import { MemberList } from "./components/MemberList";
 import { CreateProfileForm } from "./components/CreateProfileForm";
 import { EventSelectionStep } from "./components/EventSelectionStep";
+import { AttributePromptModal } from "@/components/features/Identity/AttributePromptModal";
+import { getMissingAttributes } from "@/lib/utils/attribute-check";
 
 export default function IdentityPage() {
   const router = useRouter();
@@ -16,18 +18,82 @@ export default function IdentityPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showEventSelection, setShowEventSelection] = useState(false);
+  const [showAttributeModal, setShowAttributeModal] = useState(false);
+  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
+  const [missingDefinitions, setMissingDefinitions] = useState<any[]>([]);
+  const [initialAttributeValues, setInitialAttributeValues] = useState<
+    Record<string, unknown>
+  >({});
 
   const handleSelectMember = (memberId: string) => {
     setSelectedMemberId(memberId);
     setShowEventSelection(true);
   };
 
-  const handleEventSelected = (eventId: string) => {
+  const proceedToCalendar = (eventId: string) => {
     if (selectedMemberId) {
       localStorage.setItem("selectedMemberId", selectedMemberId);
-      setContextEventId(eventId); // Uses context setter (also writes localStorage)
+      setContextEventId(eventId);
       router.push("/app/calendar");
     }
+  };
+
+  const handleEventSelected = async (eventId: string) => {
+    if (!selectedMemberId) return;
+
+    try {
+      const [defRes, valuesRes] = await Promise.all([
+        fetch(`/api/events/${eventId}/attributes`),
+        fetch(`/api/members/${selectedMemberId}/attributes?eventId=${eventId}`),
+      ]);
+
+      const defData = defRes.ok ? await defRes.json() : { data: [] };
+      const valuesData = valuesRes.ok ? await valuesRes.json() : { data: [] };
+      const definitions = defData.data || [];
+      const values = valuesData.data || [];
+
+      const missing = getMissingAttributes(definitions, values);
+
+      if (missing.length > 0) {
+        const initial: Record<string, unknown> = {};
+        for (const v of values) {
+          try {
+            initial[v.definition.name] = JSON.parse(v.value);
+          } catch {
+            initial[v.definition.name] = v.value;
+          }
+        }
+        setMissingDefinitions(missing);
+        setInitialAttributeValues(initial);
+        setPendingEventId(eventId);
+        setShowAttributeModal(true);
+      } else {
+        proceedToCalendar(eventId);
+      }
+    } catch {
+      proceedToCalendar(eventId);
+    }
+  };
+
+  const handleAttributeSubmit = async (attributes: Record<string, unknown>) => {
+    if (!selectedMemberId || !pendingEventId) return;
+
+    for (const [key, value] of Object.entries(attributes)) {
+      await fetch(`/api/members/${selectedMemberId}/attributes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: pendingEventId,
+          key,
+          value,
+        }),
+      });
+    }
+
+    setShowAttributeModal(false);
+    setPendingEventId(null);
+    setMissingDefinitions([]);
+    proceedToCalendar(pendingEventId);
   };
 
   const handleBackToMemberSelection = () => {
@@ -148,11 +214,25 @@ export default function IdentityPage() {
             )}
           </>
         ) : (
-          <EventSelectionStep
-            memberId={selectedMemberId!}
-            onEventSelected={handleEventSelected}
-            onBack={handleBackToMemberSelection}
-          />
+          <>
+            <EventSelectionStep
+              memberId={selectedMemberId!}
+              onEventSelected={handleEventSelected}
+              onBack={handleBackToMemberSelection}
+            />
+            {showAttributeModal && missingDefinitions.length > 0 && (
+              <AttributePromptModal
+                definitions={missingDefinitions}
+                initialValues={initialAttributeValues}
+                onSubmit={handleAttributeSubmit}
+                onCancel={() => {
+                  setShowAttributeModal(false);
+                  setPendingEventId(null);
+                  setMissingDefinitions([]);
+                }}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

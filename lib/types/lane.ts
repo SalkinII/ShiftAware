@@ -1,47 +1,16 @@
 export interface LaneConfig {
-  type: string;
+  /** Unique identifier: template.id or "unassigned" */
+  id: string;
+  /** Template ID for matching shifts; null for Unassigned lane */
+  templateId: string | null;
+  /** Display label */
   label: string;
+  /** Lane colour from palette */
   color: string;
+  /** Vertical order */
   order: number;
-}
-
-export const LANE_CONFIG: Record<string, LaneConfig> = {
-  MOBILE_TEAM: {
-    type: "MOBILE_TEAM",
-    label: "Mobile Team",
-    color: "#0ea5e9",
-    order: 1,
-  },
-  STATIONARY: {
-    type: "STATIONARY",
-    label: "Stationary",
-    color: "#22c55e",
-    order: 3,
-  },
-  SUPER: {
-    type: "SUPER",
-    label: "SUPER",
-    color: "#f59e0b",
-    order: 4,
-  },
-  EXTENDED: {
-    type: "EXTENDED",
-    label: "Extended Service",
-    color: "#78716c",
-    order: 5,
-  },
-};
-
-export const LANES_ORDERED = Object.values(LANE_CONFIG).sort(
-  (a, b) => a.order - b.order,
-);
-
-export function getLaneColor(type: string): string {
-  return LANE_CONFIG[type]?.color ?? "#6b7280";
-}
-
-export function getLaneLabel(type: string): string {
-  return LANE_CONFIG[type]?.label ?? type.replace(/_/g, " ");
+  /** Shift type for API (from template) */
+  type: string;
 }
 
 /** Minimal template shape needed for lane derivation */
@@ -53,30 +22,66 @@ export interface TemplateLike {
   laneOrder?: number | null;
 }
 
+/** Unassigned lane ID for shifts with templateId = null */
+export const UNASSIGNED_LANE_ID = "unassigned";
+
+import { getPaletteColor } from "@/lib/utils/palette";
+
+/** Legacy: color for shift type display (e.g. ShiftPropertiesPanel) */
+export function getLaneColor(type: string): string {
+  const colors: Record<string, string> = {
+    MOBILE_TEAM: "#0ea5e9",
+    STATIONARY: "#22c55e",
+    SUPER: "#f59e0b",
+    EXTENDED: "#78716c",
+    BUFFER: "#6b7280",
+    SHIFT_LEAD: "#8b5cf6",
+  };
+  return colors[type] ?? "#6b7280";
+}
+
+/** Legacy: label for shift type display */
+export function getLaneLabel(type: string): string {
+  const labels: Record<string, string> = {
+    MOBILE_TEAM: "Mobile Team",
+    STATIONARY: "Stationary",
+    SUPER: "SUPER",
+    EXTENDED: "Extended Service",
+    BUFFER: "Buffer",
+    SHIFT_LEAD: "Shift Lead",
+  };
+  return labels[type] ?? type.replace(/_/g, " ");
+}
+
 /**
  * Derive lane configuration from assigned templates.
- * Falls back to LANE_CONFIG for color/order when template doesn't specify them.
+ * One lane per template, colours from cycling palette.
  */
 export function deriveLanesFromTemplates(
   templates: TemplateLike[],
 ): LaneConfig[] {
   if (!templates || templates.length === 0) {
-    return LANES_ORDERED; // fallback to hardcoded lanes
+    return [];
   }
 
-  // Deduplicate by type (multiple templates can share a type/lane)
-  const laneMap = new Map<string, LaneConfig>();
+  const lanes: LaneConfig[] = templates.map((t, index) => ({
+    id: t.id,
+    templateId: t.id,
+    label: t.name || t.type.replace(/_/g, " "),
+    color: getPaletteColor(index),
+    order: t.laneOrder ?? index,
+    type: t.type,
+  }));
 
-  for (const t of templates) {
-    if (!laneMap.has(t.type)) {
-      laneMap.set(t.type, {
-        type: t.type,
-        label: t.name || getLaneLabel(t.type),
-        color: t.color || getLaneColor(t.type),
-        order: t.laneOrder ?? LANE_CONFIG[t.type]?.order ?? 99,
-      });
-    }
-  }
+  // Add Unassigned catch-all lane for shifts with templateId = null
+  lanes.push({
+    id: UNASSIGNED_LANE_ID,
+    templateId: null,
+    label: "Unassigned",
+    color: "#6b7280",
+    order: 999,
+    type: "MOBILE_TEAM", // fallback for API
+  });
 
-  return Array.from(laneMap.values()).sort((a, b) => a.order - b.order);
+  return lanes.sort((a, b) => a.order - b.order);
 }

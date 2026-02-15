@@ -1,4 +1,5 @@
 import { ShiftRepository } from "@/lib/repositories/shift.repository";
+import { assertEventStatusAllows } from "@/lib/services/event-status-guard";
 import type { Prisma } from "@prisma/client";
 
 export class ShiftsService {
@@ -17,14 +18,24 @@ export class ShiftsService {
   }
 
   async createShift(data: Prisma.ShiftCreateInput) {
+    const eventId =
+      (data as { eventId?: string }).eventId ??
+      (data.event as { connect?: { id: string } })?.connect?.id;
+    if (eventId) {
+      await assertEventStatusAllows(eventId, "SHIFT_MUTATE");
+    }
     return this.repo.create(data);
   }
 
   async updateShift(id: string, data: Prisma.ShiftUpdateInput) {
+    const existing = await this.repo.findById(id);
+    await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
     return this.repo.update(id, data);
   }
 
   async deleteShift(id: string) {
+    const existing = await this.repo.findById(id);
+    await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
     return this.repo.delete(id);
   }
 
@@ -33,10 +44,14 @@ export class ShiftsService {
     shiftData: Prisma.ShiftUpdateInput,
     requiredRoles?: Array<{ role: string; count: number }>,
   ) {
+    const existing = await this.repo.findById(id);
+    await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
     return this.repo.updateWithRoles(id, shiftData, requiredRoles);
   }
 
   async cascadeDeleteShift(id: string) {
+    const existing = await this.repo.findById(id);
+    await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
     return this.repo.cascadeDelete(id);
   }
 

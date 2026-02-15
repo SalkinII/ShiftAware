@@ -8,6 +8,7 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { AssignmentsService } from "@/lib/services/assignments.service";
+import { StatusGuardError } from "@/lib/services/event-status-guard";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
 const service = new AssignmentsService();
@@ -81,12 +82,13 @@ export async function POST(request: Request) {
 
     return createSuccessResponse(result);
   } catch (error) {
-    console.error("Run assignment algorithm error:", error);
-
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(error, error.message, 403);
+    }
     if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
       return createNotFoundResponse("Event");
     }
-
+    console.error("Run assignment algorithm error:", error);
     return createErrorResponse(error, "Failed to run assignment algorithm");
   }
 }

@@ -5,8 +5,22 @@ import { type LaneConfig } from "@/lib/types/lane";
 describe("buildShiftNodes", () => {
   const eventStart = new Date("2026-06-26T00:00:00Z");
   const lanes: LaneConfig[] = [
-    { type: "MOBILE_TEAM", label: "Mobile Team", color: "#0ea5e9", order: 1 },
-    { type: "STATIONARY", label: "Stationary", color: "#22c55e", order: 3 },
+    {
+      id: "tpl-1",
+      templateId: "tpl-1",
+      label: "Mobile Team",
+      color: "#0ea5e9",
+      order: 1,
+      type: "MOBILE_TEAM",
+    },
+    {
+      id: "unassigned",
+      templateId: null,
+      label: "Unassigned",
+      color: "#6b7280",
+      order: 999,
+      type: "MOBILE_TEAM",
+    },
   ];
 
   const shifts = [
@@ -21,7 +35,7 @@ describe("buildShiftNodes", () => {
       _count: { assignments: 2, preferences: 3 },
       event: { id: "e1", name: "Fest" },
       requiredRoles: [],
-      templateId: null,
+      templateId: "tpl-1",
     },
   ];
 
@@ -50,9 +64,10 @@ describe("buildShiftNodes", () => {
     expect((nodes[0].data as any).assignmentCount).toBe(2);
   });
 
-  it("skips shifts with unknown lane type", () => {
-    const unknownShifts = [{ ...shifts[0], type: "UNKNOWN_LANE" }];
-    const nodes = buildShiftNodes(unknownShifts as any, lanes, eventStart);
-    expect(nodes).toHaveLength(0);
+  it("puts shifts with templateId=null in Unassigned lane", () => {
+    const unassignedShifts = [{ ...shifts[0], id: "s2", templateId: null }];
+    const nodes = buildShiftNodes(unassignedShifts as any, lanes, eventStart);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].position.y).toBe(480); // lane 1 (Unassigned)
   });
 });

@@ -25,7 +25,7 @@ function LaneLabelsColumnComponent({ lanes }: LaneLabelsColumnProps) {
 
         return (
           <div
-            key={lane.type}
+            key={lane.id}
             className="absolute left-0 flex items-center gap-2 px-3"
             style={{
               top: screenY,

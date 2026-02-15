@@ -229,7 +229,7 @@ TeamMember (Global)
      │
      ├─[3]─ GET /api/events/{id}/templates ► Derive lanes from templates
      │
-     ├─[4]─ Display in LaneCalendarView
+     ├─[4]─ Display in LaneCalendarCanvas
      │
      └─[5]─ User votes on shift
             │
@@ -251,7 +251,7 @@ TeamMember (Global)
      │
      ├─[3]─ GET /api/events/{id}/templates ► Load templates → derive lanes
      │
-     ├─[4]─ LaneCalendarView displays lanes from template names
+     ├─[4]─ LaneCalendarCanvas displays lanes from template names
      │
      └─[5]─ Admin drags template to calendar
             │
@@ -300,20 +300,20 @@ TeamMember (Global)
 
 | Component | User Action | API Call | Service | Repository | DB Table |
 |-----------|-------------|----------|---------|------------|----------|
-| LaneCalendarView | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
-| ShiftCard | Vote Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
-| ShiftCard | Vote Don't Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
+| LaneCalendarCanvas | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
+| ShiftBlockNode (readOnly) | Vote Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
+| ShiftBlockNode (readOnly) | Vote Don't Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
 | SwapModal | Request swap | POST /api/swap-requests | - | - | SwapRequest |
 
 ### Schedule (Admin)
 
 | Component | User Action | API Call | Service | Repository | DB Table |
 |-----------|-------------|----------|---------|------------|----------|
-| LaneCalendarView | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
+| LaneCalendarCanvas | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
 | TemplatePalette | Load | GET /api/shifts/templates | - | - | ShiftTemplate |
-| LaneCalendarView | Drop template | POST /api/shifts | ShiftsService | ShiftRepository | Shift |
-| ShiftBlock | Delete | DELETE /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
-| ShiftBlock | Resize | PUT /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
+| LaneCalendarCanvas | Drop template | POST /api/shifts | ShiftsService | ShiftRepository | Shift |
+| ShiftPropertiesPanel | Delete | DELETE /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
+| ShiftBlockNode | Resize | PUT /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
 
 ### Setup (Admin)
 
@@ -853,6 +853,24 @@ try {
 | P2002 | DUPLICATE | Unique constraint violation |
 | P2003 | INVALID_DATA | Foreign key constraint |
 
+### EventStatus Guard Pattern
+
+Services enforce EventStatus before mutations. `assertEventStatusAllows(eventId, action)` loads event status and throws `StatusGuardError` (403) if not allowed.
+
+**Permission Matrix:**
+
+| EventStatus | Shift CRUD | Preferences | Assignments | Event Config | Registration |
+|-------------|-----------|-------------|-------------|-------------|-------------|
+| PLANNING | **allowed** | blocked | blocked | allowed | allowed |
+| OPEN_FOR_PREFERENCES | blocked | **allowed** | blocked | allowed | allowed |
+| ASSIGNING | blocked | blocked | **allowed** | allowed | blocked |
+| FINALIZED | blocked | blocked | blocked | read-only | blocked |
+| COMPLETED | blocked | blocked | blocked | read-only | blocked |
+
+**Guard actions:** `SHIFT_MUTATE`, `PREFERENCE_MUTATE`, `ASSIGNMENT_MUTATE`, `REGISTRATION_MUTATE`
+
+**Integration:** ShiftsService, PreferencesService, AssignmentsService call the guard before create/update/delete. Routes catch `StatusGuardError` and return 403.
+
 ---
 
 ## 13. TypeScript Considerations
@@ -1177,6 +1195,6 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 
 ---
 
-**Last Updated:** 2026-02-11
-**Phase:** Phase 5 ✅ Bugfix sweep complete
+**Last Updated:** 2026-02-15
+**Phase:** Phase 5 ✅ User calendar migration, EventStatus guards, PNG export complete
 **Next Review:** As needed for future enhancements

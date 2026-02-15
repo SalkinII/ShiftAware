@@ -5,7 +5,7 @@ import { type NodeProps } from "@xyflow/react";
 import { DAY_SEPARATOR_WIDTH } from "../utils/constants";
 
 export type DaySeparatorData = {
-  label: string;  // e.g. "Fri 26 Jun"
+  label: string; // e.g. "Fri 26 Jun"
   height: number; // total canvas height in px
 };
 
@@ -26,13 +26,11 @@ function DaySeparatorNodeComponent({ data }: NodeProps) {
         style={{
           width: "1px",
           height: "100%",
-          backgroundColor: "rgba(0,0,0,0.12)",
+          backgroundColor: "rgba(0,0,0,0.3)",
         }}
       />
       {/* Day label */}
-      <div
-        className="absolute -top-6 left-2 text-xs font-medium text-gray-500 whitespace-nowrap"
-      >
+      <div className="absolute -top-6 left-2 text-xs font-medium text-gray-500 whitespace-nowrap">
         {label}
       </div>
     </div>

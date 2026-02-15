@@ -33,7 +33,10 @@ import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import CalendarView from "@/components/features/Calendar/CalendarView";
-import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import {
+  LaneCalendarCanvas,
+  type LaneCalendarCanvasHandle,
+} from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 import { ShiftPropertiesPanel } from "@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel";
 
 interface Shift {
@@ -66,6 +69,7 @@ interface DraggedTemplate {
 export default function ShiftsPage() {
   const toast = useToast();
   const calendarRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<LaneCalendarCanvasHandle>(null);
   const { selectedEventId, selectedEvent } = useEventContext(true);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
@@ -419,10 +423,16 @@ export default function ShiftsPage() {
   }
 
   async function handleExportCalendar() {
-    // TODO: Implement React Flow native export using getNodesBounds + getViewportForBounds
-    // React Flow v12+ has built-in methods for exporting the canvas
-    // For now, export is disabled pending React Flow export integration
-    toast.info("Export feature will be implemented with React Flow native export");
+    const dataUrl = await canvasRef.current?.exportToPng();
+    if (!dataUrl) {
+      toast.error("No calendar to export. Add shifts first.");
+      return;
+    }
+    const link = document.createElement("a");
+    link.download = `schedule-${selectedEvent?.name ?? "export"}-${format(new Date(), "yyyy-MM-dd")}.png`;
+    link.href = dataUrl;
+    link.click();
+    toast.success("Schedule exported as PNG");
   }
 
   // Keyboard shortcuts
@@ -592,21 +602,24 @@ export default function ShiftsPage() {
                 ref={calendarRef}
                 className="bg-white rounded-xl shadow-sm overflow-hidden"
               >
-                {shifts.length === 0 ? (
+                {!selectedEvent ? (
                   <div className="p-12 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium">No shifts to display</p>
-                    <p className="text-sm">
-                      Create shifts using the form or drag templates from the
-                      sidebar
+                    <p className="font-medium">
+                      Select an event to view the calendar
                     </p>
                   </div>
                 ) : (
                   <LaneCalendarCanvas
+                    ref={canvasRef}
                     shifts={shifts}
                     lanes={derivedLanes}
-                    eventStart={selectedEvent ? new Date(selectedEvent.startDate) : null}
-                    eventEnd={selectedEvent ? new Date(selectedEvent.endDate) : null}
+                    eventStart={
+                      selectedEvent ? new Date(selectedEvent.startDate) : null
+                    }
+                    eventEnd={
+                      selectedEvent ? new Date(selectedEvent.endDate) : null
+                    }
                     eventId={selectedEventId}
                     onShiftSelected={setSelectedShiftId}
                     onShiftCreated={() => refetchShifts()}
@@ -724,7 +737,14 @@ export default function ShiftsPage() {
                           </div>
                         </div>
                       </div>
-                      <button className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100">
+                      <button
+                        onClick={() => {
+                          setSelectedShiftId(shift.id);
+                          setViewMode("calendar");
+                        }}
+                        className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100"
+                        aria-label="Edit shift"
+                      >
                         <ChevronRight className="w-6 h-6" />
                       </button>
                     </div>

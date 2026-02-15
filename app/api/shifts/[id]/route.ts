@@ -11,6 +11,7 @@ import {
   createConflictResponse,
 } from "@/lib/api-errors";
 import { ShiftsService } from "@/lib/services/shifts.service";
+import { StatusGuardError } from "@/lib/services/event-status-guard";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
 const service = new ShiftsService();
@@ -89,6 +90,9 @@ export async function PUT(
 
     return createSuccessResponse(shift);
   } catch (error) {
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(error, error.message, 403);
+    }
     if (error instanceof RepositoryError) {
       if (error.code === "NOT_FOUND") {
         return createNotFoundResponse("Shift");
@@ -131,6 +135,9 @@ export async function DELETE(
 
     return createSuccessResponse({ success: true });
   } catch (error) {
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(error, error.message, 403);
+    }
     if (error instanceof RepositoryError) {
       if (error.code === "NOT_FOUND") {
         return createNotFoundResponse("Shift");

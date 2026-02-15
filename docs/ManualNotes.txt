@@ -55,21 +55,193 @@ Files to review:
   - components/features/LaneCalendar/hooks/useShiftNodes.ts (laneIndexMap)
   - components/features/LaneCalendar/hooks/useCanvasActions.ts (drop handler)
 
-## PNG Export - WIP (2026-02-15) - TODO
-Current status: Export function is stubbed out with placeholder toast message.
-Location: app/admin/shifts/schedule/page.tsx (handleExportCalendar function)
+## PNG Export - RESOLVED (2026-02-15)
+Implemented using html-to-image: getNodesBounds() → getViewportForBounds() → toPng().
+LaneCalendarCanvas exposes exportToPng() via ref. html2canvas removed from package.json.
 
-Old implementation: Used html2canvas to capture calendar DOM element
-Removed: html2canvas dependency removed during React Flow migration
+## Post-Implementation Audit (2026-02-15)
 
-TODO: Implement React Flow native export using:
-  - getNodesBounds() - Get bounding box of all nodes
-  - getViewportForBounds() - Calculate viewport for bounds
-  - toPng() or toSvg() from 'html-to-image' library (or similar)
-  - OR use React Flow's built-in export utilities (v12+)
+Audited implementation against design doc and impl plan. All 17 planned files created.
+Pixel constants (LANE_HEIGHT, SHIFT_NODE_HEIGHT) intentionally tweaked by hand — not a bug.
 
-Reference: React Flow v12+ documentation for canvas export methods
-Consider: May need to install html-to-image or similar library for PNG generation
+### Completed (14/17 tasks fully done)
+- All 3 custom node types (LaneZone, DaySeparator, ShiftBlock)
+- All 3 hooks (useLaneNodes, useShiftNodes, useCanvasActions)
+- TimeRulerPanel + LaneLabelsColumn panels
+- LaneCalendarCanvas main wrapper with ReactFlowProvider
+- TemplatePalette migrated to native HTML drag (no more dnd-kit for calendar)
+- ShiftPropertiesPanel sidebar
+- Schedule page integration (DndContext removed, canvas wired up)
+- Old CSS grid components removed (10 files, ~955 lines)
+- 3 test files covering coordinates + hooks
+- Architecture docs updated
 
-Current behavior: Clicking export shows info toast "Export feature will be implemented with React Flow native export"
+### Resolved — Resize handler
+handleResizeEnd now persists via PUT /api/shifts/{id} with widthToDuration → snap 15min.
 
+### Resolved — PNG export
+Uses html-to-image, getNodesBounds, getViewportForBounds. html2canvas removed.
+
+### Cleanup — @dnd-kit still in package.json
+Expected — used by other features outside the calendar. Do NOT remove.
+
+### Resolved — Architecture Doc
+LaneCalendarView → LaneCalendarCanvas, ShiftBlock → ShiftBlockNode. Last Updated 2026-02-15.
+
+### Minor — investigate "click errors in calendar" (line 4 above)
+No specifics logged. Reproduce and document before fixing.
+
+
+Furhter notes:
+
+-- <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right w-6 h-6" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+## RESOLVED: Chevron opens ShiftPropertiesPanel (list view) — wired to setSelectedShiftId + setViewMode("calendar")
+
+-- in LaneCalendarCanvas
+## 1. On click this throws an error when drag and drop of nodes should happen ("Something went wrong")
+## 2. the midnight demarkation is not really visible - only a very faint line shows when navigating drag and drop.
+## 3. can the colour palette be used for the shift colours - for each now lane in new setup getting a new coulour.
+## 4. the date should be visible with the time ruler node - we want to see where we are.
+## 5. when a new event is set up, there are no shifts yet. however I can't really drag any into the field. So it would be desirable that the time lane node already spans the whole event time that we define in the event config (core + buffer) so we can already try to populate the calendar.
+
+-- team management / identity
+## when new attributes are established for a new event, which are not yet defined for a team member, the assignment of those attributes should polled when the team member is selected (e.g. when clicking in assume identity or at least when the event is first selected)
+##
+
+-- old CalendarView — RESOLVED (2026-02-15)
+## User calendar and SwapInterface now use LaneCalendarCanvas (read-only). CalendarView, DateDropZone deleted.
+
+-- event config
+## do the attributes PLANNING/OPEN FOR PREFECENCES/ASSIGNMENT/FINAL have consistent management through our service infrastructure?
+## Do those attributes serve a function (e.g. when Assignment is the case we can't push around the schedule by accident?)
+
+----
+AFTER Implementation of the calendar completion service hardening
+CalendarCanvas still crashes on drag and drop click:
+ GET /favicon.ico 200 in 12ms
+ ⨯ ./components/features/LaneCalendar/LaneCalendarCanvas.tsx
+Error:   × Expression expected
+    ╭─[D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\components\features\LaneCalendar\LaneCalendarCanvas.tsx:91:1]
+ 88 │       eventId,
+ 89 │       onShiftCreated,
+ 90 │       onShiftUpdated,
+ 91 │     });
+    ·     ─
+ 92 │
+ 93 │   const handleNodeClick = useCallback(
+ 94 │     (_event: React.MouseEvent, node: Node) => {
+    ╰────
+
+Caused by:
+    Syntax Error
+
+
+----
+## The new lane setup based on templateid now collapses everything in unassigned. the other model told me that there is an issue with templateid being assinged. Can we review that according to our architecture/service structure/data model?
+----
+<button class="inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] px-4 py-2.5 text-sm rounded-lg bg-error-600 text-white hover:bg-error-700 active:bg-error-800 shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)] focus-visible:ring-error-500 min-w-[100px]">Delete</button>
+## This is empty - shows no "delete" in button
+
+----
+
+Can we finally adress this:
+"Note: The build still fails due to existing TypeScript errors in AttributeDefinitions.tsx, app/api/shifts/route.ts, and some repository tests. These are outside the Phase 5 scope."
+We want to really know that all tests run. If they are not useful we should get rid of them.
+
+
+### BREAKING CHANGE: Now the whole thing only renders plain HTML. something went wrong.
+GET /_next/static/chunks/app/not-found.js 500 in 5722ms
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\pages\_document.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\require.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\load-components.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\utils.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\swc\options.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\swc\index.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\config.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\next.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:203:28)
+    at <unknown> (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:116:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:115:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:167:22)
+    at <unknown> (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\app\favicon.ico\route.js:1:36132)
+    at Object.<anonymous> (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\app\favicon.ico\route.js:1:36179) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 104ms
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at Object.__webpack_require__ [as require] (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:33:42)
+    at JSON.parse (<anonymous>)
+    at JSON.parse (<anonymous>) {
+  digest: '3866302404'
+}
+TypeError: __webpack_modules__[moduleId] is not a function
+    at Object.__webpack_require__ [as require] (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:33:42)
+    at JSON.parse (<anonymous>)
+    at JSON.parse (<anonymous>)
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at Object.__webpack_require__ [as require] (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:33:42)
+    at JSON.parse (<anonymous>)
+    at JSON.parse (<anonymous>)
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at Object.__webpack_require__ [as require] (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:33:42)
+    at JSON.parse (<anonymous>)
+    at JSON.parse (<anonymous>) {
+  digest: '3866302404'
+}
+TypeError: __webpack_modules__[moduleId] is not a function
+    at Object.__webpack_require__ [as require] (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:33:42)
+    at JSON.parse (<anonymous>)
+    at JSON.parse (<anonymous>)
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at Object.__webpack_require__ [as require] (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:33:42)
+    at JSON.parse (<anonymous>)
+    at JSON.parse (<anonymous>)
+ GET /_next/static/chunks/app/admin/layout.js 500 in 2154ms
+ GET /_next/static/chunks/app/admin/shifts/schedule/page.js 500 in 2137ms
+ ✓ Compiled in 937ms (899 modules)
+ ✓ Compiled in 475ms (899 modules)
+ GET /admin/shifts/schedule 200 in 65ms
+ GET /_next/static/css/app/layout.css?v=1771162058796 404 in 136ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 132ms
+ GET /_next/static/css/app/admin/shifts/schedule/page.css?v=1771162058796 404 in 136ms
+ GET /_next/static/chunks/main-app.js?v=1771162058796 404 in 133ms
+ GET /_next/static/chunks/app/not-found.js 404 in 131ms
+ GET /_next/static/chunks/app/error.js 404 in 132ms
+ GET /_next/static/chunks/app/admin/shifts/schedule/page.js 404 in 69ms
+ GET /_next/static/chunks/app/admin/layout.js 404 in 71ms
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\pages\_document.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\require.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\load-components.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\utils.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\swc\options.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\swc\index.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\config.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\next.js
+- D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\node_modules\next\dist\server\lib\start-server.js
+    at __webpack_require__.f.require (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:203:28)
+    at <unknown> (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:116:40)
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:115:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\webpack-runtime.js:167:22)
+    at <unknown> (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\app\favicon.ico\route.js:1:36132)
+    at Object.<anonymous> (D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.next\server\app\favicon.ico\route.js:1:36179) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 146ms
+ ✓ Compiled in 403ms (899 modules

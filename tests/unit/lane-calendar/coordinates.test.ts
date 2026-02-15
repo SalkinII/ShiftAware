@@ -46,7 +46,7 @@ describe("coordinates", () => {
     });
 
     it("returns LANE_HEIGHT for lane 1", () => {
-      expect(laneIndexToY(1)).toBe(120);
+      expect(laneIndexToY(1)).toBe(480);
     });
   });
 
@@ -57,8 +57,8 @@ describe("coordinates", () => {
 
     it("snaps to nearest lane", () => {
       expect(yToLaneIndex(50)).toBe(0);
-      expect(yToLaneIndex(80)).toBe(1);
-      expect(yToLaneIndex(130)).toBe(1);
+      expect(yToLaneIndex(241)).toBe(1);
+      expect(yToLaneIndex(481)).toBe(1);
     });
   });
 
@@ -84,8 +84,8 @@ describe("coordinates", () => {
   describe("snapY", () => {
     it("snaps to nearest lane", () => {
       expect(snapY(0)).toBe(0);
-      expect(snapY(59)).toBe(0);
-      expect(snapY(61)).toBe(120);
+      expect(snapY(239)).toBe(0);
+      expect(snapY(241)).toBe(480);
     });
   });
 });
