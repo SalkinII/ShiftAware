@@ -16,7 +16,7 @@ const idSchema = z
 
 export const shiftRoleSchema = z.object({
   role: z.nativeEnum(Role),
-  count: z.number().int().positive().default(1),
+  count: z.number().int().nonnegative().default(1),
 });
 
 export const shiftSchemaBase = z.object({
