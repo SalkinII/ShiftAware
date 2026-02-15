@@ -26,7 +26,7 @@ import "@xyflow/react/dist/style.css";
 import { type LaneConfig } from "@/lib/types/lane";
 import { LaneZoneNode } from "./nodes/LaneZoneNode";
 import { DaySeparatorNode } from "./nodes/DaySeparatorNode";
-import { ShiftBlockNode } from "./nodes/ShiftBlockNode";
+import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
 import { TimeRulerPanel } from "./panels/TimeRulerPanel";
 import { LaneLabelsColumn } from "./panels/LaneLabelsColumn";
 import { useLaneNodes } from "./hooks/useLaneNodes";
@@ -124,7 +124,8 @@ function LaneCalendarCanvasInner(
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
       if (node.id.startsWith("shift-")) {
-        onShiftSelected?.((node.data as any).shiftId);
+        const data = node.data as ShiftBlockData;
+        onShiftSelected?.(data.shiftId);
       }
     },
     [onShiftSelected],
@@ -228,7 +229,8 @@ function LaneCalendarCanvasInner(
           <MiniMap
             position="bottom-left"
             nodeColor={(node) => {
-              if (node.type === "shiftBlock") return (node.data as any).color;
+              if (node.type === "shiftBlock")
+                return (node.data as ShiftBlockData).color;
               return "transparent";
             }}
             maskColor="rgba(0,0,0,0.1)"
