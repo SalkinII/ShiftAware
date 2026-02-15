@@ -70,7 +70,9 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           backgroundColor: color,
           opacity: isFull ? 1 : 0.8,
           borderRadius: "6px",
-          border: selected ? "2px solid #1d4ed8" : "1px solid rgba(0,0,0,0.1)",
+          border: selected
+            ? "2px solid #1d4ed8"
+            : `2px solid color-mix(in srgb, ${color} 70%, black)`,
           overflow: "hidden",
           cursor: "grab",
           display: "flex",
@@ -80,15 +82,39 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
         }}
         className="transition-shadow"
       >
-        {/* Minimal: just a colored bar */}
-        {isMinimal ? null : isCompact ? (
-          /* Compact: name + optional vote buttons */
-          <div className="flex items-center justify-between gap-1 w-full">
-            <div className="text-base font-medium text-white truncate drop-shadow-sm min-w-0">
+        {isMinimal ? (
+          /* Minimal: counter-scaled name */
+          <div
+            style={{
+              transform: `scale(${1 / zoom})`,
+              transformOrigin: "left center",
+              width: width * zoom,
+              overflow: "hidden",
+            }}
+          >
+            <div className="text-xs font-medium text-white truncate drop-shadow-sm px-1">
               {templateName}
             </div>
+          </div>
+        ) : isCompact ? (
+          /* Compact: counter-scaled name + time range */
+          <div
+            style={{
+              transform: `scale(${1 / zoom})`,
+              transformOrigin: "left center",
+              width: width * zoom,
+              overflow: "hidden",
+            }}
+          >
+            <div className="text-xs font-medium text-white truncate drop-shadow-sm px-1">
+              {templateName}
+            </div>
+            <div className="text-[10px] text-white/80 truncate px-1">
+              {format(new Date(startTime), "HH:mm")}–
+              {format(new Date(endTime), "HH:mm")}
+            </div>
             {readOnly && (onVoteWant || onVoteDontWant) && (
-              <div className="flex gap-0.5 shrink-0">
+              <div className="flex gap-0.5 shrink-0 px-1 mt-0.5">
                 {onVoteWant && (
                   <button
                     type="button"
