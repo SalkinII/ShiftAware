@@ -13,6 +13,8 @@ import {
   ReactFlow,
   Controls,
   MiniMap,
+  Panel,
+  useViewport,
   type Node,
   type NodeChange,
   applyNodeChanges,
@@ -30,7 +32,6 @@ import { DaySeparatorNode } from "./nodes/DaySeparatorNode";
 import { HourGridNode } from "./nodes/HourGridNode";
 import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
 import { TimeRulerPanel } from "./panels/TimeRulerPanel";
-import { LaneLabelsColumn } from "./panels/LaneLabelsColumn";
 import { useLaneNodes } from "./hooks/useLaneNodes";
 import { useShiftNodes, type ShiftLike } from "./hooks/useShiftNodes";
 import { useCanvasActions } from "./hooks/useCanvasActions";
@@ -49,6 +50,48 @@ const nodeTypes = {
   daySeparator: DaySeparatorNode,
   shiftBlock: ShiftBlockNode,
 };
+
+/** Renders vertical alignment guide lines during shift drag */
+function AlignmentGuides({
+  guides,
+  laneCount,
+}: {
+  guides: number[];
+  laneCount: number;
+}) {
+  const { zoom, x: viewportX } = useViewport();
+
+  return (
+    <Panel position="top-left" className="pointer-events-none m-0 p-0">
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        {guides.map((flowX, i) => {
+          const screenX = flowX * zoom + viewportX;
+          return (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left: screenX,
+                top: 0,
+                width: 1,
+                height: "100%",
+                borderLeft: "2px dashed #3b82f6",
+                opacity: 0.7,
+              }}
+            />
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
 
 interface LaneCalendarCanvasProps {
   shifts: ShiftLike[] | null;
@@ -95,14 +138,29 @@ function LaneCalendarCanvasInner(
   const effectiveReadOnly = readOnly || shiftMutationLocked;
 
   const flowContainerRef = useRef<HTMLDivElement>(null);
-  const { handleDrop, handleDragOver, handleNodeDragStop, handleResizeEnd } =
-    useCanvasActions({
-      lanes,
-      eventStart,
-      eventId,
-      onShiftCreated,
-      onShiftUpdated,
-    });
+  const {
+    handleDrop,
+    handleDragOver,
+    handleNodeDragStop,
+    handleResizeEnd,
+    handleNodeDrag,
+    clearAlignmentGuides,
+    alignmentGuides,
+  } = useCanvasActions({
+    lanes,
+    eventStart,
+    eventId,
+    onShiftCreated,
+    onShiftUpdated,
+  });
+
+  const handleNodeDragStopWithGuides = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      clearAlignmentGuides();
+      handleNodeDragStop(event, node);
+    },
+    [clearAlignmentGuides, handleNodeDragStop],
+  );
 
   const { setViewport, fitView } = useReactFlow();
   const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
@@ -220,14 +278,16 @@ function LaneCalendarCanvasInner(
           {shiftMutationLockedMessage}
         </div>
       )}
-      <LaneLabelsColumn lanes={lanes} />
-      <div ref={flowContainerRef} style={{ marginLeft: 140, height: "100%" }}>
+      <div ref={flowContainerRef} style={{ height: "100%" }}>
         <ReactFlow
           nodes={nodes}
           edges={[]}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
-          onNodeDragStop={effectiveReadOnly ? undefined : handleNodeDragStop}
+          onNodeDrag={effectiveReadOnly ? undefined : handleNodeDrag}
+          onNodeDragStop={
+            effectiveReadOnly ? undefined : handleNodeDragStopWithGuides
+          }
           onNodeClick={handleNodeClick}
           onPaneClick={handlePaneClick}
           onDrop={effectiveReadOnly ? undefined : handleDrop}
@@ -253,6 +313,13 @@ function LaneCalendarCanvasInner(
             }}
             maskColor="rgba(0,0,0,0.15)"
           />
+          {/* Alignment guide lines */}
+          {alignmentGuides.length > 0 && (
+            <AlignmentGuides
+              guides={alignmentGuides}
+              laneCount={lanes.length}
+            />
+          )}
         </ReactFlow>
       </div>
     </div>
