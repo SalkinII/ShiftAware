@@ -26,6 +26,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^5.18.0",
+    "@reactflow/node-resizer": "^2.2.14",
+    "@xyflow/react": "^12.10.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "html2canvas": "^1.4.1",
