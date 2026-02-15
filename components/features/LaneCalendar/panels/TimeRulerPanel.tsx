@@ -10,6 +10,8 @@ import {
   TICK_HEIGHT_HOUR,
   TICK_HEIGHT_30MIN,
   TICK_HEIGHT_15MIN,
+  MIN_HOUR_LABEL_WIDTH,
+  MIN_DATE_LABEL_WIDTH,
 } from "../utils/constants";
 
 interface TimeRulerPanelProps {
@@ -41,15 +43,28 @@ function TimeRulerPanelComponent({
 
   const ticks: { x: number; label?: string; height: number }[] = [];
 
+  // Calculate how many hours to skip between labels to avoid overlap
+  const pixelsPerHourAtZoom = PIXELS_PER_HOUR * zoom;
+  const hourLabelSkip = Math.max(1, Math.ceil(MIN_HOUR_LABEL_WIDTH / pixelsPerHourAtZoom));
+  const dateLabelFits = pixelsPerHourAtZoom >= MIN_DATE_LABEL_WIDTH;
+
   for (let h = visibleStartHour; h <= visibleEndHour; h++) {
     const xBase = h * PIXELS_PER_HOUR;
     const time = addHours(eventStart, h);
     const isMidnight = time.getHours() === 0 && time.getMinutes() === 0;
-    const dateLabel = isMidnight ? format(time, "EEE d MMM") : "";
-    const timeLabel = format(time, "HH:mm");
-    const label = isMidnight ? `${dateLabel} ${timeLabel}` : timeLabel;
+    const showLabel = h % hourLabelSkip === 0;
 
-    // Hour tick (add date at midnight for multi-day context)
+    let label: string | undefined;
+    if (showLabel) {
+      const timeLabel = format(time, "HH:mm");
+      if (isMidnight && dateLabelFits) {
+        label = `${format(time, "EEE d MMM")} ${timeLabel}`;
+      } else {
+        label = timeLabel;
+      }
+    }
+
+    // Hour tick (always show tick mark, label only when it fits)
     ticks.push({
       x: xBase,
       label,

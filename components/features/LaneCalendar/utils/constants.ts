@@ -14,8 +14,8 @@ export const MAX_ZOOM = 4;
 export const DEFAULT_ZOOM = 0.5;
 
 // Semantic zoom thresholds
-export const ZOOM_MINIMAL = 0.3;   // Below: colored bar only
-export const ZOOM_COMPACT = 0.7;   // Below: bar + name. Above: full detail
+export const ZOOM_MINIMAL = 0.3; // Below: colored bar only
+export const ZOOM_COMPACT = 0.7; // Below: bar + name. Above: full detail
 
 // Time ruler
 export const TICK_HEIGHT_HOUR = 12;
@@ -24,6 +24,10 @@ export const TICK_HEIGHT_15MIN = 6;
 
 // Day separator
 export const DAY_SEPARATOR_WIDTH = 2;
+
+// Time ruler label widths (px) — used for skip-label collision avoidance
+export const MIN_HOUR_LABEL_WIDTH = 40; // "14:00" at 9px font ≈ 35px + padding
+export const MIN_DATE_LABEL_WIDTH = 100; // "Mon 15 Feb 00:00" ≈ 95px + padding
 
 // Node z-indices
 export const Z_LANE_ZONE = 0;
