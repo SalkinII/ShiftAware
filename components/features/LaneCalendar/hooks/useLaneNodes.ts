@@ -6,6 +6,7 @@ import {
   LANE_HEIGHT,
   Z_LANE_ZONE,
   Z_DAY_SEPARATOR,
+  Z_HOUR_GRID,
   PIXELS_PER_HOUR,
 } from "../utils/constants";
 import { timeToX } from "../utils/coordinates";
@@ -46,7 +47,7 @@ export function buildDaySeparatorNodes(
       type: "daySeparator",
       position: { x, y: 0 },
       data: {
-        label: format(midnight, "EEE d MMM"),
+        label: format(midnight, "d MMM yyyy"),
         height: canvasHeight,
       },
       draggable: false,
@@ -55,6 +56,29 @@ export function buildDaySeparatorNodes(
     });
   }
 
+  return nodes;
+}
+
+export function buildHourGridNodes(
+  eventStart: Date,
+  eventEnd: Date,
+  canvasHeight: number,
+): Node[] {
+  const totalDays = differenceInDays(eventEnd, eventStart) + 1;
+  const totalHours = totalDays * 24;
+
+  const nodes: Node[] = [];
+  for (let h = 0; h <= totalHours; h++) {
+    nodes.push({
+      id: `hour-grid-${h}`,
+      type: "hourGrid",
+      position: { x: h * PIXELS_PER_HOUR, y: 0 },
+      data: { height: canvasHeight },
+      draggable: false,
+      selectable: false,
+      zIndex: Z_HOUR_GRID,
+    });
+  }
   return nodes;
 }
 
@@ -74,12 +98,13 @@ export function useLaneNodes(
     const canvasHeight = lanes.length * LANE_HEIGHT;
 
     const laneNodes = buildLaneNodes(lanes, timelineWidth);
+    const gridNodes = buildHourGridNodes(eventStart, eventEnd, canvasHeight);
     const separatorNodes = buildDaySeparatorNodes(
       eventStart,
       eventEnd,
       canvasHeight,
     );
 
-    return [...laneNodes, ...separatorNodes];
+    return [...laneNodes, ...gridNodes, ...separatorNodes];
   }, [lanes, eventStart, eventEnd]);
 }
