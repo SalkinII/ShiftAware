@@ -22,10 +22,10 @@ function DaySeparatorNodeComponent({ data }: NodeProps) {
         pointerEvents: "none",
       }}
     >
-      {/* Bold vertical line */}
+      {/* Bold vertical line — zoom-dependent width */}
       <div
         style={{
-          width: 3,
+          width: Math.ceil(3 / zoom),
           height: "100%",
           backgroundColor: "rgba(0,0,0,0.6)",
         }}
