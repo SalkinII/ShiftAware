@@ -1,16 +1,17 @@
 "use client";
 
 import { memo } from "react";
-import { type NodeProps } from "@xyflow/react";
+import { type NodeProps, useViewport } from "@xyflow/react";
 import { DAY_SEPARATOR_WIDTH } from "../utils/constants";
 
 export type DaySeparatorData = {
-  label: string; // e.g. "Fri 26 Jun"
+  label: string; // e.g. "12 Feb 2026"
   height: number; // total canvas height in px
 };
 
 function DaySeparatorNodeComponent({ data }: NodeProps) {
   const { label, height } = data as DaySeparatorData;
+  const { zoom } = useViewport();
 
   return (
     <div
@@ -21,17 +22,37 @@ function DaySeparatorNodeComponent({ data }: NodeProps) {
         pointerEvents: "none",
       }}
     >
-      {/* Vertical line */}
+      {/* Bold vertical line */}
       <div
         style={{
-          width: "1px",
+          width: 3,
           height: "100%",
-          backgroundColor: "rgba(0,0,0,0.3)",
+          backgroundColor: "rgba(0,0,0,0.6)",
         }}
       />
-      {/* Day label */}
-      <div className="absolute -top-6 left-2 text-xs font-medium text-gray-500 whitespace-nowrap">
-        {label}
+      {/* Counter-scaled day label — stays readable at any zoom */}
+      <div
+        style={{
+          position: "absolute",
+          top: -28 / zoom,
+          left: 6 / zoom,
+          transform: `scale(${1 / zoom})`,
+          transformOrigin: "left top",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#374151",
+            backgroundColor: "rgba(255,255,255,0.85)",
+            padding: "1px 6px",
+            borderRadius: 3,
+          }}
+        >
+          {label}
+        </span>
       </div>
     </div>
   );
