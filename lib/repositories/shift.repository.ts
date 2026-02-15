@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { BaseRepository, RepositoryError } from "./base.repository";
-import type { Prisma } from "@prisma/client";
+import { Role, type Prisma } from "@prisma/client";
 
 export class ShiftRepository extends BaseRepository {
   private readonly fullIncludes = {
@@ -119,7 +119,7 @@ export class ShiftRepository extends BaseRepository {
           await tx.shiftRole.createMany({
             data: requiredRoles.map((role) => ({
               shiftId: id,
-              role: role.role as Prisma.Role,
+              role: role.role as Role,
               count: role.count,
             })),
           });
