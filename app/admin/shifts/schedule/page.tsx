@@ -27,7 +27,7 @@ import { TemplatePalette } from "@/components/features/TemplatePalette/TemplateP
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useEventContext } from "@/lib/hooks/useEventContext";
-import { canMutateShifts } from "@/lib/services/event-status-guard";
+import { canMutateShifts } from "@/lib/services/event-status-permissions";
 import { getShiftsCacheKey } from "@/lib/cache/utils";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
