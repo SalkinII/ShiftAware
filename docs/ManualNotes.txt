@@ -1,23 +1,19 @@
-Remaining (outside plan scope)
-event.validation.test.ts – “requires a valid cuid id” expects failure but validation passes.
-robustness.test.ts – createSuccessResponse expects body to equal data instead of { data }.
-E2E/Playwright and integration tests – config/env issues.
-Verification: npx tsc --noEmit passes; unit tests: 159/160 passing.
+Console Error
 
----
+createUnhandledError
+..\src\client\components\react-dev-overlay\internal\helpers\console-error.ts (14:35)
+formattedErrorMessage
+..\src\client\components\react-dev-overlay\internal\helpers\use-error-handler.ts (30:34)
+event
+..\src\client\components\react-dev-overlay\internal\helpers\use-error-handler.ts (80:21)
+#
+this happens around the resize handler
 
-The drag and drop in the calendar canvas still produces a crash. Can we find the root cause?
+--- 
 
----
+the blue line homing in appears somewhere left of the snapping zone - not aligned at all. 
 
-Also the wiring of the error pages is still pointing to dashboard. that is very stale part of the page. also there are two error pages.
+the alignment of the lanes to 00:00 of the start/end of the time window is off by one hour.
 
----
+the time ruler and the hour grid/the borders of the shifts are off by a bit which scales to quite some missalignment when zoomed out completely.
 
-also the time ruler has everything superimposed. The date, the times. The times overlap if you zoom out. Isn't there a nicer way to solve this so it stays clean from a UI point?
-
----
-
-there is some serious issue with the UX flows around the shift creation in the list view, the shifts displayed in the canvas and the interaction with the new states for a schedule (planning vs. open for preferences). For example the scheduled shifts were not visible for the user of an event in planning. then when switched to open for prefences it wasn't visible still. When I tried to change the shifts then there were no shifts even in the admin calendar left.
-We should thoroughly audit this.
-We want consistent information flow according to indended use.

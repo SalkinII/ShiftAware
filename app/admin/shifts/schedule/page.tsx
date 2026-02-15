@@ -522,87 +522,86 @@ export default function ShiftsPage() {
               Define and manage event shift requirements
             </p>
           </div>
-          <div className="flex gap-2">
-            {viewMode === "calendar" && (
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              {!selectedEventId && (
+                <span className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg shrink-0">
+                  Select an event from the header
+                </span>
+              )}
+              {selectedEvent && (
+                <span
+                  className="text-sm font-bold text-gray-700 truncate max-w-[280px]"
+                  title={selectedEvent.name}
+                >
+                  {selectedEvent.name}
+                </span>
+              )}
+              <div className="flex rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "p-2 transition-colors",
+                    viewMode === "list"
+                      ? "bg-primary-500 text-white"
+                      : "bg-white text-gray-400 hover:text-gray-600",
+                  )}
+                  title="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("calendar")}
+                  className={cn(
+                    "p-2 transition-colors",
+                    viewMode === "calendar"
+                      ? "bg-primary-500 text-white"
+                      : "bg-white text-gray-400 hover:text-gray-600",
+                  )}
+                  title="Calendar view"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2">
               <Button
                 variant="secondary"
                 onClick={handleExportCalendar}
-                className="flex items-center gap-2"
+                className={cn(
+                  "flex items-center gap-2",
+                  viewMode !== "calendar" && "invisible pointer-events-none",
+                )}
               >
                 <Download className="w-4 h-4" /> Export
               </Button>
-            )}
-            <Button
-              variant="secondary"
-              onClick={() => toast.success("Shifts published to team members")}
-              className="flex items-center gap-2"
-            >
-              <Zap className="w-4 h-4" /> Publish Shifts
-            </Button>
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
-            >
-              {showForm ? (
-                "Cancel"
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" /> Define New Shift
-                </>
-              )}
-            </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  toast.success("Shifts published to team members")
+                }
+                className="flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" /> Publish Shifts
+              </Button>
+              <Button
+                onClick={() => setShowForm(!showForm)}
+                className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
+              >
+                {showForm ? (
+                  "Cancel"
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" /> Define New Shift
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-sm p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                  Filter by Event
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                {!selectedEventId && (
-                  <span className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg">
-                    Select an event from the header
-                  </span>
-                )}
-                {selectedEvent && (
-                  <span className="text-sm font-bold text-gray-700 px-4 py-2">
-                    {selectedEvent.name}
-                  </span>
-                )}
-                <div className="flex rounded-lg overflow-hidden border border-gray-200">
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={cn(
-                      "p-2 transition-colors",
-                      viewMode === "list"
-                        ? "bg-primary-500 text-white"
-                        : "bg-white text-gray-400 hover:text-gray-600",
-                    )}
-                    title="List view"
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("calendar")}
-                    className={cn(
-                      "p-2 transition-colors",
-                      viewMode === "calendar"
-                        ? "bg-primary-500 text-white"
-                        : "bg-white text-gray-400 hover:text-gray-600",
-                    )}
-                    title="Calendar view"
-                  >
-                    <Calendar className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </Card>
-
             {viewMode === "calendar" ? (
               <>
                 {/* Template palette — always visible above canvas */}
