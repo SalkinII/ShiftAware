@@ -2,15 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
-  DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-  useSensor,
-  useSensors,
-  PointerSensor,
-} from "@dnd-kit/core";
-import {
   Plus,
   Clock,
   Calendar,
@@ -38,14 +29,12 @@ import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
-import { calculateSnapPosition, findShiftEndTimes } from "@/lib/utils/snap";
-import { isValidLaneDrop } from "@/lib/utils/lane-validation";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import CalendarView from "@/components/features/Calendar/CalendarView";
-import { LaneCalendarView } from "@/components/features/LaneCalendar";
-import html2canvas from "html2canvas";
+import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import { ShiftPropertiesPanel } from "@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel";
 
 interface Shift {
   id: string;
@@ -81,9 +70,7 @@ export default function ShiftsPage() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [activeTemplate, setActiveTemplate] = useState<DraggedTemplate | null>(
-    null,
-  );
+  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     shiftId: string | null;
@@ -207,222 +194,7 @@ export default function ShiftsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // DnD sensors for template drag-drop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-  );
-
-  // Track active dragged template for DragOverlay
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const { active } = event;
-    const activeData = active.data.current;
-
-    if (activeData?.type === "template") {
-      setActiveTemplate(activeData.template);
-    }
-  }, []);
-
-  const handleDragCancel = useCallback(() => {
-    setActiveTemplate(null);
-  }, []);
-
-  // Handle template drop onto calendar with snap
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      setActiveTemplate(null);
-
-      const { active, over } = event;
-      if (!over) return;
-
-      const activeData = active.data.current;
-      const overData = over.data.current;
-
-      // Handle shift repositioning
-      if (activeData?.type === "shift") {
-        const shift = activeData.shift;
-        // TODO: Calculate new position from drop coordinates and update via API
-        // This will be implemented when integrating with the actual calendar grid
-        console.log("Shift drag detected:", shift);
-        return;
-      }
-
-      // Handle lane drops (new)
-      if (activeData?.type === "template" && overData?.type === "lane") {
-        const template = activeData.template;
-        const {
-          date: dropDate,
-          laneType,
-          dayStart,
-          dayEnd,
-          snapTargets,
-        } = overData;
-
-        // Validate drop - silent rejection if invalid
-        const targetLane = laneType as ShiftType;
-        if (!isValidLaneDrop(template, targetLane)) {
-          return; // Silent rejection - no toast, no shift created
-        }
-
-        const targetEventId = selectedEventId;
-        if (!targetEventId) {
-          toast.error("Please select an event first");
-          return;
-        }
-
-        // Get pointer position for time calculation
-        const overNode = document.querySelector(
-          `[data-testid="lane-drop-${dropDate}-${laneType}"]`,
-        );
-        if (!overNode) return;
-
-        const rect = overNode.getBoundingClientRect();
-        const dropX = event.delta?.x
-          ? rect.left + rect.width / 2 + event.delta.x
-          : rect.left + rect.width / 2;
-        const relativeX = (dropX - rect.left) / rect.width;
-
-        // Calculate time from position
-        const {
-          calculateTimeFromPosition,
-          roundToInterval,
-          calculateSnapPosition,
-        } = await import("@/lib/utils/snap");
-        const rawTime = calculateTimeFromPosition(
-          relativeX,
-          new Date(dayStart),
-          new Date(dayEnd),
-        );
-        const roundedTime = roundToInterval(rawTime, 15);
-        const { snapped, time: startTime } = calculateSnapPosition(
-          roundedTime,
-          snapTargets,
-          30,
-        );
-
-        const endTime = addMinutes(startTime, template.durationMinutes);
-
-        if (snapped) {
-          toast.info(`Snapped to ${format(startTime, "HH:mm")}`);
-        }
-
-        try {
-          const payload = {
-            eventId: targetEventId,
-            type: laneType,
-            templateId: template.id,
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
-            durationMinutes: template.durationMinutes,
-            priority: template.priority,
-            desirabilityScore: 3,
-            capacity: template.capacity,
-            requiredRoles: [{ role: "TEAM_MEMBER", count: template.capacity }],
-          };
-
-          const res = await fetch("/api/shifts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          if (res.ok) {
-            toast.success(
-              `Created ${laneType.replace(/_/g, " ")} shift at ${format(startTime, "HH:mm")}`,
-            );
-            window.dispatchEvent(
-              new CustomEvent("shiftaware:cache-invalidate", {
-                detail: { keys: ["shifts", "shifts*"] },
-              }),
-            );
-          } else {
-            const errorData = await res.json();
-            toast.error(errorData.error || "Failed to create shift");
-          }
-        } catch (error) {
-          console.error("Failed to create shift:", error);
-          toast.error("Failed to create shift");
-        }
-        return;
-      }
-
-      // Keep legacy date drop handling for backwards compatibility
-      if (activeData?.type === "template" && overData?.type === "date") {
-        const template = activeData.template;
-        const dropDate = overData.date;
-
-        const targetEventId = selectedEventId;
-        if (!targetEventId) {
-          toast.error("Please select an event first");
-          return;
-        }
-
-        const [hours, minutes] = template.startTime.split(":").map(Number);
-        const baseDropTime = new Date(`${dropDate}T${template.startTime}:00`);
-
-        const shiftEndTimes = findShiftEndTimes(
-          shifts.filter((s) => s.startTime.split("T")[0] === dropDate),
-          template.type,
-        );
-
-        const { snapped, time: startTime } = calculateSnapPosition(
-          baseDropTime,
-          shiftEndTimes,
-          30,
-        );
-
-        const endTime = addMinutes(startTime, template.durationMinutes);
-
-        if (snapped) {
-          toast.info(
-            `Snapped to end of previous ${template.type.replace("_", " ")} shift`,
-          );
-        }
-
-        try {
-          const payload = {
-            eventId: targetEventId,
-            type: template.type,
-            templateId: template.id,
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
-            durationMinutes: template.durationMinutes,
-            priority: template.priority,
-            desirabilityScore: 3,
-            capacity: template.capacity,
-            requiredRoles: [{ role: "TEAM_MEMBER", count: template.capacity }],
-          };
-
-          const res = await fetch("/api/shifts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          if (res.ok) {
-            toast.success(
-              `Created ${template.type.replace("_", " ")} shift at ${format(startTime, "HH:mm")}`,
-            );
-            window.dispatchEvent(
-              new CustomEvent("shiftaware:cache-invalidate", {
-                detail: { keys: ["shifts", "shifts*"] },
-              }),
-            );
-          } else {
-            const errorData = await res.json();
-            toast.error(errorData.error || "Failed to create shift");
-          }
-        } catch (error) {
-          console.error("Failed to create shift from template:", error);
-          toast.error("Failed to create shift");
-        }
-      }
-    },
-    [selectedEventId, shifts, toast],
-  );
+  // Removed DnD context - React Flow handles drag/drop natively
 
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
@@ -718,30 +490,7 @@ export default function ShiftsPage() {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      {/* Drag overlay for templates */}
-      <DragOverlay>
-        {activeTemplate ? (
-          <div className="bg-white rounded-xl shadow-2xl p-4 border-2 border-primary-500 min-w-[200px] opacity-90">
-            <div className="font-bold text-gray-900">{activeTemplate.name}</div>
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-              <Clock className="w-3 h-3" />
-              <span>
-                {activeTemplate.startTime} (
-                {Math.round(activeTemplate.durationMinutes / 60)}h)
-              </span>
-            </div>
-            <div className="text-xs text-primary-500 mt-1">
-              {activeTemplate.type.replace("_", " ")}
-            </div>
-          </div>
-        ) : null}
-      </DragOverlay>
+    <>
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
         onClose={() => {
@@ -868,17 +617,15 @@ export default function ShiftsPage() {
                     </p>
                   </div>
                 ) : (
-                  <LaneCalendarView
+                  <LaneCalendarCanvas
                     shifts={shifts}
-                    startDate={
-                      eventRange ? new Date(eventRange.start) : new Date()
-                    }
-                    endDate={eventRange ? new Date(eventRange.end) : new Date()}
                     lanes={derivedLanes}
-                    activeTemplate={activeTemplate}
-                    isEditable={true}
-                    onShiftUpdate={handleUpdateShift}
-                    onShiftDelete={handleDeleteShift}
+                    eventStart={selectedEvent ? new Date(selectedEvent.startDate) : null}
+                    eventEnd={selectedEvent ? new Date(selectedEvent.endDate) : null}
+                    eventId={selectedEventId}
+                    onShiftSelected={setSelectedShiftId}
+                    onShiftCreated={() => refetchShifts()}
+                    onShiftUpdated={() => refetchShifts()}
                   />
                 )}
               </div>
@@ -1196,20 +943,29 @@ export default function ShiftsPage() {
               </Card>
             ) : viewMode === "calendar" ? (
               <div className="space-y-6">
-                <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Zap className="w-5 h-5" />
-                    <span className="text-xs font-bold uppercase tracking-widest opacity-80">
-                      Drag & Drop
-                    </span>
-                  </div>
-                  <p className="text-sm leading-relaxed opacity-90">
-                    Drag templates onto the calendar to create shifts.
-                    They&apos;ll snap to the end of existing shifts for seamless
-                    succession.
-                  </p>
-                </Card>
-                <TemplatePalette eventId={selectedEventId || undefined} />
+                {selectedShiftId ? (
+                  <ShiftPropertiesPanel
+                    shiftId={selectedShiftId}
+                    onClose={() => setSelectedShiftId(null)}
+                    onUpdated={() => refetchShifts()}
+                  />
+                ) : (
+                  <>
+                    <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Zap className="w-5 h-5" />
+                        <span className="text-xs font-bold uppercase tracking-widest opacity-80">
+                          Drag & Drop
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed opacity-90">
+                        Drag templates onto the calendar to create shifts.
+                        They&apos;ll snap to the 15-minute grid automatically.
+                      </p>
+                    </Card>
+                    <TemplatePalette eventId={selectedEventId || undefined} />
+                  </>
+                )}
                 <Card className="bg-white border-none shadow-sm p-4">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                     Shift Count
@@ -1285,6 +1041,6 @@ export default function ShiftsPage() {
           </div>
         </div>
       </div>
-    </DndContext>
+    </>
   );
 }
