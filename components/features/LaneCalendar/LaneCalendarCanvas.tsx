@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useMemo,
   useState,
   useRef,
@@ -103,7 +104,7 @@ function LaneCalendarCanvasInner(
       onShiftUpdated,
     });
 
-  const { setViewport } = useReactFlow();
+  const { setViewport, fitView } = useReactFlow();
   const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
   const shiftNodes = useShiftNodes(shifts, lanes, eventStart, {
     onResizeEnd: effectiveReadOnly ? undefined : handleResizeEnd,
@@ -118,6 +119,21 @@ function LaneCalendarCanvasInner(
   useMemo(() => {
     setNodes([...laneNodes, ...shiftNodes]);
   }, [laneNodes, shiftNodes]);
+
+  // Focus viewport on shift nodes when they change
+  useEffect(() => {
+    if (shiftNodes.length > 0) {
+      // Small delay to ensure nodes are rendered in the flow
+      const timer = setTimeout(() => {
+        fitView({
+          nodes: shiftNodes.map((n) => ({ id: n.id })),
+          padding: 0.15,
+          duration: 300,
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [shiftNodes.length, fitView]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
@@ -222,20 +238,20 @@ function LaneCalendarCanvasInner(
           defaultViewport={{ x: 0, y: 0, zoom: DEFAULT_ZOOM }}
           snapToGrid
           snapGrid={[SNAP_PIXELS, LANE_HEIGHT]}
-          fitView
-          fitViewOptions={{ padding: 0.1 }}
           proOptions={{ hideAttribution: true }}
         >
           <TimeRulerPanel eventStart={eventStart} eventEnd={eventEnd} />
           <Controls position="bottom-right" />
           <MiniMap
             position="bottom-left"
+            pannable
+            zoomable
             nodeColor={(node) => {
               if (node.type === "shiftBlock")
                 return (node.data as ShiftBlockData).color;
               return "transparent";
             }}
-            maskColor="rgba(0,0,0,0.1)"
+            maskColor="rgba(0,0,0,0.15)"
           />
         </ReactFlow>
       </div>
