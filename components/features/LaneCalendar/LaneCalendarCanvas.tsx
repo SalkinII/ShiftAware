@@ -39,6 +39,7 @@ import {
   LANE_HEIGHT,
   SNAP_PIXELS,
 } from "./utils/constants";
+import { Shield } from "lucide-react";
 
 const nodeTypes = {
   laneZone: LaneZoneNode,
@@ -57,6 +58,10 @@ interface LaneCalendarCanvasProps {
   onShiftUpdated?: () => void;
   /** When true, disables drag/drop, resize; shows vote buttons on shift blocks */
   readOnly?: boolean;
+  /** When true, shows a locked-state banner and disables shift mutation controls */
+  shiftMutationLocked?: boolean;
+  /** Message to display when shift mutation is locked */
+  shiftMutationLockedMessage?: string;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
 }
@@ -76,11 +81,16 @@ function LaneCalendarCanvasInner(
     onShiftCreated,
     onShiftUpdated,
     readOnly = false,
+    shiftMutationLocked = false,
+    shiftMutationLockedMessage = "Shift editing is locked for the current event state",
     onVoteWant,
     onVoteDontWant,
   }: LaneCalendarCanvasProps,
   ref: React.Ref<LaneCalendarCanvasHandle>,
 ) {
+  // Shift mutations are locked if explicitly set OR if readOnly
+  const effectiveReadOnly = readOnly || shiftMutationLocked;
+
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const { handleDrop, handleDragOver, handleNodeDragStop, handleResizeEnd } =
     useCanvasActions({
@@ -94,8 +104,8 @@ function LaneCalendarCanvasInner(
   const { setViewport } = useReactFlow();
   const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
   const shiftNodes = useShiftNodes(shifts, lanes, eventStart, {
-    onResizeEnd: readOnly ? undefined : handleResizeEnd,
-    readOnly,
+    onResizeEnd: effectiveReadOnly ? undefined : handleResizeEnd,
+    readOnly: effectiveReadOnly,
     onVoteWant,
     onVoteDontWant,
   });
@@ -177,7 +187,20 @@ function LaneCalendarCanvasInner(
   }
 
   return (
-    <div className="relative" style={{ height: "70vh", minHeight: 500 }}>
+    <div
+      className="relative"
+      style={{
+        height: "70vh",
+        minHeight: 500,
+        paddingTop: shiftMutationLocked ? 36 : 0,
+      }}
+    >
+      {shiftMutationLocked && (
+        <div className="absolute top-0 left-0 right-0 z-50 bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800 flex items-center gap-2">
+          <Shield className="w-4 h-4 flex-shrink-0" />
+          {shiftMutationLockedMessage}
+        </div>
+      )}
       <LaneLabelsColumn lanes={lanes} />
       <div ref={flowContainerRef} style={{ marginLeft: 140, height: "100%" }}>
         <ReactFlow
@@ -185,12 +208,12 @@ function LaneCalendarCanvasInner(
           edges={[]}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
-          onNodeDragStop={readOnly ? undefined : handleNodeDragStop}
+          onNodeDragStop={effectiveReadOnly ? undefined : handleNodeDragStop}
           onNodeClick={handleNodeClick}
           onPaneClick={handlePaneClick}
-          onDrop={readOnly ? undefined : handleDrop}
-          onDragOver={readOnly ? undefined : handleDragOver}
-          nodesDraggable={!readOnly}
+          onDrop={effectiveReadOnly ? undefined : handleDrop}
+          onDragOver={effectiveReadOnly ? undefined : handleDragOver}
+          nodesDraggable={!effectiveReadOnly}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
           defaultViewport={{ x: 0, y: 0, zoom: DEFAULT_ZOOM }}
