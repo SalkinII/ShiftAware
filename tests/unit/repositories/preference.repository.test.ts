@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { PreferenceLevel } from "@prisma/client";
 import { PreferenceRepository } from "@/lib/repositories/preference.repository";
 
 // Mock the prisma client
@@ -31,7 +32,7 @@ describe("PreferenceRepository", () => {
       id: "pref-1",
       teamMemberId: "member-1",
       shiftId: "shift-1",
-      wantLevel: "WANT",
+      wantLevel: PreferenceLevel.WANT,
       notes: "Prefer morning shift",
       teamMember: { id: "member-1", name: "John", emoji: "🎭" },
       shift: { id: "shift-1", type: "MOBILE_TEAM" },
@@ -58,7 +59,7 @@ describe("PreferenceRepository", () => {
         id: "pref-1",
         teamMemberId: "member-1",
         shiftId: "shift-1",
-        wantLevel: "WANT",
+        wantLevel: PreferenceLevel.WANT,
         notes: null,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -78,13 +79,13 @@ describe("PreferenceRepository", () => {
     const input = {
       teamMember: { connect: { id: "member-1" } },
       shift: { connect: { id: "shift-1" } },
-      wantLevel: "WANT",
+      wantLevel: PreferenceLevel.WANT,
     };
     const mockPreference = {
       id: "pref-2",
       teamMemberId: "member-1",
       shiftId: "shift-1",
-      wantLevel: "WANT",
+      wantLevel: PreferenceLevel.WANT,
       notes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -98,12 +99,12 @@ describe("PreferenceRepository", () => {
   });
 
   it("should update a preference", async () => {
-    const input = { wantLevel: "MUST_HAVE" };
+    const input = { wantLevel: PreferenceLevel.DONT_WANT };
     const mockPreference = {
       id: "pref-1",
       teamMemberId: "member-1",
       shiftId: "shift-1",
-      wantLevel: "MUST_HAVE",
+      wantLevel: PreferenceLevel.DONT_WANT,
       notes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -121,7 +122,7 @@ describe("PreferenceRepository", () => {
       id: "pref-1",
       teamMemberId: "member-1",
       shiftId: "shift-1",
-      wantLevel: "WANT",
+      wantLevel: PreferenceLevel.WANT,
       notes: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -138,7 +139,7 @@ describe("PreferenceRepository", () => {
     const input = {
       teamMemberId: "member-1",
       shiftId: "shift-1",
-      wantLevel: "WANT" as const,
+      wantLevel: PreferenceLevel.WANT,
       notes: "Prefer this",
     };
 
@@ -161,11 +162,11 @@ describe("PreferenceRepository", () => {
           shiftId: "shift-1",
         },
       },
-      update: { wantLevel: "WANT", notes: "Prefer this" },
+      update: { wantLevel: PreferenceLevel.WANT, notes: "Prefer this" },
       create: {
         teamMember: { connect: { id: "member-1" } },
         shift: { connect: { id: "shift-1" } },
-        wantLevel: "WANT",
+        wantLevel: PreferenceLevel.WANT,
         notes: "Prefer this",
       },
       include: { teamMember: true, shift: true },
@@ -174,7 +175,9 @@ describe("PreferenceRepository", () => {
 
   it("should find preferences with filters and includes", async () => {
     const mockPrefs = [{ id: "p1", teamMemberId: "m1", shiftId: "s1" }];
-    vi.mocked(prisma.shiftPreference.findMany).mockResolvedValue(mockPrefs as any);
+    vi.mocked(prisma.shiftPreference.findMany).mockResolvedValue(
+      mockPrefs as any,
+    );
 
     const result = await repo.findAllWithDetails({ teamMemberId: "m1" });
 
