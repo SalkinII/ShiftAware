@@ -77,7 +77,6 @@ export function FestivalSettings() {
     try {
       const payload = {
         name: formData.name,
-        status: formData.status,
         startDate: formData.startDate,
         endDate: formData.endDate,
         bufferDaysBefore: formData.bufferDaysBefore,
@@ -164,18 +163,20 @@ export function FestivalSettings() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
           />
-          <Select
-            label="Status"
-            value={formData.status}
-            onChange={(e) =>
-              setFormData({ ...formData, status: e.target.value })
-            }
-          >
-            <option value="PLANNING">Planning</option>
-            <option value="OPEN_FOR_PREFERENCES">Open for Preferences</option>
-            <option value="ASSIGNING">Assigning</option>
-            <option value="FINALIZED">Finalized</option>
-          </Select>
+          <div className="space-y-1">
+            <label className="block text-sm font-semibold text-gray-700">
+              Status
+            </label>
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg">
+              <span className="text-sm font-medium text-gray-900 capitalize">
+                {formData.status?.replace(/_/g, " ").toLowerCase() ||
+                  "Planning"}
+              </span>
+              <span className="text-xs text-gray-400">
+                (Change via Shift Configuration page)
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
