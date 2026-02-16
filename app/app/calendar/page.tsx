@@ -24,19 +24,6 @@ import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 
-interface EventWithConfig {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  config: {
-    bufferDaysBefore: number;
-    bufferDaysAfter: number;
-    minShiftsPerPerson: number;
-  } | null;
-}
-
 type CoverageState = "full" | "partial" | "empty";
 
 interface Assignment {
@@ -176,18 +163,6 @@ export default function UserCalendarPage() {
     enabled: !!selectedEventId,
   });
 
-  // Derive current event from context for calendar anchoring
-  const eventData = useMemo(() => {
-    if (events.length === 0) return null;
-    // Get the most recent event that's not completed
-    const activeEvent = events.find(
-      (e) => (e as EventWithConfig).status !== "COMPLETED",
-    );
-    if (activeEvent) return activeEvent as EventWithConfig;
-    // Fallback to most recent event
-    return events[events.length - 1] as EventWithConfig;
-  }, [events]);
-
   useEffect(() => {
     const savedView = localStorage.getItem("shiftaware:user-calendar:view");
     if (savedView === "Day" || savedView === "Week" || savedView === "Grid") {
@@ -209,11 +184,14 @@ export default function UserCalendarPage() {
     }
   }, [cachedShifts, cacheLoading]);
 
-  // Set calendar anchor date based on event config (with buffer) or fallback to earliest shift
+  // Set calendar anchor date based on selected event config (with buffer) or fallback to earliest shift
   useEffect(() => {
-    if (eventData?.startDate) {
-      const bufferDays = eventData.config?.bufferDaysBefore || 0;
-      const festivalStart = addDays(new Date(eventData.startDate), -bufferDays);
+    if (selectedEvent?.startDate) {
+      const bufferDays = selectedEvent.config?.bufferDaysBefore || 0;
+      const festivalStart = addDays(
+        new Date(selectedEvent.startDate),
+        -bufferDays,
+      );
       setCurrentEventDate(format(festivalStart, "yyyy-MM-dd"));
     } else if (shifts.length > 0) {
       const earliest = shifts.reduce(
@@ -228,7 +206,7 @@ export default function UserCalendarPage() {
       );
       setCurrentEventDate(earliest);
     }
-  }, [eventData, shifts]);
+  }, [selectedEvent, shifts]);
 
   useEffect(() => {
     localStorage.setItem("shiftaware:user-calendar:view", viewType);
@@ -774,8 +752,12 @@ export default function UserCalendarPage() {
                 <LaneCalendarCanvas
                   shifts={filteredShifts}
                   lanes={derivedLanes}
-                  eventStart={eventData ? new Date(eventData.startDate) : null}
-                  eventEnd={eventData ? new Date(eventData.endDate) : null}
+                  eventStart={
+                    selectedEvent ? new Date(selectedEvent.startDate) : null
+                  }
+                  eventEnd={
+                    selectedEvent ? new Date(selectedEvent.endDate) : null
+                  }
                   eventId={selectedEventId}
                   readOnly
                   selectedMemberId={userId || null}
