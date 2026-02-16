@@ -297,15 +297,15 @@ export function useCanvasActions({
         const otherStartX = other.position.x;
         const otherEndX = otherStartX + otherWidth;
 
-        // Check all 4 edge combinations
+        // Check all 4 edge combinations — use snapped positions for guide alignment
         if (Math.abs(draggedStartX - otherEndX) < SNAP_PIXELS)
-          guides.push(otherEndX);
+          guides.push(snapX(otherEndX));
         if (Math.abs(draggedEndX - otherStartX) < SNAP_PIXELS)
-          guides.push(otherStartX);
+          guides.push(snapX(otherStartX));
         if (Math.abs(draggedStartX - otherStartX) < SNAP_PIXELS)
-          guides.push(otherStartX);
+          guides.push(snapX(otherStartX));
         if (Math.abs(draggedEndX - otherEndX) < SNAP_PIXELS)
-          guides.push(otherEndX);
+          guides.push(snapX(otherEndX));
       }
 
       setAlignmentGuides([...new Set(guides)]);

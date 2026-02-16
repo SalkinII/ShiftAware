@@ -45,7 +45,10 @@ function TimeRulerPanelComponent({
 
   // Calculate how many hours to skip between labels to avoid overlap
   const pixelsPerHourAtZoom = PIXELS_PER_HOUR * zoom;
-  const hourLabelSkip = Math.max(1, Math.ceil(MIN_HOUR_LABEL_WIDTH / pixelsPerHourAtZoom));
+  const hourLabelSkip = Math.max(
+    1,
+    Math.ceil(MIN_HOUR_LABEL_WIDTH / pixelsPerHourAtZoom),
+  );
   const dateLabelFits = pixelsPerHourAtZoom >= MIN_DATE_LABEL_WIDTH;
 
   for (let h = visibleStartHour; h <= visibleEndHour; h++) {
@@ -125,7 +128,8 @@ function TimeRulerPanelComponent({
                   style={{
                     position: "absolute",
                     bottom: tick.height + 2,
-                    left: 4,
+                    left: "50%",
+                    transform: "translateX(-50%)",
                   }}
                 >
                   {tick.label}

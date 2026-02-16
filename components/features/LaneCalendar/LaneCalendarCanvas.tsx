@@ -79,6 +79,7 @@ function AlignmentGuides({
               style={{
                 position: "absolute",
                 left: screenX,
+                transform: "translateX(-50%)",
                 top: 0,
                 width: 1,
                 height: "100%",
@@ -110,6 +111,8 @@ interface LaneCalendarCanvasProps {
   shiftMutationLockedMessage?: string;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
+  /** When set (user calendar), highlights shifts assigned to this member */
+  selectedMemberId?: string | null;
 }
 
 export interface LaneCalendarCanvasHandle {
@@ -131,6 +134,7 @@ function LaneCalendarCanvasInner(
     shiftMutationLockedMessage = "Shift editing is locked for the current event state",
     onVoteWant,
     onVoteDontWant,
+    selectedMemberId,
   }: LaneCalendarCanvasProps,
   ref: React.Ref<LaneCalendarCanvasHandle>,
 ) {
@@ -169,6 +173,7 @@ function LaneCalendarCanvasInner(
     readOnly: effectiveReadOnly,
     onVoteWant,
     onVoteDontWant,
+    selectedMemberId,
   });
 
   const [nodes, setNodes] = useState<Node[]>([]);
