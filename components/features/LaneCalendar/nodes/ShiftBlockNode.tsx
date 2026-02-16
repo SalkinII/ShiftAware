@@ -21,6 +21,10 @@ export type ShiftBlockData = {
   capacity: number;
   assignmentCount: number;
   width: number; // calculated width in px
+  desirabilityScore?: number; // 1-5
+  assignedMembers?: Array<{ alias: string; avatarId: string }>;
+  currentMemberId?: string;
+  isAssignedToCurrentUser?: boolean;
   onResizeEnd?: (e: unknown, p: { width: number }) => void | Promise<void>;
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
@@ -37,6 +41,9 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
     capacity,
     assignmentCount,
     width,
+    desirabilityScore,
+    assignedMembers,
+    isAssignedToCurrentUser,
     onResizeEnd,
     readOnly,
     onVoteWant,
@@ -60,7 +67,16 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           handleStyle={{ width: 8, height: 24, borderRadius: 2 }}
           lineStyle={{ borderWidth: 0 }}
           keepAspectRatio={false}
-          onResizeEnd={onResizeEnd}
+          onResizeEnd={(e, p) => {
+            try {
+              const result = onResizeEnd?.(e, p);
+              if (result instanceof Promise) {
+                result.catch((err) => console.error("Resize failed:", err));
+              }
+            } catch (err) {
+              console.error("Resize failed:", err);
+            }
+          }}
         />
       )}
       <div
@@ -70,11 +86,15 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           backgroundColor: color,
           opacity: isFull ? 1 : 0.8,
           borderRadius: `${Math.ceil(6 / zoom)}px`,
-          borderWidth: `${Math.ceil(2 / zoom)}px`,
           borderStyle: "solid",
-          borderColor: selected
-            ? "#1d4ed8"
-            : `color-mix(in srgb, ${color} 70%, black)`,
+          borderColor: isAssignedToCurrentUser
+            ? "#16a34a"
+            : selected
+              ? "#1d4ed8"
+              : `color-mix(in srgb, ${color} 70%, black)`,
+          borderWidth: isAssignedToCurrentUser
+            ? `${Math.ceil(3 / zoom)}px`
+            : `${Math.ceil(2 / zoom)}px`,
           overflow: "hidden",
           cursor: "grab",
           display: "flex",
@@ -115,6 +135,22 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
               {format(new Date(startTime), "HH:mm")}–
               {format(new Date(endTime), "HH:mm")}
             </div>
+            {desirabilityScore != null && (
+              <span
+                className="inline-flex px-1 py-0.5 rounded text-[9px] font-bold mt-0.5"
+                style={{
+                  backgroundColor:
+                    desirabilityScore <= 2
+                      ? "rgba(59, 130, 246, 0.3)"
+                      : desirabilityScore === 3
+                        ? "rgba(156, 163, 175, 0.3)"
+                        : "rgba(249, 115, 22, 0.3)",
+                  color: "white",
+                }}
+              >
+                {desirabilityScore}/5
+              </span>
+            )}
             {readOnly && (onVoteWant || onVoteDontWant) && (
               <div className="flex gap-0.5 shrink-0 px-1 mt-0.5">
                 {onVoteWant && (
@@ -159,6 +195,41 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
             <div className="text-base text-white/80">
               {assignmentCount}/{capacity}
             </div>
+            {assignedMembers && assignedMembers.length > 0 && !isMinimal && (
+              <div className="flex flex-wrap gap-0.5 mt-1">
+                {assignedMembers.slice(0, 4).map((m) => (
+                  <span
+                    key={m.alias}
+                    className="text-[10px] bg-white/20 px-1 rounded truncate max-w-[60px]"
+                    title={m.alias}
+                  >
+                    {m.alias}
+                  </span>
+                ))}
+                {assignedMembers.length > 4 && (
+                  <span className="text-[10px] text-white/60">
+                    +{assignedMembers.length - 4}
+                  </span>
+                )}
+              </div>
+            )}
+            {desirabilityScore != null && (
+              <div
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-bold mt-1"
+                style={{
+                  backgroundColor:
+                    desirabilityScore <= 2
+                      ? "rgba(59, 130, 246, 0.3)"
+                      : desirabilityScore === 3
+                        ? "rgba(156, 163, 175, 0.3)"
+                        : "rgba(249, 115, 22, 0.3)",
+                  color: "white",
+                }}
+                title={`Desirability: ${desirabilityScore}/5 — ${desirabilityScore <= 2 ? "easier to get" : desirabilityScore >= 4 ? "harder to get" : "moderate"}`}
+              >
+                {desirabilityScore}/5
+              </div>
+            )}
             {readOnly && (onVoteWant || onVoteDontWant) && (
               <div className="flex gap-1 mt-1">
                 {onVoteWant && (
