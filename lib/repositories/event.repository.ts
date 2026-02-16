@@ -1,8 +1,24 @@
 import { prisma } from "@/lib/db";
-import { BaseRepository } from "./base.repository";
+import { BaseRepository, RepositoryError } from "./base.repository";
 import type { Prisma } from "@prisma/client";
 
 export class EventRepository extends BaseRepository {
+  async findByIdWithShifts(id: string) {
+    try {
+      const event = await prisma.event.findUnique({
+        where: { id },
+        include: { shifts: { select: { id: true } }, config: true },
+      });
+      if (!event) {
+        this.throwFormattedException("NOT_FOUND", `Event ${id} not found`);
+      }
+      return event;
+    } catch (error) {
+      if (error instanceof RepositoryError) throw error;
+      throw this.handlePrismaError(error, "Failed to fetch event with shifts");
+    }
+  }
+
   async findById(id: string) {
     try {
       const event = await prisma.event.findUnique({

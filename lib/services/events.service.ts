@@ -1,4 +1,5 @@
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { isValidTransition } from "@/lib/validations/event-transition";
 import type { Prisma } from "@prisma/client";
 
 export class EventsService {
@@ -34,6 +35,43 @@ export class EventsService {
 
   async deleteEvent(id: string) {
     return this.repo.delete(id);
+  }
+
+  async transitionStatus(eventId: string, targetStatus: string) {
+    const event = await this.repo.findByIdWithShifts(eventId);
+
+    if (!isValidTransition(event.status, targetStatus)) {
+      throw new Error(
+        `Invalid transition: cannot go from ${event.status} to ${targetStatus}`,
+      );
+    }
+
+    // Forward-transition prerequisites
+    const STATUS_ORDER = [
+      "PLANNING",
+      "OPEN_FOR_PREFERENCES",
+      "ASSIGNING",
+      "FINALIZED",
+      "COMPLETED",
+    ];
+    const currentIdx = STATUS_ORDER.indexOf(event.status);
+    const targetIdx = STATUS_ORDER.indexOf(targetStatus);
+    const isForward = targetIdx > currentIdx;
+
+    if (isForward) {
+      if (
+        event.status === "PLANNING" &&
+        targetStatus === "OPEN_FOR_PREFERENCES"
+      ) {
+        if (!event.shifts || event.shifts.length === 0) {
+          throw new Error("Cannot publish: event must have at least 1 shift");
+        }
+      }
+    }
+
+    return this.repo.update(eventId, {
+      status: targetStatus as Prisma.EventUpdateInput["status"],
+    });
   }
 
   async createEventWithConfig(

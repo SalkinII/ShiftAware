@@ -8,6 +8,7 @@ describe("EventsService", () => {
   beforeEach(() => {
     mockRepo = {
       findById: vi.fn(),
+      findByIdWithShifts: vi.fn(),
       findAll: vi.fn(),
       findCurrent: vi.fn(),
       create: vi.fn(),
@@ -95,5 +96,75 @@ describe("EventsService", () => {
 
     expect(mockRepo.findCurrent).toHaveBeenCalled();
     expect(result).toEqual(mockEvent);
+  });
+});
+
+describe("EventsService.transitionStatus", () => {
+  let service: EventsService;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    mockRepo = {
+      findByIdWithShifts: vi.fn(),
+      update: vi.fn(),
+    };
+    service = new EventsService(mockRepo);
+    vi.clearAllMocks();
+  });
+
+  it("should transition PLANNING → OPEN_FOR_PREFERENCES", async () => {
+    mockRepo.findByIdWithShifts.mockResolvedValue({
+      id: "e1",
+      status: "PLANNING",
+      shifts: [{ id: "s1" }],
+    });
+    mockRepo.update.mockResolvedValue({
+      id: "e1",
+      status: "OPEN_FOR_PREFERENCES",
+    });
+
+    const result = await service.transitionStatus("e1", "OPEN_FOR_PREFERENCES");
+    expect(result.status).toBe("OPEN_FOR_PREFERENCES");
+    expect(mockRepo.update).toHaveBeenCalledWith("e1", {
+      status: "OPEN_FOR_PREFERENCES",
+    });
+  });
+
+  it("should reject skipping steps (PLANNING → ASSIGNING)", async () => {
+    mockRepo.findByIdWithShifts.mockResolvedValue({
+      id: "e1",
+      status: "PLANNING",
+      shifts: [{ id: "s1" }],
+    });
+
+    await expect(service.transitionStatus("e1", "ASSIGNING")).rejects.toThrow(
+      "Invalid transition",
+    );
+  });
+
+  it("should allow backward transition FINALIZED → ASSIGNING", async () => {
+    mockRepo.findByIdWithShifts.mockResolvedValue({
+      id: "e1",
+      status: "FINALIZED",
+    });
+    mockRepo.update.mockResolvedValue({
+      id: "e1",
+      status: "ASSIGNING",
+    });
+
+    const result = await service.transitionStatus("e1", "ASSIGNING");
+    expect(result.status).toBe("ASSIGNING");
+  });
+
+  it("should reject publishing with no shifts", async () => {
+    mockRepo.findByIdWithShifts.mockResolvedValue({
+      id: "e1",
+      status: "PLANNING",
+      shifts: [],
+    });
+
+    await expect(
+      service.transitionStatus("e1", "OPEN_FOR_PREFERENCES"),
+    ).rejects.toThrow("at least 1 shift");
   });
 });
