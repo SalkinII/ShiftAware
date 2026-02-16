@@ -262,8 +262,13 @@ function LaneCalendarCanvasInner(
 
   if (lanes.length === 0) {
     return (
-      <div className="flex items-center justify-center h-96 text-gray-500">
-        No templates assigned yet. Assign templates in Setup to create lanes.
+      <div className="flex items-center justify-center h-96 text-gray-400">
+        <div className="text-center">
+          <div className="animate-pulse mb-2">Loading schedule...</div>
+          <p className="text-sm">
+            If this persists, assign templates in Setup to create lanes.
+          </p>
+        </div>
       </div>
     );
   }
