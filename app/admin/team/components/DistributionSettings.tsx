@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useEventContext } from "@/lib/hooks/useEventContext";
+import { canRunAlgorithm } from "@/lib/services/event-status-permissions";
+import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
 interface AttributeRule {
@@ -26,7 +28,7 @@ interface DistributionConfig {
 
 export function DistributionSettings() {
   const toast = useToast();
-  const { selectedEventId } = useEventContext(true);
+  const { selectedEventId, selectedEvent } = useEventContext(true);
   const [config, setConfig] = useState<DistributionConfig>({
     fairnessWeight: 50,
     preferenceWeight: 30,
@@ -37,6 +39,7 @@ export function DistributionSettings() {
 
   const [showAddRule, setShowAddRule] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [running, setRunning] = useState(false);
   const [attributeDefinitions, setAttributeDefinitions] = useState<
     Array<{
       id: string;
@@ -154,7 +157,7 @@ export function DistributionSettings() {
         const result = unwrapApiResponse<any>(data);
         const totalAssignments = result.assignments?.length || 0;
         const totalViolations = result.violations?.length || 0;
-        alert(
+        toast.success(
           `Preview: ${totalAssignments} assignments proposed. ${totalViolations} constraint violations detected.`,
         );
       } else {
@@ -165,6 +168,40 @@ export function DistributionSettings() {
       toast.error("Failed to preview algorithm results");
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const handleRunAlgorithm = async () => {
+    if (!selectedEventId) return;
+    if (!confirm("This will replace all current assignments. Continue?"))
+      return;
+
+    setRunning(true);
+    try {
+      const res = await fetch("/api/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: selectedEventId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const result = unwrapApiResponse<any>(data);
+        const count = result.assignments?.length || 0;
+        toast.success(`${count} assignments created`);
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: { keys: ["assignments", "shifts"] },
+          }),
+        );
+      } else {
+        const error = await res.json();
+        toast.error(error.message || "Algorithm failed");
+      }
+    } catch {
+      toast.error("Algorithm failed");
+    } finally {
+      setRunning(false);
     }
   };
 
@@ -392,6 +429,21 @@ export function DistributionSettings() {
                     const selectedAttr = attributeDefinitions.find(
                       (a) => a.name === rule.attribute,
                     );
+                    if (selectedAttr?.type === "BOOLEAN") {
+                      return (
+                        <select
+                          value={rule.value}
+                          onChange={(e) =>
+                            handleUpdateRule(rule.id, "value", e.target.value)
+                          }
+                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value="">Select...</option>
+                          <option value="true">Yes</option>
+                          <option value="false">No</option>
+                        </select>
+                      );
+                    }
                     if (
                       selectedAttr &&
                       selectedAttr.options &&
@@ -447,17 +499,39 @@ export function DistributionSettings() {
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Button onClick={handleSave} variant="primary">
-          Save Configuration
-        </Button>
-        <Button
-          onClick={handlePreview}
-          variant="secondary"
-          disabled={previewLoading}
-        >
-          {previewLoading ? "Previewing..." : "Preview Results"}
-        </Button>
+      <div className="space-y-4">
+        <div className="flex gap-3 flex-wrap">
+          <Button onClick={handleSave} variant="primary">
+            Save Configuration
+          </Button>
+          {selectedEvent &&
+            canRunAlgorithm(selectedEvent.status as EventStatus) && (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={handlePreview}
+                  disabled={previewLoading}
+                >
+                  {previewLoading ? "Previewing..." : "Preview Assignment"}
+                </Button>
+                <Button
+                  onClick={handleRunAlgorithm}
+                  disabled={running}
+                  className="shadow-lg"
+                >
+                  {running ? "Running..." : "Run Assignment"}
+                </Button>
+              </>
+            )}
+        </div>
+        {selectedEvent &&
+          !canRunAlgorithm(selectedEvent.status as EventStatus) && (
+            <p className="text-sm text-gray-400 pt-4 border-t">
+              Algorithm can only run when event status is &quot;Assigning&quot;.
+              Current status:{" "}
+              {selectedEvent.status.replace(/_/g, " ").toLowerCase()}
+            </p>
+          )}
       </div>
     </div>
   );
