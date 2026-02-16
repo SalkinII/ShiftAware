@@ -2,7 +2,12 @@ import { prisma } from "@/lib/db";
 import { PERMISSION_MAP, type GuardAction } from "./event-status-permissions";
 
 // Re-export client-safe items for backward compatibility
-export { canMutateShifts, PERMISSION_MAP } from "./event-status-permissions";
+export {
+  canMutateShifts,
+  canRunAlgorithm,
+  canManuallyAssign,
+  PERMISSION_MAP,
+} from "./event-status-permissions";
 export type { GuardAction } from "./event-status-permissions";
 
 export class StatusGuardError extends Error {

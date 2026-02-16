@@ -33,7 +33,7 @@ export class AssignmentsService {
     const a1 = await this.repo.findById(assignment1Id);
     const a2 = await this.repo.findById(assignment2Id);
     const eventId = a1.shift.eventId;
-    await assertEventStatusAllows(eventId, "ASSIGNMENT_MUTATE");
+    await assertEventStatusAllows(eventId, "ASSIGNMENT_MANUAL");
 
     // Validate: Cannot swap if assignments are on the same shift
     if (a1.shiftId === a2.shiftId) {
@@ -92,8 +92,37 @@ export class AssignmentsService {
     );
   }
 
+  async createManualAssignment(data: {
+    shiftId: string;
+    teamMemberId: string;
+    role?: string;
+    assignmentType?: string;
+  }) {
+    const shiftRecord = await prisma.shift.findUnique({
+      where: { id: data.shiftId },
+      select: { eventId: true },
+    });
+    if (!shiftRecord) throw new Error("Shift not found");
+    await assertEventStatusAllows(shiftRecord.eventId, "ASSIGNMENT_MANUAL");
+    return this.repo.createManual({
+      shiftId: data.shiftId,
+      teamMemberId: data.teamMemberId,
+      role: data.role || "TEAM_MEMBER",
+      assignmentType: data.assignmentType || "MANUAL",
+    });
+  }
+
+  async deleteAssignment(assignmentId: string) {
+    const assignment = await this.repo.findById(assignmentId);
+    await assertEventStatusAllows(
+      assignment.shift.eventId,
+      "ASSIGNMENT_MANUAL",
+    );
+    return this.repo.delete(assignmentId);
+  }
+
   async runAllocation(eventId: string, preview = false) {
-    await assertEventStatusAllows(eventId, "ASSIGNMENT_MUTATE");
+    await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
     const event = await this.eventRepo.findById(eventId);
 
     // 2. Load active members with preferences and assignments
