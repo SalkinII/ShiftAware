@@ -11,7 +11,7 @@ export const eventTransitionSchema = z.object({
 });
 
 /** Valid forward and backward transitions (one step at a time) */
-const STATUS_ORDER = [
+export const STATUS_ORDER = [
   "PLANNING",
   "OPEN_FOR_PREFERENCES",
   "ASSIGNING",

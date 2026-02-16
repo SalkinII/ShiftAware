@@ -1,5 +1,8 @@
 import { EventRepository } from "@/lib/repositories/event.repository";
-import { isValidTransition } from "@/lib/validations/event-transition";
+import {
+  isValidTransition,
+  STATUS_ORDER,
+} from "@/lib/validations/event-transition";
 import type { Prisma } from "@prisma/client";
 
 export class EventsService {
@@ -47,13 +50,6 @@ export class EventsService {
     }
 
     // Forward-transition prerequisites
-    const STATUS_ORDER = [
-      "PLANNING",
-      "OPEN_FOR_PREFERENCES",
-      "ASSIGNING",
-      "FINALIZED",
-      "COMPLETED",
-    ];
     const currentIdx = STATUS_ORDER.indexOf(event.status);
     const targetIdx = STATUS_ORDER.indexOf(targetStatus);
     const isForward = targetIdx > currentIdx;
