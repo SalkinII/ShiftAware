@@ -90,6 +90,7 @@ export default function UserCalendarPage() {
   const toast = useToast();
   const {
     selectedEventId,
+    selectedEvent,
     events,
     loading: eventsLoading,
   } = useEventContext(false);
@@ -707,6 +708,23 @@ export default function UserCalendarPage() {
             </div>
           </Card>
 
+          {/* Desirability legend */}
+          <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
+            <span className="font-medium">Shift Desirability:</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-4 h-4 rounded bg-blue-400/30 inline-block" />
+              1-2 = easier to get
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-4 h-4 rounded bg-gray-400/30 inline-block" />3
+              = moderate
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-4 h-4 rounded bg-orange-400/30 inline-block" />
+              4-5 = popular, harder to get
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {(Object.keys(coverageLegend) as CoverageState[]).map((state) => (
               <div
@@ -735,24 +753,50 @@ export default function UserCalendarPage() {
             ))}
           </div>
 
-          <Card className="p-0 shadow-xl overflow-hidden h-[calc(100vh-340px)] min-h-[600px] flex flex-col bg-white">
-            <div className="h-full min-h-[500px]">
-              <LaneCalendarCanvas
-                shifts={filteredShifts}
-                lanes={derivedLanes}
-                eventStart={eventData ? new Date(eventData.startDate) : null}
-                eventEnd={eventData ? new Date(eventData.endDate) : null}
-                eventId={selectedEventId}
-                readOnly
-                onShiftSelected={(id) => {
-                  if (id) handleShiftClick({ id });
-                  else setSelectedShift(null);
-                }}
-                onVoteWant={handleVoteWant}
-                onVoteDontWant={handleVoteDontWant}
-              />
+          {selectedEvent?.status === "PLANNING" && (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <Calendar className="w-12 h-12 mb-4" />
+              <p className="text-lg font-medium">Schedule is being prepared</p>
+              <p className="text-sm">Check back when shifts are published.</p>
             </div>
-          </Card>
+          )}
+
+          {selectedEvent?.status === "ASSIGNING" && (
+            <div className="bg-amber-50 border border-amber-200 px-4 py-2 rounded-lg text-sm text-amber-800">
+              Assignments are in progress. You&apos;ll be notified when the
+              schedule is finalized.
+            </div>
+          )}
+
+          {selectedEvent?.status !== "PLANNING" && (
+            <Card className="p-0 shadow-xl overflow-hidden h-[calc(100vh-340px)] min-h-[600px] flex flex-col bg-white">
+              <div className="h-full min-h-[500px]">
+                <LaneCalendarCanvas
+                  shifts={filteredShifts}
+                  lanes={derivedLanes}
+                  eventStart={eventData ? new Date(eventData.startDate) : null}
+                  eventEnd={eventData ? new Date(eventData.endDate) : null}
+                  eventId={selectedEventId}
+                  readOnly
+                  selectedMemberId={userId || null}
+                  onShiftSelected={(id) => {
+                    if (id) handleShiftClick({ id });
+                    else setSelectedShift(null);
+                  }}
+                  onVoteWant={
+                    selectedEvent?.status === "OPEN_FOR_PREFERENCES"
+                      ? handleVoteWant
+                      : undefined
+                  }
+                  onVoteDontWant={
+                    selectedEvent?.status === "OPEN_FOR_PREFERENCES"
+                      ? handleVoteDontWant
+                      : undefined
+                  }
+                />
+              </div>
+            </Card>
+          )}
 
           {/* Shift Details Modal - Read-only */}
           {selectedShift && (

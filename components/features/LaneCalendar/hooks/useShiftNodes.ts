@@ -11,7 +11,12 @@ export interface ShiftLike {
   endTime: string;
   durationMinutes?: number; // computed from start/end if missing
   capacity: number;
-  assignments?: { id: string; teamMember?: { alias?: string } }[];
+  desirabilityScore?: number;
+  assignments?: {
+    id: string;
+    teamMemberId?: string;
+    teamMember?: { id?: string; alias?: string; avatarId?: string };
+  }[];
   _count?: { assignments?: number; preferences?: number };
   event?: { id: string; name: string };
   templateId?: string | null;
@@ -27,6 +32,8 @@ export interface UseShiftNodesOptions {
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
+  /** When set, shifts assigned to this member get isAssignedToCurrentUser: true */
+  selectedMemberId?: string | null;
 }
 
 export function buildShiftNodes(
@@ -40,6 +47,7 @@ export function buildShiftNodes(
     readOnly = false,
     onVoteWant,
     onVoteDontWant,
+    selectedMemberId,
   } = options ?? {};
   // Match by templateId; shifts with templateId=null go to Unassigned lane
   const laneIndexMap = new Map(
@@ -83,6 +91,23 @@ export function buildShiftNodes(
           capacity: shift.capacity,
           assignmentCount:
             shift.assignments?.length ?? shift._count?.assignments ?? 0,
+          desirabilityScore: shift.desirabilityScore,
+          assignedMembers:
+            shift.assignments?.map(
+              (a: { teamMember?: { alias?: string; avatarId?: string } }) => ({
+                alias: a.teamMember?.alias || "?",
+                avatarId: a.teamMember?.avatarId || "",
+              }),
+            ) ?? [],
+          isAssignedToCurrentUser:
+            !!selectedMemberId &&
+            (shift.assignments ?? []).some(
+              (a) =>
+                (a as { teamMemberId?: string }).teamMemberId ===
+                  selectedMemberId ||
+                (a as { teamMember?: { id?: string } }).teamMember?.id ===
+                  selectedMemberId,
+            ),
           width,
           onResizeEnd:
             !readOnly &&
@@ -114,6 +139,7 @@ export function useShiftNodes(
     readOnly = false,
     onVoteWant,
     onVoteDontWant,
+    selectedMemberId,
   } = options ?? {};
   return useMemo(() => {
     if (!shifts || !eventStart || lanes.length === 0) return [];
@@ -122,6 +148,7 @@ export function useShiftNodes(
       readOnly,
       onVoteWant,
       onVoteDontWant,
+      selectedMemberId,
     });
   }, [
     shifts,
@@ -131,5 +158,6 @@ export function useShiftNodes(
     readOnly,
     onVoteWant,
     onVoteDontWant,
+    selectedMemberId,
   ]);
 }
