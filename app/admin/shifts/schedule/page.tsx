@@ -13,6 +13,9 @@ import {
   Zap,
   GripVertical,
   Download,
+  Lock,
+  CheckCircle,
+  Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -28,6 +31,10 @@ import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { canMutateShifts } from "@/lib/services/event-status-permissions";
+import {
+  getNextStatus,
+  getPreviousStatus,
+} from "@/lib/validations/event-transition";
 import { getShiftsCacheKey } from "@/lib/cache/utils";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
@@ -71,12 +78,51 @@ export default function ShiftsPage() {
   const toast = useToast();
   const calendarRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<LaneCalendarCanvasHandle>(null);
-  const { selectedEventId, selectedEvent } = useEventContext(true);
+  const { selectedEventId, selectedEvent, refreshEvents } =
+    useEventContext(true);
   const shiftMutationLocked = selectedEvent
     ? !canMutateShifts(
         selectedEvent.status as import("@prisma/client").EventStatus,
       )
     : false;
+
+  const STATUS_ACTION_LABELS: Record<
+    string,
+    { label: string; icon: typeof Zap }
+  > = {
+    OPEN_FOR_PREFERENCES: { label: "Publish Shifts", icon: Zap },
+    ASSIGNING: { label: "Close Preferences", icon: Lock },
+    FINALIZED: { label: "Finalize Schedule", icon: CheckCircle },
+    COMPLETED: { label: "Mark Complete", icon: Archive },
+  };
+
+  const handleTransition = async (targetStatus: string) => {
+    if (!selectedEventId) return;
+    const label = STATUS_ACTION_LABELS[targetStatus]?.label || targetStatus;
+    if (
+      !confirm(
+        `Are you sure you want to ${label.toLowerCase()}? This will change the event workflow state.`,
+      )
+    )
+      return;
+
+    const res = await fetch(`/api/events/${selectedEventId}/transition`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetStatus }),
+    });
+
+    if (res.ok) {
+      toast.success(
+        `Event status changed to ${targetStatus.replace(/_/g, " ").toLowerCase()}`,
+      );
+      refreshEvents();
+    } else {
+      const json = await res.json().catch(() => ({}));
+      toast.error(json.error || json.message || "Failed to change status");
+    }
+  };
+
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -428,17 +474,59 @@ export default function ShiftsPage() {
     }
   }
 
-  async function handleExportCalendar() {
-    const dataUrl = await canvasRef.current?.exportToPng();
-    if (!dataUrl) {
-      toast.error("No calendar to export. Add shifts first.");
+  function handleExportCalendar() {
+    if (!shifts || shifts.length === 0) {
+      toast.error("No shifts to export");
       return;
     }
-    const link = document.createElement("a");
-    link.download = `schedule-${selectedEvent?.name ?? "export"}-${format(new Date(), "yyyy-MM-dd")}.png`;
-    link.href = dataUrl;
-    link.click();
-    toast.success("Schedule exported as PNG");
+
+    const shiftsByDay = new Map<string, any[]>();
+    for (const shift of shifts) {
+      const day = format(new Date(shift.startTime), "yyyy-MM-dd");
+      if (!shiftsByDay.has(day)) shiftsByDay.set(day, []);
+      shiftsByDay.get(day)!.push(shift);
+    }
+
+    const html = Array.from(shiftsByDay.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, dayShifts]) => {
+        const rows = dayShifts
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+          )
+          .map(
+            (s: any) => `
+          <tr>
+            <td>${s.template?.name || s.type || "—"}</td>
+            <td>${format(new Date(s.startTime), "HH:mm")} – ${format(new Date(s.endTime), "HH:mm")}</td>
+            <td>${s.assignments?.map((a: any) => a.teamMember?.alias).join(", ") || "—"}</td>
+            <td>${s.assignments?.length || 0}/${s.capacity}</td>
+          </tr>
+        `,
+          )
+          .join("");
+
+        return `
+        <h2>${format(new Date(day), "EEEE, d MMMM yyyy")}</h2>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+          <thead><tr><th>Shift</th><th>Time</th><th>Assigned</th><th>Capacity</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+      })
+      .join("");
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(`
+      <html><head><title>Schedule Export</title>
+      <style>body{font-family:sans-serif;padding:20px}table{margin-bottom:20px}th{background:#f3f4f6}</style>
+      </head><body><h1>Schedule: ${selectedEvent?.name ?? "Export"}</h1>${html}</body></html>
+    `);
+      printWindow.document.close();
+      printWindow.print();
+    }
   }
 
   // Keyboard shortcuts
@@ -575,15 +663,43 @@ export default function ShiftsPage() {
               >
                 <Download className="w-4 h-4" /> Export
               </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  toast.success("Shifts published to team members")
-                }
-                className="flex items-center gap-2"
-              >
-                <Zap className="w-4 h-4" /> Publish Shifts
-              </Button>
+              {selectedEvent &&
+                (() => {
+                  const nextStatus = getNextStatus(selectedEvent.status);
+                  const prevStatus = getPreviousStatus(selectedEvent.status);
+                  const action = nextStatus
+                    ? STATUS_ACTION_LABELS[nextStatus]
+                    : null;
+                  const ActionIcon = action?.icon || Zap;
+
+                  return (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 capitalize">
+                        {selectedEvent.status.replace(/_/g, " ").toLowerCase()}
+                      </span>
+                      {action && nextStatus && (
+                        <Button
+                          variant="secondary"
+                          onClick={() => handleTransition(nextStatus)}
+                          className="flex items-center gap-2"
+                        >
+                          <ActionIcon className="w-4 h-4" /> {action.label}
+                        </Button>
+                      )}
+                      {prevStatus && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTransition(prevStatus)}
+                          className="text-xs text-gray-500"
+                        >
+                          ← Back to{" "}
+                          {prevStatus.replace(/_/g, " ").toLowerCase()}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()}
               <Button
                 onClick={() => setShowForm(!showForm)}
                 className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
@@ -983,6 +1099,7 @@ export default function ShiftsPage() {
                 {selectedShiftId && (
                   <ShiftPropertiesPanel
                     shiftId={selectedShiftId}
+                    eventStatus={selectedEvent?.status}
                     onClose={() => setSelectedShiftId(null)}
                     onUpdated={() => refetchShifts()}
                   />
