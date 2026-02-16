@@ -19,10 +19,7 @@ export class AssignmentRepository extends BaseRepository {
       });
 
       if (!assignment) {
-        this.throwFormattedException(
-          "NOT_FOUND",
-          `Assignment ${id} not found`,
-        );
+        this.throwFormattedException("NOT_FOUND", `Assignment ${id} not found`);
       }
 
       return assignment;
@@ -54,6 +51,41 @@ export class AssignmentRepository extends BaseRepository {
       });
     } catch (error) {
       throw this.handlePrismaError(error, "Failed to fetch assignments");
+    }
+  }
+
+  async delete(id: string) {
+    try {
+      return await prisma.assignment.delete({
+        where: { id },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to delete assignment");
+    }
+  }
+
+  async createManual(data: {
+    shiftId: string;
+    teamMemberId: string;
+    role: string;
+    assignmentType: string;
+  }) {
+    try {
+      return await prisma.assignment.create({
+        data: {
+          shiftId: data.shiftId,
+          teamMemberId: data.teamMemberId,
+          role: data.role as any,
+          isLead: false,
+          assignmentType: data.assignmentType as any,
+        },
+        include: {
+          shift: true,
+          teamMember: true,
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to create assignment");
     }
   }
 
@@ -117,8 +149,20 @@ export class AssignmentRepository extends BaseRepository {
   async swapAssignments(
     assignment1Id: string,
     assignment2Id: string,
-    a1Data: { shiftId: string; teamMemberId: string; role: string; isLead: boolean; notes: string | null },
-    a2Data: { shiftId: string; teamMemberId: string; role: string; isLead: boolean; notes: string | null },
+    a1Data: {
+      shiftId: string;
+      teamMemberId: string;
+      role: string;
+      isLead: boolean;
+      notes: string | null;
+    },
+    a2Data: {
+      shiftId: string;
+      teamMemberId: string;
+      role: string;
+      isLead: boolean;
+      notes: string | null;
+    },
   ) {
     try {
       return await prisma.$transaction(async (tx) => {

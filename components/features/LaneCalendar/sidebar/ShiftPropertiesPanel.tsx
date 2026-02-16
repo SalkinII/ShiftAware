@@ -6,15 +6,19 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { getLaneColor } from "@/lib/types/lane";
 import { useToast } from "@/components/ui/Toast";
+import { canManuallyAssign } from "@/lib/services/event-status-permissions";
+import type { EventStatus } from "@prisma/client";
 
 interface ShiftPropertiesPanelProps {
   shiftId: string;
+  eventStatus?: string;
   onClose: () => void;
   onUpdated: () => void;
 }
 
 export function ShiftPropertiesPanel({
   shiftId,
+  eventStatus,
   onClose,
   onUpdated,
 }: ShiftPropertiesPanelProps) {
@@ -25,23 +29,44 @@ export function ShiftPropertiesPanel({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [capacity, setCapacity] = useState(2);
+  const [availableMembers, setAvailableMembers] = useState<any[]>([]);
+  const [selectedMemberToAdd, setSelectedMemberToAdd] = useState("");
+
+  const canManualAssign = eventStatus
+    ? canManuallyAssign(eventStatus as EventStatus)
+    : false;
+
+  async function fetchShift() {
+    setLoading(true);
+    const res = await fetch(`/api/shifts/${shiftId}`);
+    if (res.ok) {
+      const json = await res.json();
+      const data = json.data || json;
+      setShift(data);
+      setStartTime(format(new Date(data.startTime), "yyyy-MM-dd'T'HH:mm"));
+      setEndTime(format(new Date(data.endTime), "yyyy-MM-dd'T'HH:mm"));
+      setCapacity(data.capacity);
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function fetchShift() {
-      setLoading(true);
-      const res = await fetch(`/api/shifts/${shiftId}`);
-      if (res.ok) {
-        const json = await res.json();
-        const data = json.data || json;
-        setShift(data);
-        setStartTime(format(new Date(data.startTime), "yyyy-MM-dd'T'HH:mm"));
-        setEndTime(format(new Date(data.endTime), "yyyy-MM-dd'T'HH:mm"));
-        setCapacity(data.capacity);
-      }
-      setLoading(false);
-    }
     fetchShift();
   }, [shiftId]);
+
+  useEffect(() => {
+    if (!shift?.eventId) return;
+    fetch(`/api/members?eventId=${shift.eventId}`)
+      .then((r) => r.json())
+      .then((json) => {
+        const members = json.data || json;
+        const assignedIds = new Set(
+          (shift.assignments || []).map((a: any) => a.teamMemberId),
+        );
+        setAvailableMembers(members.filter((m: any) => !assignedIds.has(m.id)));
+      })
+      .catch(() => setAvailableMembers([]));
+  }, [shift]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -78,6 +103,48 @@ export function ShiftPropertiesPanel({
       } else {
         toast.error("Failed to update shift");
       }
+    }
+  };
+
+  const handleRemoveAssignment = async (assignmentId: string) => {
+    if (!confirm("Remove this assignment?")) return;
+    const res = await fetch(`/api/assignments?id=${assignmentId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      toast.success("Assignment removed");
+      fetchShift();
+      onUpdated();
+    } else {
+      toast.error("Failed to remove assignment");
+    }
+  };
+
+  const handleAddAssignment = async () => {
+    if (!selectedMemberToAdd || !shift) return;
+    const res = await fetch("/api/assignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId: shift.eventId,
+        assignments: [
+          {
+            shiftId: shiftId,
+            teamMemberId: selectedMemberToAdd,
+            role: "TEAM_MEMBER",
+            assignmentType: "MANUAL",
+          },
+        ],
+      }),
+    });
+    if (res.ok) {
+      toast.success("Member assigned");
+      setSelectedMemberToAdd("");
+      fetchShift();
+      onUpdated();
+    } else {
+      const json = await res.json().catch(() => ({}));
+      toast.error(json.message || json.error || "Failed to assign member");
     }
   };
 
@@ -167,24 +234,60 @@ export function ShiftPropertiesPanel({
       </div>
 
       {/* Assigned members */}
-      {shift.assignments?.length > 0 && (
-        <div>
-          <div className="text-xs text-gray-600 mb-1">
-            Assigned ({shift.assignments.length}/{shift.capacity})
-          </div>
+      <div>
+        <div className="text-xs text-gray-600 mb-1">
+          Assigned ({shift.assignments?.length || 0}/{shift.capacity})
+        </div>
+        {shift.assignments?.length > 0 && (
           <ul className="space-y-1">
             {shift.assignments.map((a: any) => (
               <li
                 key={a.id}
-                className="text-xs text-gray-700 flex items-center gap-1"
+                className="text-xs text-gray-700 flex items-center justify-between"
               >
-                <span>{a.teamMember?.alias || "Unknown"}</span>
-                <span className="text-gray-400">({a.role})</span>
+                <span>
+                  {a.teamMember?.alias || "Unknown"} ({a.role})
+                </span>
+                {canManualAssign && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAssignment(a.id)}
+                    className="text-red-400 hover:text-red-600 text-xs"
+                    title="Remove assignment"
+                  >
+                    ×
+                  </button>
+                )}
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        )}
+        {canManualAssign &&
+          (shift.assignments?.length || 0) < shift.capacity && (
+            <div className="flex gap-1 mt-2">
+              <select
+                value={selectedMemberToAdd}
+                onChange={(e) => setSelectedMemberToAdd(e.target.value)}
+                className="flex-1 text-xs border rounded px-2 py-1"
+              >
+                <option value="">Add member...</option>
+                {availableMembers.map((m: any) => (
+                  <option key={m.id} value={m.id}>
+                    {m.alias}
+                  </option>
+                ))}
+              </select>
+              <Button
+                size="sm"
+                onClick={handleAddAssignment}
+                disabled={!selectedMemberToAdd}
+                className="text-xs"
+              >
+                Add
+              </Button>
+            </div>
+          )}
+      </div>
 
       {/* Actions */}
       <div className="flex gap-2 pt-2 border-t">
