@@ -455,10 +455,11 @@ FestivalSettings shows a **read-only status badge** (no dropdown). Status only c
 
 **Phase 6 ✅ Complete:** Full event lifecycle workflow. Status-driven UI with contextual transition buttons. Split ASSIGNMENT_MUTATE into ALGORITHM + MANUAL. New `/api/events/{id}/transition` endpoint. Desirability scores on shift blocks. Status-dependent user calendar views. Algorithm run buttons in team page. Admin reassignment via ShiftPropertiesPanel. Day view export. Attribute-aware algorithm config dropdowns.
 
+**Phase 7 ✅ Complete:** Bugfixes and polish. Compact zoom info density (capacity + member names visible at 2-day overview). Preference polling (30s auto-refresh). Removed obsolete Day/Week/Grid toggle. PNG export includes time ruler and lane labels. Audit logging completed for preferences, swap-requests, config, and registrations routes.
+
 **Future Enhancements:**
 - Add caching layer
 - API versioning
-- Comprehensive audit logging (some routes still missing)
 
 ### Service Layer Patterns
 
@@ -1124,17 +1125,9 @@ npm test -- --coverage
 
 ### Current Test Status
 
-- ✅ BaseRepository: 4 tests passing
-- ✅ TeamMemberRepository: 5 tests passing
-- ✅ EventRepository: 5 tests passing
-- ✅ ShiftRepository: 5 tests passing
-- ✅ PreferenceRepository: 5 tests passing
-- ✅ MembersService: 3 tests passing
-- ✅ EventsService: 3 tests passing
-- ✅ ShiftsService: 3 tests passing
-- ✅ PreferencesService: 3 tests passing
-
-**Total: 36 passing unit tests**
+- 230 tests passing (28 test files)
+- 3 known pre-existing failures (robustness, event.validation)
+- 6 skipped (integration tests)
 
 ---
 
@@ -1180,6 +1173,22 @@ const { selectedMemberId, setSelectedMemberId, selectedMember } = useMemberConte
 **Where used:**
 - Header: member identity display
 - Calendar: filter "My Shifts" by selectedMemberId
+
+### Preference Polling
+
+The user calendar uses a 30-second polling interval to auto-refresh shift data:
+
+```typescript
+useEffect(() => {
+  if (!selectedEventId) return;
+  const interval = setInterval(() => {
+    refetchShifts();
+  }, 30_000);
+  return () => clearInterval(interval);
+}, [selectedEventId, refetchShifts]);
+```
+
+This keeps preference counts current across all users without requiring manual refresh.
 
 ---
 
@@ -1320,5 +1329,5 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 ---
 
 **Last Updated:** 2026-02-17
-**Phase:** Phase 6 ✅ Full event lifecycle workflow, status-driven UI, assignment management, export, audit wiring
+**Phase:** Phase 7 ✅ Bugfixes, polish, audit completion
 **Next Review:** As needed for future enhancements
