@@ -1,5 +1,7 @@
 import { isAuthenticated } from "@/lib/auth";
+import { createAuditLog } from "@/lib/services/audit";
 import { preferenceSchema } from "@/lib/validations/preference";
+import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -51,6 +53,21 @@ export async function POST(request: Request) {
       notes: validated.notes,
     });
 
+    try {
+      await createAuditLog({
+        action: AuditAction.PREFERENCE_SUBMIT,
+        entityType: EntityType.PREFERENCE,
+        entityId: preference.id,
+        after: {
+          shiftId: validated.shiftId,
+          wantLevel: validated.wantLevel,
+        },
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
+
     return createSuccessResponse(preference);
   } catch (error) {
     if (error instanceof StatusGuardError) {
@@ -86,6 +103,18 @@ export async function DELETE(request: Request) {
     }
 
     await service.deleteByCompoundKey(teamMemberId, shiftId);
+
+    try {
+      await createAuditLog({
+        action: AuditAction.DELETE,
+        entityType: EntityType.PREFERENCE,
+        entityId: `${teamMemberId}-${shiftId}`,
+        before: { teamMemberId, shiftId },
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
 
     return createSuccessResponse({ deleted: true });
   } catch (error) {
