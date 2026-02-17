@@ -86,7 +86,6 @@ export default function UserCalendarPage() {
   const [calendarView, setCalendarView] = useState<
     "my-shifts" | "full-schedule"
   >("my-shifts");
-  const [viewType, setViewType] = useState<"Day" | "Week" | "Grid">("Week");
   const [currentEventDate, setCurrentEventDate] = useState<string>();
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
 
@@ -172,13 +171,6 @@ export default function UserCalendarPage() {
     return () => clearInterval(interval);
   }, [selectedEventId, refetchShifts]);
 
-  useEffect(() => {
-    const savedView = localStorage.getItem("shiftaware:user-calendar:view");
-    if (savedView === "Day" || savedView === "Week" || savedView === "Grid") {
-      setViewType(savedView);
-    }
-  }, []);
-
   // Update shifts when cache data changes
   useEffect(() => {
     if (cachedShifts) {
@@ -217,10 +209,6 @@ export default function UserCalendarPage() {
     }
   }, [selectedEvent, shifts]);
 
-  useEffect(() => {
-    localStorage.setItem("shiftaware:user-calendar:view", viewType);
-  }, [viewType]);
-
   function coverageState(shift: Shift): CoverageState {
     const filled = shift.assignments?.length || 0;
     if (filled >= shift.capacity) return "full";
@@ -251,18 +239,6 @@ export default function UserCalendarPage() {
 
   const filteredShifts = useMemo(() => {
     return shifts.filter((shift) => {
-      if (viewType === "Day" && currentEventDate) {
-        const shiftDate = shift.startTime.split("T")[0];
-        if (shiftDate !== currentEventDate) return false;
-      }
-
-      if (viewType === "Week" && currentEventDate) {
-        const shiftDate = new Date(shift.startTime);
-        const weekStart = new Date(currentEventDate);
-        const weekEnd = addDays(weekStart, 7);
-        if (shiftDate < weekStart || shiftDate >= weekEnd) return false;
-      }
-
       const state = coverageState(shift);
       if (coverageFilter !== "all" && state !== coverageFilter) return false;
       if (roleFilter !== "all") {
@@ -279,14 +255,7 @@ export default function UserCalendarPage() {
       }
       return true;
     });
-  }, [
-    shifts,
-    coverageFilter,
-    roleFilter,
-    memberFilter,
-    viewType,
-    currentEventDate,
-  ]);
+  }, [shifts, coverageFilter, roleFilter, memberFilter]);
 
   const metrics = useMemo(() => {
     const totalCapacity = filteredShifts.reduce(
@@ -561,25 +530,6 @@ export default function UserCalendarPage() {
               Full Schedule
             </button>
           </div>
-
-          {calendarView === "full-schedule" && (
-            <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">
-              {(["Day", "Week", "Grid"] as const).map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setViewType(option)}
-                  className={cn(
-                    "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
-                    viewType === option
-                      ? "bg-primary-500 text-white shadow-md"
-                      : "text-gray-400 hover:text-gray-600",
-                  )}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          )}
 
           <Button
             onClick={() => refetchShifts()}
