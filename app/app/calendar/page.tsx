@@ -163,6 +163,15 @@ export default function UserCalendarPage() {
     enabled: !!selectedEventId,
   });
 
+  // Auto-refresh shift data every 30 seconds for live preference updates
+  useEffect(() => {
+    if (!selectedEventId) return;
+    const interval = setInterval(() => {
+      refetchShifts();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [selectedEventId, refetchShifts]);
+
   useEffect(() => {
     const savedView = localStorage.getItem("shiftaware:user-calendar:view");
     if (savedView === "Day" || savedView === "Week" || savedView === "Grid") {
@@ -462,6 +471,30 @@ export default function UserCalendarPage() {
     typeof window !== "undefined"
       ? localStorage.getItem("selectedMemberId") || ""
       : "";
+
+  // Debug: log userId and assignment data for My Shifts
+  useEffect(() => {
+    if (shifts.length > 0) {
+      const allAssignmentMemberIds = shifts.flatMap((s) =>
+        (s.assignments || []).map((a) => a.teamMember?.id),
+      );
+      const uniqueIds = [...new Set(allAssignmentMemberIds)];
+      if (!userId) {
+        console.warn(
+          "[My Shifts] No userId in localStorage (selectedMemberId). Re-select identity.",
+        );
+      } else if (!uniqueIds.includes(userId)) {
+        console.warn(
+          `[My Shifts] userId "${userId}" not found in ${uniqueIds.length} assigned member IDs:`,
+          uniqueIds,
+        );
+      } else {
+        console.info(
+          `[My Shifts] userId "${userId}" matched. ${shifts.filter((s) => s.assignments?.some((a) => a.teamMember?.id === userId)).length} shifts assigned.`,
+        );
+      }
+    }
+  }, [shifts, userId]);
 
   if (!selectedEventId) {
     return (
