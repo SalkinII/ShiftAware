@@ -1,5 +1,7 @@
 // app/api/events/[id]/registrations/[memberId]/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
+import { createAuditLog } from "@/lib/services/audit";
+import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -50,7 +52,11 @@ export async function PUT(
     const body = await request.json();
     const validated = updateRegistrationSchema.parse(body);
 
-    const updated = await service.updateRegistration(eventId, memberId, validated);
+    const updated = await service.updateRegistration(
+      eventId,
+      memberId,
+      validated,
+    );
 
     return createSuccessResponse(updated);
   } catch (error) {
@@ -78,6 +84,18 @@ export async function DELETE(
     const { id: eventId, memberId } = await params;
 
     await service.deleteRegistration(eventId, memberId);
+
+    try {
+      await createAuditLog({
+        action: AuditAction.DELETE,
+        entityType: EntityType.TEAM_MEMBER,
+        entityId: `${eventId}-${memberId}`,
+        before: { eventId, memberId },
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
 
     return createSuccessResponse({ deleted: true });
   } catch (error) {

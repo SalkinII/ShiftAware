@@ -1,5 +1,7 @@
 // app/api/events/[id]/registrations/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
+import { createAuditLog } from "@/lib/services/audit";
+import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -81,6 +83,22 @@ export async function POST(
       validated.memberId,
       validated.status,
     );
+
+    try {
+      await createAuditLog({
+        action: AuditAction.CREATE,
+        entityType: EntityType.TEAM_MEMBER,
+        entityId: registration.id,
+        after: {
+          eventId,
+          memberId: validated.memberId,
+          status: validated.status,
+        },
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
 
     return createSuccessResponse(registration, 201);
   } catch (error) {

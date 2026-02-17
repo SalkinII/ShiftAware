@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { isAuthenticated, isAdmin } from "@/lib/auth";
+import { createAuditLog } from "@/lib/services/audit";
+import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -88,6 +90,18 @@ export async function PUT(
       balanceThresholds: validated.balanceThresholds || {},
       autoAssignUnfilled: validated.autoAssignUnfilled,
     });
+
+    try {
+      await createAuditLog({
+        action: AuditAction.UPDATE,
+        entityType: EntityType.CONFIG,
+        entityId: id,
+        after: validated,
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
 
     return createSuccessResponse(config);
   } catch (error) {
