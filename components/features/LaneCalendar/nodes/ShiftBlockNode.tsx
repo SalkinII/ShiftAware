@@ -135,6 +135,19 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
               {format(new Date(startTime), "HH:mm")}–
               {format(new Date(endTime), "HH:mm")}
             </div>
+            <div className="text-[10px] text-white/80 px-1">
+              {assignmentCount}/{capacity}
+            </div>
+            {assignedMembers && assignedMembers.length > 0 && (
+              <div className="text-[9px] text-white/70 truncate px-1">
+                {assignedMembers
+                  .slice(0, 3)
+                  .map((m) => m.alias)
+                  .join(", ")}
+                {assignedMembers.length > 3 &&
+                  ` +${assignedMembers.length - 3}`}
+              </div>
+            )}
             {desirabilityScore != null && (
               <span
                 className="inline-flex px-1 py-0.5 rounded text-[9px] font-bold mt-0.5"
