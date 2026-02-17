@@ -2,7 +2,7 @@
 
 > **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
 >
-> Last updated: 2026-02-15 (React Flow lane calendar migration complete)
+> Last updated: 2026-02-16 (Full workflow: lifecycle transitions, assignment, export)
 
 ---
 
@@ -15,8 +15,9 @@
 ├──────────────────────────────────────────────────────────────────────┤
 │  USER FLOWS              │  ADMIN FLOWS                               │
 │  ───────────             │  ────────────                              │
-│  Identity → Calendar     │  Setup → Templates → Schedule → Team       │
-│  Preferences/Swaps       │  Allocation → Assignments                  │
+│  Identity → Calendar →   │  Setup → Templates → Schedule →            │
+│  Preferences → Schedule  │  Publish → Allocation → Finalize           │
+│  (status-driven views)   │  Reassignment → Export                     │
 └──────────────────────────────────────────────────────────────────────┘
          │                           │
          ▼                           ▼
@@ -193,7 +194,52 @@ TeamMember (Global)
 
 ---
 
-## 4. User Journeys
+## 4. Event Lifecycle
+
+ShiftAware's workflow is driven by the event status. Each status unlocks specific capabilities and locks others.
+
+### Status Flow
+
+```
+PLANNING ──► OPEN_FOR_PREFERENCES ──► ASSIGNING ──► FINALIZED ──► COMPLETED
+    ◄──              ◄──                  ◄──           ◄──
+```
+
+Every status can step backward one step. COMPLETED → FINALIZED is always allowed for last-minute changes (dropouts, late additions).
+
+### What Each Status Means
+
+| Status | Purpose | Who acts | What's unlocked |
+|--------|---------|----------|----------------|
+| **PLANNING** | Admin builds the schedule | Admin | Shift CRUD, template drag-drop, member registration |
+| **OPEN_FOR_PREFERENCES** | Team submits shift preferences | Users + Admin | Preference voting (WANT/DONT_WANT), registration |
+| **ASSIGNING** | Admin runs algorithm + manual tweaks | Admin | Algorithm execution, manual assignment, registration |
+| **FINALIZED** | Published schedule, operational | Admin | Manual reassignment (dropouts/late adds), registration |
+| **COMPLETED** | Archive / read-only | Nobody | Nothing — revertible to FINALIZED if needed |
+
+### Status-Driven UI
+
+The schedule page header shows a **contextual action button** that advances the workflow:
+- PLANNING → "Publish Shifts" button
+- OPEN_FOR_PREFERENCES → "Close Preferences" button
+- ASSIGNING → "Finalize Schedule" button
+- FINALIZED → "Mark Complete" button
+- Each also has a "Go Back" secondary action
+
+FestivalSettings shows a **read-only status badge** (no dropdown). Status only changes through the transition button or `POST /api/events/{id}/transition`.
+
+### User Calendar — Status-Dependent Views
+
+| Status | What the user sees |
+|--------|-------------------|
+| PLANNING | "Schedule is being prepared" placeholder |
+| OPEN_FOR_PREFERENCES | Shifts with desirability scores + voting buttons |
+| ASSIGNING | Shifts visible, voting disabled, "in progress" banner |
+| FINALIZED / COMPLETED | Shifts with assigned members, own assignments highlighted |
+
+---
+
+## 5. User Journeys
 
 ### Journey A: Team Member Registration
 
@@ -217,29 +263,7 @@ TeamMember (Global)
             └── POST /api/members/{id}/attributes ► Save custom attributes
 ```
 
-### Journey B: Viewing Calendar & Voting
-
-```
-/app/calendar
-     │
-     ├─[1]─ Read localStorage ─────────► Get selectedEventId, selectedMemberId
-     │
-     ├─[2]─ GET /api/shifts?eventId ───► Load all shifts with assignments
-     │      (Route filters → Service → Repository with includes → Prisma)
-     │
-     ├─[3]─ GET /api/events/{id}/templates ► Derive lanes from templates
-     │
-     ├─[4]─ Display in LaneCalendarCanvas
-     │
-     └─[5]─ User votes on shift
-            │
-            ├── POST /api/preferences ► { shiftId, wantLevel: WANT|DONT_WANT }
-            │   (Route validates → Service → Repository → Prisma)
-            │
-            └── UI shows thumbs up/down state
-```
-
-### Journey C: Admin Creates Schedule
+### Journey B: Admin Creates Schedule (PLANNING)
 
 ```
 /admin/shifts/schedule
@@ -253,39 +277,103 @@ TeamMember (Global)
      │
      ├─[4]─ LaneCalendarCanvas displays lanes from template names
      │
-     └─[5]─ Admin drags template to calendar
+     ├─[5]─ Admin drags template to calendar
+     │      │
+     │      ├── POST /api/shifts ──────► { eventId, templateId, startTime, ... }
+     │      │   (Route validates → ShiftsService → ShiftRepository → Prisma)
+     │      │
+     │      └── Shift appears in correct lane (by templateId)
+     │
+     └─[6]─ Admin clicks "Publish Shifts"
             │
-            ├── POST /api/shifts ──────► { eventId, templateId, startTime, ... }
-            │   (Route validates → Service → Repository → Prisma)
-            │
-            └── Shift appears in correct lane (by templateId)
+            └── POST /api/events/{id}/transition
+                └── { targetStatus: "OPEN_FOR_PREFERENCES" }
+                └── EventsService.transitionStatus() validates + updates
 ```
 
-### Journey D: Running Allocation Algorithm
+### Journey C: Team Votes on Preferences (OPEN_FOR_PREFERENCES)
+
+```
+/app/calendar
+     │
+     ├─[1]─ useEventContext() ─────────► Get selectedEventId, selectedMemberId
+     │
+     ├─[2]─ GET /api/shifts?eventId ───► Load all shifts with assignments
+     │
+     ├─[3]─ GET /api/events/{id}/templates ► Derive lanes from templates
+     │
+     ├─[4]─ Canvas shows shifts with desirability score (1-5 badge)
+     │      + thumbs up/down voting buttons
+     │
+     └─[5]─ User votes on shift
+            │
+            ├── POST /api/preferences ► { shiftId, wantLevel: WANT|DONT_WANT }
+            │   (Route validates → PreferencesService → PreferenceRepository)
+            │
+            └── UI shows vote confirmation
+```
+
+### Journey D: Running Allocation Algorithm (ASSIGNING)
 
 ```
 /admin/team (Allocation tab)
      │
      ├─[1]─ GET /api/events/{id}/config ► Load algorithm weights
      │
-     ├─[2]─ Admin adjusts sliders
+     ├─[2]─ Admin adjusts weights + attribute-aware balance rules
+     │      (dropdowns populated from EventAttributeDefinition options)
      │
      ├─[3]─ PUT /api/events/{id}/config ► Save weights
      │
-     ├─[4]─ Click "Preview"
+     ├─[4]─ Click "Preview Assignment"
      │      │
      │      └── POST /api/assignments?preview=true&eventId=X
      │          └── Returns proposed assignments WITHOUT saving
      │
-     └─[5]─ Click "Run Algorithm"
+     ├─[5]─ Click "Run Assignment"
+     │      │
+     │      └── POST /api/assignments?eventId=X
+     │          └── AssignmentsService.runAllocation() saves to DB
+     │
+     └─[6]─ Admin clicks "Finalize Schedule"
             │
-            └── POST /api/assignments?eventId=X
-                └── Saves assignments to DB, clears previous
+            └── POST /api/events/{id}/transition
+                └── { targetStatus: "FINALIZED" }
+```
+
+### Journey E: Admin Reassignment (ASSIGNING or FINALIZED)
+
+```
+/admin/shifts/schedule → Click shift → ShiftPropertiesPanel
+     │
+     ├─[1]─ Panel shows assigned members with remove (×) buttons
+     │
+     ├─[2]─ Remove member from shift
+     │      └── DELETE /api/assignments?id=X
+     │
+     ├─[3]─ Add member to shift
+     │      └── POST /api/assignments { eventId, assignments: [{ shiftId, teamMemberId, role, assignmentType: "MANUAL" }] }
+     │
+     └─[4]─ Handle dropout
+            ├── Remove old member's assignment
+            ├── Register new member: POST /api/events/{id}/registrations
+            └── Assign new member to open shift
+```
+
+### Journey F: Day View Export (any status)
+
+```
+/admin/shifts/schedule → "Export" button
+     │
+     └── Generates printable day-grouped schedule
+         ├── Shifts sorted by day and time
+         ├── Shows template name, time range, assigned members
+         └── Opens browser print dialog
 ```
 
 ---
 
-## 5. Component → API → DB Mapping
+## 6. Component → API → DB Mapping
 
 ### Identity Page
 
@@ -314,6 +402,10 @@ TeamMember (Global)
 | LaneCalendarCanvas | Drop template | POST /api/shifts | ShiftsService | ShiftRepository | Shift |
 | ShiftPropertiesPanel | Delete | DELETE /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
 | ShiftBlockNode | Resize | PUT /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
+| Header buttons | Transition status | POST /api/events/{id}/transition | EventsService | EventRepository | Event |
+| ShiftPropertiesPanel | Add assignment | POST /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
+| ShiftPropertiesPanel | Remove assignment | DELETE /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
+| Header | Export | (client-side) | - | - | - |
 
 ### Setup (Admin)
 
@@ -329,16 +421,17 @@ TeamMember (Global)
 
 | Component | User Action | API Call | Service | Repository | DB Table |
 |-----------|-------------|----------|---------|------------|----------|
-| MemberListByEvent | Load | GET /api/members?eventId | - | - | TeamMember + EventRegistration |
-| MemberListByEvent | Add member | POST /api/events/{id}/registrations | - | - | EventRegistration |
-| DistributionSettings | Load | GET /api/events/{id}/config | - | - | EventConfig |
-| DistributionSettings | Save | PUT /api/events/{id}/config | - | - | EventConfig |
-| DistributionSettings | Preview | POST /api/assignments?preview=true | - | - | - |
-| DistributionSettings | Run | POST /api/assignments | - | - | Assignment |
+| MemberListByEvent | Load | GET /api/members?eventId | MembersService | TeamMemberRepository | TeamMember + EventRegistration |
+| MemberListByEvent | Add member | POST /api/events/{id}/registrations | EventsService | EventRepository | EventRegistration |
+| DistributionSettings | Load config | GET /api/events/{id}/config | EventsService | EventRepository | EventConfig |
+| DistributionSettings | Save config | PUT /api/events/{id}/config | EventsService | EventRepository | EventConfig |
+| DistributionSettings | Load attributes | GET /api/events/{id}/attributes | EventsService | EventRepository | EventAttributeDefinition |
+| DistributionSettings | Preview | POST /api/assignments?preview=true | AssignmentsService | AssignmentRepository | - |
+| DistributionSettings | Run Algorithm | POST /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
 
 ---
 
-## 6. API Architecture
+## 7. API Architecture
 
 ### Current Implementation Status
 
@@ -358,12 +451,14 @@ TeamMember (Global)
 
 **Phase 3 Complete:** All remaining entities refactored. Sub-entities grouped under parent services (EventsService handles config/registrations/templates/attributes). Algorithm orchestration in AssignmentsService. Swap matching logic in SwapRequestsService. **Zero direct Prisma calls in any route.**
 
-**Phase 4 ✅ Complete:** UI-Service alignment complete. `useEventContext` hook created and fully integrated. All UI pages now pass `eventId` to API endpoints. Server-side filtering implemented across all admin and user pages. Local event selectors removed. `useCurrentEvent` consolidated into `useEventContext`. Test coverage: 167/176 passing (3 pre-existing failures, 6 skipped).
+**Phase 4 ✅ Complete:** UI-Service alignment complete. `useEventContext` hook created and fully integrated. All UI pages now pass `eventId` to API endpoints. Server-side filtering implemented across all admin and user pages.
+
+**Phase 6 ✅ Complete:** Full event lifecycle workflow. Status-driven UI with contextual transition buttons. Split ASSIGNMENT_MUTATE into ALGORITHM + MANUAL. New `/api/events/{id}/transition` endpoint. Desirability scores on shift blocks. Status-dependent user calendar views. Algorithm run buttons in team page. Admin reassignment via ShiftPropertiesPanel. Day view export. Attribute-aware algorithm config dropdowns.
 
 **Future Enhancements:**
 - Add caching layer
 - API versioning
-- Advanced error handling
+- Comprehensive audit logging (some routes still missing)
 
 ### Service Layer Patterns
 
@@ -857,19 +952,48 @@ try {
 
 Services enforce EventStatus before mutations. `assertEventStatusAllows(eventId, action)` loads event status and throws `StatusGuardError` (403) if not allowed.
 
+**Guard actions:** `SHIFT_MUTATE`, `PREFERENCE_MUTATE`, `ASSIGNMENT_ALGORITHM`, `ASSIGNMENT_MANUAL`, `REGISTRATION_MUTATE`
+
+Note: `ASSIGNMENT_MUTATE` was split into `ASSIGNMENT_ALGORITHM` (bulk algorithm run) and `ASSIGNMENT_MANUAL` (individual add/remove/swap) to support operational flexibility in FINALIZED status.
+
 **Permission Matrix:**
 
-| EventStatus | Shift CRUD | Preferences | Assignments | Event Config | Registration |
-|-------------|-----------|-------------|-------------|-------------|-------------|
-| PLANNING | **allowed** | blocked | blocked | allowed | allowed |
-| OPEN_FOR_PREFERENCES | blocked | **allowed** | blocked | allowed | allowed |
-| ASSIGNING | blocked | blocked | **allowed** | allowed | blocked |
-| FINALIZED | blocked | blocked | blocked | read-only | blocked |
-| COMPLETED | blocked | blocked | blocked | read-only | blocked |
+| EventStatus | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
+|-------------|-------------|-------------------|---------------------|-------------------|-------------------|
+| PLANNING | **yes** | no | no | no | **yes** |
+| OPEN_FOR_PREFERENCES | no | **yes** | no | no | **yes** |
+| ASSIGNING | no | no | **yes** | **yes** | **yes** |
+| FINALIZED | no | no | no | **yes** | **yes** |
+| COMPLETED | no | no | no | no | no |
 
-**Guard actions:** `SHIFT_MUTATE`, `PREFERENCE_MUTATE`, `ASSIGNMENT_MUTATE`, `REGISTRATION_MUTATE`
+**Key design decision:** FINALIZED allows manual assignment changes and new registrations. This handles real-world scenarios: dropouts, late additions, and last-minute reassignments. Only COMPLETED locks everything — and even COMPLETED can revert to FINALIZED.
+
+**Client-safe helpers** (no Prisma import, safe for `"use client"` components):
+- `canMutateShifts(status)` — checks SHIFT_MUTATE
+- `canRunAlgorithm(status)` — checks ASSIGNMENT_ALGORITHM
+- `canManuallyAssign(status)` — checks ASSIGNMENT_MANUAL
 
 **Integration:** ShiftsService, PreferencesService, AssignmentsService call the guard before create/update/delete. Routes catch `StatusGuardError` and return 403.
+
+### Status Transition Pattern
+
+Status changes go through a dedicated endpoint with validation:
+
+```
+POST /api/events/{id}/transition  →  EventsService.transitionStatus()
+     │                                     │
+     ├── Validates one-step transition      ├── Forward: checks prerequisites
+     │   (forward or backward)              │   (e.g., at least 1 shift to publish)
+     │                                      │
+     ├── Audit-logged                       ├── Backward: always allowed
+     │                                      │
+     └── Returns updated event              └── Updates via EventRepository
+```
+
+**Transition validation** is in `lib/validations/event-transition.ts`:
+- `isValidTransition(current, target)` — one step forward or backward
+- `getNextStatus(current)` / `getPreviousStatus(current)` — for UI buttons
+- `STATUS_ORDER` constant — canonical status sequence
 
 ---
 
@@ -1195,6 +1319,6 @@ if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
 
 ---
 
-**Last Updated:** 2026-02-15
-**Phase:** Phase 5 ✅ User calendar migration, EventStatus guards, PNG export complete
+**Last Updated:** 2026-02-17
+**Phase:** Phase 6 ✅ Full event lifecycle workflow, status-driven UI, assignment management, export, audit wiring
 **Next Review:** As needed for future enhancements
