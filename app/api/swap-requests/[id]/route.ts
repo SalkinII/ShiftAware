@@ -1,5 +1,7 @@
 // app/api/swap-requests/[id]/route.ts
 import { isAuthenticated, isAdmin } from "@/lib/auth";
+import { createAuditLog } from "@/lib/services/audit";
+import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -63,6 +65,18 @@ export async function PUT(
       updated = await service.updateSwapRequest(id, validated.status);
     }
 
+    try {
+      await createAuditLog({
+        action: AuditAction.MANUAL_SWAP,
+        entityType: EntityType.ASSIGNMENT,
+        entityId: id,
+        after: { status: validated.status },
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
+
     return createSuccessResponse(updated);
   } catch (error) {
     console.error("Update swap request error:", error);
@@ -86,6 +100,17 @@ export async function DELETE(
     const { id } = await params;
 
     const result = await service.cancelSwapRequest(id);
+
+    try {
+      await createAuditLog({
+        action: AuditAction.DELETE,
+        entityType: EntityType.ASSIGNMENT,
+        entityId: id,
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
+      });
+    } catch (auditError) {
+      console.error("Audit log failed:", auditError);
+    }
 
     return createSuccessResponse(result);
   } catch (error) {
