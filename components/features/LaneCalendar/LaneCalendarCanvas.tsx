@@ -219,8 +219,8 @@ function LaneCalendarCanvasInner(
   const exportToPng = useCallback(async (): Promise<string | null> => {
     const container = flowContainerRef.current;
     if (!container) return null;
-    const viewport = container.querySelector(".react-flow__viewport");
-    const target = (viewport as HTMLElement) ?? container;
+    const target =
+      (container.querySelector(".react-flow") as HTMLElement) ?? container;
     if (!target) return null;
 
     const flowNodes = [...laneNodes, ...shiftNodes];
