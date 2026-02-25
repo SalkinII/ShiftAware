@@ -68,7 +68,80 @@ CSS usage: `var(--status-bg)`, `var(--status-accent)`
 
 ---
 
-## 3. Component Patterns
+## 3. Coordinate System Architecture
+
+> **Critical:** All React Flow positioning must use a single, consistent coordinate transformation model.
+
+### Three Coordinate Spaces
+
+| Space | Description | Positioning | Transform |
+|-------|-------------|-----------|-----------|
+| **Flow Space** | Logical coordinates within React Flow canvas | Node `position` prop | Automatic (React Flow handles) |
+| **Viewport Space** | Visible canvas area with pan/zoom applied | - | Zoom + pan (React Flow) |
+| **Screen Space** | Physical pixel positions on browser window | Panel overlays | Manual via `useScreenCoordinates` hook |
+
+### Rules (MUST FOLLOW)
+
+1. **Node-positioned elements** → Always use React Flow's automatic transforms
+   - Position via `position: { x, y }` prop
+   - Never manually scale or transform
+   - Examples: LaneZoneNode, DaySeparatorNode, ShiftBlockNode, HourGridNode
+
+2. **Panel-based overlays** → Use `useScreenCoordinates` hook ONLY
+   - All screen-space positioning calculated via `flowToScreenX()`
+   - Never apply manual viewport math inline
+   - Examples: TimeRulerPanel, AlignmentGuides
+
+3. **Never mix** → A single element cannot use both automatic + manual transforms
+   - ✗ Node positioned by React Flow + manual viewport math = misalignment
+   - ✓ Node positioned by React Flow OR Panel using flowToScreenX() = correct
+
+### Coordinate Transform Formula
+
+```
+screenX = (flowX * zoom) + viewportX
+```
+
+Where:
+- `flowX` - Position in flow coordinate space
+- `zoom` - Current viewport zoom level (0.1 to 4.0)
+- `viewportX` - Viewport pan offset
+- `screenX` - Resulting screen pixel position
+
+**All Panel overlays must use this formula exactly.** Encapsulated in `useScreenCoordinates()` hook.
+
+### Visual Scaling (Zoom-Dependent)
+
+For visual elements that should maintain constant appearance size at all zoom levels:
+
+```typescript
+// Scale inversely with zoom (use for borders, lines)
+const scaledWidth = Math.ceil(1 / zoom);  // 1px at zoom 1.0, 2px at zoom 0.5
+
+// Do NOT use for content overflow (use semantic zoom instead)
+```
+
+### Semantic Zoom Density
+
+Instead of scaling content with zoom, use semantic thresholds:
+
+```typescript
+const show15min = zoom > ZOOM_COMPACT;      // Show detail at zoom > 0.7
+const show30min = zoom > ZOOM_MINIMAL;     // Show baseline at zoom > 0.3
+
+// Content responds by showing/hiding information, not by scaling
+```
+
+### Affected Files
+
+- **Coordinate utilities:** `components/features/LaneCalendar/utils/coordinates.ts`
+- **Viewport hook:** `components/features/LaneCalendar/hooks/useScreenCoordinates.ts`
+- **Node components:** `nodes/LaneZoneNode.tsx`, `nodes/DaySeparatorNode.tsx`, `nodes/ShiftBlockNode.tsx`
+- **Panel components:** `panels/TimeRulerPanel.tsx`
+
+---
+
+## 4. Component Patterns
 
 ### Shift Cards (ShiftBlockNode)
 
@@ -145,7 +218,7 @@ backgroundImage: var(--lane-stripe)
 
 ---
 
-## 4. Atom Components
+## 5. Atom Components
 
 | Component | File | Purpose |
 |-----------|------|---------|
@@ -159,7 +232,7 @@ backgroundImage: var(--lane-stripe)
 
 ---
 
-## 5. Typography Hierarchy
+## 6. Typography Hierarchy
 
 | Element | Classes |
 |---------|---------|
@@ -171,7 +244,7 @@ backgroundImage: var(--lane-stripe)
 
 ---
 
-## 6. Interaction Patterns
+## 7. Interaction Patterns
 
 ### Hover States
 
@@ -195,7 +268,7 @@ Active statuses (OPEN_FOR_PREFERENCES, ASSIGNING) use `animate-pulse` on the Sta
 
 ---
 
-## 7. Color Scale Reference
+## 8. Color Scale Reference
 
 ### Desirability Scoring
 
@@ -217,7 +290,7 @@ Generated from alias using consistent mapping:
 
 ---
 
-## 8. Quick Reference
+## 9. Quick Reference
 
 ### Adding a New Lane Type
 

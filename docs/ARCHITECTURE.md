@@ -602,6 +602,12 @@ Shift.templateId ──► find Lane where Lane.id === templateId
 - Native pan/zoom, snap-to-grid, semantic zoom
 - Replaced @dnd-kit with React Flow native drag-drop
 
+**React Flow Coordinate System:**
+All canvas positioning uses a single coordinate model:
+- Flow-space elements (nodes) → positioned via `position: { x, y }` prop, React Flow applies viewport transforms automatically
+- Screen-space overlays (panels) → use `useScreenCoordinates()` hook for all viewport math
+- See [DESIGN.md § Coordinate System Architecture](./DESIGN.md#3-coordinate-system-architecture) for details
+
 ---
 
 ## 9. Algorithm Flow
