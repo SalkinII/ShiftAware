@@ -720,29 +720,6 @@ export default function ShiftsPage() {
           <div className="lg:col-span-2 space-y-6">
             {viewMode === "calendar" ? (
               <>
-                {/* Template palette — always visible above canvas */}
-                {selectedEvent && (
-                  <TemplatePalette
-                    eventId={selectedEventId || undefined}
-                    layout="horizontal"
-                  />
-                )}
-                {/* Lane legend */}
-                {selectedEvent && derivedLanes.length > 0 && (
-                  <div className="flex items-center gap-4 px-4 py-2 bg-white rounded-xl shadow-sm">
-                    {derivedLanes.map((lane) => (
-                      <div key={lane.id} className="flex items-center gap-1.5">
-                        <div
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: lane.color }}
-                        />
-                        <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
-                          {lane.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
                 {/* Canvas */}
                 <div
                   ref={calendarRef}
@@ -1097,14 +1074,15 @@ export default function ShiftsPage() {
               </Card>
             ) : viewMode === "calendar" ? (
               <div className="space-y-6">
-                {selectedShiftId && (
-                  <ShiftPropertiesPanel
-                    shiftId={selectedShiftId}
-                    eventStatus={selectedEvent?.status}
-                    onClose={() => setSelectedShiftId(null)}
-                    onUpdated={() => refetchShifts()}
+                {/* Template palette — vertical layout in sidebar */}
+                {selectedEvent && (
+                  <TemplatePalette
+                    eventId={selectedEventId || undefined}
+                    layout="vertical"
                   />
                 )}
+
+                {/* REMOVED: ShiftPropertiesPanel now overlays the canvas */}
                 {!selectedShiftId && (
                   <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
                     <div className="flex items-center gap-3 mb-3">
@@ -1114,9 +1092,8 @@ export default function ShiftsPage() {
                       </span>
                     </div>
                     <p className="text-sm leading-relaxed opacity-90">
-                      Drag templates from the strip above the calendar onto the
-                      canvas to create shifts. They&apos;ll snap to the
-                      15-minute grid automatically.
+                      Drag templates from the sidebar onto the canvas to create
+                      shifts. They&apos;ll snap to the 15-minute grid automatically.
                     </p>
                   </Card>
                 )}
