@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { type NodeProps } from "@xyflow/react";
-import { LANE_HEIGHT, SHIFT_NODE_PADDING } from "../utils/constants";
+import { LANE_HEIGHT } from "../utils/constants";
 
 export type LaneZoneData = {
   label: string;
@@ -13,16 +13,18 @@ export type LaneZoneData = {
 function LaneZoneNodeComponent({ data }: NodeProps) {
   const { color, width } = data as LaneZoneData;
 
+  // Convert hex to rgba for 10% opacity tint
+  const tintColor = `${color}1A`;
+
   return (
     <div
       style={{
         width: `${width}px`,
         height: `${LANE_HEIGHT}px`,
-        backgroundColor: color,
-        opacity: 0.08,
-        borderBottom: "1px solid rgba(0,0,0,0.06)",
-        pointerEvents: "none",
+        backgroundColor: tintColor,
+        backgroundImage: "var(--lane-stripe)",
       }}
+      className="rounded-lg pointer-events-none"
     />
   );
 }
