@@ -2,6 +2,7 @@
 
 import { Clock, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { ColorStripe } from "@/components/ui/ColorStripe";
 import { useCache } from "@/lib/cache/useCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType } from "@prisma/client";
@@ -40,51 +41,54 @@ function TemplateItem({ template, compact = false }: TemplateItemProps) {
     setIsDragging(false);
   };
 
+  if (compact) {
+    return (
+      <div
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        className={cn(
+          "group flex items-center gap-2 px-3 py-1.5 rounded-lg",
+          "bg-white hover:bg-gray-50 cursor-grab active:cursor-grabbing",
+          "border border-transparent hover:border-gray-200 transition-colors",
+          isDragging && "opacity-50",
+          "shrink-0",
+        )}
+      >
+        <ColorStripe color={template.color || "#6b7280"} className="h-6" />
+        <span className="font-medium text-xs text-gray-900 truncate">
+          {template.name}
+        </span>
+        <GripVertical className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
+  }
+
   return (
     <div
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={cn(
-        "cursor-grab active:cursor-grabbing",
+        "group flex items-center gap-3 p-2 rounded-lg",
+        "hover:bg-gray-50 cursor-grab active:cursor-grabbing",
+        "border border-transparent hover:border-gray-200 transition-colors",
         isDragging && "opacity-50",
-        compact && "shrink-0",
       )}
     >
-      {compact ? (
-        <Card elevation={1} hover className="px-3 py-1.5 whitespace-nowrap">
-          <div className="flex items-center gap-2">
-            <GripVertical className="w-3 h-3 text-gray-400" />
-            <span className="font-medium text-xs text-gray-900">
-              {template.name}
-            </span>
-            <span className="text-[10px] text-gray-400">
-              {Math.round(template.durationMinutes / 60)}h
-            </span>
-          </div>
-        </Card>
-      ) : (
-        <Card elevation={1} hover className="p-3">
-          <div className="flex items-start gap-2">
-            <GripVertical className="w-4 h-4 text-gray-400 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-gray-900 truncate">
-                {template.name}
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                <Clock className="w-3 h-3" />
-                <span>
-                  {template.startTime} (
-                  {Math.round(template.durationMinutes / 60)}h)
-                </span>
-              </div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                {template.type.replace("_", " ")} • {template.capacity} people
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
+      <ColorStripe color={template.color || "#6b7280"} className="h-8" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-gray-900 truncate">
+          {template.name}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <Clock className="w-3 h-3" />
+          <span>
+            {template.startTime} ({Math.round(template.durationMinutes / 60)}h)
+          </span>
+        </div>
+      </div>
+      <GripVertical className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }
