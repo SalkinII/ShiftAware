@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Card } from "@/components/ui/Card";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { getLaneColor } from "@/lib/types/lane";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { ColorStripe } from "@/components/ui/ColorStripe";
+import { AvatarStack } from "@/components/ui/AvatarStack";
 import { useToast } from "@/components/ui/Toast";
 import { canManuallyAssign } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
@@ -172,142 +176,210 @@ export function ShiftPropertiesPanel({
 
   if (loading) {
     return (
-      <Card className="p-4 animate-pulse">
-        <div className="h-40 bg-gray-100 rounded" />
-      </Card>
+      <GlassPanel className="w-80 border-l border-gray-200 p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
+          <div className="h-20 bg-gray-200 rounded" />
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+        </div>
+      </GlassPanel>
     );
   }
 
   if (!shift) {
-    return <Card className="p-4 text-gray-500">Shift not found</Card>;
+    return (
+      <GlassPanel className="w-80 border-l border-gray-200 p-4 text-gray-500">
+        Shift not found
+      </GlassPanel>
+    );
   }
 
+  const laneColor = shift?.template?.color || "#6b7280";
+  const wantCount =
+    shift?.preferences?.filter((p: any) => p.wantLevel === "WANT").length || 0;
+  const dontWantCount =
+    shift?.preferences?.filter((p: any) => p.wantLevel === "DONT_WANT")
+      .length || 0;
+
   return (
-    <Card className="p-4 space-y-4">
+    <GlassPanel className="w-80 border-l border-gray-200 flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <div
-          className="w-4 h-4 rounded"
-          style={{ backgroundColor: getLaneColor(shift.type) }}
-        />
-        <h3 className="font-semibold text-sm">
-          {shift.type.replace("_", " ")}
-        </h3>
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900">Shift Details</h3>
         <button
           onClick={onClose}
-          className="ml-auto text-gray-400 hover:text-gray-600 text-xs"
+          className="text-gray-400 hover:text-gray-600 transition-colors"
         >
-          Close
+          <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Time inputs */}
-      <div className="space-y-2">
-        <label className="block text-xs text-gray-600">
-          Start
-          <input
-            type="datetime-local"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-          />
-        </label>
-        <label className="block text-xs text-gray-600">
-          End
-          <input
-            type="datetime-local"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-          />
-        </label>
-        <label className="block text-xs text-gray-600">
-          Capacity
-          <input
-            type="number"
-            min={1}
-            value={capacity}
-            onChange={(e) => setCapacity(parseInt(e.target.value) || 1)}
-            className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-          />
-        </label>
-      </div>
-
-      {/* Assigned members */}
-      <div>
-        <div className="text-xs text-gray-600 mb-1">
-          Assigned ({shift.assignments?.length || 0}/{shift.capacity})
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {/* Shift Info Card */}
+        <div className="bg-sky-50 rounded-lg p-3 border border-sky-100">
+          <div className="flex items-center gap-2 mb-2">
+            <ColorStripe color={laneColor} className="h-4" />
+            <span className="text-xs font-medium text-sky-900 uppercase tracking-wider">
+              {shift?.template?.name || shift?.type?.replace("_", " ") || "Shift"}
+            </span>
+          </div>
+          <div className="text-lg font-bold text-gray-900">
+            {shift?.template?.name || shift?.type?.replace("_", " ")}
+          </div>
+          <div className="text-sm text-gray-600">
+            {shift &&
+              format(new Date(shift.startTime), "MMM d")}{" "}
+            •{" "}
+            {shift && format(new Date(shift.startTime), "HH:mm")}–
+            {shift && format(new Date(shift.endTime), "HH:mm")}
+          </div>
         </div>
-        {shift.assignments?.length > 0 && (
-          <ul className="space-y-1">
-            {shift.assignments.map((a: any) => (
-              <li
-                key={a.id}
-                className="text-xs text-gray-700 flex items-center justify-between"
+
+        {/* Time & Capacity inputs */}
+        <div className="space-y-2">
+          <SectionLabel className="mb-2">Edit Times</SectionLabel>
+          <label className="block text-xs text-gray-600">
+            Start
+            <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="block text-xs text-gray-600">
+            End
+            <input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="block text-xs text-gray-600">
+            Capacity
+            <input
+              type="number"
+              min={1}
+              value={capacity}
+              onChange={(e) => setCapacity(parseInt(e.target.value) || 1)}
+              className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+            />
+          </label>
+        </div>
+
+        {/* Team Preference */}
+        {shift?.desirabilityScore != null && shift?.desirabilityScore > 0 && (
+          <div>
+            <SectionLabel className="mb-2">Team Preference</SectionLabel>
+            <ProgressBar
+              value={shift.desirabilityScore}
+              max={5}
+              color={
+                shift.desirabilityScore >= 4
+                  ? "orange"
+                  : shift.desirabilityScore <= 2
+                    ? "blue"
+                    : "gray"
+              }
+            />
+            <div className="flex justify-between mt-1 text-xs text-gray-500">
+              <span>{wantCount} want this</span>
+              <span>{dontWantCount} don&apos;t want</span>
+            </div>
+          </div>
+        )}
+
+        {/* Assignments */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <SectionLabel>Assigned</SectionLabel>
+            <span className="text-xs text-gray-400">
+              {shift?.assignments?.length || 0}/{shift?.capacity}
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {shift?.assignments?.map((assignment: any) => (
+              <div
+                key={assignment.id}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg group"
               >
-                <span>
-                  {a.teamMember?.alias || "Unknown"} ({a.role})
-                </span>
+                <div className="flex items-center gap-2">
+                  <AvatarStack
+                    members={[
+                      {
+                        alias: assignment.teamMember?.alias || "?",
+                        avatarId: assignment.teamMember?.avatarId,
+                      },
+                    ]}
+                    max={1}
+                    size="md"
+                  />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {assignment.teamMember?.alias || "Unknown"}
+                    </div>
+                    <div className="text-xs text-gray-500">{assignment.role}</div>
+                  </div>
+                </div>
                 {canManualAssign && (
                   <button
-                    type="button"
-                    onClick={() => handleRemoveAssignment(a.id)}
-                    className="text-red-400 hover:text-red-600 text-xs"
-                    title="Remove assignment"
+                    onClick={() => handleRemoveAssignment(assignment.id)}
+                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    ×
+                    <X className="w-4 h-4" />
                   </button>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
-        )}
-        {canManualAssign &&
-          (shift.assignments?.length || 0) < shift.capacity && (
-            <div className="flex gap-1 mt-2">
+          </div>
+
+          {/* Add Member Button */}
+          {canManualAssign &&
+            availableMembers.length > 0 &&
+            (shift?.assignments?.length || 0) < (shift?.capacity || 0) && (
+            <div className="mt-2">
               <select
                 value={selectedMemberToAdd}
                 onChange={(e) => setSelectedMemberToAdd(e.target.value)}
-                className="flex-1 text-xs border rounded px-2 py-1"
+                className="w-full p-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 transition-colors"
               >
-                <option value="">Add member...</option>
+                <option value="">+ Add Member</option>
                 {availableMembers.map((m: any) => (
                   <option key={m.id} value={m.id}>
                     {m.alias}
                   </option>
                 ))}
               </select>
-              <Button
-                size="sm"
-                onClick={handleAddAssignment}
-                disabled={!selectedMemberToAdd}
-                className="text-xs"
-              >
-                Add
-              </Button>
+              {selectedMemberToAdd && (
+                <Button
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={handleAddAssignment}
+                >
+                  Add {availableMembers.find((m: any) => m.id === selectedMemberToAdd)?.alias}
+                </Button>
+              )}
             </div>
           )}
+        </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-2 border-t">
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleDelete}
-          className="text-xs"
-        >
-          Delete
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-200 space-y-2">
+        <Button className="w-full" onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save Changes"}
         </Button>
         <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={saving}
-          className="text-xs ml-auto"
+          variant="ghost"
+          className="w-full text-red-600 hover:bg-red-50"
+          onClick={handleDelete}
         >
-          {saving ? "Saving..." : "Save"}
+          Delete Shift
         </Button>
       </div>
-    </Card>
+    </GlassPanel>
   );
 }
