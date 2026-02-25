@@ -45,22 +45,11 @@ function getZoomDensity(zoom: number): ZoomDensity {
 
 function MinimalContent({
   templateName,
-  zoom,
-  width,
 }: {
   templateName: string;
-  zoom: number;
-  width: number;
 }) {
   return (
-    <div
-      className="h-full flex items-center px-2"
-      style={{
-        transform: `scale(${1 / zoom})`,
-        transformOrigin: "left center",
-        width: width * zoom,
-      }}
-    >
+    <div className="h-full flex items-center px-2">
       <span className="text-sm font-medium text-gray-900 truncate">
         {templateName}
       </span>
@@ -75,8 +64,6 @@ function CompactContent({
   assignmentCount,
   capacity,
   desirabilityScore,
-  zoom,
-  width,
 }: {
   templateName: string;
   startTime: string;
@@ -84,18 +71,9 @@ function CompactContent({
   assignmentCount: number;
   capacity: number;
   desirabilityScore?: number;
-  zoom: number;
-  width: number;
 }) {
   return (
-    <div
-      className="h-full flex flex-col justify-center px-2 py-1"
-      style={{
-        transform: `scale(${1 / zoom})`,
-        transformOrigin: "left center",
-        width: width * zoom,
-      }}
-    >
+    <div className="h-full flex flex-col justify-center px-2 py-1">
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium text-gray-900 truncate">
           {templateName}
@@ -339,8 +317,6 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
         {density === "minimal" && (
           <MinimalContent
             templateName={templateName}
-            zoom={zoom}
-            width={width}
           />
         )}
         {density === "compact" && (
@@ -351,8 +327,6 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
             assignmentCount={assignmentCount}
             capacity={capacity}
             desirabilityScore={desirabilityScore}
-            zoom={zoom}
-            width={width}
           />
         )}
         {density === "standard" && (
