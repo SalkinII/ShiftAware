@@ -132,11 +132,25 @@ const show30min = zoom > ZOOM_MINIMAL;     // Show baseline at zoom > 0.3
 // Content responds by showing/hiding information, not by scaling
 ```
 
+### Shift Annotation Nodes
+
+Shift information is displayed via separate annotation nodes that maintain constant screen size:
+
+- **ShiftBlockNode**: Minimal 4px colored bar that scales with zoom (visual anchor)
+- **ShiftAnnotationNode**: Rich content (time, name, avatars, status) at fixed pixel size
+- **Positioning**: Annotation nodes use same flow-space coordinates as shifts
+- **Result**: Overview zoom shows readable information without coordinate distortion
+
+**Visual Behavior:**
+- At zoom 0.1: Annotations appear 10x larger than shift bars, creating clear labels
+- At zoom 1.0: Annotations and shift bars appear at natural size
+- No content scaling or overflow — each element maintains its intended size
+
 ### Affected Files
 
 - **Coordinate utilities:** `components/features/LaneCalendar/utils/coordinates.ts`
 - **Viewport hook:** `components/features/LaneCalendar/hooks/useScreenCoordinates.ts`
-- **Node components:** `nodes/LaneZoneNode.tsx`, `nodes/DaySeparatorNode.tsx` (line only), `nodes/ShiftBlockNode.tsx` (uses internal scale(1/zoom))
+- **Node components:** `nodes/LaneZoneNode.tsx`, `nodes/DaySeparatorNode.tsx` (line only), `nodes/ShiftBlockNode.tsx` (minimal bar), `nodes/ShiftAnnotationNode.tsx`
 - **Panel components:** `panels/TimeRulerPanel.tsx`
 
 ### Manual Verification Checklist
@@ -160,33 +174,24 @@ const show30min = zoom > ZOOM_MINIMAL;     // Show baseline at zoom > 0.3
 
 ## 4. Component Patterns
 
-### Shift Cards (ShiftBlockNode)
+### Shift Visualization (Two-Node Pattern)
 
-**Structure:** White card with 4px left border in lane color.
+**ShiftBlockNode** — Minimal 4px colored bar (visual anchor, scales with zoom)
+
+**ShiftAnnotationNode** — Rich labels (time, name, avatars, status) at fixed size
 
 ```
-┌─────────────────────────────────────────┐
-│██ Title                    [Score ★]   │
-│██ Time range                           │
-│██ ●●● Assignments                      │
-│██ ─────────────────────────────────    │
-│██ Footer hint              [Actions]   │
-└─────────────────────────────────────────┘
+[4px colored bar] ← ShiftBlockNode (draggable, resizable)
+
+08:00 - 16:00     ← ShiftAnnotationNode (time, name, avatars, status)
+Morning Shift
+●● John, Mary
+3/5 - needs 2 more
 ```
 
-**Semantic Zoom Levels:**
-
-| Level | Zoom | Content |
-|-------|------|---------|
-| Minimal | < 0.3 | Left border + name only |
-| Compact | 0.3 - 0.7 | + time, capacity, desirability |
-| Standard | 0.7 - 1.5 | + avatar stack, footer hint |
-| Detailed | > 1.5 | + member names, voting buttons |
-
-**Key Classes:**
+**Key Classes (annotation):**
 ```css
-bg-white rounded-lg border-l-4
-shadow-[var(--shift-shadow)] hover:shadow-[var(--shift-shadow-hover)]
+pointer-events-none select-none
 ```
 
 ### Template Palette Items
