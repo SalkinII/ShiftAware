@@ -14,7 +14,6 @@ import {
   Controls,
   MiniMap,
   Panel,
-  useViewport,
   type Node,
   type NodeChange,
   applyNodeChanges,
@@ -42,6 +41,7 @@ import {
   LANE_HEIGHT,
   SNAP_PIXELS,
 } from "./utils/constants";
+import { useScreenCoordinates } from "./hooks/useScreenCoordinates";
 import { Shield } from "lucide-react";
 
 const nodeTypes = {
@@ -56,10 +56,10 @@ function AlignmentGuides({
   guides,
   laneCount,
 }: {
-  guides: number[];
+  guides: number[]; // flow coordinates
   laneCount: number;
 }) {
-  const { zoom, x: viewportX } = useViewport();
+  const { flowToScreenX } = useScreenCoordinates();
 
   return (
     <Panel position="top-left" className="pointer-events-none m-0 p-0">
@@ -72,7 +72,8 @@ function AlignmentGuides({
         }}
       >
         {guides.map((flowX, i) => {
-          const screenX = flowX * zoom + viewportX;
+          // Use centralized coordinate transform (single source of truth)
+          const screenX = flowToScreenX(flowX);
           return (
             <div
               key={i}
