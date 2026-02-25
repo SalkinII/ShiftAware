@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { type NodeProps, useViewport } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
 import { DAY_SEPARATOR_WIDTH } from "../utils/constants";
 
 export type DaySeparatorData = {
@@ -9,9 +9,10 @@ export type DaySeparatorData = {
   height: number; // total canvas height in px
 };
 
+const TIME_RULER_HEIGHT = 28; // Matches TimeRulerPanel height
+
 function DaySeparatorNodeComponent({ data }: NodeProps) {
   const { label, height } = data as DaySeparatorData;
-  const { zoom } = useViewport();
 
   return (
     <div
@@ -22,22 +23,21 @@ function DaySeparatorNodeComponent({ data }: NodeProps) {
         pointerEvents: "none",
       }}
     >
-      {/* Bold vertical line — zoom-dependent width */}
+      {/* Bold vertical line — constant 1px (appears thicker at zoom because node scales) */}
       <div
         style={{
-          width: Math.ceil(3 / zoom),
+          width: 1,
           height: "100%",
           backgroundColor: "rgba(0,0,0,0.6)",
         }}
       />
-      {/* Counter-scaled day label — stays readable at any zoom */}
+      {/* Day label — fixed pixel offset above node, no zoom scaling */}
       <div
         style={{
           position: "absolute",
-          top: -28 / zoom,
-          left: 6 / zoom,
-          transform: `scale(${1 / zoom})`,
-          transformOrigin: "left top",
+          // Fixed offset above the time ruler (don't scale with zoom)
+          top: -TIME_RULER_HEIGHT,
+          left: 4,
           whiteSpace: "nowrap",
         }}
       >
