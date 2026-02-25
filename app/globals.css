@@ -68,6 +68,31 @@
     --color-cyprus-950: #07272c;
     
     
+    /* Lane colors — 3-tier system (KIMI) */
+    --lane-mobile-north: #0ea5e9;
+    --lane-mobile-north-dark: #0284c7;
+    --lane-mobile-north-light: #7dd3fc;
+
+    --lane-mobile-south: #f59e0b;
+    --lane-mobile-south-dark: #d97706;
+    --lane-mobile-south-light: #fcd34d;
+
+    --lane-stationary: #10b981;
+    --lane-stationary-dark: #059669;
+    --lane-stationary-light: #6ee7b7;
+
+    --lane-shift-lead: #8b5cf6;
+    --lane-shift-lead-dark: #7c3aed;
+    --lane-shift-lead-light: #c4b5fd;
+
+    --lane-super: #ef4444;
+    --lane-super-dark: #dc2626;
+    --lane-super-light: #fca5a5;
+
+    --lane-buffer: #6b7280;
+    --lane-buffer-dark: #4b5563;
+    --lane-buffer-light: #d1d5db;
+
     /* Shift Types */
     --color-shift-mobile1: var(--color-primary-500);
     --color-shift-mobile2: hsl(285, 60%, 50%);     /* Purple */
@@ -163,6 +188,7 @@
     --duration-fast: 100ms;
     --duration-normal: 200ms;
     --duration-slow: 300ms;
+    --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     
     /* ============================================
        BREAKPOINTS
@@ -199,6 +225,53 @@
       /* Interactive states */
       --color-hover: hsl(240, 15%, 97%);
       --color-active: hsl(240, 20%, 94%);
+
+      /* KIMI shift card shadows */
+      --shift-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 0 2px 2px -1px rgba(0,0,0,0.06);
+      --shift-shadow-hover: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+
+      /* Glass panel effect */
+      --glass-bg: rgba(255, 255, 255, 0.9);
+      --glass-blur: 10px;
+
+      /* Lane stripe pattern */
+      --lane-stripe: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0,0,0,0.02) 10px,
+        rgba(0,0,0,0.02) 20px
+      );
+
+      /* Status ambient defaults */
+      --status-bg: transparent;
+      --status-accent: #a8a29e;
+    }
+
+    /* Event status ambient theming — applied via data-event-status attribute */
+    [data-event-status="PLANNING"] {
+      --status-bg: #f8fafc;
+      --status-accent: #64748b;
+    }
+
+    [data-event-status="OPEN_FOR_PREFERENCES"] {
+      --status-bg: #f0f9ff;
+      --status-accent: #0ea5e9;
+    }
+
+    [data-event-status="ASSIGNING"] {
+      --status-bg: #fff7ed;
+      --status-accent: #f97316;
+    }
+
+    [data-event-status="FINALIZED"] {
+      --status-bg: #f0fdf4;
+      --status-accent: #22c55e;
+    }
+
+    [data-event-status="COMPLETED"] {
+      --status-bg: #fafaf9;
+      --status-accent: #a8a29e;
     }
 
     body {
