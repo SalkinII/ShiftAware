@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { Panel, useViewport, useReactFlow } from "@xyflow/react";
+import { Panel } from "@xyflow/react";
 import { format, addHours, differenceInHours } from "date-fns";
 import {
   PIXELS_PER_HOUR,
@@ -13,6 +13,7 @@ import {
   MIN_HOUR_LABEL_WIDTH,
   MIN_DATE_LABEL_WIDTH,
 } from "../utils/constants";
+import { useScreenCoordinates } from "../hooks/useScreenCoordinates";
 
 interface TimeRulerPanelProps {
   eventStart: Date;
@@ -23,7 +24,7 @@ function TimeRulerPanelComponent({
   eventStart,
   eventEnd,
 }: TimeRulerPanelProps) {
-  const { zoom, x: viewportX } = useViewport();
+  const { flowToScreenX, zoom } = useScreenCoordinates();
 
   const totalHours = differenceInHours(eventEnd, eventStart) + 24;
 
@@ -31,20 +32,20 @@ function TimeRulerPanelComponent({
   const show15min = zoom > ZOOM_COMPACT;
   const show30min = zoom > ZOOM_MINIMAL;
 
-  // Only render ticks visible in viewport (performance)
+  // Calculate which hours are visible in viewport
+  const pixelsPerHourAtZoom = PIXELS_PER_HOUR * zoom;
   const visibleStartHour = Math.max(
     0,
-    Math.floor(-viewportX / (PIXELS_PER_HOUR * zoom)),
+    Math.floor(-flowToScreenX(0) / pixelsPerHourAtZoom),
   );
   const visibleEndHour = Math.min(
     totalHours,
-    Math.ceil((-viewportX + window.innerWidth) / (PIXELS_PER_HOUR * zoom)) + 1,
+    Math.ceil((-flowToScreenX(0) + window.innerWidth) / pixelsPerHourAtZoom) + 1,
   );
 
   const ticks: { x: number; label?: string; height: number }[] = [];
 
   // Calculate how many hours to skip between labels to avoid overlap
-  const pixelsPerHourAtZoom = PIXELS_PER_HOUR * zoom;
   const hourLabelSkip = Math.max(
     1,
     Math.ceil(MIN_HOUR_LABEL_WIDTH / pixelsPerHourAtZoom),
@@ -102,7 +103,8 @@ function TimeRulerPanelComponent({
         }}
       >
         {ticks.map((tick, i) => {
-          const screenX = tick.x * zoom + viewportX;
+          // Use centralized coordinate transform
+          const screenX = flowToScreenX(tick.x);
           if (screenX < -50 || screenX > window.innerWidth + 50) return null;
 
           return (
