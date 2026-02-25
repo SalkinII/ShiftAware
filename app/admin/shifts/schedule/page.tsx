@@ -724,7 +724,7 @@ export default function ShiftsPage() {
                 <div
                   ref={calendarRef}
                   data-event-status={selectedEvent?.status}
-                  className="flex-1 flex flex-col rounded-xl shadow-sm overflow-hidden bg-[var(--status-bg)] transition-colors duration-500"
+                  className="flex-1 flex flex-col rounded-xl shadow-sm overflow-hidden bg-[var(--status-bg)] transition-colors duration-500 relative"
                 >
                   {!selectedEvent ? (
                     <div className="p-12 text-center text-gray-400">
@@ -734,22 +734,35 @@ export default function ShiftsPage() {
                       </p>
                     </div>
                   ) : (
-                    <LaneCalendarCanvas
-                      ref={canvasRef}
-                      shifts={shifts}
-                      lanes={derivedLanes}
-                      eventStart={
-                        selectedEvent ? new Date(selectedEvent.startDate) : null
-                      }
-                      eventEnd={
-                        selectedEvent ? new Date(selectedEvent.endDate) : null
-                      }
-                      eventId={selectedEventId}
-                      onShiftSelected={setSelectedShiftId}
-                      onShiftCreated={() => refetchShifts()}
-                      onShiftUpdated={() => refetchShifts()}
-                      shiftMutationLocked={shiftMutationLocked}
-                    />
+                    <>
+                      <LaneCalendarCanvas
+                        ref={canvasRef}
+                        shifts={shifts}
+                        lanes={derivedLanes}
+                        eventStart={
+                          selectedEvent ? new Date(selectedEvent.startDate) : null
+                        }
+                        eventEnd={
+                          selectedEvent ? new Date(selectedEvent.endDate) : null
+                        }
+                        eventId={selectedEventId}
+                        onShiftSelected={setSelectedShiftId}
+                        onShiftCreated={() => refetchShifts()}
+                        onShiftUpdated={() => refetchShifts()}
+                        shiftMutationLocked={shiftMutationLocked}
+                      />
+                      {/* Properties panel overlays canvas when a shift is selected */}
+                      {selectedShiftId && (
+                        <div className="absolute right-4 top-4 bottom-4 w-80 z-20 overflow-y-auto">
+                          <ShiftPropertiesPanel
+                            shiftId={selectedShiftId}
+                            eventStatus={selectedEvent?.status}
+                            onClose={() => setSelectedShiftId(null)}
+                            onUpdated={() => refetchShifts()}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </>

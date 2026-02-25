@@ -278,8 +278,8 @@ function LaneCalendarCanvasInner(
     <div
       className="relative"
       style={{
-        height: "70vh",
-        minHeight: 500,
+        height: "80vh",
+        minHeight: 600,
         paddingTop: shiftMutationLocked ? 36 : 0,
       }}
     >
