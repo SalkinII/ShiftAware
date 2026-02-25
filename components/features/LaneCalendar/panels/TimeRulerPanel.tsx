@@ -11,7 +11,6 @@ import {
   TICK_HEIGHT_30MIN,
   TICK_HEIGHT_15MIN,
   MIN_HOUR_LABEL_WIDTH,
-  MIN_DATE_LABEL_WIDTH,
 } from "../utils/constants";
 import { useScreenCoordinates } from "../hooks/useScreenCoordinates";
 
@@ -43,15 +42,13 @@ function TimeRulerPanelComponent({
     Math.ceil((-flowToScreenX(0) + window.innerWidth) / pixelsPerHourAtZoom) + 1,
   );
 
-  const ticks: { x: number; label?: string; height: number }[] = [];
+  const ticks: { x: number; label?: string; dayLabel?: string; height: number }[] = [];
 
   // Calculate how many hours to skip between labels to avoid overlap
   const hourLabelSkip = Math.max(
     1,
     Math.ceil(MIN_HOUR_LABEL_WIDTH / pixelsPerHourAtZoom),
   );
-  const dateLabelFits = pixelsPerHourAtZoom >= MIN_DATE_LABEL_WIDTH;
-
   for (let h = visibleStartHour; h <= visibleEndHour; h++) {
     const xBase = h * PIXELS_PER_HOUR;
     const time = addHours(eventStart, h);
@@ -59,19 +56,23 @@ function TimeRulerPanelComponent({
     const showLabel = h % hourLabelSkip === 0;
 
     let label: string | undefined;
+    let dayLabel: string | undefined;
+
     if (showLabel) {
-      const timeLabel = format(time, "HH:mm");
-      if (isMidnight && dateLabelFits) {
-        label = `${format(time, "EEE d MMM")} ${timeLabel}`;
-      } else {
-        label = timeLabel;
-      }
+      label = format(time, "HH:mm");
+    }
+
+    if (isMidnight) {
+      // Always show day label at midnight (zoom determines short vs long format)
+      dayLabel =
+        zoom > 0.3 ? format(time, "EEE d MMM") : format(time, "d MMM");
     }
 
     // Hour tick (always show tick mark, label only when it fits)
     ticks.push({
       x: xBase,
       label,
+      dayLabel,
       height: TICK_HEIGHT_HOUR,
     });
 
@@ -135,6 +136,22 @@ function TimeRulerPanelComponent({
                   }}
                 >
                   {tick.label}
+                </div>
+              )}
+              {tick.dayLabel && (
+                <div
+                  className="text-[10px] font-bold text-gray-700 whitespace-nowrap"
+                  style={{
+                    position: "absolute",
+                    top: 15,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "rgba(255,255,255,0.85)",
+                    padding: "0 4px",
+                    borderRadius: 2,
+                  }}
+                >
+                  {tick.dayLabel}
                 </div>
               )}
             </div>
