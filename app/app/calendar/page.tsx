@@ -731,7 +731,10 @@ export default function UserCalendarPage() {
 
           {selectedEvent?.status !== "PLANNING" && (
             <Card className="p-0 shadow-xl overflow-hidden h-[calc(100vh-340px)] min-h-[600px] flex flex-col bg-white">
-              <div className="h-full min-h-[500px]">
+              <div
+                data-event-status={selectedEvent?.status}
+                className="flex-1 h-full min-h-[500px] bg-[var(--status-bg)] transition-colors duration-500"
+              >
                 <LaneCalendarCanvas
                   shifts={filteredShifts}
                   lanes={derivedLanes}
