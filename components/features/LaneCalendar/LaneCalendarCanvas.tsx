@@ -19,7 +19,6 @@ import {
   applyNodeChanges,
   ReactFlowProvider,
   useReactFlow,
-  useViewport,
   getNodesBounds,
   getViewportForBounds,
 } from "@xyflow/react";
@@ -31,11 +30,9 @@ import { LaneZoneNode } from "./nodes/LaneZoneNode";
 import { DaySeparatorNode } from "./nodes/DaySeparatorNode";
 import { HourGridNode } from "./nodes/HourGridNode";
 import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
-import { ShiftAnnotationNode } from "./nodes/ShiftAnnotationNode";
 import { TimeRulerPanel } from "./panels/TimeRulerPanel";
 import { useLaneNodes } from "./hooks/useLaneNodes";
 import { useShiftNodes, type ShiftLike } from "./hooks/useShiftNodes";
-import { useAnnotationNodes } from "./hooks/useAnnotationNodes";
 import { useCanvasActions } from "./hooks/useCanvasActions";
 import {
   MIN_ZOOM,
@@ -52,7 +49,6 @@ const nodeTypes = {
   hourGrid: HourGridNode,
   daySeparator: DaySeparatorNode,
   shiftBlock: ShiftBlockNode,
-  shiftAnnotation: ShiftAnnotationNode,
 };
 
 /** Renders vertical alignment guide lines during shift drag */
@@ -172,25 +168,21 @@ function LaneCalendarCanvasInner(
   );
 
   const { setViewport, fitView } = useReactFlow();
-  const { zoom } = useViewport();
   const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
   const shiftNodes = useShiftNodes(shifts, lanes, eventStart, {
     onResizeEnd: effectiveReadOnly ? undefined : handleResizeEnd,
     readOnly: effectiveReadOnly,
+    onVoteWant: effectiveReadOnly ? onVoteWant : undefined,
+    onVoteDontWant: effectiveReadOnly ? onVoteDontWant : undefined,
+    selectedMemberId,
   });
-  const annotationNodes = useAnnotationNodes(
-    shifts ?? [],
-    lanes,
-    eventStart,
-    zoom
-  );
 
   const [nodes, setNodes] = useState<Node[]>([]);
 
-  // Merge lane + shift + annotation nodes (annotations on top)
+  // Merge lane + shift nodes
   useMemo(() => {
-    setNodes([...laneNodes, ...shiftNodes, ...annotationNodes]);
-  }, [laneNodes, shiftNodes, annotationNodes]);
+    setNodes([...laneNodes, ...shiftNodes]);
+  }, [laneNodes, shiftNodes]);
 
   // Focus viewport on shift nodes when they change
   useEffect(() => {
@@ -232,7 +224,7 @@ function LaneCalendarCanvasInner(
       (container.querySelector(".react-flow") as HTMLElement) ?? container;
     if (!target) return null;
 
-    const flowNodes = [...laneNodes, ...shiftNodes, ...annotationNodes];
+    const flowNodes = [...laneNodes, ...shiftNodes];
     if (flowNodes.length === 0) return null;
 
     const bounds = getNodesBounds(flowNodes);
@@ -257,7 +249,7 @@ function LaneCalendarCanvasInner(
     } catch {
       return null;
     }
-  }, [laneNodes, shiftNodes, annotationNodes, setViewport]);
+  }, [laneNodes, shiftNodes, setViewport]);
 
   useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
 
@@ -328,8 +320,6 @@ function LaneCalendarCanvasInner(
             nodeColor={(node) => {
               if (node.type === "shiftBlock")
                 return (node.data as ShiftBlockData).color;
-              if (node.type === "shiftAnnotation")
-                return (node.data as { color: string }).color;
               return "transparent";
             }}
             maskColor="rgba(0,0,0,0.15)"
