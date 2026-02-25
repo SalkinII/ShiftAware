@@ -746,7 +746,8 @@ export default function ShiftsPage() {
                 {/* Canvas */}
                 <div
                   ref={calendarRef}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden"
+                  data-event-status={selectedEvent?.status}
+                  className="flex-1 flex flex-col rounded-xl shadow-sm overflow-hidden bg-[var(--status-bg)] transition-colors duration-500"
                 >
                   {!selectedEvent ? (
                     <div className="p-12 text-center text-gray-400">
