@@ -2,14 +2,14 @@ import { useMemo } from "react";
 import { type Node } from "@xyflow/react";
 import { type LaneConfig } from "@/lib/types/lane";
 import { timeToX, durationToWidth, laneIndexToY } from "../utils/coordinates";
-import { Z_SHIFT_BLOCK } from "../utils/constants";
+import { Z_SHIFT_BLOCK, SHIFT_NODE_HEIGHT } from "../utils/constants";
 
 export interface ShiftLike {
   id: string;
   type: string;
   startTime: string;
   endTime: string;
-  durationMinutes?: number; // computed from start/end if missing
+  durationMinutes?: number;
   capacity: number;
   desirabilityScore?: number;
   assignments?: {
@@ -32,7 +32,6 @@ export interface UseShiftNodesOptions {
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
-  /** When set, shifts assigned to this member get isAssignedToCurrentUser: true */
   selectedMemberId?: string | null;
 }
 
@@ -42,8 +41,13 @@ export function buildShiftNodes(
   eventStart: Date,
   options?: UseShiftNodesOptions,
 ): Node[] {
-  const { onResizeEnd, readOnly = false } = options ?? {};
-  // Match by templateId; shifts with templateId=null go to Unassigned lane
+  const {
+    onResizeEnd,
+    readOnly = false,
+    onVoteWant,
+    onVoteDontWant,
+    selectedMemberId,
+  } = options ?? {};
   const laneIndexMap = new Map(
     lanes.map((lane, i) => [lane.templateId ?? "unassigned", i]),
   );
@@ -77,15 +81,41 @@ export function buildShiftNodes(
         position: { x, y },
         data: {
           shiftId: shift.id,
+          templateName: lane.label,
+          type: shift.type,
           color: lane.color,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+          capacity: shift.capacity,
+          assignmentCount:
+            shift.assignments?.length ?? shift._count?.assignments ?? 0,
+          desirabilityScore: shift.desirabilityScore,
+          assignedMembers:
+            shift.assignments?.map(
+              (a: { teamMember?: { alias?: string; avatarId?: string } }) => ({
+                alias: a.teamMember?.alias || "?",
+                avatarId: a.teamMember?.avatarId || "",
+              }),
+            ) ?? [],
+          isAssignedToCurrentUser:
+            !!selectedMemberId &&
+            (shift.assignments ?? []).some(
+              (a) =>
+                (a as { teamMemberId?: string }).teamMemberId ===
+                  selectedMemberId ||
+                (a as { teamMember?: { id?: string } }).teamMember?.id ===
+                  selectedMemberId,
+            ),
           width,
           onResizeEnd:
             !readOnly &&
             onResizeEnd &&
             ((_e: unknown, p: { width: number }) => onResizeEnd(nodeId, p)),
           readOnly,
+          onVoteWant: readOnly ? onVoteWant : undefined,
+          onVoteDontWant: readOnly ? onVoteDontWant : undefined,
         },
-        style: { width, height: 4 },
+        style: { width, height: SHIFT_NODE_HEIGHT },
         draggable: !readOnly,
         selectable: true,
         zIndex: Z_SHIFT_BLOCK,
@@ -93,21 +123,36 @@ export function buildShiftNodes(
     });
 }
 
-/**
- * Hook that converts API shift data to React Flow nodes.
- */
 export function useShiftNodes(
   shifts: ShiftLike[] | null,
   lanes: LaneConfig[],
   eventStart: Date | null,
   options?: UseShiftNodesOptions,
 ) {
-  const { onResizeEnd, readOnly = false } = options ?? {};
+  const {
+    onResizeEnd,
+    readOnly = false,
+    onVoteWant,
+    onVoteDontWant,
+    selectedMemberId,
+  } = options ?? {};
   return useMemo(() => {
     if (!shifts || !eventStart || lanes.length === 0) return [];
     return buildShiftNodes(shifts, lanes, eventStart, {
       onResizeEnd,
       readOnly,
+      onVoteWant,
+      onVoteDontWant,
+      selectedMemberId,
     });
-  }, [shifts, lanes, eventStart, onResizeEnd, readOnly]);
+  }, [
+    shifts,
+    lanes,
+    eventStart,
+    onResizeEnd,
+    readOnly,
+    onVoteWant,
+    onVoteDontWant,
+    selectedMemberId,
+  ]);
 }
