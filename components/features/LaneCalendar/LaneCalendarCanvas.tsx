@@ -55,11 +55,16 @@ const nodeTypes = {
 function AlignmentGuides({
   guides,
   laneCount,
+  containerRef,
 }: {
   guides: number[]; // flow coordinates
   laneCount: number;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { flowToScreenX } = useScreenCoordinates();
+
+  // Measure container offset from window left edge
+  const containerLeft = containerRef.current?.getBoundingClientRect().left ?? 0;
 
   return (
     <Panel position="top-left" className="pointer-events-none m-0 p-0">
@@ -72,8 +77,7 @@ function AlignmentGuides({
         }}
       >
         {guides.map((flowX, i) => {
-          // Use centralized coordinate transform (single source of truth)
-          const screenX = flowToScreenX(flowX);
+          const screenX = flowToScreenX(flowX) + containerLeft;
           return (
             <div
               key={i}
@@ -329,6 +333,7 @@ function LaneCalendarCanvasInner(
             <AlignmentGuides
               guides={alignmentGuides}
               laneCount={lanes.length}
+              containerRef={flowContainerRef}
             />
           )}
         </ReactFlow>
