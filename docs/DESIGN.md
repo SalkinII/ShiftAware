@@ -139,6 +139,19 @@ const show30min = zoom > ZOOM_MINIMAL;     // Show baseline at zoom > 0.3
 - **Node components:** `nodes/LaneZoneNode.tsx`, `nodes/DaySeparatorNode.tsx`, `nodes/ShiftBlockNode.tsx`
 - **Panel components:** `panels/TimeRulerPanel.tsx`
 
+### Manual Verification Checklist
+
+- [ ] At zoom 0.3: Node cards show template name only (minimal view)
+- [ ] At zoom 0.5: Node cards show time + capacity (compact view)
+- [ ] At zoom 1.0: Node cards show full detail (standard view)
+- [ ] At zoom 2.0: Node cards show member names (detailed view)
+- [ ] TimeRulerPanel ticks align with node positions at all zoom levels
+- [ ] DaySeparatorNode midnight marker offset stays constant (no drift)
+- [ ] ShiftBlockNode content doesn't overflow at zoom 0.1 or 0.3
+- [ ] AlignmentGuides (blue snap line) appears exactly where shift snaps
+- [ ] LaneZoneNode background stripes align with time ruler ticks
+- [ ] Pan left/right and verify all elements move together (no drift)
+
 ---
 
 ## 4. Component Patterns
