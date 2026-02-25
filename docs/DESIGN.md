@@ -132,25 +132,11 @@ const show30min = zoom > ZOOM_MINIMAL;     // Show baseline at zoom > 0.3
 // Content responds by showing/hiding information, not by scaling
 ```
 
-### Shift Annotation Nodes
-
-Shift information is displayed via separate annotation nodes that maintain constant screen size:
-
-- **ShiftBlockNode**: Minimal 4px colored bar that scales with zoom (visual anchor)
-- **ShiftAnnotationNode**: Rich content (time, name, avatars, status) at fixed pixel size
-- **Positioning**: Annotation nodes use same flow-space coordinates as shifts
-- **Result**: Overview zoom shows readable information without coordinate distortion
-
-**Visual Behavior:**
-- At zoom 0.1: Annotations appear 10x larger than shift bars, creating clear labels
-- At zoom 1.0: Annotations and shift bars appear at natural size
-- No content scaling or overflow — each element maintains its intended size
-
 ### Affected Files
 
 - **Coordinate utilities:** `components/features/LaneCalendar/utils/coordinates.ts`
 - **Viewport hook:** `components/features/LaneCalendar/hooks/useScreenCoordinates.ts`
-- **Node components:** `nodes/LaneZoneNode.tsx`, `nodes/DaySeparatorNode.tsx` (line only), `nodes/ShiftBlockNode.tsx` (minimal bar), `nodes/ShiftAnnotationNode.tsx`
+- **Node components:** `nodes/LaneZoneNode.tsx`, `nodes/DaySeparatorNode.tsx` (line only), `nodes/ShiftBlockNode.tsx` (glass card)
 - **Panel components:** `panels/TimeRulerPanel.tsx`
 
 ### Manual Verification Checklist
@@ -174,25 +160,34 @@ Shift information is displayed via separate annotation nodes that maintain const
 
 ## 4. Component Patterns
 
-### Shift Visualization (Two-Node Pattern)
+### Shift Visualization (Single-Node Glass Card)
 
-**ShiftBlockNode** — Minimal 4px colored bar (visual anchor, scales with zoom)
-
-**ShiftAnnotationNode** — Rich labels (time, name, avatars, status) at fixed size
+**ShiftBlockNode** — Glass card with colored left border, scale(1/zoom) for zoom-independent text.
 
 ```
-[4px colored bar] ← ShiftBlockNode (draggable, resizable)
+┌──┬──────────────────────────────┐
+│██│ 08:00–16:00  ★★★             │  ← CompactContent (zoom < 0.7)
+│██│ Morning Shift                │     scale(1/zoom), text-2xl+
+│██│ 3/5                          │
+└──┴──────────────────────────────┘
 
-08:00 - 16:00     ← ShiftAnnotationNode (time, name, avatars, status)
-Morning Shift
-●● John, Mary
-3/5 - needs 2 more
+┌──┬──────────────────────────────┐
+│██│ Morning Shift                │  ← DetailedContent (zoom >= 0.7)
+│██│ 08:00 – 16:00         ★★★   │     native size, text-2xl+
+│██│ ●● John, Mary               │
+│██│ 3/5 — needs 2 more    👍👎  │
+└──┴──────────────────────────────┘
 ```
 
-**Key Classes (annotation):**
+**Key Classes:**
 ```css
-pointer-events-none select-none
+bg-white/80 backdrop-blur-sm border-l-4
+shadow-[var(--shift-shadow)] hover:shadow-[var(--shift-shadow-hover)]
 ```
+
+**Density thresholds:**
+- `zoom < ZOOM_COMPACT (0.7)`: CompactContent with scale(1/zoom)
+- `zoom >= ZOOM_COMPACT`: DetailedContent (no scaling needed)
 
 ### Template Palette Items
 
