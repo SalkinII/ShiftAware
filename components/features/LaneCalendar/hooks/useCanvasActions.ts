@@ -73,8 +73,8 @@ export function useCanvasActions({
           y: event.clientY,
         });
 
-        const snappedX = snapX(flowPos.x);
-        const snappedY = snapY(flowPos.y);
+        const snappedX = Math.max(0, snapX(flowPos.x));
+        const snappedY = Math.max(0, snapY(flowPos.y));
 
         const startTime = xToTime(snappedX, eventStart);
         const laneIndex = yToLaneIndex(snappedY);
@@ -148,8 +148,8 @@ export function useCanvasActions({
 
       try {
         const { shiftId, startTime: origStart, endTime: origEnd } = node.data;
-        const snappedX = snapX(node.position.x);
-        const snappedY = snapY(node.position.y);
+        const snappedX = Math.max(0, snapX(node.position.x));
+        const snappedY = Math.max(0, snapY(node.position.y));
 
         const newStartTime = xToTime(snappedX, eventStart);
         const laneIndex = yToLaneIndex(snappedY);
