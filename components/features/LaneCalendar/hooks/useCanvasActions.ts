@@ -200,26 +200,40 @@ export function useCanvasActions({
   /**
    * Handle node resize end (duration change).
    * Converts width to duration, snaps to 15min, persists via PUT.
+   * When x is provided (left-handle resize), derives new startTime from position.
    */
   const handleResizeEnd = useCallback(
-    async (nodeId: string, params: { width: number }) => {
+    async (nodeId: string, params: { width: number; x?: number }) => {
       if (!eventStart || !eventId || !nodeId.startsWith("shift-")) return;
 
       const shiftId = nodeId.replace("shift-", "");
       const node = getNode(nodeId);
-      if (!node?.data || !isShiftNodeData(node.data)) return;
+      if (!node?.data) {
+        toast.error("Could not update shift — node not found");
+        return;
+      }
+      if (!isShiftNodeData(node.data)) {
+        toast.error("Could not update shift — invalid data");
+        return;
+      }
 
       try {
-        const startTime = new Date(node.data.startTime);
+        // Derive start time: if x provided (left-handle), use it; else keep original
+        let newStartTime: Date;
+        if (params.x != null) {
+          const snappedX = Math.max(0, snapX(params.x));
+          newStartTime = xToTime(snappedX, eventStart);
+        } else {
+          newStartTime = new Date(node.data.startTime);
+        }
+
+        // Derive end time from start + duration (from width)
         const durationMinutes =
           Math.round(widthToDuration(params.width) / SNAP_INTERVAL_MINUTES) *
           SNAP_INTERVAL_MINUTES;
-        const snappedDuration = Math.max(
-          SNAP_INTERVAL_MINUTES,
-          durationMinutes,
-        );
+        const snappedDuration = Math.max(SNAP_INTERVAL_MINUTES, durationMinutes);
         const newEndTime = new Date(
-          startTime.getTime() + snappedDuration * 60 * 1000,
+          newStartTime.getTime() + snappedDuration * 60 * 1000,
         );
 
         const res = await fetch(`/api/shifts/${shiftId}`, {
@@ -227,7 +241,7 @@ export function useCanvasActions({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: shiftId,
-            startTime: startTime.toISOString(),
+            startTime: newStartTime.toISOString(),
             endTime: newEndTime.toISOString(),
             durationMinutes: snappedDuration,
           }),
@@ -244,8 +258,12 @@ export function useCanvasActions({
           const data = await res.json().catch(() => ({}));
           if (res.status === 403) {
             toast.error("Shifts can't be edited in the current event state");
+          } else if (Array.isArray(data.details) && data.details.length > 0) {
+            toast.error(
+              data.details.map((d: { message?: string }) => d.message).join("; "),
+            );
           } else {
-            toast.error(data.error || "Failed to update shift");
+            toast.error(data.message || data.error || "Failed to update shift");
           }
         }
       } catch (err) {
