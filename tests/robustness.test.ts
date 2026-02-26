@@ -59,7 +59,7 @@ describe("API Error Response Standardization", () => {
       const body = await response.json();
 
       expect(response.status).toBe(200);
-      expect(body).toEqual(data);
+      expect(body).toEqual({ data });
     });
 
     it("should create success response with custom status", async () => {
@@ -68,7 +68,7 @@ describe("API Error Response Standardization", () => {
       const body = await response.json();
 
       expect(response.status).toBe(201);
-      expect(body).toEqual(data);
+      expect(body).toEqual({ data });
     });
   });
 

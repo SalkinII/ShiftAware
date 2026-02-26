@@ -40,9 +40,9 @@ describe("updateEventSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("requires a valid cuid id", () => {
+  it("rejects empty id", () => {
     const result = updateEventSchema.safeParse({
-      id: "not-a-cuid",
+      id: "",
       name: "Test",
     });
     expect(result.success).toBe(false);

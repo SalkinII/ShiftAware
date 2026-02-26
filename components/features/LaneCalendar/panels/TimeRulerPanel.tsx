@@ -24,6 +24,7 @@ function TimeRulerPanelComponent({
   eventStart,
   eventEnd,
 }: TimeRulerPanelProps) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- hook is at top level, not in loop; linter false positive
   const { flowToScreenX, zoom } = useScreenCoordinates();
 
   const totalHours = differenceInHours(eventEnd, eventStart) + 24;

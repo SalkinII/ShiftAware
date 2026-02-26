@@ -112,8 +112,8 @@ describe("API Error Response Integration", () => {
       }
     });
 
-    it("should reject empty requiredRoles array", () => {
-      const invalidShift = {
+    it("should allow empty requiredRoles array (marker shifts)", () => {
+      const markerShift = {
         eventId: "clx1234567890123456789012",
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T10:00:00.000Z",
@@ -121,17 +121,12 @@ describe("API Error Response Integration", () => {
         durationMinutes: 360,
         priority: "CORE",
         desirabilityScore: 3,
-        capacity: 2,
-        requiredRoles: [], // Empty array
+        capacity: 0,
+        requiredRoles: [], // Empty array allowed for marker shifts
       };
 
-      const result = shiftSchema.safeParse(invalidShift);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(
-          result.error.errors.some((e) => e.path.includes("requiredRoles")),
-        ).toBe(true);
-      }
+      const result = shiftSchema.safeParse(markerShift);
+      expect(result.success).toBe(true);
     });
   });
 

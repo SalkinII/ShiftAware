@@ -78,7 +78,7 @@ export function ShiftPreferencePanel({
                 : "bg-red-50 text-red-700"
             }`}
           >
-            You voted: {currentVote === "WANT" ? "Want" : "Don't want"} this
+            You voted: {currentVote === "WANT" ? "Want" : "Don&apos;t want"} this
             shift
           </div>
         )}
@@ -106,7 +106,7 @@ export function ShiftPreferencePanel({
           }`}
         >
           <ThumbsDown className="w-5 h-5" />
-          Don't want this shift
+          Don&apos;t want this shift
         </button>
       </div>
     </div>
