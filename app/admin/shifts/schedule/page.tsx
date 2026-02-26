@@ -36,6 +36,7 @@ import {
   getPreviousStatus,
 } from "@/lib/validations/event-transition";
 import { getShiftsCacheKey } from "@/lib/cache/utils";
+import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
@@ -331,14 +332,9 @@ export default function ShiftsPage() {
         setFormErrors({});
         // Notify schedule page to refresh
         window.dispatchEvent(new CustomEvent("shiftaware:refresh-schedule"));
-        // Invalidate cache
-        window.dispatchEvent(
-          new CustomEvent("shiftaware:cache-invalidate", {
-            detail: {
-              keys: ["shifts", "shifts:*", "assignments", "assignments:*"],
-            },
-          }),
-        );
+        if (selectedEventId) {
+          invalidateEventCache(selectedEventId, "shifts", "assignments");
+        }
         // Reset form
         setFormData({
           eventId: selectedEventId || "",
@@ -421,11 +417,9 @@ export default function ShiftsPage() {
 
       if (res.ok) {
         toast.success("Shift updated successfully");
-        window.dispatchEvent(
-          new CustomEvent("shiftaware:cache-invalidate", {
-            detail: { keys: ["shifts", "shifts:*"] },
-          }),
-        );
+        if (selectedEventId) {
+          invalidateEventCache(selectedEventId, "shifts");
+        }
       } else {
         const errorData = await res.json();
         toast.error(errorData.error || "Failed to update shift");
@@ -448,14 +442,9 @@ export default function ShiftsPage() {
 
       if (res.ok) {
         toast.success("Shift deleted successfully");
-        // Invalidate cache
-        window.dispatchEvent(
-          new CustomEvent("shiftaware:cache-invalidate", {
-            detail: {
-              keys: ["shifts", "shifts:*", "assignments", "assignments:*"],
-            },
-          }),
-        );
+        if (selectedEventId) {
+          invalidateEventCache(selectedEventId, "shifts", "assignments");
+        }
         setDeleteDialog({
           isOpen: false,
           shiftId: null,

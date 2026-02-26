@@ -20,6 +20,7 @@ import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
+import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -314,6 +315,9 @@ export default function UserCalendarPage() {
       .then(async (res) => {
         if (res.ok) {
           toast.success("Preference saved: Want this shift");
+          if (selectedEventId) {
+            invalidateEventCache(selectedEventId, "preferences", "shifts");
+          }
           refetchShifts();
         } else {
           const error = await res.json();
@@ -348,6 +352,9 @@ export default function UserCalendarPage() {
       .then(async (res) => {
         if (res.ok) {
           toast.success("Preference saved: Don't want this shift");
+          if (selectedEventId) {
+            invalidateEventCache(selectedEventId, "preferences", "shifts");
+          }
           refetchShifts();
         } else {
           const error = await res.json();

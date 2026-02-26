@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { invalidateIdentity } from "@/lib/cache/invalidateIdentity";
 
 interface Member {
   id: string;
@@ -36,6 +37,7 @@ export function useMemberContext(): MemberContextState {
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
+    invalidateIdentity();
   }, []);
 
   const refreshMember = useCallback(async () => {
