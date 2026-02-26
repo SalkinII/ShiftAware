@@ -42,8 +42,10 @@ export class AssignmentsService {
       );
     }
 
-    // Validate: Check if swap would create conflicts
-    const allAssignments = await this.repo.findAll();
+    // Validate: Check if swap would create conflicts (scope to event)
+    const allAssignments = await this.repo.findAll({
+      shift: { eventId },
+    });
 
     const wouldConflict1 = allAssignments.find(
       (a) =>
@@ -100,9 +102,23 @@ export class AssignmentsService {
   }) {
     const shiftRecord = await prisma.shift.findUnique({
       where: { id: data.shiftId },
-      select: { eventId: true },
+      select: { eventId: true, capacity: true },
     });
     if (!shiftRecord) throw new Error("Shift not found");
+
+    // Verify member is registered for this event
+    const registration = await prisma.eventRegistration.findUnique({
+      where: {
+        memberId_eventId: {
+          memberId: data.teamMemberId,
+          eventId: shiftRecord.eventId,
+        },
+      },
+    });
+    if (!registration) {
+      throw new Error("Member is not registered for this event");
+    }
+
     await assertEventStatusAllows(shiftRecord.eventId, "ASSIGNMENT_MANUAL");
     return this.repo.createManual({
       shiftId: data.shiftId,
@@ -125,18 +141,23 @@ export class AssignmentsService {
     await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
     const event = await this.eventRepo.findById(eventId);
 
-    // 2. Load active members with preferences and assignments
-    const members = await prisma.teamMember.findMany({
-      where: { isActive: true },
+    // 2. Load event-registered members with preferences and assignments
+    const registrations = await prisma.eventRegistration.findMany({
+      where: { eventId },
       include: {
-        preferences: {
-          include: { shift: true },
-        },
-        assignments: {
-          include: { shift: true },
+        member: {
+          include: {
+            preferences: {
+              include: { shift: true },
+            },
+            assignments: {
+              include: { shift: true },
+            },
+          },
         },
       },
     });
+    const members = registrations.map((r) => r.member);
 
     // 3. Load shifts for event
     const shifts = await prisma.shift.findMany({

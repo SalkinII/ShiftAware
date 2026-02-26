@@ -7,6 +7,9 @@ vi.mock("@/lib/db", () => ({
     event: {
       findUnique: vi.fn(),
     },
+    eventRegistration: {
+      findMany: vi.fn(),
+    },
     teamMember: {
       findMany: vi.fn(),
     },
@@ -159,7 +162,9 @@ describe("AssignmentsService", () => {
       id: "event-1",
       status: "ASSIGNING",
     });
-    vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers);
+    vi.mocked(prisma.eventRegistration.findMany).mockResolvedValue(
+      mockMembers.map((member) => ({ member })),
+    );
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts);
     vi.mocked(runAssignmentAlgorithm).mockResolvedValue(mockResult);
 
@@ -261,7 +266,9 @@ describe("AssignmentsService", () => {
       id: "event-1",
       status: "ASSIGNING",
     });
-    vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers);
+    vi.mocked(prisma.eventRegistration.findMany).mockResolvedValue(
+      mockMembers.map((member) => ({ member })),
+    );
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts);
     vi.mocked(runAssignmentAlgorithm).mockResolvedValue(mockResult);
     mockAssignmentRepo.deleteByEvent.mockResolvedValue({ count: 0 });

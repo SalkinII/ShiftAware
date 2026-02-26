@@ -54,6 +54,10 @@ export class AssignmentRepository extends BaseRepository {
     }
   }
 
+  async findByEvent(eventId: string) {
+    return this.findAll({ shift: { eventId } });
+  }
+
   async delete(id: string) {
     try {
       return await prisma.assignment.delete({
