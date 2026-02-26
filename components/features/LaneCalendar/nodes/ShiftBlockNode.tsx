@@ -35,10 +35,12 @@ export type ShiftBlockData = {
 /** Minimum zoom density: just who is staffed on this shift */
 function OccupationContent({
   assignedMembers,
+  isMarker,
   zoom,
   width,
 }: {
   assignedMembers?: Array<{ alias: string; avatarId?: string }>;
+  isMarker?: boolean;
   zoom: number;
   width: number;
 }) {
@@ -52,7 +54,11 @@ function OccupationContent({
         height: SHIFT_NODE_HEIGHT * zoom,
       }}
     >
-      {assignedMembers && assignedMembers.length > 0 ? (
+      {isMarker ? (
+        <span className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5">
+          Marker
+        </span>
+      ) : assignedMembers && assignedMembers.length > 0 ? (
         <>
           <div className="flex -space-x-1 mb-1">
             {assignedMembers.slice(0, 4).map((m, i) => (
@@ -94,6 +100,7 @@ function CoreContent({
   endTime,
   assignmentCount,
   capacity,
+  isMarker,
   desirabilityScore,
   zoom,
   width,
@@ -103,6 +110,7 @@ function CoreContent({
   endTime: string;
   assignmentCount: number;
   capacity: number;
+  isMarker?: boolean;
   desirabilityScore?: number;
   zoom: number;
   width: number;
@@ -129,9 +137,15 @@ function CoreContent({
       <div className="text-3xl font-bold text-gray-900 truncate">
         {templateName}
       </div>
-      <div className="text-2xl font-bold text-gray-500">
-        {assignmentCount}/{capacity}
-      </div>
+      {isMarker ? (
+        <span className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5">
+          Marker
+        </span>
+      ) : (
+        <div className="text-2xl font-bold text-gray-500">
+          {assignmentCount}/{capacity}
+        </div>
+      )}
     </div>
   );
 }
@@ -144,6 +158,7 @@ function DetailedContent({
   endTime,
   assignmentCount,
   capacity,
+  isMarker,
   desirabilityScore,
   assignedMembers,
   isFull,
@@ -157,6 +172,7 @@ function DetailedContent({
   endTime: string;
   assignmentCount: number;
   capacity: number;
+  isMarker?: boolean;
   desirabilityScore?: number;
   assignedMembers?: Array<{ alias: string; avatarId?: string }>;
   isFull: boolean;
@@ -186,9 +202,13 @@ function DetailedContent({
         )}
       </div>
 
-      {/* Assignments with names */}
+      {/* Assignments with names or Marker */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
-        {assignedMembers && assignedMembers.length > 0 ? (
+        {isMarker ? (
+          <span className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5">
+            Marker
+          </span>
+        ) : assignedMembers && assignedMembers.length > 0 ? (
           <>
             <div className="flex -space-x-2">
               {assignedMembers.slice(0, 4).map((m, i) => (
@@ -211,7 +231,8 @@ function DetailedContent({
         )}
       </div>
 
-      {/* Footer: status + vote */}
+      {/* Footer: status + vote (skip for markers) */}
+      {!isMarker && (
       <div className="mt-auto pt-3 border-t border-gray-200/50 flex items-center justify-between">
         <span
           className={cn(
@@ -253,6 +274,7 @@ function DetailedContent({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -280,6 +302,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
   const isDetailed = zoom >= ZOOM_COMPACT;
   const isCore = zoom >= ZOOM_MINIMAL;
   const isFull = assignmentCount >= capacity;
+  const isMarker = capacity === 0;
 
   return (
     <>
@@ -329,6 +352,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
             endTime={endTime}
             assignmentCount={assignmentCount}
             capacity={capacity}
+            isMarker={isMarker}
             desirabilityScore={desirabilityScore}
             assignedMembers={assignedMembers}
             isFull={isFull}
@@ -343,6 +367,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
             endTime={endTime}
             assignmentCount={assignmentCount}
             capacity={capacity}
+            isMarker={isMarker}
             desirabilityScore={desirabilityScore}
             zoom={zoom}
             width={width}
@@ -350,6 +375,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
         ) : (
           <OccupationContent
             assignedMembers={assignedMembers}
+            isMarker={isMarker}
             zoom={zoom}
             width={width}
           />

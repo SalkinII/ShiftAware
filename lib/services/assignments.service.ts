@@ -118,6 +118,9 @@ export class AssignmentsService {
     if (!registration) {
       throw new Error("Member is not registered for this event");
     }
+    if (shiftRecord.capacity === 0) {
+      throw new Error("Cannot assign members to a marker shift (capacity is 0)");
+    }
 
     await assertEventStatusAllows(shiftRecord.eventId, "ASSIGNMENT_MANUAL");
     return this.repo.createManual({
@@ -197,7 +200,8 @@ export class AssignmentsService {
             coreShiftCoverage: 0.05,
           };
 
-    const coreShifts = shifts.filter((s) => s.priority === "CORE");
+    const assignableShifts = shifts.filter((s) => s.capacity > 0);
+    const coreShifts = assignableShifts.filter((s) => s.priority === "CORE");
 
     // 5. Load member attributes for the event
     const memberAttributes = new Map<string, Map<string, string>>();
@@ -210,13 +214,17 @@ export class AssignmentsService {
       memberAttributes.set(member.id, attrMap);
     }
 
-    // 6. Run algorithm
-    const result = await runAssignmentAlgorithm(members as any, shifts as any, {
-      minShiftsPerPerson: config.minShiftsPerPerson || 2,
-      coreShifts,
-      weights,
-      memberAttributes,
-    });
+    // 6. Run algorithm (only assignable shifts)
+    const result = await runAssignmentAlgorithm(
+      members as any,
+      assignableShifts as any,
+      {
+        minShiftsPerPerson: config.minShiftsPerPerson || 2,
+        coreShifts,
+        weights,
+        memberAttributes,
+      },
+    );
 
     // 7. If preview, return without saving
     if (preview) {
