@@ -21,6 +21,7 @@ import { addDays, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
+import { ShiftPreferencePanel } from "@/components/features/ShiftPropertiesPanel/ShiftPreferencePanel";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -319,6 +320,7 @@ export default function UserCalendarPage() {
             invalidateEventCache(selectedEventId, "preferences", "shifts");
           }
           refetchShifts();
+          refetchPreferences();
         } else {
           const error = await res.json();
           toast.error(error.message || "Failed to save preference");
@@ -356,6 +358,7 @@ export default function UserCalendarPage() {
             invalidateEventCache(selectedEventId, "preferences", "shifts");
           }
           refetchShifts();
+          refetchPreferences();
         } else {
           const error = await res.json();
           toast.error(error.message || "Failed to save preference");
@@ -447,6 +450,37 @@ export default function UserCalendarPage() {
     typeof window !== "undefined"
       ? localStorage.getItem("selectedMemberId") || ""
       : "";
+
+  // Fetch preferences when in OPEN_FOR_PREFERENCES (for vote panel)
+  const shouldFetchPreferences =
+    !!userId &&
+    !!selectedEventId &&
+    selectedEvent?.status === "OPEN_FOR_PREFERENCES";
+  const {
+    data: preferences,
+    refetch: refetchPreferences,
+  } = useCache<
+    Array<{ shiftId: string; wantLevel?: "WANT" | "DONT_WANT" }>
+  >({
+    key: shouldFetchPreferences
+      ? `preferences-${userId}-${selectedEventId}`
+      : "preferences-none",
+    fetchFn: async () => {
+      if (!userId) return [];
+      const res = await fetch(`/api/preferences?teamMemberId=${userId}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      const result = unwrapApiResponse<Array<{ shiftId: string; wantLevel?: string }>>(json);
+      return result ?? [];
+    },
+    enabled: shouldFetchPreferences,
+  });
+
+  const userVoteForShift = useMemo(() => {
+    if (!selectedShift || !preferences) return null;
+    const pref = preferences.find((p) => p.shiftId === selectedShift.id);
+    return (pref?.wantLevel as "WANT" | "DONT_WANT") || null;
+  }, [selectedShift, preferences]);
 
   // Debug: log userId and assignment data for My Shifts
   useEffect(() => {
@@ -772,7 +806,20 @@ export default function UserCalendarPage() {
                 />
               </div>
 
-              {selectedShift && (
+              {selectedShift && selectedEvent?.status === "OPEN_FOR_PREFERENCES" ? (
+                <div className="w-80 flex-shrink-0 overflow-y-auto">
+                  <ShiftPreferencePanel
+                    shift={{
+                      ...selectedShift,
+                      assignmentCount: selectedShift.assignments?.length ?? 0,
+                    }}
+                    currentVote={userVoteForShift}
+                    onVoteWant={handleVoteWant}
+                    onVoteDontWant={handleVoteDontWant}
+                    onClose={() => setSelectedShift(null)}
+                  />
+                </div>
+              ) : selectedShift ? (
                 <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
                   <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="text-sm font-bold text-gray-900">
@@ -832,7 +879,7 @@ export default function UserCalendarPage() {
                     </Button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 
