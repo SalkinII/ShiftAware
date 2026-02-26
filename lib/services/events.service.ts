@@ -53,7 +53,9 @@ export class EventsService {
 
     // Forward-transition prerequisites
     const currentIdx = STATUS_ORDER.indexOf(event.status);
-    const targetIdx = STATUS_ORDER.indexOf(targetStatus);
+    const targetIdx = STATUS_ORDER.indexOf(
+      targetStatus as (typeof STATUS_ORDER)[number],
+    );
     const isForward = targetIdx > currentIdx;
 
     if (isForward) {

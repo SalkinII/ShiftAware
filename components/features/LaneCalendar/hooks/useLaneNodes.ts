@@ -1,15 +1,13 @@
 import { useMemo } from "react";
 import { type Node } from "@xyflow/react";
-import { format, addDays, startOfDay, differenceInDays } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { type LaneConfig } from "@/lib/types/lane";
 import {
   LANE_HEIGHT,
   Z_LANE_ZONE,
-  Z_DAY_SEPARATOR,
   Z_HOUR_GRID,
   PIXELS_PER_HOUR,
 } from "../utils/constants";
-import { timeToX } from "../utils/coordinates";
 
 export function buildLaneNodes(
   lanes: LaneConfig[],
@@ -28,36 +26,6 @@ export function buildLaneNodes(
     selectable: false,
     zIndex: Z_LANE_ZONE,
   }));
-}
-
-export function buildDaySeparatorNodes(
-  eventStart: Date,
-  eventEnd: Date,
-  canvasHeight: number,
-): Node[] {
-  const nodes: Node[] = [];
-  const totalDays = differenceInDays(eventEnd, eventStart) + 1;
-
-  for (let d = 0; d <= totalDays; d++) {
-    const midnight = startOfDay(addDays(eventStart, d));
-    const x = timeToX(midnight, eventStart);
-    if (x < 0) continue; // skip separators before timeline start
-
-    nodes.push({
-      id: `day-sep-${d}`,
-      type: "daySeparator",
-      position: { x, y: 0 },
-      data: {
-        label: format(midnight, "d MMM yyyy"),
-        height: canvasHeight,
-      },
-      draggable: false,
-      selectable: false,
-      zIndex: Z_DAY_SEPARATOR,
-    });
-  }
-
-  return nodes;
 }
 
 export function buildHourGridNodes(
@@ -84,7 +52,7 @@ export function buildHourGridNodes(
 }
 
 /**
- * Hook that builds lane zone and day separator nodes.
+ * Hook that builds lane zone and hour grid nodes.
  */
 export function useLaneNodes(
   lanes: LaneConfig[],
@@ -100,12 +68,7 @@ export function useLaneNodes(
 
     const laneNodes = buildLaneNodes(lanes, timelineWidth);
     const gridNodes = buildHourGridNodes(eventStart, eventEnd, canvasHeight);
-    const separatorNodes = buildDaySeparatorNodes(
-      eventStart,
-      eventEnd,
-      canvasHeight,
-    );
 
-    return [...laneNodes, ...gridNodes, ...separatorNodes];
+    return [...laneNodes, ...gridNodes];
   }, [lanes, eventStart, eventEnd]);
 }

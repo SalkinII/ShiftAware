@@ -27,7 +27,7 @@ export const DAY_SEPARATOR_WIDTH = 4;
 
 // Layout panel dimensions
 export const LANE_LABEL_WIDTH = 72; // px — left lane labels strip width
-export const RULER_HEIGHT = 28; // px — top time ruler height
+export const RULER_HEIGHT = 48; // px — top time ruler height (28 ticks + 20 day bar)
 
 // Time ruler label widths (px) — used for skip-label collision avoidance
 export const MIN_HOUR_LABEL_WIDTH = 40; // "14:00" at 9px font ≈ 35px + padding
