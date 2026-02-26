@@ -1,50 +1,71 @@
 ShiftAware Backlog
 ==================
 
-Ref: docs/plans/2026-02-26-backlog-list-plan.md
+Ref: docs/plans/arch/2026-02-26-v3.3-canvas-fixes-design.md (latest)
+Ref: docs/plans/arch/2026-02-26_NEEDSREVAMP-backlog-list-plan.md (full inventory)
 
-## Phase 1 — Canvas Bug Fixes
+## Canvas UX
 
-- Shift resize left handle — empty toast, wrong position (ignore node.position.x)
-- Canvas full reload on drag-drop — merge strategy, fix fitView trigger
-- Node content stacked — grid layout for DetailedContent
+- Lane name abbreviations — multi-word→initials, single→first 3 letters
+  Files: new `LaneCalendar/utils/laneName.ts`, `panels/LaneLabelPanel.tsx`
+  Ref: NEEDSREVAMP Task 4
 
-## Phase 2 — Canvas UX
+- Time ruler dates — add year (dd.MM.yyyy format)
+  Files: `panels/TimeRulerPanel.tsx` day label format
+  Ref: NEEDSREVAMP Task 5
 
-- Lane names — initials (multi-word) or first 3 letters (single)
-- Time ruler dates — add year (dd.MM.yyyy)
-- Contextual zoom — useStore summary/detail by zoom level
-- Colour harmonization — templates match lanes
+- Colour harmonization — template palette colours match lane colours
+  Files: `lib/utils/palette.ts`, `TemplatePalette.tsx`, `ShiftBlockNode.tsx`, `LaneZoneNode.tsx`
+  Ref: NEEDSREVAMP Task 7
 
-## Phase 3 — Export & Markers
+## Export
 
-- Export — choose React Flow PNG vs PDF
-- Zero-occupancy shifts as markers
+- Export choice — React Flow PNG vs PDF table
+  Files: `app/admin/shifts/schedule/page.tsx` (export button), existing PNG export (Phase 7)
+  Ref: NEEDSREVAMP Task 8
 
-## Phase 4 — User View
+## User View
 
-- User list view — want/don't want, assignment state (reuse admin logic)
-- Password-based event selection in user view
+- User list view — want/don't want selections, assigned shifts
+  Reuse admin list view logic. Show preference state (OPEN_FOR_PREFERENCES) or assignments (FINALIZED).
+  Files: new `app/app/calendar/components/MyShiftsList.tsx`, reuse admin shift card patterns
+  Ref: NEEDSREVAMP Task 10
 
-## Phase 5 — Admin Parity
+- Password-based event selection
+  Add optional `accessCode` to Event model. User enters code to filter to matching event.
+  Files: `prisma/schema.prisma`, `app/app/identity/components/EventSelectionStep.tsx`
+  Ref: NEEDSREVAMP Task 11
 
-- Admin team — same detail/create logic as identity page
+## Admin Parity
+
+- Admin team — same detail/create logic as identity claim page
+  Files: `app/admin/team/`, reuse `CreateProfileForm` from identity
+  Ref: NEEDSREVAMP Task 12
+
 - Profile card read-only on avatar click (user + admin)
+  Files: new `components/features/Identity/ProfileDetailCard.tsx`
+  Ref: NEEDSREVAMP Task 13
 
-## Phase 6 — Service
+## Service Logic
 
 - Attribute/skill validation during assignment
+  Enforce member attributes match shift requirements in `runAllocation` and `createManualAssignment`.
+  Files: `lib/services/assignments.service.ts`, `lib/utils/attribute-check.ts`
+  Ref: NEEDSREVAMP Task 14
 
-## Phase 7 — Audit
+- Zero-occupancy shifts as markers (may already be partially done in v3.2)
+  Guard allocation for capacity=0; show "Marker" badge in node.
+  Files: `lib/services/assignments.service.ts`, `ShiftBlockNode.tsx`
+  Ref: NEEDSREVAMP Task 9
+
+## Audit & Quality
 
 - Full UI audit — DESIGN.md & ARCHITECTURE.md compliance (gap report only)
+  Ref: NEEDSREVAMP Task 15
 
----
+## Deferred
 
-## Deferred (not in plan)
+- RegistrationStatus workflow — REGISTERED → CONFIRMED → DECLINED
+  Schema exists, no service logic. Ref: brainstorming 2026-02-26.
 
-- Full UI consistency audit — inventory shift display views (list, canvas, panel) and harmonize. Ref: REQUIREMENTS.md 8.1-8.2.
-
-- Window-switching empty calendar bug — monitor after cache invalidation. Ref: REQUIREMENTS.md 7.4.
-
-- RegistrationStatus workflow — REGISTERED → CONFIRMED → DECLINED. Schema exists, no service logic. Ref: brainstorming 2026-02-26.
+- Window-switching empty calendar bug — monitor, investigate if recurs
