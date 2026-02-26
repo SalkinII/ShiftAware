@@ -1,21 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock prisma before importing service
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    eventRegistration: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
+vi.mock("@/lib/db", () => {
+  const txMock = {
+    assignment: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      create: vi.fn().mockImplementation((args: any) =>
+        Promise.resolve({
+          id: "a1",
+          ...args.data,
+          shift: {},
+          teamMember: {},
+        }),
+      ),
     },
-    shift: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
+  };
+  return {
+    prisma: {
+      $transaction: vi.fn().mockImplementation(async (fn: any) => {
+        if (typeof fn === "function") return fn(txMock);
+        return Promise.all(fn);
+      }),
+      eventRegistration: {
+        findMany: vi.fn(),
+        findUnique: vi.fn(),
+      },
+      shift: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+      },
+      teamMember: { findMany: vi.fn() },
+      event: { findUnique: vi.fn() },
+      assignment: { findMany: vi.fn() },
     },
-    teamMember: { findMany: vi.fn() },
-    event: { findUnique: vi.fn() },
-    assignment: { findMany: vi.fn() },
-  },
-}));
+  };
+});
 
 vi.mock("@/lib/services/event-status-guard", () => ({
   assertEventStatusAllows: vi.fn(),

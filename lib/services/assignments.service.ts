@@ -228,13 +228,31 @@ export class AssignmentsService {
       };
     }
 
-    // 8. Clear old, save new
-    await this.repo.deleteByEvent(eventId);
-    const saved = await this.repo.bulkCreate(
-      result.assignments,
-      result.scores as any,
-      result.explanations,
-    );
+    // 8. Clear old, save new — atomic transaction
+    const saved = await prisma.$transaction(async (tx) => {
+      await tx.assignment.deleteMany({
+        where: { shift: { eventId } },
+      });
+
+      const created = [];
+      for (const assignment of result.assignments) {
+        const key = `${assignment.teamMemberId}-${assignment.shiftId}`;
+        const record = await tx.assignment.create({
+          data: {
+            shiftId: assignment.shiftId,
+            teamMemberId: assignment.teamMemberId,
+            role: assignment.role as any,
+            isLead: assignment.isLead || false,
+            assignmentType: assignment.assignmentType as any,
+            algorithmScore: (result.scores.get(key) as any) ?? null,
+            notes: result.explanations.get(key) || null,
+          },
+          include: { shift: true, teamMember: true },
+        });
+        created.push(record);
+      }
+      return created;
+    });
 
     return {
       assignments: saved,

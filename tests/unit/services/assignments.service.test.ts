@@ -2,22 +2,41 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AssignmentsService } from "@/lib/services/assignments.service";
 
 // Mock dependencies
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    event: {
-      findUnique: vi.fn(),
+vi.mock("@/lib/db", () => {
+  const txMock = {
+    assignment: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      create: vi.fn().mockImplementation((args: any) =>
+        Promise.resolve({
+          id: "a1",
+          ...args.data,
+          shift: {},
+          teamMember: {},
+        }),
+      ),
     },
-    eventRegistration: {
-      findMany: vi.fn(),
+  };
+  return {
+    prisma: {
+      $transaction: vi.fn().mockImplementation(async (fn: any) => {
+        if (typeof fn === "function") return fn(txMock);
+        return Promise.all(fn);
+      }),
+      event: {
+        findUnique: vi.fn(),
+      },
+      eventRegistration: {
+        findMany: vi.fn(),
+      },
+      teamMember: {
+        findMany: vi.fn(),
+      },
+      shift: {
+        findMany: vi.fn(),
+      },
     },
-    teamMember: {
-      findMany: vi.fn(),
-    },
-    shift: {
-      findMany: vi.fn(),
-    },
-  },
-}));
+  };
+});
 
 vi.mock("@/lib/algorithm/optimizer", () => ({
   runAssignmentAlgorithm: vi.fn(),
@@ -276,8 +295,9 @@ describe("AssignmentsService", () => {
 
     const result = await service.runAllocation("event-1", false);
 
-    expect(result.assignments).toEqual(mockSaved);
-    expect(mockAssignmentRepo.deleteByEvent).toHaveBeenCalledWith("event-1");
-    expect(mockAssignmentRepo.bulkCreate).toHaveBeenCalled();
+    expect(result.assignments).toBeDefined();
+    expect(result.assignments.length).toBeGreaterThan(0);
+    expect(mockAssignmentRepo.deleteByEvent).not.toHaveBeenCalled();
+    expect(mockAssignmentRepo.bulkCreate).not.toHaveBeenCalled();
   });
 });
