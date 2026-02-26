@@ -40,7 +40,7 @@ function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
         {lanes.map((lane, index) => {
           // Center of this lane row in viewport Y; convert to container-relative
           const centerY = flowToScreenY((index + 0.5) * LANE_HEIGHT);
-          const localY = centerY - RULER_HEIGHT;
+          const localY = Math.round(centerY - RULER_HEIGHT);
           if (localY < 0 || localY > canvasHeight) return null;
 
           return (
@@ -54,9 +54,9 @@ function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
                 right: 0,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "flex-start",
                 gap: 4,
-                paddingLeft: 4,
+                paddingLeft: 8,
                 paddingRight: 4,
               }}
             >
