@@ -87,47 +87,35 @@ const nodeTypes = {
 /** Renders vertical alignment guide lines during shift drag */
 function AlignmentGuides({
   guides,
-  laneCount,
-  containerRef,
 }: {
-  guides: number[]; // flow coordinates
-  laneCount: number;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  guides: number[];
 }) {
   const { flowToScreenX } = useScreenCoordinates();
 
-  // Measure container offset from window left edge
-  const containerLeft = containerRef.current?.getBoundingClientRect().left ?? 0;
-
   return (
-    <Panel position="top-left" className="pointer-events-none m-0 p-0">
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          overflow: "hidden",
-          pointerEvents: "none",
-        }}
-      >
-        {guides.map((flowX, i) => {
-          const screenX = flowToScreenX(flowX) + containerLeft;
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: screenX,
-                transform: "translateX(-50%)",
-                top: 0,
-                width: 1,
-                height: "100%",
-                borderLeft: "2px dashed #3b82f6",
-                opacity: 0.7,
-              }}
-            />
-          );
-        })}
-      </div>
+    <Panel
+      position="top-left"
+      className="!m-0 !p-0 !inset-0 !w-full !h-full !transform-none pointer-events-none"
+    >
+      {guides.map((flowX, i) => {
+        const screenX = flowToScreenX(flowX);
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: screenX,
+              transform: "translateX(-50%)",
+              top: 0,
+              bottom: 0,
+              width: 0,
+              borderLeft: "2px dashed #3b82f6",
+              opacity: 0.7,
+              pointerEvents: "none",
+            }}
+          />
+        );
+      })}
     </Panel>
   );
 }
@@ -369,11 +357,7 @@ function LaneCalendarCanvasInner(
           />
           {/* Alignment guide lines */}
           {alignmentGuides.length > 0 && (
-            <AlignmentGuides
-              guides={alignmentGuides}
-              laneCount={lanes.length}
-              containerRef={flowContainerRef}
-            />
+            <AlignmentGuides guides={alignmentGuides} />
           )}
         </ReactFlow>
       </div>
