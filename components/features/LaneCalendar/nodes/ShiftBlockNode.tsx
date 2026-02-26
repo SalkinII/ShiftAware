@@ -26,7 +26,7 @@ export type ShiftBlockData = {
   assignedMembers?: Array<{ alias: string; avatarId?: string }>;
   currentMemberId?: string;
   isAssignedToCurrentUser?: boolean;
-  onResizeEnd?: (e: unknown, p: { width: number }) => void | Promise<void>;
+  onResizeEnd?: (nodeId: string, p: { width: number }) => void | Promise<void>;
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
@@ -290,9 +290,12 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           handleStyle={{ width: 8, height: 24, borderRadius: 2 }}
           lineStyle={{ borderWidth: 0 }}
           keepAspectRatio={false}
-          onResizeEnd={(e, p) => {
+          onResizeEnd={(_e, p) => {
             try {
-              const result = onResizeEnd?.(e, p);
+              const result = onResizeEnd?.(
+                `shift-${shiftId}`,
+                { width: p.width ?? (p as any).x ?? width },
+              );
               if (result instanceof Promise) {
                 result.catch((err) => console.error("Resize failed:", err));
               }
