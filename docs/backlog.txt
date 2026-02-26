@@ -1,0 +1,16 @@
+ShiftAware Backlog
+==================
+
+## Existing
+
+- Feature: Use password to distinguish user flows. Not show all "events" but rather define event they encounter in user view by the password that they have.
+
+## Deferred from v3.2 iteration (2026-02-26)
+
+- Full UI consistency audit — inventory all shift display views (list card, canvas node, side panel) and harmonize attributes, icons, ordering across all three. Ref: REQUIREMENTS.md 8.1-8.2.
+
+- Window-switching empty calendar bug — monitor if it recurs after cache invalidation pattern is implemented. Ref: REQUIREMENTS.md 7.4.
+
+- RegistrationStatus workflow — build REGISTERED → CONFIRMED → DECLINED transitions. Schema infrastructure exists (prisma enum) but no service logic wired. Ref: brainstorming Q&A 2026-02-26.
+
+- Attribute/skill validation during assignment — enforce that assigned members match shift attribute requirements. Currently attributes are loaded but not enforced. Ref: assignments.service.ts runAllocation().
