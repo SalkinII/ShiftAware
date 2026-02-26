@@ -781,7 +781,7 @@ export default function ShiftsPage() {
                 </span>
                 <span className="flex items-center gap-1.5 text-success-700">
                   <span className="w-2 h-2 rounded-full bg-success-500 inline-block" />
-                  {shifts.filter((s) => s.assignments?.length >= s.capacity).length} fully staffed
+                  {shifts.filter((s) => (s.assignments?.length ?? 0) >= s.capacity).length} fully staffed
                 </span>
                 <span className="flex items-center gap-1.5 text-accent-700">
                   <span className="w-2 h-2 rounded-full bg-accent-500 inline-block" />
@@ -792,7 +792,7 @@ export default function ShiftsPage() {
                 </span>
                 <span className="flex items-center gap-1.5 text-red-700">
                   <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-                  {shifts.filter((s) => !(s.assignments?.length > 0)).length} unstaffed
+                  {shifts.filter((s) => (s.assignments?.length ?? 0) === 0).length} unstaffed
                 </span>
                 <span className="ml-auto text-gray-400">
                   {shifts.length} total shifts
@@ -926,7 +926,6 @@ export default function ShiftsPage() {
                   </Card>
                 ))}
               </div>
-            )}
           </div>
 
           <div className="space-y-6">
@@ -1121,60 +1120,6 @@ export default function ShiftsPage() {
                   </Button>
                 </form>
               </Card>
-            ) : viewMode === "calendar" ? (
-              <div className="space-y-6">
-                {/* Template palette — vertical layout in sidebar */}
-                {selectedEvent && (
-                  <TemplatePalette
-                    eventId={selectedEventId || undefined}
-                    layout="vertical"
-                  />
-                )}
-
-                {/* REMOVED: ShiftPropertiesPanel now overlays the canvas */}
-                {!selectedShiftId && (
-                  <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-6 border-none shadow-xl">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Zap className="w-5 h-5" />
-                      <span className="text-xs font-bold uppercase tracking-widest opacity-80">
-                        Drag & Drop
-                      </span>
-                    </div>
-                    <p className="text-sm leading-relaxed opacity-90">
-                      Drag templates from the sidebar onto the canvas to create
-                      shifts. They&apos;ll snap to the 15-minute grid automatically.
-                    </p>
-                  </Card>
-                )}
-                <Card className="bg-white border-none shadow-sm p-4">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                    Shift Count
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                      <span className="text-gray-600">M1:</span>
-                      <span className="font-bold">
-                        {shifts.filter((s) => s.type === "MOBILE_TEAM").length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-success-500"></div>
-                      <span className="text-gray-600">ST:</span>
-                      <span className="font-bold">
-                        {shifts.filter((s) => s.type === "STATIONARY").length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-accent-500"></div>
-                      <span className="text-gray-600">EX:</span>
-                      <span className="font-bold">
-                        {shifts.filter((s) => s.type === "SUPER").length}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </div>
             ) : (
               <div className="space-y-6">
                 <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
@@ -1220,6 +1165,7 @@ export default function ShiftsPage() {
             )}
           </div>
         </div>
+        )}
       </div>
     </>
   );
