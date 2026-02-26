@@ -11,12 +11,13 @@ function HourGridNodeComponent({ data }: NodeProps) {
   const { height } = data as HourGridData;
   const { zoom } = useViewport();
 
+  const borderWidth = Math.max(1, Math.ceil(1 / zoom));
   return (
     <div
       style={{
-        width: 1,
+        width: borderWidth,
         height: `${height}px`,
-        borderLeft: `${Math.ceil(1 / zoom)}px dashed rgba(0,0,0,0.08)`,
+        borderLeft: `${borderWidth}px dashed rgba(0,0,0,0.15)`,
         pointerEvents: "none",
       }}
     />
