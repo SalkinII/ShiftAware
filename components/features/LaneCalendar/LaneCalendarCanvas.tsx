@@ -31,6 +31,7 @@ import { DaySeparatorNode } from "./nodes/DaySeparatorNode";
 import { HourGridNode } from "./nodes/HourGridNode";
 import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
 import { TimeRulerPanel } from "./panels/TimeRulerPanel";
+import { LaneLabelPanel } from "./panels/LaneLabelPanel";
 import { useLaneNodes } from "./hooks/useLaneNodes";
 import { useShiftNodes, type ShiftLike } from "./hooks/useShiftNodes";
 import { useCanvasActions } from "./hooks/useCanvasActions";
@@ -173,6 +174,7 @@ function LaneCalendarCanvasInner(
 
   const { setViewport, fitView } = useReactFlow();
   const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
+  const canvasHeight = lanes.length * LANE_HEIGHT;
   const shiftNodes = useShiftNodes(shifts, lanes, eventStart, {
     onResizeEnd: effectiveReadOnly ? undefined : handleResizeEnd,
     readOnly: effectiveReadOnly,
@@ -316,6 +318,7 @@ function LaneCalendarCanvasInner(
           proOptions={{ hideAttribution: true }}
         >
           <TimeRulerPanel eventStart={eventStart} eventEnd={eventEnd} />
+          <LaneLabelPanel lanes={lanes} canvasHeight={canvasHeight} />
           <Controls position="bottom-right" />
           <MiniMap
             position="bottom-left"
