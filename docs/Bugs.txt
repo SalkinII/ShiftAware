@@ -1,0 +1,8 @@
+Now at the start the canvas view jumped to the maximum zoom in the left upper corner of the canvas after I drag and drop. I think that had something to do with the cache.
+The left handle for resize now has the right behaviour. however it still throws a console error that is however empty. We should use /systematic debugging to identify where that error is coming from.
+The blue dashed indicator that appeared on snap behaviour is now gone.
+the grid lines are no longer visible.
+can we try to get all - and I mean all components of the canvas to a state where they are at least 1 pixel at the 0.1 zoom out?
+the content of the nodes in now tiny. we should maximize the size of the content.
+Also the avatar lookup for the names as badges still doesn't work.
+D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.context\Screenshot 2026-02-26 155425.png

@@ -28,10 +28,10 @@ export type ShiftBlockData = {
 
 /** Minimum screen-pixel thresholds for progressive content reveal */
 const W_NAMES = 40;   // show member names
-const W_TIME = 140;   // add time range
-const W_STARS = 180;  // add desirability stars
-const H_ROW2 = 24;    // show second row (shift name, count)
-const H_ROW3 = 48;    // show third row (avatars, votes)
+const W_TIME = 100;   // add time range
+const W_STARS = 130;  // add desirability stars
+const H_ROW2 = 20;    // show second row (stars + votes)
+const H_ROW3 = 38;    // show third row (avatars + names)
 
 function ShiftContent({
   shiftId,
@@ -92,84 +92,84 @@ function ShiftContent({
   return (
     <div
       ref={containerRef}
-      className="h-full w-full flex flex-col px-[16px] py-[8px] overflow-hidden"
+      className="h-full w-full flex flex-col px-[16px] py-[8px] gap-[8px] overflow-hidden"
     >
-      {/* Row 1: Names (left) + Time + Stars (right) */}
+      {/* Row 1: Names + Time (left) | Count + Status (right) */}
       {showNames && (
-        <div className="flex items-center gap-[10px] min-w-0">
-          <span className={cn(
-            "truncate font-semibold flex-1 min-w-0 text-[140px] leading-[1.15]",
-            isMarker ? "text-gray-400" : "text-gray-900"
-          )}>
-            {nameText}
-          </span>
-          {showTime && (
-            <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">
-              {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
+        <div className="flex items-center gap-[16px] min-w-0">
+          <div className="flex items-center gap-[12px] flex-1 min-w-0">
+            <span className={cn(
+              "truncate font-semibold min-w-0 text-[100px] leading-[1.15]",
+              isMarker ? "text-gray-400" : "text-gray-900"
+            )}>
+              {isMarker ? "Marker" : templateName}
             </span>
-          )}
-          {showStars && (
-            <span className="text-[100px] leading-[1.15] text-amber-500 flex-shrink-0">
-              {"★".repeat(desirabilityScore!)}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Row 2: Shift name + Count */}
-      {showRow2 && showNames && !isMarker && (
-        <div className="flex items-center gap-[10px] min-w-0">
-          <span className="truncate text-[100px] leading-[1.15] text-gray-600 flex-1 min-w-0">
-            {templateName}
-          </span>
-          <span className="text-[100px] leading-[1.15] font-medium text-gray-500 flex-shrink-0">
-            {assignmentCount}/{capacity}
-          </span>
-          <span className={cn(
-            "text-[100px] leading-[1.15] flex-shrink-0",
-            isFull ? "text-green-600" : "text-amber-600"
-          )}>
-            {isFull ? "✓" : `−${needed}`}
-          </span>
-        </div>
-      )}
-
-      {/* Row 3: Avatars + Vote buttons */}
-      {showRow3 && showNames && !isMarker && (
-        <div className="flex items-center gap-[10px] min-w-0">
-          {assignedMembers && assignedMembers.length > 0 && (
-            <div className="flex -space-x-[8px] flex-1 min-w-0">
-              {assignedMembers.slice(0, 4).map((m, i) => (
-                <div
-                  key={i}
-                  className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[20px] font-bold border-[2px] border-white flex-shrink-0"
-                  title={m.alias}
-                >
-                  {m.avatarId || m.alias.slice(0, 2).toUpperCase()}
-                </div>
-              ))}
+            {showTime && !isMarker && (
+              <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">
+                {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
+              </span>
+            )}
+          </div>
+          {!isMarker && (
+            <div className="flex items-center gap-[8px] flex-shrink-0">
+              <span className="text-[100px] leading-[1.15] font-medium text-gray-500">
+                {assignmentCount}/{capacity}
+              </span>
+              {isFull && (
+                <span className="text-[100px] leading-[1.15] text-green-600">
+                  -check-
+                </span>
+              )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Row 2: Desirability stars (left) | Vote buttons (right) */}
+      {showRow2 && showNames && !isMarker && (showStars || (readOnly && onVoteWant && onVoteDontWant)) && (
+        <div className="flex items-center gap-[16px] min-w-0">
+          <span className="text-[100px] leading-[1.15] text-amber-500 flex-1 min-w-0 truncate">
+            {showStars ? "+".repeat(desirabilityScore!) : ""}
+          </span>
           {readOnly && onVoteWant && onVoteDontWant && (
-            <div className="flex items-center gap-[4px] flex-shrink-0">
+            <div className="flex items-center gap-[8px] flex-shrink-0">
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onVoteWant(shiftId); }}
-                className="p-[4px] rounded bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
+                className="p-[8px] rounded bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
                 title="Want this shift"
               >
-                <ThumbsUp style={{ width: 30, height: 30 }} />
+                <ThumbsUp style={{ width: 60, height: 60 }} />
               </button>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onVoteDontWant(shiftId); }}
-                className="p-[4px] rounded bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
+                className="p-[8px] rounded bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
                 title="Don't want this shift"
               >
-                <ThumbsDown style={{ width: 30, height: 30 }} />
+                <ThumbsDown style={{ width: 60, height: 60 }} />
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Row 3: Avatar emoji + name pairs */}
+      {showRow3 && showNames && !isMarker && assignedMembers && assignedMembers.length > 0 && (
+        <div className="flex items-center gap-[20px] min-w-0 overflow-hidden">
+          {assignedMembers.slice(0, 4).map((m, i) => (
+            <div key={i} className="flex items-center gap-[8px] flex-shrink-0">
+              <div
+                className="w-[100px] h-[100px] rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[60px] leading-none border-[3px] border-white flex-shrink-0"
+                title={m.alias}
+              >
+                {m.avatarId || m.alias.slice(0, 2).toUpperCase()}
+              </div>
+              <span className="text-[100px] leading-[1.15] text-gray-700 whitespace-nowrap">
+                {m.alias}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
