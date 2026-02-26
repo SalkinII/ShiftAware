@@ -92,7 +92,11 @@ function TimeRulerPanelComponent({
   }
 
   return (
-    <Panel position="top-left" className="pointer-events-none m-0 p-0">
+    <Panel
+      position="top-left"
+      className="pointer-events-none"
+      style={{ margin: 0, padding: 0 }}
+    >
       <div
         style={{
           height: 28,
@@ -127,7 +131,7 @@ function TimeRulerPanelComponent({
               />
               {tick.label && (
                 <div
-                  className="text-[9px] text-gray-500 whitespace-nowrap"
+                  className="text-xs text-gray-500 whitespace-nowrap"
                   style={{
                     position: "absolute",
                     bottom: tick.height + 2,
@@ -140,7 +144,7 @@ function TimeRulerPanelComponent({
               )}
               {tick.dayLabel && (
                 <div
-                  className="text-[10px] font-bold text-gray-700 whitespace-nowrap"
+                  className="text-xs font-bold text-gray-700 whitespace-nowrap"
                   style={{
                     position: "absolute",
                     top: 15,
