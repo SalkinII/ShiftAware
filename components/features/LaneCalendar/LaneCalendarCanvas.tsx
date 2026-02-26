@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   useRef,
   useImperativeHandle,
@@ -43,6 +42,41 @@ import {
 } from "./utils/constants";
 import { useScreenCoordinates } from "./hooks/useScreenCoordinates";
 import { Shield } from "lucide-react";
+
+/**
+ * Merge updated shift nodes into current React Flow nodes.
+ * Preserves React Flow-owned state (position, measured) for existing shift nodes.
+ * Lane/grid nodes are always replaced. New shifts are added; deleted shifts removed.
+ */
+function mergeNodes(
+  currentNodes: Node[],
+  laneNodes: Node[],
+  newShiftNodes: Node[],
+): Node[] {
+  const currentShiftMap = new Map<string, Node>();
+  for (const node of currentNodes) {
+    if (node.id.startsWith("shift-")) {
+      currentShiftMap.set(node.id, node);
+    }
+  }
+
+  const mergedShifts = newShiftNodes.map((newNode) => {
+    const existing = currentShiftMap.get(newNode.id);
+    if (existing) {
+      // Keep React Flow-owned state, update data from API
+      return {
+        ...existing,
+        data: newNode.data,
+        style: newNode.style,
+        // Preserve position — React Flow may have updated it during drag
+        // Preserve measured — React Flow's internal measurement
+      };
+    }
+    return newNode;
+  });
+
+  return [...laneNodes, ...mergedShifts];
+}
 
 const nodeTypes = {
   laneZone: LaneZoneNode,
@@ -183,15 +217,17 @@ function LaneCalendarCanvasInner(
 
   const [nodes, setNodes] = useState<Node[]>([]);
 
-  // Merge lane + shift nodes
-  useMemo(() => {
-    setNodes([...laneNodes, ...shiftNodes]);
+  // Merge shift nodes into current state, preserving React Flow position during drag
+  useEffect(() => {
+    setNodes((current) => mergeNodes(current, laneNodes, shiftNodes));
   }, [laneNodes, shiftNodes]);
 
-  // Focus viewport on shift nodes when they change
+  // fitView only on initial load and event change — never on refetch
+  const fitViewDoneRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (shiftNodes.length > 0) {
-      // Small delay to ensure nodes are rendered in the flow
+    if (shiftNodes.length > 0 && fitViewDoneRef.current !== eventId) {
+      fitViewDoneRef.current = eventId;
       const timer = setTimeout(() => {
         fitView({
           nodes: shiftNodes.map((n) => ({ id: n.id })),
@@ -201,7 +237,7 @@ function LaneCalendarCanvasInner(
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [shiftNodes.length, fitView]);
+  }, [shiftNodes.length, fitView, eventId]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
