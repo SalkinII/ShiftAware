@@ -6,8 +6,6 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  ZOOM_COMPACT,
-  ZOOM_MINIMAL,
   SHIFT_NODE_HEIGHT,
   SNAP_PIXELS,
 } from "../utils/constants";
@@ -32,136 +30,25 @@ export type ShiftBlockData = {
   onVoteDontWant?: (shiftId: string) => void;
 };
 
-/** Minimum zoom density: just who is staffed on this shift */
-function OccupationContent({
-  assignedMembers,
-  isMarker,
-  zoom,
-  width,
-}: {
-  assignedMembers?: Array<{ alias: string; avatarId?: string }>;
-  isMarker?: boolean;
-  zoom: number;
-  width: number;
-}) {
-  return (
-    <div
-      className="h-full flex flex-col items-center justify-center px-3 py-2 gap-1"
-      style={{
-        transform: `scale(${1 / zoom})`,
-        transformOrigin: "top left",
-        width: width * zoom,
-        height: SHIFT_NODE_HEIGHT * zoom,
-      }}
-    >
-      {isMarker ? (
-        <span className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5">
-          Marker
-        </span>
-      ) : assignedMembers && assignedMembers.length > 0 ? (
-        <>
-          <div className="flex -space-x-1 mb-1">
-            {assignedMembers.slice(0, 4).map((m, i) => (
-              <div
-                key={i}
-                className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white border border-white"
-                title={m.alias}
-              >
-                <span className="text-[8px] font-bold">
-                  {m.alias.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="text-xl font-bold text-gray-900 text-center leading-tight truncate w-full">
-            {assignedMembers
-              .slice(0, 2)
-              .map((m) => m.alias)
-              .join(", ")}
-            {assignedMembers.length > 2 && (
-              <span className="text-gray-500">
-                {" "}
-                +{assignedMembers.length - 2}
-              </span>
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="text-xl font-medium text-gray-400">—</div>
-      )}
-    </div>
-  );
+/** Item definition for dynamic reveal */
+interface RevealItem {
+  key: string;
+  minWidth: number;
+  minHeight: number;
+  render: () => React.ReactNode;
 }
 
-/** Core density: time, name, desirability, count */
-function CoreContent({
-  templateName,
-  startTime,
-  endTime,
-  assignmentCount,
-  capacity,
-  isMarker,
-  desirabilityScore,
-  zoom,
-  width,
-}: {
-  templateName: string;
-  startTime: string;
-  endTime: string;
-  assignmentCount: number;
-  capacity: number;
-  isMarker?: boolean;
-  desirabilityScore?: number;
-  zoom: number;
-  width: number;
-}) {
-  return (
-    <div
-      className="h-full flex flex-col justify-center px-4 py-2 gap-1"
-      style={{
-        transform: `scale(${1 / zoom})`,
-        transformOrigin: "top left",
-        width: width * zoom,
-        height: SHIFT_NODE_HEIGHT * zoom,
-      }}
-    >
-      <div className="text-2xl font-semibold text-gray-600">
-        {format(new Date(startTime), "HH:mm")}–
-        {format(new Date(endTime), "HH:mm")}
-        {desirabilityScore != null && (
-          <span className="ml-2 text-2xl font-bold text-amber-500">
-            {"★".repeat(desirabilityScore)}
-          </span>
-        )}
-      </div>
-      <div className="text-3xl font-bold text-gray-900 truncate">
-        {templateName}
-      </div>
-      {isMarker ? (
-        <span className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5">
-          Marker
-        </span>
-      ) : (
-        <div className="text-2xl font-bold text-gray-500">
-          {assignmentCount}/{capacity}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Detailed density: + avatars, member names, status, vote buttons */
-function DetailedContent({
+function DynamicShiftContent({
   shiftId,
   templateName,
   startTime,
   endTime,
   assignmentCount,
   capacity,
-  isMarker,
   desirabilityScore,
   assignedMembers,
-  isFull,
+  zoom,
+  width,
   readOnly,
   onVoteWant,
   onVoteDontWant,
@@ -172,108 +59,252 @@ function DetailedContent({
   endTime: string;
   assignmentCount: number;
   capacity: number;
-  isMarker?: boolean;
   desirabilityScore?: number;
   assignedMembers?: Array<{ alias: string; avatarId?: string }>;
-  isFull: boolean;
+  zoom: number;
+  width: number;
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
 }) {
+  const isMarker = capacity === 0;
+  const isFull = assignmentCount >= capacity;
   const needed = capacity - assignmentCount;
 
-  return (
-    <div className="h-full flex flex-col p-4">
-      {/* Header: time + score */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-3xl font-bold text-gray-900 truncate">
-            {templateName}
-          </div>
-          <div className="text-2xl font-semibold text-gray-500">
-            {format(new Date(startTime), "HH:mm")} –{" "}
-            {format(new Date(endTime), "HH:mm")}
-          </div>
+  const contentWidth = width;
+  const contentHeight = SHIFT_NODE_HEIGHT;
+  const items: RevealItem[] = [];
+  let usedHeight = 8;
+
+  if (!isMarker) {
+    const memberItem: RevealItem = {
+      key: "members",
+      minWidth: 60,
+      minHeight: 24,
+      render: () => (
+        <div className="text-lg font-medium text-gray-900 truncate" key="members">
+          {assignedMembers && assignedMembers.length > 0
+            ? assignedMembers.map((m) => m.alias).join(", ")
+            : "—"}
         </div>
-        {desirabilityScore != null && (
-          <span className="text-2xl font-bold text-amber-500 flex-shrink-0 ml-2">
-            {"★".repeat(desirabilityScore)}
-          </span>
-        )}
-      </div>
-
-      {/* Assignments with names or Marker */}
-      <div className="flex items-center gap-3 mb-3 flex-wrap">
-        {isMarker ? (
-          <span className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5">
-            Marker
-          </span>
-        ) : assignedMembers && assignedMembers.length > 0 ? (
-          <>
-            <div className="flex -space-x-2">
-              {assignedMembers.slice(0, 4).map((m, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold border-2 border-white"
-                  title={m.alias}
-                >
-                  {m.alias.slice(0, 2).toUpperCase()}
-                </div>
-              ))}
-            </div>
-            <span className="text-2xl font-medium text-gray-600">
-              {assignedMembers.slice(0, 3).map((m) => m.alias).join(", ")}
-              {assignedMembers.length > 3 && ` +${assignedMembers.length - 3}`}
-            </span>
-          </>
-        ) : (
-          <span className="text-2xl text-gray-400">No assignments</span>
-        )}
-      </div>
-
-      {/* Footer: status + vote (skip for markers) */}
-      {!isMarker && (
-      <div className="mt-auto pt-3 border-t border-gray-200/50 flex items-center justify-between">
+      ),
+    };
+    if (
+      contentWidth >= memberItem.minWidth &&
+      usedHeight + memberItem.minHeight <= contentHeight
+    ) {
+      items.push(memberItem);
+      usedHeight += memberItem.minHeight;
+    }
+  } else {
+    items.push({
+      key: "marker",
+      minWidth: 50,
+      minHeight: 20,
+      render: () => (
         <span
-          className={cn(
-            "text-2xl font-medium",
-            isFull ? "text-green-600" : "text-amber-600",
-          )}
+          key="marker"
+          className="text-sm font-medium text-gray-400 bg-gray-100 rounded px-2 py-0.5"
         >
-          {isFull
-            ? `${assignmentCount}/${capacity} — fully staffed`
-            : `${assignmentCount}/${capacity} — needs ${needed} more`}
+          Marker
         </span>
+      ),
+    });
+    usedHeight += 20;
+  }
 
-        <div className="flex items-center gap-2">
-          {readOnly && onVoteWant && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onVoteWant(shiftId);
-              }}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
-              title="Want this shift"
-            >
-              <ThumbsUp className="w-5 h-5" />
-            </button>
-          )}
-          {readOnly && onVoteDontWant && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onVoteDontWant(shiftId);
-              }}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
-              title="Don't want this shift"
-            >
-              <ThumbsDown className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+  const timeItem: RevealItem = {
+    key: "time",
+    minWidth: 100,
+    minHeight: 20,
+    render: () => (
+      <div className="text-base font-semibold text-gray-600" key="time">
+        {format(new Date(startTime), "HH:mm")}–
+        {format(new Date(endTime), "HH:mm")}
       </div>
+    ),
+  };
+  if (
+    contentWidth >= timeItem.minWidth &&
+    usedHeight + timeItem.minHeight <= contentHeight
+  ) {
+    items.push(timeItem);
+    usedHeight += timeItem.minHeight;
+  }
+
+  const nameItem: RevealItem = {
+    key: "name",
+    minWidth: 80,
+    minHeight: 22,
+    render: () => (
+      <div className="text-lg font-bold text-gray-900 truncate" key="name">
+        {templateName}
+      </div>
+    ),
+  };
+  if (
+    contentWidth >= nameItem.minWidth &&
+    usedHeight + nameItem.minHeight <= contentHeight
+  ) {
+    items.push(nameItem);
+    usedHeight += nameItem.minHeight;
+  }
+
+  if (desirabilityScore != null) {
+    const desItem: RevealItem = {
+      key: "desirability",
+      minWidth: 60,
+      minHeight: 18,
+      render: () => (
+        <span
+          className="text-base font-bold text-amber-500"
+          key="desirability"
+        >
+          {"★".repeat(desirabilityScore)}
+        </span>
+      ),
+    };
+    if (
+      contentWidth >= desItem.minWidth &&
+      usedHeight + desItem.minHeight <= contentHeight
+    ) {
+      items.push(desItem);
+      usedHeight += desItem.minHeight;
+    }
+  }
+
+  if (!isMarker) {
+    const countItem: RevealItem = {
+      key: "count",
+      minWidth: 40,
+      minHeight: 18,
+      render: () => (
+        <div className="text-base font-bold text-gray-500" key="count">
+          {assignmentCount}/{capacity}
+        </div>
+      ),
+    };
+    if (
+      contentWidth >= countItem.minWidth &&
+      usedHeight + countItem.minHeight <= contentHeight
+    ) {
+      items.push(countItem);
+      usedHeight += countItem.minHeight;
+    }
+  }
+
+  if (!isMarker) {
+    const statusItem: RevealItem = {
+      key: "status",
+      minWidth: 100,
+      minHeight: 18,
+      render: () => (
+        <span
+          className={`text-sm font-medium ${
+            isFull ? "text-green-600" : "text-amber-600"
+          }`}
+          key="status"
+        >
+          {isFull ? "fully staffed" : `needs ${needed} more`}
+        </span>
+      ),
+    };
+    if (
+      contentWidth >= statusItem.minWidth &&
+      usedHeight + statusItem.minHeight <= contentHeight
+    ) {
+      items.push(statusItem);
+      usedHeight += statusItem.minHeight;
+    }
+  }
+
+  if (
+    !isMarker &&
+    assignedMembers &&
+    assignedMembers.length > 0
+  ) {
+    const avatarItem: RevealItem = {
+      key: "avatars",
+      minWidth: 80,
+      minHeight: 32,
+      render: () => (
+        <div className="flex -space-x-2" key="avatars">
+          {assignedMembers.slice(0, 4).map((m, i) => (
+            <div
+              key={i}
+              className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white"
+              title={m.alias}
+            >
+              {m.alias.slice(0, 2).toUpperCase()}
+            </div>
+          ))}
+        </div>
+      ),
+    };
+    if (
+      contentWidth >= avatarItem.minWidth &&
+      usedHeight + avatarItem.minHeight <= contentHeight
+    ) {
+      items.push(avatarItem);
+      usedHeight += avatarItem.minHeight;
+    }
+  }
+
+  if (readOnly && onVoteWant && onVoteDontWant && !isMarker) {
+    const voteItem: RevealItem = {
+      key: "votes",
+      minWidth: 80,
+      minHeight: 36,
+      render: () => (
+        <div className="flex items-center gap-2" key="votes">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onVoteWant(shiftId);
+            }}
+            className="p-2 rounded-lg bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
+            title="Want this shift"
+          >
+            <ThumbsUp className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onVoteDontWant(shiftId);
+            }}
+            className="p-2 rounded-lg bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
+            title="Don't want this shift"
+          >
+            <ThumbsDown className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    };
+    if (
+      contentWidth >= voteItem.minWidth &&
+      usedHeight + voteItem.minHeight <= contentHeight
+    ) {
+      items.push(voteItem);
+      usedHeight += voteItem.minHeight;
+    }
+  }
+
+  return (
+    <div
+      className="h-full flex flex-col px-3 py-1 gap-0.5 overflow-hidden"
+      style={{
+        transform: `scale(${1 / zoom})`,
+        transformOrigin: "top left",
+        width: width * zoom,
+        height: SHIFT_NODE_HEIGHT * zoom,
+      }}
+    >
+      {items.length > 0 ? (
+        items.map((item) => item.render())
+      ) : (
+        <div className="text-base font-medium text-gray-400">—</div>
       )}
     </div>
   );
@@ -299,10 +330,6 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
   } = data as ShiftBlockData;
 
   const { zoom } = useViewport();
-  const isDetailed = zoom >= ZOOM_COMPACT;
-  const isCore = zoom >= ZOOM_MINIMAL;
-  const isFull = assignmentCount >= capacity;
-  const isMarker = capacity === 0;
 
   return (
     <>
@@ -344,42 +371,21 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           isAssignedToCurrentUser && "ring-2 ring-green-500",
         )}
       >
-        {isDetailed ? (
-          <DetailedContent
-            shiftId={shiftId}
-            templateName={templateName}
-            startTime={startTime}
-            endTime={endTime}
-            assignmentCount={assignmentCount}
-            capacity={capacity}
-            isMarker={isMarker}
-            desirabilityScore={desirabilityScore}
-            assignedMembers={assignedMembers}
-            isFull={isFull}
-            readOnly={readOnly}
-            onVoteWant={onVoteWant}
-            onVoteDontWant={onVoteDontWant}
-          />
-        ) : isCore ? (
-          <CoreContent
-            templateName={templateName}
-            startTime={startTime}
-            endTime={endTime}
-            assignmentCount={assignmentCount}
-            capacity={capacity}
-            isMarker={isMarker}
-            desirabilityScore={desirabilityScore}
-            zoom={zoom}
-            width={width}
-          />
-        ) : (
-          <OccupationContent
-            assignedMembers={assignedMembers}
-            isMarker={isMarker}
-            zoom={zoom}
-            width={width}
-          />
-        )}
+        <DynamicShiftContent
+          shiftId={shiftId}
+          templateName={templateName}
+          startTime={startTime}
+          endTime={endTime}
+          assignmentCount={assignmentCount}
+          capacity={capacity}
+          desirabilityScore={desirabilityScore}
+          assignedMembers={assignedMembers}
+          zoom={zoom}
+          width={width}
+          readOnly={readOnly}
+          onVoteWant={onVoteWant}
+          onVoteDontWant={onVoteDontWant}
+        />
       </div>
     </>
   );
