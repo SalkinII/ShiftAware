@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { type NodeProps } from "@xyflow/react";
+import { type NodeProps, useViewport } from "@xyflow/react";
 import { LANE_HEIGHT } from "../utils/constants";
 
 export type LaneZoneData = {
@@ -12,9 +12,9 @@ export type LaneZoneData = {
 
 function LaneZoneNodeComponent({ data }: NodeProps) {
   const { color, width } = data as LaneZoneData;
-
-  // Convert hex to rgba for 10% opacity tint
+  const { zoom } = useViewport();
   const tintColor = `${color}1A`;
+  const borderWidth = Math.max(1, Math.ceil(1 / zoom));
 
   return (
     <div
@@ -23,6 +23,7 @@ function LaneZoneNodeComponent({ data }: NodeProps) {
         height: `${LANE_HEIGHT}px`,
         backgroundColor: tintColor,
         backgroundImage: "var(--lane-stripe)",
+        borderBottom: `${borderWidth}px solid rgba(0,0,0,0.06)`,
       }}
       className="rounded-lg pointer-events-none"
     />
