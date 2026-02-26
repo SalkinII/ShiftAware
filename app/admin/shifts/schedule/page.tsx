@@ -59,6 +59,7 @@ interface Shift {
   eventId: string;
   event: { id: string; name: string };
   requiredRoles: { role: Role; count: number }[];
+  assignments?: Array<{ id: string; teamMember?: { alias: string } }>;
 }
 
 interface Event {
@@ -716,57 +717,92 @@ export default function ShiftsPage() {
           </div>
         </div>
 
+        {viewMode === "calendar" ? (
+          <div className="space-y-2">
+            {/* Template palette — above canvas, horizontal */}
+            <TemplatePalette eventId={selectedEventId ?? undefined} layout="horizontal" />
+
+            {/* Canvas row: canvas + optional shift details panel */}
+            <div
+              className="flex flex-row gap-0 rounded-xl shadow-sm overflow-hidden"
+              data-event-status={selectedEvent?.status}
+              style={{ backgroundColor: "var(--status-bg)", transition: "background-color 500ms" }}
+            >
+              {/* Canvas container */}
+              <div
+                ref={calendarRef}
+                className="flex-1 min-w-0 relative"
+              >
+                {!selectedEvent ? (
+                  <div className="p-12 text-center text-gray-400">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium">
+                      Select an event to view the calendar
+                    </p>
+                  </div>
+                ) : (
+                  <LaneCalendarCanvas
+                    ref={canvasRef}
+                    shifts={shifts}
+                    lanes={derivedLanes}
+                    eventStart={
+                      selectedEvent ? new Date(selectedEvent.startDate) : null
+                    }
+                    eventEnd={
+                      selectedEvent ? new Date(selectedEvent.endDate) : null
+                    }
+                    eventId={selectedEventId}
+                    onShiftSelected={setSelectedShiftId}
+                    onShiftCreated={() => refetchShifts()}
+                    onShiftUpdated={() => refetchShifts()}
+                    shiftMutationLocked={shiftMutationLocked}
+                  />
+                )}
+              </div>
+
+              {/* Shift properties panel — beside canvas when shift is selected */}
+              {selectedShiftId && (
+                <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
+                  <ShiftPropertiesPanel
+                    shiftId={selectedShiftId}
+                    eventStatus={selectedEvent?.status}
+                    onClose={() => setSelectedShiftId(null)}
+                    onUpdated={() => refetchShifts()}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Shift stats bar — below canvas */}
+            {selectedEvent && shifts.length > 0 && (
+              <div className="flex items-center gap-4 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
+                <span className="text-gray-400 font-medium uppercase tracking-widest text-[10px]">
+                  Coverage
+                </span>
+                <span className="flex items-center gap-1.5 text-success-700">
+                  <span className="w-2 h-2 rounded-full bg-success-500 inline-block" />
+                  {shifts.filter((s) => s.assignments?.length >= s.capacity).length} fully staffed
+                </span>
+                <span className="flex items-center gap-1.5 text-accent-700">
+                  <span className="w-2 h-2 rounded-full bg-accent-500 inline-block" />
+                  {shifts.filter((s) => {
+                    const c = s.assignments?.length ?? 0;
+                    return c > 0 && c < s.capacity;
+                  }).length} partial
+                </span>
+                <span className="flex items-center gap-1.5 text-red-700">
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  {shifts.filter((s) => !(s.assignments?.length > 0)).length} unstaffed
+                </span>
+                <span className="ml-auto text-gray-400">
+                  {shifts.length} total shifts
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {viewMode === "calendar" ? (
-              <>
-                {/* Canvas */}
-                <div
-                  ref={calendarRef}
-                  data-event-status={selectedEvent?.status}
-                  className="flex-1 flex flex-col rounded-xl shadow-sm overflow-hidden bg-[var(--status-bg)] transition-colors duration-500 relative"
-                >
-                  {!selectedEvent ? (
-                    <div className="p-12 text-center text-gray-400">
-                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p className="font-medium">
-                        Select an event to view the calendar
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <LaneCalendarCanvas
-                        ref={canvasRef}
-                        shifts={shifts}
-                        lanes={derivedLanes}
-                        eventStart={
-                          selectedEvent ? new Date(selectedEvent.startDate) : null
-                        }
-                        eventEnd={
-                          selectedEvent ? new Date(selectedEvent.endDate) : null
-                        }
-                        eventId={selectedEventId}
-                        onShiftSelected={setSelectedShiftId}
-                        onShiftCreated={() => refetchShifts()}
-                        onShiftUpdated={() => refetchShifts()}
-                        shiftMutationLocked={shiftMutationLocked}
-                      />
-                      {/* Properties panel overlays canvas when a shift is selected */}
-                      {selectedShiftId && (
-                        <div className="absolute right-4 top-4 bottom-4 w-80 z-20 overflow-y-auto">
-                          <ShiftPropertiesPanel
-                            shiftId={selectedShiftId}
-                            eventStatus={selectedEvent?.status}
-                            onClose={() => setSelectedShiftId(null)}
-                            onUpdated={() => refetchShifts()}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
               <div className="space-y-4">
                 {shifts.map((shift) => (
                   <Card

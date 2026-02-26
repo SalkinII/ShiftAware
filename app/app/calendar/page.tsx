@@ -730,11 +730,12 @@ export default function UserCalendarPage() {
           )}
 
           {selectedEvent?.status !== "PLANNING" && (
-            <Card className="p-0 shadow-xl overflow-hidden h-[calc(100vh-340px)] min-h-[600px] flex flex-col bg-white">
-              <div
-                data-event-status={selectedEvent?.status}
-                className="flex-1 h-full min-h-[500px] bg-[var(--status-bg)] transition-colors duration-500"
-              >
+            <div
+              className="flex flex-row rounded-2xl shadow-xl overflow-hidden"
+              data-event-status={selectedEvent?.status}
+              style={{ backgroundColor: "var(--status-bg)", transition: "background-color 500ms", minHeight: 600 }}
+            >
+              <div className="flex-1 min-w-0">
                 <LaneCalendarCanvas
                   shifts={filteredShifts}
                   lanes={derivedLanes}
@@ -763,144 +764,68 @@ export default function UserCalendarPage() {
                   }
                 />
               </div>
-            </Card>
-          )}
 
-          {/* Shift Details Modal - Read-only */}
-          {selectedShift && (
-            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-              <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="bg-primary-600 p-8 text-white relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                  <div className="relative">
-                    <div className="flex items-start justify-between mb-4">
-                      <span className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest">
-                        Shift Details
-                      </span>
-                      <button
-                        onClick={() => setSelectedShift(null)}
-                        className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                      >
-                        <ChevronRight className="w-5 h-5 rotate-90" />
-                      </button>
-                    </div>
-                    <h2 className="text-3xl font-black leading-tight mb-2">
-                      {selectedShift.type.replace("_", " ")}
-                    </h2>
-                    <div className="flex items-center gap-4 text-primary-100 text-sm font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
-                        {format(
-                          new Date(selectedShift.startTime),
-                          "EEEE, MMM d",
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
-                        {format(
-                          new Date(selectedShift.startTime),
-                          "HH:mm",
-                        )} - {format(new Date(selectedShift.endTime), "HH:mm")}
-                      </div>
-                    </div>
+              {selectedShift && (
+                <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
+                  <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-900">
+                      {selectedShift.type.replace(/_/g, " ")}
+                    </h3>
+                    <button
+                      onClick={() => setSelectedShift(null)}
+                      className="p-1 rounded hover:bg-gray-100 text-gray-400"
+                    >
+                      ×
+                    </button>
                   </div>
-                </div>
-
-                <div className="p-8 space-y-8">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <Users className="w-3.5 h-3.5" />
-                        Assignments ({selectedShift.assignments?.length ||
-                          0} / {selectedShift.capacity})
-                      </h3>
+                  <div className="p-4 space-y-4">
+                    <div className="text-xs text-gray-500">
+                      {format(new Date(selectedShift.startTime), "EEEE, MMM d")}
+                      {" · "}
+                      {format(new Date(selectedShift.startTime), "HH:mm")} –{" "}
+                      {format(new Date(selectedShift.endTime), "HH:mm")}
                     </div>
-                    <div className="grid gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                        Assignments ({selectedShift.assignments?.length ?? 0}/{selectedShift.capacity})
+                      </p>
                       {selectedShift.assignments?.length > 0 ? (
-                        selectedShift.assignments.map((a) => (
-                          <div
-                            key={a.id}
-                            className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-between group hover:border-primary-200 transition-all"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-2xl border border-gray-50 group-hover:scale-110 transition-transform">
+                        <div className="space-y-2">
+                          {selectedShift.assignments.map((a) => (
+                            <div
+                              key={a.id}
+                              className="flex items-center gap-2 p-2 rounded-lg bg-gray-50"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-lg border border-gray-100">
                                 {a.teamMember.avatarId}
                               </div>
                               <div>
-                                <p className="font-bold text-gray-900 leading-none mb-1">
+                                <p className="text-xs font-bold text-gray-900">
                                   {a.teamMember.alias}
                                 </p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-primary-600">
-                                    {a.role}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                    • {a.assignmentType}
-                                  </span>
-                                </div>
+                                <p className="text-[10px] text-gray-400 uppercase">
+                                  {a.role}
+                                </p>
                               </div>
                             </div>
-                            {a.algorithmScore &&
-                              a.algorithmScore.overall !== undefined && (
-                                <div className="text-right">
-                                  <div className="px-3 py-1 rounded-lg bg-success-50 border border-success-100">
-                                    <span className="text-success-700 text-xs font-black">
-                                      {(a.algorithmScore.overall * 100).toFixed(
-                                        0,
-                                      )}{" "}
-                                      pts
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100">
-                          <User className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-                          <p className="text-gray-400 text-sm font-medium">
-                            No members assigned yet.
-                          </p>
+                          ))}
                         </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">No assignments yet.</p>
                       )}
                     </div>
                   </div>
-
-                  {selectedShift.assignments?.some((a) => a.notes) && (
-                    <div className="animate-in slide-in-from-top-2">
-                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        Assignment Notes
-                      </h3>
-                      <div className="grid gap-2">
-                        {selectedShift.assignments
-                          .filter((a) => a.notes)
-                          .map((a) => (
-                            <div
-                              key={`note-${a.id}`}
-                              className="text-xs font-medium text-gray-600 bg-primary-50/50 p-4 rounded-2xl border border-primary-100 flex gap-3"
-                            >
-                              <span className="text-primary-600 font-black shrink-0">
-                                {a.teamMember.alias}:
-                              </span>
-                              {a.notes}
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="p-4 border-t border-gray-100">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setSelectedShift(null)}
+                      className="w-full text-xs"
+                    >
+                      Close
+                    </Button>
+                  </div>
                 </div>
-
-                <div className="px-8 pb-8 flex justify-end">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setSelectedShift(null)}
-                    className="bg-gray-100 text-gray-600 border-none hover:bg-gray-200 px-8 py-3 rounded-2xl font-bold uppercase tracking-widest text-xs"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </Card>
+              )}
             </div>
           )}
 
