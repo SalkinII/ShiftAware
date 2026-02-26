@@ -25,6 +25,10 @@ export const TICK_HEIGHT_15MIN = 6;
 // Day separator
 export const DAY_SEPARATOR_WIDTH = 4;
 
+// Layout panel dimensions
+export const LANE_LABEL_WIDTH = 72; // px — left lane labels strip width
+export const RULER_HEIGHT = 28; // px — top time ruler height
+
 // Time ruler label widths (px) — used for skip-label collision avoidance
 export const MIN_HOUR_LABEL_WIDTH = 40; // "14:00" at 9px font ≈ 35px + padding
 export const MIN_DATE_LABEL_WIDTH = 100; // "Mon 15 Feb 00:00" ≈ 95px + padding
