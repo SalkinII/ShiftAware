@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   ZOOM_COMPACT,
+  ZOOM_MINIMAL,
   SHIFT_NODE_HEIGHT,
   SNAP_PIXELS,
 } from "../utils/constants";
@@ -31,8 +32,63 @@ export type ShiftBlockData = {
   onVoteDontWant?: (shiftId: string) => void;
 };
 
-/** Compact density: time, name, capacity, desirability badge */
-function CompactContent({
+/** Minimum zoom density: just who is staffed on this shift */
+function OccupationContent({
+  assignedMembers,
+  zoom,
+  width,
+}: {
+  assignedMembers?: Array<{ alias: string; avatarId?: string }>;
+  zoom: number;
+  width: number;
+}) {
+  return (
+    <div
+      className="h-full flex flex-col items-center justify-center px-3 py-2 gap-1"
+      style={{
+        transform: `scale(${1 / zoom})`,
+        transformOrigin: "top left",
+        width: width * zoom,
+        height: SHIFT_NODE_HEIGHT * zoom,
+      }}
+    >
+      {assignedMembers && assignedMembers.length > 0 ? (
+        <>
+          <div className="flex -space-x-1 mb-1">
+            {assignedMembers.slice(0, 4).map((m, i) => (
+              <div
+                key={i}
+                className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white border border-white"
+                title={m.alias}
+              >
+                <span className="text-[8px] font-bold">
+                  {m.alias.slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="text-xl font-bold text-gray-900 text-center leading-tight truncate w-full">
+            {assignedMembers
+              .slice(0, 2)
+              .map((m) => m.alias)
+              .join(", ")}
+            {assignedMembers.length > 2 && (
+              <span className="text-gray-500">
+                {" "}
+                +{assignedMembers.length - 2}
+              </span>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="text-xl font-medium text-gray-400">—</div>
+      )}
+    </div>
+  );
+}
+
+/** Core density: time, name, desirability, count */
+function CoreContent({
   templateName,
   startTime,
   endTime,
@@ -222,6 +278,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
 
   const { zoom } = useViewport();
   const isDetailed = zoom >= ZOOM_COMPACT;
+  const isCore = zoom >= ZOOM_MINIMAL;
   const isFull = assignmentCount >= capacity;
 
   return (
@@ -276,14 +333,20 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
             onVoteWant={onVoteWant}
             onVoteDontWant={onVoteDontWant}
           />
-        ) : (
-          <CompactContent
+        ) : isCore ? (
+          <CoreContent
             templateName={templateName}
             startTime={startTime}
             endTime={endTime}
             assignmentCount={assignmentCount}
             capacity={capacity}
             desirabilityScore={desirabilityScore}
+            zoom={zoom}
+            width={width}
+          />
+        ) : (
+          <OccupationContent
+            assignedMembers={assignedMembers}
             zoom={zoom}
             width={width}
           />
