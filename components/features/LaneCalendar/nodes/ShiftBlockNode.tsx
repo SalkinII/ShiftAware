@@ -92,24 +92,24 @@ function ShiftContent({
   return (
     <div
       ref={containerRef}
-      className="h-full w-full flex flex-col px-2 py-1 overflow-hidden"
+      className="h-full w-full flex flex-col px-[16px] py-[8px] overflow-hidden"
     >
       {/* Row 1: Names (left) + Time + Stars (right) */}
       {showNames && (
-        <div className="flex items-baseline gap-1 min-w-0">
+        <div className="flex items-center gap-[10px] min-w-0">
           <span className={cn(
-            "truncate font-semibold text-gray-900 flex-1 min-w-0",
-            isMarker ? "text-gray-400 text-xs" : "text-xs"
+            "truncate font-semibold flex-1 min-w-0 text-[140px] leading-[1.15]",
+            isMarker ? "text-gray-400" : "text-gray-900"
           )}>
             {nameText}
           </span>
           {showTime && (
-            <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0">
+            <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">
               {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
             </span>
           )}
           {showStars && (
-            <span className="text-[10px] text-amber-500 flex-shrink-0">
+            <span className="text-[100px] leading-[1.15] text-amber-500 flex-shrink-0">
               {"★".repeat(desirabilityScore!)}
             </span>
           )}
@@ -118,15 +118,15 @@ function ShiftContent({
 
       {/* Row 2: Shift name + Count */}
       {showRow2 && showNames && !isMarker && (
-        <div className="flex items-baseline gap-1 min-w-0">
-          <span className="truncate text-[10px] text-gray-600 flex-1 min-w-0">
+        <div className="flex items-center gap-[10px] min-w-0">
+          <span className="truncate text-[100px] leading-[1.15] text-gray-600 flex-1 min-w-0">
             {templateName}
           </span>
-          <span className="text-[10px] font-medium text-gray-500 flex-shrink-0">
+          <span className="text-[100px] leading-[1.15] font-medium text-gray-500 flex-shrink-0">
             {assignmentCount}/{capacity}
           </span>
           <span className={cn(
-            "text-[10px] flex-shrink-0",
+            "text-[100px] leading-[1.15] flex-shrink-0",
             isFull ? "text-green-600" : "text-amber-600"
           )}>
             {isFull ? "✓" : `−${needed}`}
@@ -136,37 +136,37 @@ function ShiftContent({
 
       {/* Row 3: Avatars + Vote buttons */}
       {showRow3 && showNames && !isMarker && (
-        <div className="flex items-center gap-1 min-w-0">
+        <div className="flex items-center gap-[10px] min-w-0">
           {assignedMembers && assignedMembers.length > 0 && (
-            <div className="flex -space-x-1 flex-1 min-w-0">
+            <div className="flex -space-x-[8px] flex-1 min-w-0">
               {assignedMembers.slice(0, 4).map((m, i) => (
                 <div
                   key={i}
-                  className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[7px] font-bold border border-white flex-shrink-0"
+                  className="w-[40px] h-[40px] rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[20px] font-bold border-[2px] border-white flex-shrink-0"
                   title={m.alias}
                 >
-                  {m.alias.slice(0, 2).toUpperCase()}
+                  {m.avatarId || m.alias.slice(0, 2).toUpperCase()}
                 </div>
               ))}
             </div>
           )}
           {readOnly && onVoteWant && onVoteDontWant && (
-            <div className="flex items-center gap-0.5 flex-shrink-0">
+            <div className="flex items-center gap-[4px] flex-shrink-0">
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onVoteWant(shiftId); }}
-                className="p-0.5 rounded bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
+                className="p-[4px] rounded bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
                 title="Want this shift"
               >
-                <ThumbsUp className="w-3 h-3" />
+                <ThumbsUp style={{ width: 30, height: 30 }} />
               </button>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onVoteDontWant(shiftId); }}
-                className="p-0.5 rounded bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
+                className="p-[4px] rounded bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
                 title="Don't want this shift"
               >
-                <ThumbsDown className="w-3 h-3" />
+                <ThumbsDown style={{ width: 30, height: 30 }} />
               </button>
             </div>
           )}
@@ -210,10 +210,12 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
                 { width: p.width, x: p.x },
               );
               if (result instanceof Promise) {
-                result.catch((err: unknown) => console.error("Resize failed:", err));
+                result.catch((err: unknown) => {
+                  if (err) console.error("Resize failed:", err);
+                });
               }
             } catch (err) {
-              console.error("Resize failed:", err);
+              if (err) console.error("Resize failed:", err);
             }
           }}
         />
