@@ -41,6 +41,7 @@ export function buildDaySeparatorNodes(
   for (let d = 0; d <= totalDays; d++) {
     const midnight = startOfDay(addDays(eventStart, d));
     const x = timeToX(midnight, eventStart);
+    if (x < 0) continue; // skip separators before timeline start
 
     nodes.push({
       id: `day-sep-${d}`,
