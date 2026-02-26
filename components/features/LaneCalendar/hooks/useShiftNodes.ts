@@ -24,7 +24,7 @@ export interface ShiftLike {
 
 export type OnResizeEndHandler = (
   nodeId: string,
-  params: { width: number },
+  params: { width: number; x?: number },
 ) => void | Promise<void>;
 
 export interface UseShiftNodesOptions {
@@ -106,11 +106,10 @@ export function buildShiftNodes(
                 (a as { teamMember?: { id?: string } }).teamMember?.id ===
                   selectedMemberId,
             ),
-          width,
           onResizeEnd:
             !readOnly &&
             onResizeEnd &&
-            ((_e: unknown, p: { width: number }) => onResizeEnd(nodeId, p)),
+            ((_e: unknown, p: { width: number; x?: number }) => onResizeEnd(nodeId, p)),
           readOnly,
           onVoteWant: readOnly ? onVoteWant : undefined,
           onVoteDontWant: readOnly ? onVoteDontWant : undefined,

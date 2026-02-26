@@ -51,7 +51,7 @@ describe("buildShiftNodes", () => {
 
   it("sets width based on duration (240min = 800px)", () => {
     const nodes = buildShiftNodes(shifts as any, lanes, eventStart);
-    expect((nodes[0].data as any).width).toBe(800);
+    expect((nodes[0].style as any).width).toBe(800);
   });
 
   it("sets node type to shiftBlock", () => {
@@ -59,12 +59,11 @@ describe("buildShiftNodes", () => {
     expect(nodes[0].type).toBe("shiftBlock");
   });
 
-  it("sets minimal data (shiftId, color, width)", () => {
+  it("sets minimal data (shiftId, color)", () => {
     const nodes = buildShiftNodes(shifts as any, lanes, eventStart);
     const data = nodes[0].data as any;
     expect(data.shiftId).toBe("shift-1");
     expect(data.color).toBe("#0ea5e9");
-    expect(data.width).toBe(800);
   });
 
   it("puts shifts with templateId=null in Unassigned lane", () => {
