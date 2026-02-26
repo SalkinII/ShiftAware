@@ -1,4 +1,5 @@
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { assertEventStatusAllows } from "@/lib/services/event-status-guard";
 import {
   isValidTransition,
   STATUS_ORDER,
@@ -33,6 +34,7 @@ export class EventsService {
   }
 
   async updateEvent(id: string, data: Prisma.EventUpdateInput) {
+    await assertEventStatusAllows(id, "EVENT_MUTATE");
     return this.repo.update(id, data);
   }
 

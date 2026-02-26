@@ -9,7 +9,8 @@ export type GuardAction =
   | "PREFERENCE_MUTATE"
   | "ASSIGNMENT_ALGORITHM"
   | "ASSIGNMENT_MANUAL"
-  | "REGISTRATION_MUTATE";
+  | "REGISTRATION_MUTATE"
+  | "EVENT_MUTATE";
 
 export const PERMISSION_MAP: Record<
   EventStatus,
@@ -21,6 +22,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_ALGORITHM: false,
     ASSIGNMENT_MANUAL: false,
     REGISTRATION_MUTATE: true,
+    EVENT_MUTATE: true,
   },
   OPEN_FOR_PREFERENCES: {
     SHIFT_MUTATE: false,
@@ -28,6 +30,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_ALGORITHM: false,
     ASSIGNMENT_MANUAL: false,
     REGISTRATION_MUTATE: true,
+    EVENT_MUTATE: false,
   },
   ASSIGNING: {
     SHIFT_MUTATE: false,
@@ -35,6 +38,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_ALGORITHM: true,
     ASSIGNMENT_MANUAL: true,
     REGISTRATION_MUTATE: true,
+    EVENT_MUTATE: false,
   },
   FINALIZED: {
     SHIFT_MUTATE: false,
@@ -42,6 +46,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_ALGORITHM: false,
     ASSIGNMENT_MANUAL: true,
     REGISTRATION_MUTATE: true,
+    EVENT_MUTATE: false,
   },
   COMPLETED: {
     SHIFT_MUTATE: false,
@@ -49,6 +54,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_ALGORITHM: false,
     ASSIGNMENT_MANUAL: false,
     REGISTRATION_MUTATE: false,
+    EVENT_MUTATE: false,
   },
 };
 
@@ -65,4 +71,8 @@ export function canRunAlgorithm(status: EventStatus): boolean {
 
 export function canManuallyAssign(status: EventStatus): boolean {
   return PERMISSION_MAP[status]?.ASSIGNMENT_MANUAL === true;
+}
+
+export function canMutateEvent(status: EventStatus): boolean {
+  return PERMISSION_MAP[status]?.EVENT_MUTATE === true;
 }

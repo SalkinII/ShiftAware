@@ -6,6 +6,7 @@ export {
   canMutateShifts,
   canRunAlgorithm,
   canManuallyAssign,
+  canMutateEvent,
   PERMISSION_MAP,
 } from "./event-status-permissions";
 export type { GuardAction } from "./event-status-permissions";
