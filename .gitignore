@@ -17,6 +17,8 @@
 
 #IDE
 .cursor/
+!.cursor/skills/
+!.cursor/rules/
 
 # next.js
 /.next/
