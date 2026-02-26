@@ -224,12 +224,14 @@ function LaneCalendarCanvasInner(
 
   // fitView only on initial load and event change — never on refetch
   const fitViewDoneRef = useRef<string | null>(null);
+  const fitViewRef = useRef(fitView);
+  fitViewRef.current = fitView;
 
   useEffect(() => {
     if (shiftNodes.length > 0 && fitViewDoneRef.current !== eventId) {
       fitViewDoneRef.current = eventId;
       const timer = setTimeout(() => {
-        fitView({
+        fitViewRef.current({
           nodes: shiftNodes.map((n) => ({ id: n.id })),
           padding: 0.15,
           duration: 300,
@@ -237,7 +239,7 @@ function LaneCalendarCanvasInner(
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [shiftNodes.length, fitView, eventId]);
+  }, [shiftNodes.length, eventId]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));

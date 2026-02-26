@@ -174,11 +174,6 @@ export function useCanvasActions({
         });
 
         if (res.ok) {
-          window.dispatchEvent(
-            new CustomEvent("shiftaware:cache-invalidate", {
-              detail: { keys: ["shifts", "shifts:*"] },
-            }),
-          );
           onShiftUpdated?.();
         } else {
           const data = await res.json().catch(() => ({}));
@@ -248,11 +243,6 @@ export function useCanvasActions({
         });
 
         if (res.ok) {
-          window.dispatchEvent(
-            new CustomEvent("shiftaware:cache-invalidate", {
-              detail: { keys: ["shifts", "shifts:*"] },
-            }),
-          );
           onShiftUpdated?.();
         } else {
           const data = await res.json().catch(() => ({}));
