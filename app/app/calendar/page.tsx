@@ -94,7 +94,6 @@ export default function UserCalendarPage() {
   const [coverageFilter, setCoverageFilter] = useState<CoverageState | "all">(
     "all",
   );
-  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [memberFilter, setMemberFilter] = useState<string>("all");
 
   // Swap request state
@@ -218,15 +217,6 @@ export default function UserCalendarPage() {
     return "empty";
   }
 
-  const roleOptions = useMemo(() => {
-    const roles = new Set<string>();
-    shifts.forEach((shift) => {
-      shift.requiredRoles?.forEach((r) => roles.add(r.role));
-      shift.assignments?.forEach((a) => roles.add(a.role));
-    });
-    return Array.from(roles);
-  }, [shifts]);
-
   const memberOptions = useMemo(() => {
     const members = new Map<string, string>();
     shifts.forEach((shift) => {
@@ -243,12 +233,6 @@ export default function UserCalendarPage() {
     return shifts.filter((shift) => {
       const state = coverageState(shift);
       if (coverageFilter !== "all" && state !== coverageFilter) return false;
-      if (roleFilter !== "all") {
-        const roleMatches =
-          shift.requiredRoles?.some((r) => r.role === roleFilter) ||
-          shift.assignments?.some((a) => a.role === roleFilter);
-        if (!roleMatches) return false;
-      }
       if (memberFilter !== "all") {
         const hasMember = shift.assignments?.some(
           (a) => a.teamMember.id === memberFilter,
@@ -257,7 +241,7 @@ export default function UserCalendarPage() {
       }
       return true;
     });
-  }, [shifts, coverageFilter, roleFilter, memberFilter]);
+  }, [shifts, coverageFilter, memberFilter]);
 
   const metrics = useMemo(() => {
     const totalCapacity = filteredShifts.reduce(
@@ -664,7 +648,7 @@ export default function UserCalendarPage() {
               <SlidersHorizontal className="w-4 h-4 text-primary-500" />
               Filters
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500">
                   Coverage
@@ -689,24 +673,6 @@ export default function UserCalendarPage() {
                     ),
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-gray-500">
-                  Role
-                </label>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 bg-white focus:border-primary-400 focus:outline-none"
-                >
-                  <option value="all">All roles</option>
-                  {roleOptions.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div className="space-y-2">
