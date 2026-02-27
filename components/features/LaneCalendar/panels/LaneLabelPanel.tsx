@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { Panel } from "@xyflow/react";
-import { type LaneConfig } from "@/lib/types/lane";
+import { type LaneConfig, UNASSIGNED_LANE_ID } from "@/lib/types/lane";
 import {
   LANE_HEIGHT,
   LANE_LABEL_WIDTH,
@@ -14,10 +14,16 @@ import { abbreviateLaneName } from "../utils/laneName";
 interface LaneLabelPanelProps {
   lanes: LaneConfig[];
   canvasHeight: number;
+  onReorder?: (laneId: string, direction: "up" | "down") => void;
 }
 
-function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
+function LaneLabelPanelComponent({
+  lanes,
+  canvasHeight,
+  onReorder,
+}: LaneLabelPanelProps) {
   const { flowToScreenY } = useScreenCoordinates();
+  const sortableLanes = lanes.filter((l) => l.id !== UNASSIGNED_LANE_ID);
 
   return (
     <Panel
@@ -38,14 +44,20 @@ function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
         }}
       >
         {lanes.map((lane, index) => {
-          // Center of this lane row in viewport Y; convert to container-relative
           const centerY = flowToScreenY((index + 0.5) * LANE_HEIGHT);
           const localY = Math.round(centerY - RULER_HEIGHT);
           if (localY < 0 || localY > canvasHeight) return null;
 
+          const isSortable = lane.id !== UNASSIGNED_LANE_ID;
+          const sortableIndex = sortableLanes.indexOf(lane);
+          const canMoveUp = isSortable && sortableIndex > 0;
+          const canMoveDown =
+            isSortable && sortableIndex < sortableLanes.length - 1;
+
           return (
             <div
               key={lane.id}
+              className="group"
               style={{
                 position: "absolute",
                 top: localY,
@@ -56,10 +68,34 @@ function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
                 alignItems: "center",
                 justifyContent: "flex-start",
                 gap: 4,
-                paddingLeft: 8,
+                paddingLeft: 4,
                 paddingRight: 4,
               }}
             >
+              {/* Reorder buttons — only for sortable lanes, visible on hover */}
+              {onReorder && isSortable && (
+                <div
+                  className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto"
+                  style={{ gap: 0, flexShrink: 0 }}
+                >
+                  <button
+                    onClick={() => onReorder(lane.id, "up")}
+                    disabled={!canMoveUp}
+                    className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-default leading-none text-[9px]"
+                    title="Move lane up"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => onReorder(lane.id, "down")}
+                    disabled={!canMoveDown}
+                    className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-default leading-none text-[9px]"
+                    title="Move lane down"
+                  >
+                    ▼
+                  </button>
+                </div>
+              )}
               {/* Lane color accent bar */}
               <div
                 style={{
@@ -73,7 +109,7 @@ function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
               {/* Abbreviated lane name */}
               <span
                 className="text-xs text-gray-500 font-medium truncate pointer-events-auto"
-                style={{ maxWidth: LANE_LABEL_WIDTH - 16 }}
+                style={{ maxWidth: LANE_LABEL_WIDTH - 32 }}
                 title={lane.label}
               >
                 {abbreviateLaneName(lane.label)}

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
   useRef,
   useImperativeHandle,
@@ -24,7 +25,7 @@ import {
 import { toPng } from "html-to-image";
 import "@xyflow/react/dist/style.css";
 
-import { type LaneConfig } from "@/lib/types/lane";
+import { type LaneConfig, UNASSIGNED_LANE_ID } from "@/lib/types/lane";
 import { LaneZoneNode } from "./nodes/LaneZoneNode";
 import { HourGridNode } from "./nodes/HourGridNode";
 import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
@@ -192,10 +193,63 @@ function LaneCalendarCanvasInner(
     [clearAlignmentGuides, handleNodeDragStop],
   );
 
+  const [laneOrderOverride, setLaneOrderOverride] = useState<
+    Record<string, number>
+  >({});
+
+  useEffect(() => {
+    if (!eventId) return;
+    const stored = localStorage.getItem(`shiftaware:laneOrder:${eventId}`);
+    if (stored) {
+      try {
+        setLaneOrderOverride(JSON.parse(stored));
+      } catch {
+        // Ignore invalid JSON
+      }
+    } else {
+      setLaneOrderOverride({});
+    }
+  }, [eventId]);
+
+  const orderedLanes = useMemo(() => {
+    if (Object.keys(laneOrderOverride).length === 0) return lanes;
+    return [...lanes]
+      .map((lane) => ({
+        ...lane,
+        order:
+          lane.id in laneOrderOverride ? laneOrderOverride[lane.id] : lane.order,
+      }))
+      .sort((a, b) => a.order - b.order);
+  }, [lanes, laneOrderOverride]);
+
+  function handleReorder(laneId: string, direction: "up" | "down") {
+    const sortable = orderedLanes.filter((l) => l.id !== UNASSIGNED_LANE_ID);
+    const idx = sortable.findIndex((l) => l.id === laneId);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sortable.length) return;
+
+    const next = [...sortable];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+
+    const newOverride: Record<string, number> = {};
+    next.forEach((lane, i) => {
+      newOverride[lane.id] = i;
+    });
+
+    setLaneOrderOverride(newOverride);
+    if (eventId) {
+      localStorage.setItem(
+        `shiftaware:laneOrder:${eventId}`,
+        JSON.stringify(newOverride),
+      );
+    }
+  }
+
   const { setViewport, fitView } = useReactFlow();
-  const laneNodes = useLaneNodes(lanes, eventStart, eventEnd);
-  const canvasHeight = lanes.length * LANE_HEIGHT;
-  const shiftNodes = useShiftNodes(shifts, lanes, eventStart, {
+  const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);
+  const canvasHeight = orderedLanes.length * LANE_HEIGHT;
+  const shiftNodes = useShiftNodes(shifts, orderedLanes, eventStart, {
     onResizeEnd: effectiveReadOnly ? undefined : handleResizeEnd,
     readOnly: effectiveReadOnly,
     onVoteWant: effectiveReadOnly ? onVoteWant : undefined,
@@ -342,7 +396,11 @@ function LaneCalendarCanvasInner(
           proOptions={{ hideAttribution: true }}
         >
           <TimeRulerPanel eventStart={eventStart} eventEnd={eventEnd} />
-          <LaneLabelPanel lanes={lanes} canvasHeight={canvasHeight} />
+          <LaneLabelPanel
+            lanes={orderedLanes}
+            canvasHeight={canvasHeight}
+            onReorder={handleReorder}
+          />
           <Controls position="bottom-right" />
           <MiniMap
             position="bottom-left"
