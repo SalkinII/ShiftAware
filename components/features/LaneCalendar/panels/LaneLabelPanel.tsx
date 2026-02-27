@@ -72,8 +72,9 @@ function LaneLabelPanelComponent({ lanes, canvasHeight }: LaneLabelPanelProps) {
               />
               {/* Abbreviated lane name */}
               <span
-                className="text-xs text-gray-500 font-medium truncate"
+                className="text-xs text-gray-500 font-medium truncate pointer-events-auto"
                 style={{ maxWidth: LANE_LABEL_WIDTH - 16 }}
+                title={lane.label}
               >
                 {abbreviateLaneName(lane.label)}
               </span>

@@ -1,9 +1,14 @@
 /**
- * Returns the first word of a lane label for use in the compact
- * LaneLabelPanel. Trims whitespace before splitting.
+ * Abbreviate a lane label for compact display.
+ * Multi-word: uppercase initials ("Mobile North" → "MN")
+ * Single-word: first 3 characters ("SUPER" → "SUP")
  */
 export function abbreviateLaneName(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "";
-  return trimmed.split(/\s+/)[0];
+  const words = trimmed.split(/\s+/);
+  if (words.length > 1) {
+    return words.map((w) => w[0].toUpperCase()).join("");
+  }
+  return trimmed.slice(0, 3);
 }
