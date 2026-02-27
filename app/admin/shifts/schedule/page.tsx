@@ -893,7 +893,7 @@ export default function ShiftsPage() {
                                         "text-gray-200",
                                     )}
                                   >
-                                    ★
+                                    +
                                   </span>
                                 ))}
                               </div>

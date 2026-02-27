@@ -57,7 +57,7 @@ export function ShiftPreferencePanel({
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500" />
             <span className="text-amber-500 font-bold">
-              {"★".repeat(shift.desirabilityScore)}
+              {"+".repeat(shift.desirabilityScore)}
             </span>
           </div>
         )}

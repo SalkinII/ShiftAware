@@ -200,11 +200,11 @@ export function AvailabilityHeatmap({
 
     // Status with explanation
     if (status.isAssigned) {
-      lines.push("✓ ASSIGNED to this shift");
+      lines.push("-check- ASSIGNED to this shift");
     } else {
       switch (status.status) {
         case "available":
-          lines.push("✓ AVAILABLE - Can be assigned");
+          lines.push("-check- AVAILABLE - Can be assigned");
           if (status.hasPreference) {
             lines.push("   • Member requested this shift");
           }
@@ -226,7 +226,7 @@ export function AvailabilityHeatmap({
           }
           break;
         case "unavailable":
-          lines.push("✗ UNAVAILABLE:");
+          lines.push("x UNAVAILABLE:");
           if (status.hasConflict) {
             lines.push(`   • Scheduled conflict`);
           }

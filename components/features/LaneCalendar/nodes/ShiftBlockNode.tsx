@@ -134,7 +134,7 @@ function ShiftContent({
             desirabilityScore! <= 2 ? "text-blue-400" :
             "text-gray-400"
           )}>
-            {showStars ? "★".repeat(desirabilityScore!) : ""}
+            {showStars ? "+".repeat(desirabilityScore!) : ""}
           </span>
           {readOnly && onVoteWant && onVoteDontWant && (
             <div className="flex items-center gap-[8px] flex-shrink-0">
