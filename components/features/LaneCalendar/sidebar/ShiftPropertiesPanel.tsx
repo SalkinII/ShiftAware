@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import { canManuallyAssign } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
+import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
 interface ShiftPropertiesPanelProps {
   shiftId: string;
@@ -36,6 +37,10 @@ export function ShiftPropertiesPanel({
   const [desirabilityScore, setDesirabilityScore] = useState(3);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [selectedMemberToAdd, setSelectedMemberToAdd] = useState("");
+  const [profileCardMember, setProfileCardMember] = useState<{
+    alias: string;
+    avatarId?: string;
+  } | null>(null);
 
   const canManualAssign = eventStatus
     ? canManuallyAssign(eventStatus as EventStatus)
@@ -318,7 +323,16 @@ export function ShiftPropertiesPanel({
                 key={assignment.id}
                 className="flex items-center justify-between p-2 bg-gray-50 rounded-lg group"
               >
-                <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-2 text-left hover:bg-sky-50 rounded-lg px-1 -mx-1 transition-colors"
+                  onClick={() =>
+                    setProfileCardMember({
+                      alias: assignment.teamMember?.alias || "Unknown",
+                      avatarId: assignment.teamMember?.avatarId,
+                    })
+                  }
+                  title={`View ${assignment.teamMember?.alias}'s profile`}
+                >
                   <AvatarStack
                     members={[
                       {
@@ -335,7 +349,7 @@ export function ShiftPropertiesPanel({
                     </div>
                     <div className="text-xs text-gray-500">{assignment.role}</div>
                   </div>
-                </div>
+                </button>
                 {canManualAssign && (
                   <button
                     onClick={() => handleRemoveAssignment(assignment.id)}
@@ -392,6 +406,11 @@ export function ShiftPropertiesPanel({
           Delete Shift
         </Button>
       </div>
+
+      <ProfileDetailCard
+        member={profileCardMember}
+        onClose={() => setProfileCardMember(null)}
+      />
     </GlassPanel>
   );
 }

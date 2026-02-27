@@ -30,6 +30,7 @@ import {
   CreateProfileForm,
   type ProfileData,
 } from "@/app/app/identity/components/CreateProfileForm";
+import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
 interface TeamMember {
   id: string;
@@ -43,6 +44,12 @@ interface TeamMember {
 export default function MembersPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
+  const [profileCardMember, setProfileCardMember] = useState<{
+    alias: string;
+    avatarId: string;
+    experienceLevel: string;
+    capabilities: Role[];
+  } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "heatmap">("list");
@@ -403,9 +410,13 @@ export default function MembersPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl shadow-inner border border-gray-100 group-hover:scale-110 transition-transform">
+                        <button
+                          onClick={() => setProfileCardMember(member)}
+                          className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl shadow-inner border border-gray-100 group-hover:scale-110 transition-transform cursor-pointer"
+                          title={`View ${member.alias}'s profile`}
+                        >
                           {member.avatarId}
-                        </div>
+                        </button>
                         <div>
                           <h3 className="text-lg font-bold text-gray-900 leading-tight">
                             {member.alias}
@@ -537,6 +548,11 @@ export default function MembersPage() {
           </div>
         )}
       </div>
+
+      <ProfileDetailCard
+        member={profileCardMember}
+        onClose={() => setProfileCardMember(null)}
+      />
     </>
   );
 }

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
 interface Member {
   id: string;
@@ -49,6 +50,10 @@ export function MemberListByEvent({
     {},
   );
   const [savingAttributes, setSavingAttributes] = useState(false);
+  const [profileCardMember, setProfileCardMember] = useState<{
+    alias: string;
+    avatarId: string;
+  } | null>(null);
 
   useEffect(() => {
     loadMembers();
@@ -227,7 +232,18 @@ export function MemberListByEvent({
               className="p-4 flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
-                <span className="text-2xl">{member.avatarId}</span>
+                <button
+                  onClick={() =>
+                    setProfileCardMember({
+                      alias: member.alias,
+                      avatarId: member.avatarId,
+                    })
+                  }
+                  className="text-2xl cursor-pointer"
+                  title={`View ${member.alias}'s profile`}
+                >
+                  {member.avatarId}
+                </button>
                 <div>
                   <div className="font-bold text-gray-900">{member.alias}</div>
                   <div className="text-sm text-gray-500">
@@ -412,6 +428,11 @@ export function MemberListByEvent({
           </Card>
         </div>
       )}
+
+      <ProfileDetailCard
+        member={profileCardMember}
+        onClose={() => setProfileCardMember(null)}
+      />
     </div>
   );
 }
