@@ -10,7 +10,7 @@ interface CreateProfileFormProps {
   onSubmit: (profileData: ProfileData) => void;
 }
 
-interface ProfileData {
+export interface ProfileData {
   alias: string;
   avatarId: string;
   experienceLevel: string;

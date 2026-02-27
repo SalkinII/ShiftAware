@@ -16,12 +16,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { EmojiPicker } from "@/components/ui/EmojiPicker";
 import { useCache } from "@/lib/cache/useCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ExperienceLevel, Role } from "@prisma/client";
@@ -29,6 +26,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { cn } from "@/lib/utils";
 import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
+import {
+  CreateProfileForm,
+  type ProfileData,
+} from "@/app/app/identity/components/CreateProfileForm";
 
 interface TeamMember {
   id: string;
@@ -56,14 +57,6 @@ export default function MembersPage() {
     memberName: "",
     isLoading: false,
   });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [formData, setFormData] = useState({
-    alias: "",
-    avatarId: "🐺",
-    experienceLevel: "INTERMEDIATE" as ExperienceLevel,
-    capabilities: [] as Role[],
-  });
-
   // Use cache for members
   const {
     data: members,
@@ -194,7 +187,6 @@ export default function MembersPage() {
       handler: () => {
         if (showForm) {
           setShowForm(false);
-          setFormErrors({});
         }
         if (deleteDialog.isOpen && !deleteDialog.isLoading) {
           setDeleteDialog({
@@ -247,39 +239,16 @@ export default function MembersPage() {
     }
   }
 
-  function validateForm(): boolean {
-    const errors: Record<string, string> = {};
-
-    if (!formData.alias.trim()) {
-      errors.alias = "Alias is required";
-    }
-
-    if (formData.capabilities.length === 0) {
-      errors.capabilities = "At least one capability is required";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error("Please fix the form errors before submitting");
-      return;
-    }
-
+  async function handleProfileSubmit(data: ProfileData) {
     try {
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       if (res.ok) {
         toast.success("Member created successfully");
-        // Invalidate cache for members
         window.dispatchEvent(
           new CustomEvent("shiftaware:cache-invalidate", {
             detail: { keys: ["members", "members*"] },
@@ -287,13 +256,6 @@ export default function MembersPage() {
         );
         await loadMembers();
         setShowForm(false);
-        setFormErrors({});
-        setFormData({
-          alias: "",
-          avatarId: "🐺",
-          experienceLevel: "INTERMEDIATE",
-          capabilities: [],
-        });
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to create member");
@@ -516,115 +478,7 @@ export default function MembersPage() {
                   <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
                     <Plus className="w-5 h-5 text-primary-500" /> New Member
                   </h2>
-                  <form
-                    onSubmit={handleSubmit}
-                    className="space-y-5"
-                    aria-label="Add new team member form"
-                  >
-                    <Input
-                      label="System Alias"
-                      placeholder="e.g. Wolf, Fox, Bear"
-                      value={formData.alias}
-                      onChange={(e) => {
-                        setFormData({ ...formData, alias: e.target.value });
-                        if (formErrors.alias) {
-                          setFormErrors({ ...formErrors, alias: "" });
-                        }
-                      }}
-                      error={formErrors.alias}
-                      required
-                      className="bg-gray-50 border-gray-100 font-medium"
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <EmojiPicker
-                        label="Avatar"
-                        value={formData.avatarId}
-                        onChange={(emoji) =>
-                          setFormData({ ...formData, avatarId: emoji })
-                        }
-                      />
-                      <Select
-                        label="Exp Level"
-                        value={formData.experienceLevel}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            experienceLevel: e.target.value as ExperienceLevel,
-                          })
-                        }
-                        className="bg-gray-50 border-gray-100 font-medium"
-                      >
-                        <option value="JUNIOR">Junior</option>
-                        <option value="INTERMEDIATE">Intermediate</option>
-                        <option value="SENIOR">Senior</option>
-                      </Select>
-                    </div>
-                    <div className="space-y-3">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">
-                        Capabilities
-                        <span className="text-red-500 ml-1">*</span>
-                      </label>
-                      {formErrors.capabilities && (
-                        <p
-                          className="text-sm text-red-600 font-medium flex items-center gap-1"
-                          role="alert"
-                        >
-                          <span>⚠</span>
-                          {formErrors.capabilities}
-                        </p>
-                      )}
-                      <div className="grid grid-cols-1 gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                        {Object.values(Role).map((role) => (
-                          <label
-                            key={role}
-                            className="flex items-center gap-3 cursor-pointer group"
-                          >
-                            <div className="relative flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={formData.capabilities.includes(role)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setFormData({
-                                      ...formData,
-                                      capabilities: [
-                                        ...formData.capabilities,
-                                        role,
-                                      ],
-                                    });
-                                  } else {
-                                    setFormData({
-                                      ...formData,
-                                      capabilities:
-                                        formData.capabilities.filter(
-                                          (r) => r !== role,
-                                        ),
-                                    });
-                                  }
-                                  if (formErrors.capabilities) {
-                                    setFormErrors({
-                                      ...formErrors,
-                                      capabilities: "",
-                                    });
-                                  }
-                                }}
-                                className="w-5 h-5 rounded-lg border-gray-300 text-primary-600 focus:ring-primary-500"
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
-                              {role.replace("_", " ")}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs"
-                    >
-                      Create Member Record
-                    </Button>
-                  </form>
+                  <CreateProfileForm onSubmit={handleProfileSubmit} />
                 </Card>
               ) : (
                 <div className="space-y-6">
