@@ -5,6 +5,22 @@
 
 New:
 
+- in the assignment rules the template selector jumps around and goes back to values that weren't selected.
+
+- Sidebar card with shift name now just says shift for all shifts. no matter how the template was called. you are doing something wrong here with the implementation.
+
+- feature: We should lock that lane reorder after the planning phase. consistent with other immutable settings after the shift is done.
+
+- Something about the lane reorder probably broke the drag and drop coordinate calculation. If I drag and drop the shifts appear at random places.
+Really unpredictable now. Breaking change.
+
+- the create profile card is still not present on the team manage admin page.
+
+- on the event config page the buffer input is stale. does that somehow correspond to our architecture? We used to plan to have buffer days. but the way it is now we could scrap that.
+However, if we get rid of the buffer and all the stuff around it we would probably also need to get rid of those attributes in our data model and sanitize the prisma schema. Like full 3 layer clean up with testing so we don't break stuff.
+
+
+--- should be fixed:
 - With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am messing with the complete structure of the canvas.
 We would need to look at how the lanes, shiftnodes and so forth are organised. whe want this to be consistent. This was a breaking change.
 It does reorder itslef if I drop shifts into it.
