@@ -10,7 +10,7 @@ Ref: docs/Bugs.txt (bug register)
 | Phase | Focus | Status |
 |-------|-------|--------|
 | v3.5 | Visual Truth — navigation, colours, labels, cleanup | PLANNED |
-| v3.6 | Canvas Consistency & UX Polish | PLANNED |
+| v3.6 | Canvas Consistency & UX Polish | ✓ COMPLETE |
 | v3.7 | Admin Data & Sidebar | PLANNED |
 | v3.8 | Algorithm & Assignment | PLANNED |
 | v3.9 | User View & Export | PLANNED |
@@ -43,25 +43,9 @@ Ref: docs/Bugs.txt (bug register)
 
 ---
 
-## v3.6 — Canvas Consistency & UX Polish
+## v3.6 — Canvas Consistency & UX Polish ✓ COMPLETE
 
-- Bug #15 (full): Unify all 4 desirability renderers to use DesirabilityBadge
-  Files: `DesirabilityBadge.tsx`, `ShiftBlockNode.tsx`, `ShiftPreferencePanel.tsx`, `schedule/page.tsx`
-
-- Bug #16: Canvas view consistency — define and apply consistent patterns
-  Files: `LaneCalendarCanvas.tsx`, admin + user canvas views
-
-- Bug #12: User calendar role filter — replace with attribute-based or remove
-  Files: Calendar filter components
-
-- Bug #13: Filter card + counter layout — move filter to top, counters to bottom
-  Files: Calendar layout components
-
-- Bug #14: Remove dead staffed/partially-staffed cards
-  Files: Calendar card components
-
-- Bug #5: Lane reorder controls (up/down + persist)
-  Files: `LaneLabelPanel.tsx`, `lane.ts`, persistence API
+All 7 tasks completed in v3.6. See docs/Bugs.txt for individual bug status.
 
 ---
 

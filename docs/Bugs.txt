@@ -1,8 +1,235 @@
-Now at the start the canvas view jumped to the maximum zoom in the left upper corner of the canvas after I drag and drop. I think that had something to do with the cache.
-The left handle for resize now has the right behaviour. however it still throws a console error that is however empty. We should use /systematic debugging to identify where that error is coming from.
-The blue dashed indicator that appeared on snap behaviour is now gone.
-the grid lines are no longer visible.
-can we try to get all - and I mean all components of the canvas to a state where they are at least 1 pixel at the 0.1 zoom out?
-the content of the nodes in now tiny. we should maximize the size of the content.
-Also the avatar lookup for the names as badges still doesn't work.
-D:\DIVERS\NoG-BastelProjekte\2026\ShiftAware\.context\Screenshot 2026-02-26 155425.png
+# ShiftAware — Bug and Issue Register
+
+This document lists known bugs, design gaps, and UX issues. Descriptions follow systematic-debugging: symptom, context, and root cause where identified.
+
+---
+
+## 1. Profile Create Page — Shift Lead / Supervisor Checkboxes
+
+**Type:** Orphaned UI / Superseded by architecture
+
+**Context:** CreateProfileForm (`app/app/identity/components/CreateProfileForm.tsx`) includes "Shift Lead" and "Supervisor" capability checkboxes. These are wired to form state and submitted to `/api/members` (capabilities are persisted). However, the product direction is to express roles via event-specific attributes rather than global capabilities.
+
+**Symptom:** Checkboxes exist and function, but their purpose is unclear and they duplicate the attributes model. Risk of inconsistent data (capabilities vs attributes).
+
+**Proposed resolution:** Remove capability checkboxes from Create Profile, or clearly mark as deprecated. Rely on event-specific attribute definitions for role assignment.
+
+---
+
+## 2. Attribute Rules — Template Import in Team Management
+
+**Type:** Feature gap / Data flow
+
+**Context:** Attribute rules in team management define which members can fill which shifts. Shift eligibility is defined by templates (ShiftTemplate + attribute requirements). Team management UI does not load or display the event's templates when configuring attribute rules.
+
+**Symptom:** Admin cannot see which templates apply when defining attribute rules. Rules are configured without template context, leading to mismatched or invalid rules.
+
+**Proposed resolution:** When configuring attribute rules for an event, import and display that event's templates. Attribute rules should reference templates so eligibility is explicit and verifiable.
+
+---
+
+## 3. Template Reservoir — Colour Schema
+
+**Type:** Visual inconsistency / Semantic mapping
+
+**Context:** Template reservoir (top of schedule canvas) shows templates with a colour scheme that does not align with lane colours. Lanes have semantic colours (mobile-north, mobile-south, stationary, etc.). Templates that map to lanes should inherit those colours.
+
+**Symptom:** Template palette colours appear arbitrary; user cannot quickly match a template to its intended lane.
+
+**Proposed resolution:** Inherit template reservoir colours from the lanes to which those templates belong. Establish single source of truth for lane→template colour mapping.
+
+---
+
+## 4. Canvas Viewport Reset on Shift Drop / Reposition
+
+**Type:** Bug — Root cause documented
+
+**Context:** See `docs/plans/arch/2026-02-26_NEEDSREVAMP-backlog-list-plan.md` and `2026-02-26-v3.3-canvas-fixes-design.md`.
+
+**Root causes:**
+- `LaneCalendarCanvas.tsx`: `setNodes([...laneNodes, ...shiftNodes])` replaces all nodes on every `shiftNodes` change. After drag-stop, `onShiftUpdated` → cache invalidation → `refetchShifts()` → new `shiftNodes` → full replacement discards React Flow's in-flight position.
+- `fitView` runs when `shiftNodes.length` (or related) changes; refetch can trigger this, resetting viewport and zoom to default.
+
+**Symptom:** On dropping or repositioning a shift at max zoom, canvas viewport resets to origin (upper-left) at default zoom. User loses focus area.
+
+**Proposed resolution:** ID-based merge of nodes (preserve position from current nodes when ID matches); guard `fitView` so it runs only on initial load or event change, never on refetch within same event.
+
+---
+
+## 5. Reorder Lanes (Feature Request)
+
+**Type:** Feature gap
+
+**Context:** Lanes are displayed in fixed order. Users want to customise lane order.
+
+**Symptom:** No way to reorder lanes (e.g. via up/down buttons and lock).
+
+**Proposed resolution:** Add lane reorder controls; persist user preference (e.g. per event or global).
+**Status: FIXED in v3.6**
+
+---
+
+## 6. Shift Template Names in Sidebar Detail View
+
+**Type:** Missing data display
+
+**Context:** Right sidebar (ShiftPropertiesPanel) shows shift details. Template name is not surfaced; only Prisma-backed attributes are shown.
+
+**Symptom:** User cannot see which shift template a shift belongs to when viewing details. Template name is critical for identification and assignment logic.
+
+**Proposed resolution:** Include `templateName` (from ShiftTemplate) in the sidebar detail view alongside other shift attributes.
+
+---
+
+## 7. PNG Export Missing
+
+**Type:** Feature gap
+
+**Context:** Canvas export currently supports PDF only.
+
+**Symptom:** No option to export schedule as PNG. Users may need raster export for sharing or embedding.
+
+**Proposed resolution:** Add PNG export option alongside PDF.
+
+---
+
+## 8. Gender Equality Logic (Feature Request)
+
+**Type:** Algorithm / constraint requirement
+
+**Context:** Distribution algorithm does not enforce diversity constraints such as "at least one of every N team members must have attribute Y".
+
+**Symptom:** No built-in way to require e.g. gender balance across shifts.
+
+**Proposed resolution:** Add attribute-based constraint rule: "One out of N team members must have attribute Y". Integrate into assignment algorithm.
+
+---
+
+## 9. Assignment Preview — No Visible Results
+
+**Type:** Bug — Feature malfunction
+
+**Context:** Preview feature runs assignment logic in the background but does not render results in the UI.
+
+**Symptom:** User triggers preview; nothing is displayed. No feedback on what the assignment would look like. Feature appears incomplete or broken.
+
+**Proposed resolution:** Reuse or harmonise an older preview/assignment view with current design and architecture. Preview must show resulting assignments in a meaningful way.
+
+---
+
+## 10. Assignment Algorithm — Logic, Tests, Transparency
+
+**Type:** Documentation / testing gap
+
+**Context:** Assignment algorithm behaviour is not documented or easily inspectable. No clear specification of weights, constraints, and tie-breaking.
+
+**Symptom:** Users cannot verify correctness; developers cannot safely refactor. Behaviour is opaque.
+
+**Proposed resolution:** Document algorithm logic; add tests (unit and/or integration); expose "How are shifts assigned?" summary in UI (as per design).
+
+---
+
+## 11. Assignment Run — Configuration Loss, Attributes, Resting Period
+
+**Type:** Multiple interrelated bugs
+
+**Context:** Several issues observed when running assignment:
+
+### 11a. Configured logic lost after run
+
+**Symptom:** Saved allocation logic (weights, rules, constraints) disappears after running assignment. Unclear trigger: cache refresh, new members added, or other state reset.
+
+**Investigation needed:** Trace where allocation config is stored (localStorage, DB, session). Identify what invalidates or overwrites it.
+
+### 11b. Existing members lack event attributes when added to new event
+
+**Symptom:** Adding existing team members to a new event does not populate event-specific attributes. Assignment rules that depend on those attributes fail or behave incorrectly.
+
+**Proposed resolution:** Reuse the attribute prompt from "Assume Identity" when an admin adds an existing member to a new event. Prompt for missing attributes before assignment.
+
+### 11c. Resting period constraint violated
+
+**Symptom:** With resting period set to 6 hours, a member receives two consecutive shifts without the required gap.
+
+**Context:** Indicates distribution algorithm may not correctly enforce min-rest-between-shifts.
+
+**Proposed resolution:** Refactor distribution algorithm with clear constraint handling. Add tests for resting period. Consider architectural review if multiple constraint violations persist.
+
+---
+
+## 12. User Calendar — Role Filter Inappropriate
+
+**Type:** UX / feature mismatch
+
+**Context:** User calendar has a role filter. Roles (capabilities) are being superseded by attributes. Filter may not map well to current data model.
+
+**Symptom:** Filter does not align with how shifts are actually described (attributes). May be more appropriate for admin views.
+
+**Proposed resolution:** Consider attribute-based filter for user calendar, or move role filter to admin-only. Clarify admin vs user filtering needs.
+**Status: FIXED in v3.6**
+
+---
+
+## 13. User Calendar — Filter Card and Counter Layout
+
+**Type:** UX improvement
+
+**Context:** Filter card placement and counter prominence were designed for a different layout.
+
+**Symptom:** Filter card should move to top; staffed/partially staffed counters should be at bottom, smaller and less dominant.
+
+**Proposed resolution:** Adjust layout per design notes.
+**Status: FIXED in v3.6**
+
+---
+
+## 14. Partially / Fully Staffed Cards — Dead UI
+
+**Type:** Design cleanup
+
+**Context:** Staffed/partially staffed cards with colour coding exist but are not used in current design.
+
+**Symptom:** Unused UI adds noise; design has evolved.
+
+**Proposed resolution:** Remove or repurpose. Align with current design system.
+**Status: FIXED in v3.6**
+
+---
+
+## 15. Desirability Colour Coding — Legend Mismatch
+
+**Type:** Bug — Visual mapping
+
+**Context:** Design specifies: 1–2 = easier (blue), 3 = moderate (grey), 4–5 = popular/harder (orange). Implemented in `DesirabilityBadge.tsx` and `ShiftPropertiesPanel.tsx`. User calendar legend uses `bg-blue-400/30`, `bg-gray-400/30`, `bg-orange-400/30`.
+
+**Symptom:** User reports 3+ appears yellow instead of grey. Possible causes: different component using amber/yellow; `gray-400/30` perceived as yellowish on some displays; inconsistent mapping in another view.
+
+**Investigation needed:** Audit all components that render desirability (ShiftBlockNode, sidebar, legend, heatmap). Ensure single mapping: 1–2 blue, 3 grey, 4–5 orange. Fix any drift.
+**Status: FIXED in v3.6** (edit added, badge unified, + hotfix)
+
+---
+
+## 16. Canvas View Consistency
+
+**Type:** Design system violation
+
+**Context:** Multiple canvas views (admin schedule, user calendar, etc.) may use different layouts, controls, or visual treatment.
+
+**Symptom:** Inconsistent experience across canvas contexts.
+
+**Proposed resolution:** Define and apply consistent canvas view patterns. Document in design system.
+**Status: FIXED in v3.6**
+
+---
+
+## 17. Identity / Event Selection — No Escape to Choose Different Event
+
+**Type:** Bug — Navigation flow
+
+**Context:** Flow: MemberList → EventSelectionStep → Calendar. When member has a single registered event, `EventSelectionStep` auto-calls `onEventSelected` (see `EventSelectionStep.tsx`). After selecting an event or registering for one, returning to member selection and re-selecting the same member triggers the same auto-forward.
+
+**Symptom:** User cannot choose a different event. If they want to switch events after picking one, there is no affordance. "Back" returns to member selection; selecting the same member again auto-forwards to the same event.
+
+**Proposed resolution:** Add explicit "Choose different event" action, or refrain from auto-forwarding when user has returned from Calendar. Allow event list to be shown even when member has one registration, so user can confirm or change selection.
+
+---
