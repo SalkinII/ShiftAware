@@ -11,7 +11,7 @@ Ref: docs/Bugs.txt (bug register)
 |-------|-------|--------|
 | v3.5 | Visual Truth — navigation, colours, labels, cleanup | PLANNED |
 | v3.6 | Canvas Consistency & UX Polish | ✓ COMPLETE |
-| v3.7 | Admin Data & Sidebar | PLANNED |
+| v3.7 | Admin Data & Sidebar | ✓ COMPLETE |
 | v3.8 | Algorithm & Assignment | PLANNED |
 | v3.9 | User View & Export | PLANNED |
 | v3.10 | Advanced & Audit | PLANNED |
@@ -49,19 +49,19 @@ All 7 tasks completed in v3.6. See docs/Bugs.txt for individual bug status.
 
 ---
 
-## v3.7 — Admin Data & Sidebar
+## v3.7 — Admin Data & Sidebar ✓ COMPLETE
 
-- Bug #2: Attribute rules — import event templates in team management
+- [x] Bug #2: Attribute rules — import event templates in team management
   Files: Team management UI, template API
 
-- Bug #11b: Members lack event attributes when added to new event
+- [x] Bug #11b: Members lack event attributes when added to new event
   Files: Registration flow, attribute prompt
 
-- Admin team — same detail/create logic as identity claim page
+- [x] Admin team — same detail/create logic as identity claim page
   Files: `app/admin/team/`, reuse `CreateProfileForm`
   Ref: NEEDSREVAMP Task 12
 
-- Profile card read-only on avatar click (user + admin)
+- [x] Profile card read-only on avatar click (user + admin)
   Files: new `components/features/Identity/ProfileDetailCard.tsx`
   Ref: NEEDSREVAMP Task 13
 

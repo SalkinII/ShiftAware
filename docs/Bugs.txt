@@ -1,5 +1,13 @@
 # ShiftAware — Bug and Issue Register
 
+
+----
+
+New:
+
+- With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am mess
+
+
 This document lists known bugs, design gaps, and UX issues. Descriptions follow systematic-debugging: symptom, context, and root cause where identified.
 
 ---
@@ -26,6 +34,8 @@ This document lists known bugs, design gaps, and UX issues. Descriptions follow 
 
 **Proposed resolution:** When configuring attribute rules for an event, import and display that event's templates. Attribute rules should reference templates so eligibility is explicit and verifiable.
 
+**Status: FIXED in v3.7** — shiftType dropdown now loads from event templates.
+ng 
 ---
 
 ## 3. Template Reservoir — Colour Schema
@@ -146,6 +156,8 @@ This document lists known bugs, design gaps, and UX issues. Descriptions follow 
 **Symptom:** Adding existing team members to a new event does not populate event-specific attributes. Assignment rules that depend on those attributes fail or behave incorrectly.
 
 **Proposed resolution:** Reuse the attribute prompt from "Assume Identity" when an admin adds an existing member to a new event. Prompt for missing attributes before assignment.
+
+**Status: FIXED in v3.7** — attribute prompt shown after admin adds existing member to event.
 
 ### 11c. Resting period constraint violated
 
