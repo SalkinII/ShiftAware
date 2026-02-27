@@ -6,6 +6,7 @@ import {
   TeamMemberWithRelations,
   ShiftWithRelations,
   AssignmentScore,
+  AllocationRule,
 } from "./types";
 import { scoreAssignment } from "./scorer";
 import {
@@ -15,6 +16,7 @@ import {
   validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
+import { evaluateRule, filterByRules, validateComplementaryRules } from "./rule-validator";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
   preferenceMatch: 0.35,
@@ -61,6 +63,7 @@ export async function runAssignmentAlgorithm(
     maxShiftsPerPerson?: number;
     minRestMs?: number;
     coreShifts: Shift[];
+    allocationRules?: AllocationRule[];
     memberAttributes?: Map<string, Map<string, string>>;
     weights?: AlgorithmWeights;
   },
@@ -68,6 +71,7 @@ export async function runAssignmentAlgorithm(
   const weights = eventConfig.weights || DEFAULT_WEIGHTS;
   const minRestMs = eventConfig.minRestMs ?? 15 * 60 * 1000;
   const maxShiftsPerPerson = eventConfig.maxShiftsPerPerson ?? Infinity;
+  const allocationRules = eventConfig.allocationRules ?? [];
   const state: AssignmentState = {
     assignments: new Map(),
     memberShifts: new Map(),
@@ -115,6 +119,14 @@ export async function runAssignmentAlgorithm(
         shift.capacity,
       );
       if (capacityViolation) continue;
+
+      // Check allocation rules
+      if (allocationRules.length > 0) {
+        const memberAttrs = eventConfig.memberAttributes?.get(member.id) || new Map<string, string>();
+        const applicableRules = allocationRules.filter((r) => r.shiftType === shift.type);
+        const passesRules = applicableRules.every((rule) => evaluateRule(rule, memberAttrs));
+        if (!passesRules) continue;
+      }
 
       // Determine role based on shift requirements
       // Find first available role requirement
@@ -212,9 +224,14 @@ export async function runAssignmentAlgorithm(
         )
         .sort((a, b) => b.score.overall - a.score.overall);
 
-      if (candidates.length === 0) break;
+      // Filter by allocation rules
+      const filteredCandidates = allocationRules.length > 0
+        ? filterByRules(candidates, shift.type, allocationRules, eventConfig.memberAttributes || new Map())
+        : candidates;
 
-      const best = candidates[0];
+      if (filteredCandidates.length === 0) break;
+
+      const best = filteredCandidates[0];
       // Find first available role requirement
       const requiredRoleEntry = shift.requiredRoles.find((rr) => {
         const currentCount = (state.assignments.get(shift.id) || []).filter(
@@ -277,6 +294,19 @@ export async function runAssignmentAlgorithm(
     );
     for (const v of restViolations) {
       violations.push(`${member.alias}: ${v.message}`);
+    }
+  }
+
+  // Validate complementary rules
+  if (allocationRules.length > 0) {
+    const compViolations = validateComplementaryRules(
+      state,
+      shifts,
+      allocationRules,
+      eventConfig.memberAttributes || new Map(),
+    );
+    for (const v of compViolations) {
+      violations.push(v.message);
     }
   }
 

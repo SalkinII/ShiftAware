@@ -34,6 +34,14 @@ export interface ConstraintViolation {
   severity: "hard" | "soft";
 }
 
+export interface AllocationRule {
+  id: string;
+  shiftType: string;
+  attribute: string;
+  operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS";
+  value: string;
+}
+
 export type TeamMemberWithRelations = TeamMember & {
   preferences: (ShiftPreference & { shift: Shift })[];
   assignments: (Assignment & { shift: Shift })[];

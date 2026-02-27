@@ -211,6 +211,11 @@ export class AssignmentsService {
     const minRestHours = balanceThresholds.minRestHours ?? 8;
     const maxShiftsPerPerson = balanceThresholds.maxShiftsPerPerson ?? Infinity;
 
+    // Extract allocation rules
+    const allocationRules = Array.isArray(config.allocationRules)
+      ? config.allocationRules
+      : [];
+
     // 5. Load member attributes for the event
     const memberAttributes = new Map<string, Map<string, string>>();
     for (const member of members) {
@@ -231,6 +236,7 @@ export class AssignmentsService {
         maxShiftsPerPerson,
         minRestMs: minRestHours * 3600000,
         coreShifts,
+        allocationRules,
         weights,
         memberAttributes,
       },
