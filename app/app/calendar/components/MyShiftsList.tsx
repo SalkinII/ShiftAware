@@ -8,10 +8,23 @@ import {
   ThumbsUp,
   ThumbsDown,
   ArrowLeftRight,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+
+interface ShiftPreference {
+  shiftId: string;
+  wantLevel: "WANT" | "DONT_WANT";
+  shift: {
+    id: string;
+    type: string;
+    startTime: string;
+    endTime: string;
+  };
+}
 
 interface Assignment {
   id: string;
@@ -34,6 +47,7 @@ interface Shift {
 interface MyShiftsListProps {
   shifts: Shift[];
   userId: string;
+  preferences?: ShiftPreference[];
   onVoteWant: (shiftId: string) => void;
   onVoteDontWant: (shiftId: string) => void;
   onRequestSwap: (assignmentId: string) => void;
@@ -42,6 +56,7 @@ interface MyShiftsListProps {
 export function MyShiftsList({
   shifts,
   userId,
+  preferences,
   onVoteWant,
   onVoteDontWant,
   onRequestSwap,
@@ -58,6 +73,19 @@ export function MyShiftsList({
           new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
       );
   }, [shifts, userId]);
+
+  const myPreferences = useMemo(() => {
+    if (!preferences) return [];
+    return preferences.sort(
+      (a, b) =>
+        new Date(a.shift.startTime).getTime() -
+        new Date(b.shift.startTime).getTime(),
+    );
+  }, [preferences]);
+
+  const assignedShiftIds = useMemo(() => {
+    return new Set(myShifts.map((s) => s.id));
+  }, [myShifts]);
 
   // Get user's assignment for a shift
   const getUserAssignment = (shift: Shift) => {
@@ -82,107 +110,126 @@ export function MyShiftsList({
     );
   }
 
-  if (myShifts.length === 0) {
-    return (
-      <Card className="p-12 text-center">
-        <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-bold text-gray-900 mb-2">
-          No Shifts Assigned
-        </h3>
-        <p className="text-gray-500">
-          You don't have any shifts assigned yet. Check back later or contact
-          your shift lead.
-        </p>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      {myShifts.map((shift) => {
-        const assignment = getUserAssignment(shift);
-        const isAssigned = !!assignment;
-
-        return (
-          <Card key={shift.id} className="p-6 hover:shadow-md transition-all">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                      {shift.type.replace(/_/g, " ")}
-                    </h3>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
-                        {format(new Date(shift.startTime), "EEE, dd.MM.yyyy")}
+    <div className="space-y-6">
+      {/* My Assignments Section */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">
+          My Assignments ({myShifts.length})
+        </h3>
+        {myShifts.length === 0 ? (
+          <Card className="p-6 text-center text-gray-400 text-sm">
+            No shifts assigned yet
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {myShifts.map((shift) => {
+              const assignment = getUserAssignment(shift);
+              return (
+                <Card key={shift.id} className="p-5 hover:shadow-md transition-all">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="text-lg font-bold text-gray-900">
+                          {shift.type.replace(/_/g, " ")}
+                        </h4>
+                        {assignment && (
+                          <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-primary-100 text-primary-700">
+                            {assignment.assignmentType}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
-                        {format(new Date(shift.startTime), "HH:mm")} -{" "}
-                        {format(new Date(shift.endTime), "HH:mm")}
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4" />
+                          {format(new Date(shift.startTime), "EEE, dd.MM.yyyy")}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" />
+                          {format(new Date(shift.startTime), "HH:mm")} –{" "}
+                          {format(new Date(shift.endTime), "HH:mm")}
+                        </div>
                       </div>
+                      {assignment && (
+                        <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onRequestSwap(assignment.id)}
+                            className="text-xs"
+                          >
+                            <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+                            Request Swap
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {assignment && (
-                    <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-primary-100 text-primary-700">
-                      {assignment.role}
-                    </span>
-                  )}
-                </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                {/* Inline Actions */}
-                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                  {isAssigned ? (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                          assignment && onRequestSwap(assignment.id)
-                        }
-                        className="text-xs"
-                      >
-                        <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
-                        Request Swap
-                      </Button>
-                      <span className="text-xs text-gray-400 ml-auto">
-                        Assigned as {assignment.assignmentType}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => onVoteWant(shift.id)}
-                        className={cn(
-                          "text-xs",
-                          "hover:bg-green-50 hover:text-green-700 hover:border-green-200",
-                        )}
-                      >
-                        <ThumbsUp className="w-3.5 h-3.5 mr-1.5" />I Want This
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => onVoteDontWant(shift.id)}
-                        className={cn(
-                          "text-xs",
-                          "hover:bg-red-50 hover:text-red-700 hover:border-red-200",
-                        )}
-                      >
-                        <ThumbsDown className="w-3.5 h-3.5 mr-1.5" />I Don't
-                        Want This
-                      </Button>
-                    </>
+      {/* My Preferences Section */}
+      {myPreferences.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">
+            My Preferences ({myPreferences.length})
+          </h3>
+          <div className="space-y-2">
+            {myPreferences.map((pref) => {
+              const isFulfilled =
+                pref.wantLevel === "WANT" && assignedShiftIds.has(pref.shiftId);
+              const isViolated =
+                pref.wantLevel === "DONT_WANT" &&
+                assignedShiftIds.has(pref.shiftId);
+
+              return (
+                <Card
+                  key={pref.shiftId}
+                  className={cn(
+                    "p-4 flex items-center gap-3",
+                    isViolated && "border-red-200 bg-red-50",
+                    isFulfilled && "border-green-200 bg-green-50",
                   )}
-                </div>
-              </div>
-            </div>
-          </Card>
-        );
-      })}
+                >
+                  {pref.wantLevel === "WANT" ? (
+                    <ThumbsUp
+                      className={cn(
+                        "w-4 h-4 flex-shrink-0",
+                        isFulfilled ? "text-green-600" : "text-gray-400",
+                      )}
+                    />
+                  ) : (
+                    <ThumbsDown
+                      className={cn(
+                        "w-4 h-4 flex-shrink-0",
+                        isViolated ? "text-red-600" : "text-gray-400",
+                      )}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-900">
+                      {pref.shift.type.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-xs text-gray-500 ml-2">
+                      {format(new Date(pref.shift.startTime), "EEE dd.MM HH:mm")}
+                    </span>
+                  </div>
+                  {isFulfilled && (
+                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  )}
+                  {isViolated && (
+                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

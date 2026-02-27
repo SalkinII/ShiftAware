@@ -386,11 +386,8 @@ export default function UserCalendarPage() {
       ? localStorage.getItem("selectedMemberId") || ""
       : "";
 
-  // Fetch preferences when in OPEN_FOR_PREFERENCES (for vote panel)
-  const shouldFetchPreferences =
-    !!userId &&
-    !!selectedEventId &&
-    selectedEvent?.status === "OPEN_FOR_PREFERENCES";
+  // Fetch preferences for vote panel and My Preferences section
+  const shouldFetchPreferences = !!userId && !!selectedEventId;
   const {
     data: preferences,
     refetch: refetchPreferences,
@@ -410,6 +407,29 @@ export default function UserCalendarPage() {
     },
     enabled: shouldFetchPreferences,
   });
+
+  const preferencesWithShifts = useMemo(() => {
+    if (!preferences || preferences.length === 0) return [];
+    return preferences
+      .filter(
+        (p): p is { shiftId: string; wantLevel: "WANT" | "DONT_WANT" } =>
+          !!p.wantLevel,
+      )
+      .map((p) => {
+        const shift = shifts.find((s) => s.id === p.shiftId);
+        if (!shift) return null;
+        return {
+          ...p,
+          shift: {
+            id: shift.id,
+            type: shift.type,
+            startTime: shift.startTime,
+            endTime: shift.endTime,
+          },
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }, [preferences, shifts]);
 
   const userVoteForShift = useMemo(() => {
     if (!selectedShift || !preferences) return null;
@@ -540,6 +560,7 @@ export default function UserCalendarPage() {
         <MyShiftsList
           shifts={shifts}
           userId={userId}
+          preferences={preferencesWithShifts}
           onVoteWant={handleVoteWant}
           onVoteDontWant={handleVoteDontWant}
           onRequestSwap={handleRequestSwap}
