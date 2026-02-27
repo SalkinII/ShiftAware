@@ -234,6 +234,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           "transition-shadow",
           selected && "ring-2 ring-blue-500",
           isAssignedToCurrentUser && "ring-2 ring-green-500",
+          capacity === 0 && "opacity-60 border-dashed",
         )}
         style={{ borderLeftColor: color }}
       >
