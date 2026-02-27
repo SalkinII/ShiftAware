@@ -545,6 +545,25 @@ export default function UserCalendarPage() {
           <p className="text-gray-500 font-medium">
             View your shift assignments and team coverage
           </p>
+          {selectedEvent && (
+            <p className="text-xs text-gray-400 mt-1">
+              Event: <span className="font-medium text-gray-600">{selectedEvent.name}</span>
+              {" · "}
+              <a
+                href="/app/identity"
+                className="text-primary-500 hover:underline"
+                onClick={() => {
+                  // Ensure EventSelectionStep shows list instead of auto-forwarding
+                  const memberId = localStorage.getItem("selectedMemberId");
+                  if (memberId) {
+                    sessionStorage.setItem(`shiftaware:eventAutoForward:${memberId}`, "done");
+                  }
+                }}
+              >
+                Change
+              </a>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">

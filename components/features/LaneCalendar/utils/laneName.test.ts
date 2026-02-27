@@ -2,16 +2,16 @@ import { describe, it, expect } from "vitest";
 import { abbreviateLaneName } from "./laneName";
 
 describe("abbreviateLaneName", () => {
-  it("returns first word of multi-word name", () => {
-    expect(abbreviateLaneName("Mobile North")).toBe("Mobile");
+  it("returns initials for multi-word names", () => {
+    expect(abbreviateLaneName("Mobile North")).toBe("MN");
   });
 
-  it("returns single-word name unchanged", () => {
-    expect(abbreviateLaneName("Super")).toBe("Super");
+  it("returns first 3 chars for single-word names", () => {
+    expect(abbreviateLaneName("Super")).toBe("Sup");
   });
 
-  it("returns first word of three-word name", () => {
-    expect(abbreviateLaneName("Shift Lead North")).toBe("Shift");
+  it("returns initials for three-word names", () => {
+    expect(abbreviateLaneName("Shift Lead North")).toBe("SLN");
   });
 
   it("handles empty string", () => {
@@ -19,6 +19,6 @@ describe("abbreviateLaneName", () => {
   });
 
   it("trims leading/trailing whitespace", () => {
-    expect(abbreviateLaneName("  Mobile North  ")).toBe("Mobile");
+    expect(abbreviateLaneName("  Mobile North  ")).toBe("MN");
   });
 });

@@ -47,7 +47,10 @@ export function EventSelectionStep({
           .map((r: any) => r.event);
         setEvents(registeredEvents);
 
-        if (registeredEvents.length === 1) {
+        // Auto-forward only on first visit, not when user navigated back
+        const autoForwardKey = `shiftaware:eventAutoForward:${memberId}`;
+        if (registeredEvents.length === 1 && !sessionStorage.getItem(autoForwardKey)) {
+          sessionStorage.setItem(autoForwardKey, "done");
           onEventSelected(registeredEvents[0].id);
         }
       } else {
