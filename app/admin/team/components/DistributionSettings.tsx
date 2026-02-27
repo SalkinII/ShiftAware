@@ -9,6 +9,7 @@ import { useEventContext } from "@/lib/hooks/useEventContext";
 import { canRunAlgorithm } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { AlgorithmResultsModal } from "@/components/features/AlgorithmResultsModal";
 
 interface AttributeRule {
   id: string;
@@ -40,6 +41,7 @@ export function DistributionSettings() {
   const [showAddRule, setShowAddRule] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [running, setRunning] = useState(false);
+  const [previewResult, setPreviewResult] = useState<any>(null);
   const [attributeDefinitions, setAttributeDefinitions] = useState<
     Array<{
       id: string;
@@ -126,6 +128,7 @@ export function DistributionSettings() {
     key: "fairnessWeight" | "preferenceWeight",
     value: number,
   ) => {
+    setPreviewResult(null);
     setConfig({ ...config, [key]: value });
   };
 
@@ -184,11 +187,7 @@ export function DistributionSettings() {
       if (res.ok) {
         const data = await res.json();
         const result = unwrapApiResponse<any>(data);
-        const totalAssignments = result.assignments?.length || 0;
-        const totalViolations = result.violations?.length || 0;
-        toast.success(
-          `Preview: ${totalAssignments} assignments proposed. ${totalViolations} constraint violations detected.`,
-        );
+        setPreviewResult(result);
         await loadConfig();
       } else {
         const error = await res.json();
@@ -585,6 +584,13 @@ export function DistributionSettings() {
             </p>
           )}
       </div>
+
+      {previewResult && (
+        <AlgorithmResultsModal
+          result={previewResult}
+          onClose={() => setPreviewResult(null)}
+        />
+      )}
     </div>
   );
 }
