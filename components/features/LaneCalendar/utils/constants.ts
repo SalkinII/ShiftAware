@@ -31,7 +31,7 @@ export const RULER_HEIGHT = 48; // px — top time ruler height (28 ticks + 20 d
 
 // Time ruler label widths (px) — used for skip-label collision avoidance
 export const MIN_HOUR_LABEL_WIDTH = 40; // "14:00" at 9px font ≈ 35px + padding
-export const MIN_DATE_LABEL_WIDTH = 100; // "Mon 15 Feb 00:00" ≈ 95px + padding
+export const MIN_DATE_LABEL_WIDTH = 130; // "Fri 07.03.2026" ≈ 120px + padding
 
 // Node z-indices (render order)
 export const Z_HOUR_GRID = 0;

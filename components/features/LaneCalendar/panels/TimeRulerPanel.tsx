@@ -110,7 +110,7 @@ function TimeRulerPanelComponent({
     daySegments.push({
       startX: Math.max(0, startScreenX),
       width: endScreenX - Math.max(0, startScreenX),
-      label: format(dayMidnight, zoom > 0.3 ? "EEE d MMM" : "d MMM"),
+      label: format(dayMidnight, zoom > ZOOM_MINIMAL ? "EEE dd.MM.yyyy" : "dd.MM.yy"),
     });
   }
 
