@@ -49,28 +49,10 @@ interface Shift {
   event: { name: string; id: string };
 }
 
-const coverageLegend: Record<
-  CoverageState,
-  { label: string; badge: string; bg: string; text: string }
-> = {
-  full: {
-    label: "Fully Staffed",
-    badge: "bg-success-500",
-    bg: "bg-success-50",
-    text: "text-success-700",
-  },
-  partial: {
-    label: "Partially Staffed",
-    badge: "bg-accent-500",
-    bg: "bg-accent-50",
-    text: "text-accent-700",
-  },
-  empty: {
-    label: "Unstaffed",
-    badge: "bg-red-500",
-    bg: "bg-red-50",
-    text: "text-red-700",
-  },
+const coverageLabels: Record<CoverageState, string> = {
+  full: "Fully Staffed",
+  partial: "Partially Staffed",
+  empty: "Unstaffed",
 };
 
 // User Calendar View - Read-only schedule display
@@ -589,7 +571,7 @@ export default function UserCalendarPage() {
                       >
                         {option === "all"
                           ? "All"
-                          : coverageLegend[option].label}
+                          : coverageLabels[option]}
                       </button>
                     ),
                   )}
@@ -631,34 +613,6 @@ export default function UserCalendarPage() {
               <span className="w-4 h-4 rounded bg-orange-400/30 inline-block" />
               4-5 = popular, harder to get
             </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {(Object.keys(coverageLegend) as CoverageState[]).map((state) => (
-              <div
-                key={state}
-                className={cn(
-                  "flex items-center gap-3 p-4 rounded-2xl border",
-                  coverageLegend[state].bg,
-                  coverageLegend[state].text,
-                  state === "full"
-                    ? "border-success-100"
-                    : state === "partial"
-                      ? "border-accent-100"
-                      : "border-red-100",
-                )}
-              >
-                <div
-                  className={cn(
-                    "w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]",
-                    coverageLegend[state].badge,
-                  )}
-                ></div>
-                <span className="text-xs font-bold uppercase tracking-widest">
-                  {coverageLegend[state].label}
-                </span>
-              </div>
-            ))}
           </div>
 
           {selectedEvent?.status === "PLANNING" && (
