@@ -13,6 +13,7 @@ import {
   validateShiftCapacity,
   validateGenderBalance,
   validateNoOverlaps,
+  validateRestPeriod,
 } from "./validator";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
@@ -57,12 +58,16 @@ export async function runAssignmentAlgorithm(
   shifts: ShiftWithRelations[],
   eventConfig: {
     minShiftsPerPerson: number;
+    maxShiftsPerPerson?: number;
+    minRestMs?: number;
     coreShifts: Shift[];
     memberAttributes?: Map<string, Map<string, string>>;
     weights?: AlgorithmWeights;
   },
 ): Promise<AlgorithmResult> {
   const weights = eventConfig.weights || DEFAULT_WEIGHTS;
+  const minRestMs = eventConfig.minRestMs ?? 15 * 60 * 1000;
+  const maxShiftsPerPerson = eventConfig.maxShiftsPerPerson ?? Infinity;
   const state: AssignmentState = {
     assignments: new Map(),
     memberShifts: new Map(),
@@ -100,6 +105,7 @@ export async function runAssignmentAlgorithm(
         shift,
         state,
         allShiftsMap,
+        minRestMs,
       );
       if (overlapViolation) continue;
 
@@ -171,11 +177,16 @@ export async function runAssignmentAlgorithm(
     while ((state.shiftCoverage.get(shift.id) || 0) < shift.capacity) {
       const candidates = members
         .map((member) => {
+          // Skip member if already at max shifts
+          const memberShiftCount = (state.memberShifts.get(member.id) || []).length;
+          if (memberShiftCount >= maxShiftsPerPerson) return null;
+
           const overlapViolation = validateNoOverlaps(
             member.id,
             shift,
             state,
             allShiftsMap,
+            minRestMs,
           );
           if (overlapViolation) return null;
 
@@ -253,6 +264,19 @@ export async function runAssignmentAlgorithm(
     );
     if (minShiftViolation) {
       violations.push(`${member.alias}: ${minShiftViolation.message}`);
+    }
+  }
+
+  // Validate rest periods
+  for (const member of members) {
+    const restViolations = validateRestPeriod(
+      member.id,
+      state,
+      allShiftsMap,
+      minRestMs,
+    );
+    for (const v of restViolations) {
+      violations.push(`${member.alias}: ${v.message}`);
     }
   }
 

@@ -1,19 +1,25 @@
 import { TeamMember, Shift, Assignment } from "@prisma/client";
 import { AssignmentState, ConstraintViolation } from "./types";
 
-export function validateShiftOverlap(shift1: Shift, shift2: Shift): boolean {
+export function validateShiftOverlap(
+  shift1: Shift,
+  shift2: Shift,
+  minRestMs: number = 15 * 60 * 1000,
+): boolean {
   const start1 = new Date(shift1.startTime);
   const end1 = new Date(shift1.endTime);
   const start2 = new Date(shift2.startTime);
   const end2 = new Date(shift2.endTime);
 
-  // Check if shifts overlap (with 15-minute buffer)
-  const bufferMs = 15 * 60 * 1000;
-  return (
-    (start1 < end2 && end1 > start2) ||
-    (start1.getTime() + bufferMs >= end2.getTime() &&
-      end1.getTime() - bufferMs <= start2.getTime())
+  // Direct overlap
+  if (start1 < end2 && end1 > start2) return true;
+
+  // Rest period violation (gap < minRestMs)
+  const gap = Math.max(
+    start2.getTime() - end1.getTime(),
+    start1.getTime() - end2.getTime(),
   );
+  return gap < minRestMs;
 }
 
 export function validateMinimumShifts(
@@ -127,19 +133,59 @@ export function validateNoOverlaps(
   newShift: Shift,
   state: AssignmentState,
   allShifts: Map<string, Shift>,
+  minRestMs: number = 15 * 60 * 1000,
 ): ConstraintViolation | null {
   const memberShiftIds = state.memberShifts.get(memberId) || [];
 
   for (const existingShiftId of memberShiftIds) {
     const existingShift = allShifts.get(existingShiftId);
-    if (existingShift && validateShiftOverlap(newShift, existingShift)) {
+    if (existingShift && validateShiftOverlap(newShift, existingShift, minRestMs)) {
+      // Determine if direct overlap or rest period violation
+      const s1 = new Date(newShift.startTime);
+      const e1 = new Date(newShift.endTime);
+      const s2 = new Date(existingShift.startTime);
+      const e2 = new Date(existingShift.endTime);
+      const isDirectOverlap = s1 < e2 && e1 > s2;
+
       return {
-        type: "SHIFT_OVERLAP",
-        message: `Shift overlaps with existing assignment`,
+        type: isDirectOverlap ? "SHIFT_OVERLAP" : "REST_PERIOD",
+        message: isDirectOverlap
+          ? "Shift overlaps with existing assignment"
+          : `Insufficient rest period between shifts (required: ${Math.round(minRestMs / 3600000)}h)`,
         severity: "hard",
       };
     }
   }
 
   return null;
+}
+
+export function validateRestPeriod(
+  memberId: string,
+  state: AssignmentState,
+  allShifts: Map<string, Shift>,
+  minRestMs: number,
+): ConstraintViolation[] {
+  const memberShiftIds = state.memberShifts.get(memberId) || [];
+  if (memberShiftIds.length < 2) return [];
+
+  const shifts = memberShiftIds
+    .map((id) => allShifts.get(id))
+    .filter((s): s is Shift => s !== undefined)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  const violations: ConstraintViolation[] = [];
+  for (let i = 0; i < shifts.length - 1; i++) {
+    const end = new Date(shifts[i].endTime).getTime();
+    const nextStart = new Date(shifts[i + 1].startTime).getTime();
+    const gap = nextStart - end;
+    if (gap < minRestMs && gap >= 0) {
+      violations.push({
+        type: "REST_PERIOD",
+        message: `Insufficient rest between shifts: ${Math.round(gap / 3600000)}h gap, ${Math.round(minRestMs / 3600000)}h required`,
+        severity: "hard",
+      });
+    }
+  }
+  return violations;
 }

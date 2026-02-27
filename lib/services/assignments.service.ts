@@ -203,6 +203,14 @@ export class AssignmentsService {
     const assignableShifts = shifts.filter((s) => s.capacity > 0);
     const coreShifts = assignableShifts.filter((s) => s.priority === "CORE");
 
+    // Extract minRestMs and maxShiftsPerPerson from config
+    const balanceThresholds =
+      typeof config.balanceThresholds === "object" && config.balanceThresholds !== null
+        ? (config.balanceThresholds as any)
+        : {};
+    const minRestHours = balanceThresholds.minRestHours ?? 8;
+    const maxShiftsPerPerson = balanceThresholds.maxShiftsPerPerson ?? Infinity;
+
     // 5. Load member attributes for the event
     const memberAttributes = new Map<string, Map<string, string>>();
     for (const member of members) {
@@ -220,6 +228,8 @@ export class AssignmentsService {
       assignableShifts as any,
       {
         minShiftsPerPerson: config.minShiftsPerPerson || 2,
+        maxShiftsPerPerson,
+        minRestMs: minRestHours * 3600000,
         coreShifts,
         weights,
         memberAttributes,
