@@ -128,8 +128,13 @@ function ShiftContent({
       {/* Row 2: Desirability stars (left) | Vote buttons (right) */}
       {showRow2 && showNames && !isMarker && (showStars || (readOnly && onVoteWant && onVoteDontWant)) && (
         <div className="flex items-center gap-[16px] min-w-0">
-          <span className="text-[100px] leading-[1.15] text-amber-500 flex-1 min-w-0 truncate">
-            {showStars ? "+".repeat(desirabilityScore!) : ""}
+          <span className={cn(
+            "text-[100px] leading-[1.15] flex-1 min-w-0 truncate",
+            desirabilityScore! >= 4 ? "text-amber-500" :
+            desirabilityScore! <= 2 ? "text-blue-400" :
+            "text-gray-400"
+          )}>
+            {showStars ? "★".repeat(desirabilityScore!) : ""}
           </span>
           {readOnly && onVoteWant && onVoteDontWant && (
             <div className="flex items-center gap-[8px] flex-shrink-0">
