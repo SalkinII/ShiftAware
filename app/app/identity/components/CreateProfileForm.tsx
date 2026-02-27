@@ -39,11 +39,6 @@ const EXPERIENCE_LEVELS = [
   { value: "SENIOR", label: "Senior" },
 ];
 
-const CAPABILITIES = [
-  { value: "SHIFT_LEAD", label: "Shift Lead" },
-  { value: "SUPER", label: "Supervisor" },
-];
-
 export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
   const [formData, setFormData] = useState<ProfileData>({
     alias: "",
@@ -102,15 +97,6 @@ export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
-  };
-
-  const toggleCapability = (capability: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      capabilities: prev.capabilities.includes(capability)
-        ? prev.capabilities.filter((c) => c !== capability)
-        : [...prev.capabilities, capability],
-    }));
   };
 
   const handleAttributeChange = (key: string, value: any) => {
@@ -194,28 +180,6 @@ export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
             </option>
           ))}
         </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Capabilities
-        </label>
-        <div className="space-y-2">
-          {CAPABILITIES.map((capability) => (
-            <label
-              key={capability.value}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={formData.capabilities.includes(capability.value)}
-                onChange={() => toggleCapability(capability.value)}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-              />
-              <span className="text-sm text-gray-700">{capability.label}</span>
-            </label>
-          ))}
-        </div>
       </div>
 
       {formData.eventId && attributeDefinitions.length > 0 && (
