@@ -8,7 +8,6 @@ import {
   User,
   ShieldCheck,
   Clock,
-  Users,
   SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -242,36 +241,6 @@ export default function UserCalendarPage() {
       return true;
     });
   }, [shifts, coverageFilter, memberFilter]);
-
-  const metrics = useMemo(() => {
-    const totalCapacity = filteredShifts.reduce(
-      (acc, shift) => acc + (shift.capacity || 0),
-      0,
-    );
-    const filled = filteredShifts.reduce(
-      (acc, shift) => acc + (shift.assignments?.length || 0),
-      0,
-    );
-    const fullCount = filteredShifts.filter(
-      (s) => coverageState(s) === "full",
-    ).length;
-    const partialCount = filteredShifts.filter(
-      (s) => coverageState(s) === "partial",
-    ).length;
-    const emptyCount = filteredShifts.filter(
-      (s) => coverageState(s) === "empty",
-    ).length;
-    const coverage =
-      totalCapacity === 0 ? 0 : Math.round((filled / totalCapacity) * 100);
-    return {
-      totalCapacity,
-      filled,
-      coverage,
-      fullCount,
-      partialCount,
-      emptyCount,
-    };
-  }, [filteredShifts]);
 
   function handleShiftClick(data: { id: string }) {
     const shift = filteredShifts.find((s) => s.id === data.id);
@@ -595,54 +564,6 @@ export default function UserCalendarPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-4 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-2xl shadow-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-widest font-black text-white/80">
-                    Coverage
-                  </p>
-                  <p className="text-3xl font-black mt-1">
-                    {metrics.coverage}%
-                  </p>
-                  <p className="text-white/80 text-sm font-medium">
-                    Filled {metrics.filled} / {metrics.totalCapacity}
-                  </p>
-                </div>
-                <div className="p-3 rounded-2xl bg-white/15">
-                  <Users className="w-6 h-6" />
-                </div>
-              </div>
-            </Card>
-            <Card className="p-4 rounded-2xl border border-success-100 bg-success-50">
-              <p className="text-xs uppercase tracking-widest font-black text-success-700">
-                Fully staffed
-              </p>
-              <p className="text-2xl font-black text-success-900 mt-1">
-                {metrics.fullCount}
-              </p>
-              <p className="text-success-700 text-sm">Shifts at capacity</p>
-            </Card>
-            <Card className="p-4 rounded-2xl border border-accent-100 bg-accent-50">
-              <p className="text-xs uppercase tracking-widest font-black text-accent-700">
-                Partial
-              </p>
-              <p className="text-2xl font-black text-accent-900 mt-1">
-                {metrics.partialCount}
-              </p>
-              <p className="text-accent-700 text-sm">Need more coverage</p>
-            </Card>
-            <Card className="p-4 rounded-2xl border border-red-100 bg-red-50">
-              <p className="text-xs uppercase tracking-widest font-black text-red-700">
-                Unstaffed
-              </p>
-              <p className="text-2xl font-black text-red-900 mt-1">
-                {metrics.emptyCount}
-              </p>
-              <p className="text-red-700 text-sm">Urgent attention</p>
-            </Card>
-          </div>
-
           <Card className="p-4 bg-white border border-gray-200 shadow-sm rounded-2xl">
             <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-700">
               <SlidersHorizontal className="w-4 h-4 text-primary-500" />
