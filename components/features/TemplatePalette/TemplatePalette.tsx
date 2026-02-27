@@ -2,13 +2,11 @@
 
 import { Clock, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { ColorStripe } from "@/components/ui/ColorStripe";
 import { useCache } from "@/lib/cache/useCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { getPaletteColor } from "@/lib/utils/palette";
 
 interface ShiftTemplate {
   id: string;
@@ -24,12 +22,10 @@ interface ShiftTemplate {
 interface TemplateItemProps {
   template: ShiftTemplate;
   compact?: boolean;
-  index?: number;
 }
 
-function TemplateItem({ template, compact = false, index = 0 }: TemplateItemProps) {
+function TemplateItem({ template, compact = false }: TemplateItemProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const resolvedColor = template.color || getPaletteColor(index);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData(
@@ -58,11 +54,10 @@ function TemplateItem({ template, compact = false, index = 0 }: TemplateItemProp
           "shrink-0",
         )}
       >
-        <ColorStripe color={resolvedColor} className="h-6" />
+        <GripVertical className="w-3 h-3 text-gray-400 shrink-0" />
         <span className="font-medium text-xs text-gray-900 truncate">
           {template.name}
         </span>
-        <GripVertical className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   }
@@ -79,7 +74,7 @@ function TemplateItem({ template, compact = false, index = 0 }: TemplateItemProp
         isDragging && "opacity-50",
       )}
     >
-      <ColorStripe color={resolvedColor} className="h-8" />
+      <GripVertical className="w-4 h-4 text-gray-400 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-gray-900 truncate">
           {template.name}
@@ -91,7 +86,6 @@ function TemplateItem({ template, compact = false, index = 0 }: TemplateItemProp
           </span>
         </div>
       </div>
-      <GripVertical className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }
@@ -161,12 +155,11 @@ export function TemplatePalette({
               : "space-y-2 max-h-[400px] overflow-y-auto",
           )}
         >
-          {templates.map((template, index) => (
+          {templates.map((template) => (
             <TemplateItem
               key={template.id}
               template={template}
               compact={isHorizontal}
-              index={index}
             />
           ))}
         </div>
