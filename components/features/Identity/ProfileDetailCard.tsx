@@ -8,6 +8,7 @@ interface ProfileMember {
   avatarId?: string;
   experienceLevel?: string;
   capabilities?: string[];
+  attributes?: { name: string; value: string }[];
 }
 
 interface ProfileDetailCardProps {
@@ -83,6 +84,30 @@ export function ProfileDetailCard({ member, onClose }: ProfileDetailCardProps) {
                 {cap.replace(/_/g, " ")}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Attributes */}
+        {member.attributes && member.attributes.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-400 text-center">
+              Attributes
+            </p>
+            <div className="space-y-1">
+              {member.attributes.map((attr) => (
+                <div
+                  key={attr.name}
+                  className="flex justify-between items-center px-3 py-1.5 bg-gray-50 rounded-lg"
+                >
+                  <span className="text-xs font-medium text-gray-600">
+                    {attr.name}
+                  </span>
+                  <span className="text-xs font-bold text-gray-900">
+                    {attr.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

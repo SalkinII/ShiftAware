@@ -13,8 +13,14 @@ interface Member {
   id: string;
   alias: string;
   avatarId: string;
-  experienceLevel: string;
+  experienceLevel?: string;
+  capabilities?: string[];
   eventRegistrations?: { status: string }[];
+  attributes?: Array<{
+    definition?: { name?: string };
+    name?: string;
+    value: string;
+  }>;
 }
 
 interface MemberListByEventProps {
@@ -53,6 +59,9 @@ export function MemberListByEvent({
   const [profileCardMember, setProfileCardMember] = useState<{
     alias: string;
     avatarId: string;
+    experienceLevel?: string;
+    capabilities?: string[];
+    attributes?: { name: string; value: string }[];
   } | null>(null);
 
   useEffect(() => {
@@ -237,6 +246,19 @@ export function MemberListByEvent({
                     setProfileCardMember({
                       alias: member.alias,
                       avatarId: member.avatarId,
+                      experienceLevel: member.experienceLevel,
+                      capabilities: member.capabilities,
+                      attributes: member.attributes?.map((a) => {
+                        const name = a.definition?.name || (a as { name?: string }).name || "Unknown";
+                        let val: string;
+                        try {
+                          const v = typeof a.value === "string" ? JSON.parse(a.value) : a.value;
+                          val = typeof v === "boolean" ? String(v) : String(v);
+                        } catch {
+                          val = String(a.value);
+                        }
+                        return { name, value: val };
+                      })
                     })
                   }
                   className="text-2xl cursor-pointer"
