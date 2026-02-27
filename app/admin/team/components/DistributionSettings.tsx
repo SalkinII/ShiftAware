@@ -49,6 +49,9 @@ export function DistributionSettings() {
       options: string[];
     }>
   >([]);
+  const [templates, setTemplates] = useState<
+    Array<{ id: string; name: string; type: string }>
+  >([]);
 
   // Load config when event changes
   useEffect(() => {
@@ -60,10 +63,22 @@ export function DistributionSettings() {
 
   async function fetchAttributeDefinitions(eventId: string) {
     try {
-      const res = await fetch(`/api/events/${eventId}/attributes`);
-      if (res.ok) {
-        const data = await res.json();
+      const [attrRes, tplRes] = await Promise.all([
+        fetch(`/api/events/${eventId}/attributes`),
+        fetch(`/api/events/${eventId}/templates`),
+      ]);
+      if (attrRes.ok) {
+        const data = await attrRes.json();
         setAttributeDefinitions(data.data || []);
+      }
+      if (tplRes.ok) {
+        const data = await tplRes.json();
+        const tplData = data.data || {};
+        const all = [
+          ...(tplData.assigned || []),
+          ...(tplData.eventSpecific || []),
+        ];
+        setTemplates(all);
       }
     } catch (error) {
       console.error("Failed to fetch attribute definitions:", error);
@@ -103,7 +118,7 @@ export function DistributionSettings() {
   const handleAddRule = () => {
     const newRule: AttributeRule = {
       id: Date.now().toString(),
-      shiftType: "SUPER",
+      shiftType: templates[0]?.type || "",
       attribute: "experience_level",
       operator: "EQUALS",
       value: "",
@@ -389,9 +404,15 @@ export function DistributionSettings() {
                     }
                     className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="SUPER">SUPER</option>
-                    <option value="MOBILE_TEAM">Mobile Team</option>
-                    <option value="STATIONARY">Stationary</option>
+                    {templates.length === 0 ? (
+                      <option value="">No templates loaded</option>
+                    ) : (
+                      templates.map((t) => (
+                        <option key={t.id} value={t.type}>
+                          {t.name}
+                        </option>
+                      ))
+                    )}
                   </select>
 
                   <select
