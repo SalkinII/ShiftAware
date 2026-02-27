@@ -5,7 +5,29 @@
 
 New:
 
-- With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am mess
+- With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am messing with the complete structure of the canvas.
+We would need to look at how the lanes, shiftnodes and so forth are organised. whe want this to be consistent. This was a breaking change.
+It does reorder itslef if I drop shifts into it.
+- Also can we just loose the colours for the templates in the template reservoir. This get's messed up always. And it is nothing that is really important. Let's just do other pretty visuals and a handle in keeping with our general design principles.
+- Don't know whether that's in the Bug list already but the rules for distribute settings are not persisted even when save config is hit. How does that correspond to our service architecture?
+
+- The profile detail I see when I click the avatar is useless. I thought I would get all the information about that member. I would only want that for the admin team manage page. but there one should be able to see all attributes that member has with their values.
+
+- Can't see where that should be: Task 3: Admin team create — reuse CreateProfileForm
+Exported ProfileData from CreateProfileForm.tsx
+app/admin/team/manage/page.tsx: replaced inline form with CreateProfileForm, removed formData/formErrors/validateForm
+Commit: refactor(admin/team): reuse CreateProfileForm for member creation
+
+- This wasn't removed from the Team Calendar view:
+<div class="flex items-center gap-3 p-4 rounded-2xl border bg-success-50 text-success-700 border-success-100"><div class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] bg-success-500"></div><span class="text-xs font-bold uppercase tracking-widest">Fully Staffed</span></div><div class="flex items-center gap-3 p-4 rounded-2xl border bg-accent-50 text-accent-700 border-accent-100"><div class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] bg-accent-500"></div><span class="text-xs font-bold uppercase tracking-widest">Partially Staffed</span></div><div class="flex items-center gap-3 p-4 rounded-2xl border bg-red-50 text-red-700 border-red-100"><div class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] bg-red-500"></div><span class="text-xs font-bold uppercase tracking-widest">Unstaffed</span></div>
+however it says:
+Task 5+6	e5cff64	Removed four metric cards, filter card at top
+
+- this side bar in the LaneCalendarCanvas still doesn't show the shift name but rather the old prsima types:
+<div class="flex items-center gap-2 mb-2"><div class="w-1 rounded-full flex-shrink-0 h-4" style="background-color: rgb(107, 114, 128);"></div><span class="text-xs font-medium text-sky-900 uppercase tracking-wider">STATIONARY</span></div><div class="text-lg font-bold text-gray-900">STATIONARY</div><div class="text-sm text-gray-600">Tue 14.07.2026</div><div class="text-sm text-gray-600">09:15–21:15</div>
+Same logic for the create bar. We want to work with our template names. We can look them up. we can change them. we index them. Why not use them here?
+Also the list view card? How is it that it still says: STATIONARY in the card as hardcoded html? This doesn't correspond to our service architecture or our desing principles.
+
 
 
 This document lists known bugs, design gaps, and UX issues. Descriptions follow systematic-debugging: symptom, context, and root cause where identified.
@@ -35,7 +57,7 @@ This document lists known bugs, design gaps, and UX issues. Descriptions follow 
 **Proposed resolution:** When configuring attribute rules for an event, import and display that event's templates. Attribute rules should reference templates so eligibility is explicit and verifiable.
 
 **Status: FIXED in v3.7** — shiftType dropdown now loads from event templates.
-ng 
+
 ---
 
 ## 3. Template Reservoir — Colour Schema
@@ -156,8 +178,6 @@ ng
 **Symptom:** Adding existing team members to a new event does not populate event-specific attributes. Assignment rules that depend on those attributes fail or behave incorrectly.
 
 **Proposed resolution:** Reuse the attribute prompt from "Assume Identity" when an admin adds an existing member to a new event. Prompt for missing attributes before assignment.
-
-**Status: FIXED in v3.7** — attribute prompt shown after admin adds existing member to event.
 
 ### 11c. Resting period constraint violated
 
