@@ -1,69 +1,135 @@
 ShiftAware Backlog
 ==================
 
-Ref: docs/plans/arch/2026-02-26-v3.3-canvas-fixes-design.md (latest)
+Ref: docs/plans/2026-02-27-v3.5-visual-truth-design.md (roadmap)
 Ref: docs/plans/arch/2026-02-26_NEEDSREVAMP-backlog-list-plan.md (full inventory)
+Ref: docs/Bugs.txt (bug register)
 
-## Canvas UX
+## Roadmap Overview
 
-- Lane name abbreviations — multi-word→initials, single→first 3 letters
-  Files: new `LaneCalendar/utils/laneName.ts`, `panels/LaneLabelPanel.tsx`
-  Ref: NEEDSREVAMP Task 4
+| Phase | Focus | Status |
+|-------|-------|--------|
+| v3.5 | Visual Truth — navigation, colours, labels, cleanup | PLANNED |
+| v3.6 | Canvas Consistency & UX Polish | PLANNED |
+| v3.7 | Admin Data & Sidebar | PLANNED |
+| v3.8 | Algorithm & Assignment | PLANNED |
+| v3.9 | User View & Export | PLANNED |
+| v3.10 | Advanced & Audit | PLANNED |
 
-- Time ruler dates — add year (dd.MM.yyyy format)
-  Files: `panels/TimeRulerPanel.tsx` day label format
-  Ref: NEEDSREVAMP Task 5
+---
 
-- Colour harmonization — template palette colours match lane colours
-  Files: `lib/utils/palette.ts`, `TemplatePalette.tsx`, `ShiftBlockNode.tsx`, `LaneZoneNode.tsx`
-  Ref: NEEDSREVAMP Task 7
+## v3.5 — Visual Truth (PLANNED)
 
-## Export
+- [x→PLANNED] Bug #17: Event navigation escape — auto-forward guard + "Change" link
+  Files: `EventSelectionStep.tsx`, `app/app/calendar/page.tsx`
 
-- Export choice — React Flow PNG vs PDF table
-  Files: `app/admin/shifts/schedule/page.tsx` (export button), existing PNG export (Phase 7)
-  Ref: NEEDSREVAMP Task 8
+- [x→PLANNED] Bug #3 + Colour harmonization — prefer template.color, palette fallback
+  Files: `lib/types/lane.ts`, `TemplatePalette.tsx`, `ShiftPropertiesPanel.tsx`
 
-## User View
+- [x→PLANNED] Bug #6: Template name in sidebar header
+  Files: `ShiftPropertiesPanel.tsx`
 
-- User list view — want/don't want selections, assigned shifts
-  Reuse admin list view logic. Show preference state (OPEN_FOR_PREFERENCES) or assignments (FINALIZED).
-  Files: new `app/app/calendar/components/MyShiftsList.tsx`, reuse admin shift card patterns
-  Ref: NEEDSREVAMP Task 10
+- [x→PLANNED] Bug #15: Desirability colour in ShiftBlockNode — 3-tier (blue/grey/amber)
+  Files: `ShiftBlockNode.tsx`
 
-- Password-based event selection
-  Add optional `accessCode` to Event model. User enters code to filter to matching event.
-  Files: `prisma/schema.prisma`, `app/app/identity/components/EventSelectionStep.tsx`
-  Ref: NEEDSREVAMP Task 11
+- [x→PLANNED] Lane name abbreviations — initials for multi-word, first 3 for single
+  Files: `laneName.ts`, `LaneLabelPanel.tsx`
 
-## Admin Parity
+- [x→PLANNED] Time ruler dates — dd.MM.yyyy format
+  Files: `TimeRulerPanel.tsx`, `constants.ts`
+
+- [x→PLANNED] Bug #1: Remove orphaned capability checkboxes
+  Files: `CreateProfileForm.tsx`
+
+---
+
+## v3.6 — Canvas Consistency & UX Polish
+
+- Bug #15 (full): Unify all 4 desirability renderers to use DesirabilityBadge
+  Files: `DesirabilityBadge.tsx`, `ShiftBlockNode.tsx`, `ShiftPreferencePanel.tsx`, `schedule/page.tsx`
+
+- Bug #16: Canvas view consistency — define and apply consistent patterns
+  Files: `LaneCalendarCanvas.tsx`, admin + user canvas views
+
+- Bug #12: User calendar role filter — replace with attribute-based or remove
+  Files: Calendar filter components
+
+- Bug #13: Filter card + counter layout — move filter to top, counters to bottom
+  Files: Calendar layout components
+
+- Bug #14: Remove dead staffed/partially-staffed cards
+  Files: Calendar card components
+
+- Bug #5: Lane reorder controls (up/down + persist)
+  Files: `LaneLabelPanel.tsx`, `lane.ts`, persistence API
+
+---
+
+## v3.7 — Admin Data & Sidebar
+
+- Bug #2: Attribute rules — import event templates in team management
+  Files: Team management UI, template API
+
+- Bug #11b: Members lack event attributes when added to new event
+  Files: Registration flow, attribute prompt
 
 - Admin team — same detail/create logic as identity claim page
-  Files: `app/admin/team/`, reuse `CreateProfileForm` from identity
+  Files: `app/admin/team/`, reuse `CreateProfileForm`
   Ref: NEEDSREVAMP Task 12
 
 - Profile card read-only on avatar click (user + admin)
   Files: new `components/features/Identity/ProfileDetailCard.tsx`
   Ref: NEEDSREVAMP Task 13
 
-## Service Logic
+---
+
+## v3.8 — Algorithm & Assignment
+
+- Bug #9: Assignment preview — render results in UI
+  Files: Assignment preview components, API
+
+- Bug #11a: Configured logic lost after assignment run
+  Files: Allocation config storage, cache
+
+- Bug #11c: Resting period constraint violated
+  Files: Distribution algorithm, constraint handling
+
+- Bug #10: Algorithm logic documentation + tests
+  Files: `assignments.service.ts`, test files
 
 - Attribute/skill validation during assignment
-  Enforce member attributes match shift requirements in `runAllocation` and `createManualAssignment`.
   Files: `lib/services/assignments.service.ts`, `lib/utils/attribute-check.ts`
   Ref: NEEDSREVAMP Task 14
 
-- Zero-occupancy shifts as markers (may already be partially done in v3.2)
-  Guard allocation for capacity=0; show "Marker" badge in node.
-  Files: `lib/services/assignments.service.ts`, `ShiftBlockNode.tsx`
+---
+
+## v3.9 — User View & Export
+
+- User list view — preferences + assigned shifts
+  Files: new `app/app/calendar/components/MyShiftsList.tsx`
+  Ref: NEEDSREVAMP Task 10
+
+- Password-based event selection
+  Files: `prisma/schema.prisma` (accessCode), `EventSelectionStep.tsx`
+  Ref: NEEDSREVAMP Task 11
+
+- Export choice — PNG vs PDF table (includes Bug #7)
+  Files: `schedule/page.tsx`, export logic
+  Ref: NEEDSREVAMP Task 8
+
+- Zero-occupancy shifts as markers (verify v3.2 work)
+  Files: `assignments.service.ts`, `ShiftBlockNode.tsx`
   Ref: NEEDSREVAMP Task 9
 
-## Audit & Quality
+---
 
-- Full UI audit — DESIGN.md & ARCHITECTURE.md compliance (gap report only)
+## v3.10 — Advanced & Audit
+
+- Bug #8: Gender equality / attribute constraint logic
+  Files: Distribution algorithm
+
+- Full UI audit — DESIGN.md & ARCHITECTURE.md compliance (gap report)
   Ref: NEEDSREVAMP Task 15
-
-## Deferred
 
 - RegistrationStatus workflow — REGISTERED → CONFIRMED → DECLINED
   Schema exists, no service logic. Ref: brainstorming 2026-02-26.
