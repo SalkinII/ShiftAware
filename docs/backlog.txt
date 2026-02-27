@@ -49,6 +49,18 @@ All 7 tasks completed in v3.6. See docs/Bugs.txt for individual bug status.
 
 ---
 
+## v3.5b — Post-v3.7 Fixes ✓ COMPLETE
+
+- [x] Lane reorder: shift Y-position sync on lane reorder (mergeNodes)
+- [x] Template palette: remove colour stripes, show always-visible grip handle
+- [x] Distribution rules: persist allocationRules (Prisma + Zod + route)
+- [x] ProfileDetailCard: full member info with attributes on admin team page
+- [x] User calendar: remove dead staffed/partially-staffed legend cards
+- [x] ShiftPropertiesPanel: template name fallback (no Prisma enum)
+- [x] CreateProfileForm reuse: verified in admin team manage page
+
+---
+
 ## v3.7 — Admin Data & Sidebar ✓ COMPLETE
 
 - [x] Bug #2: Attribute rules — import event templates in team management
