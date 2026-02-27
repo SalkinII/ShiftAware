@@ -31,9 +31,42 @@ export function MemberListByEvent({
   const [loading, setLoading] = useState(true);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [attributeDefinitions, setAttributeDefinitions] = useState<
+    Array<{
+      id: string;
+      name: string;
+      label: string;
+      type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT";
+      required: boolean;
+      options?: string[];
+    }>
+  >([]);
+  const [pendingAttributeMember, setPendingAttributeMember] = useState<{
+    memberId: string;
+    alias: string;
+  } | null>(null);
+  const [attributeValues, setAttributeValues] = useState<Record<string, any>>(
+    {},
+  );
+  const [savingAttributes, setSavingAttributes] = useState(false);
 
   useEffect(() => {
     loadMembers();
+  }, [eventId]);
+
+  useEffect(() => {
+    async function loadAttributeDefinitions() {
+      try {
+        const res = await fetch(`/api/events/${eventId}/attributes`);
+        if (res.ok) {
+          const data = await res.json();
+          setAttributeDefinitions(data.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to load attribute definitions:", error);
+      }
+    }
+    loadAttributeDefinitions();
   }, [eventId]);
 
   async function loadMembers() {
@@ -61,7 +94,7 @@ export function MemberListByEvent({
     }
   }
 
-  async function handleAddMember(memberId: string) {
+  async function handleAddMember(memberId: string, memberAlias: string) {
     try {
       const res = await fetch(`/api/events/${eventId}/registrations`, {
         method: "POST",
@@ -71,14 +104,46 @@ export function MemberListByEvent({
 
       if (res.ok) {
         toast.success("Member added to event");
-        loadMembers();
         setShowAddPicker(false);
+        if (attributeDefinitions.length > 0) {
+          setPendingAttributeMember({ memberId, alias: memberAlias });
+          setAttributeValues({});
+        } else {
+          loadMembers();
+        }
       } else {
         const error = await res.json();
         toast.error(error.message || "Failed to add member");
       }
     } catch (error) {
       toast.error("Failed to add member");
+    }
+  }
+
+  async function handleSaveAttributes() {
+    if (!pendingAttributeMember) return;
+    setSavingAttributes(true);
+    try {
+      await Promise.all(
+        Object.entries(attributeValues).map(([key, value]) =>
+          fetch(
+            `/api/members/${pendingAttributeMember.memberId}/attributes`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ eventId, key, value }),
+            },
+          ),
+        ),
+      );
+      toast.success("Attributes saved");
+    } catch {
+      toast.error("Failed to save some attributes");
+    } finally {
+      setSavingAttributes(false);
+      setPendingAttributeMember(null);
+      setAttributeValues({});
+      loadMembers();
     }
   }
 
@@ -203,7 +268,7 @@ export function MemberListByEvent({
                 unregisteredMembers.map((member) => (
                   <button
                     key={member.id}
-                    onClick={() => handleAddMember(member.id)}
+                    onClick={() => handleAddMember(member.id, member.alias)}
                     className="w-full p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all flex items-center gap-3 text-left"
                   >
                     <span className="text-2xl">{member.avatarId}</span>
@@ -225,6 +290,123 @@ export function MemberListByEvent({
                 onClick={() => setShowAddPicker(false)}
               >
                 Cancel
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Attribute Prompt Modal */}
+      {pendingAttributeMember && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full bg-white p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              Event Attributes for {pendingAttributeMember.alias}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Fill in event-specific attributes. You can skip and edit later.
+            </p>
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {attributeDefinitions.map((attr) => (
+                <div key={attr.id}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {attr.label}
+                    {attr.required && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </label>
+                  {attr.type === "BOOLEAN" && (
+                    <input
+                      type="checkbox"
+                      checked={attributeValues[attr.name] || false}
+                      onChange={(e) =>
+                        setAttributeValues((prev) => ({
+                          ...prev,
+                          [attr.name]: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4 text-primary-600 border-gray-300 rounded"
+                    />
+                  )}
+                  {attr.type === "TEXT" && (
+                    <input
+                      type="text"
+                      value={attributeValues[attr.name] || ""}
+                      onChange={(e) =>
+                        setAttributeValues((prev) => ({
+                          ...prev,
+                          [attr.name]: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  )}
+                  {attr.type === "SELECT" && (
+                    <select
+                      value={attributeValues[attr.name] || ""}
+                      onChange={(e) =>
+                        setAttributeValues((prev) => ({
+                          ...prev,
+                          [attr.name]: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Select...</option>
+                      {attr.options?.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {attr.type === "MULTISELECT" && (
+                    <div className="space-y-1">
+                      {attr.options?.map((opt) => (
+                        <label key={opt} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={(
+                              attributeValues[attr.name] || []
+                            ).includes(opt)}
+                            onChange={(e) => {
+                              const current =
+                                attributeValues[attr.name] || [];
+                              setAttributeValues((prev) => ({
+                                ...prev,
+                                [attr.name]: e.target.checked
+                                  ? [...current, opt]
+                                  : current.filter(
+                                      (v: string) => v !== opt,
+                                    ),
+                              }));
+                            }}
+                            className="w-4 h-4 text-primary-600 border-gray-300 rounded"
+                          />
+                          <span className="text-sm">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPendingAttributeMember(null);
+                  setAttributeValues({});
+                  loadMembers();
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                onClick={handleSaveAttributes}
+                disabled={savingAttributes}
+              >
+                {savingAttributes ? "Saving..." : "Save Attributes"}
               </Button>
             </div>
           </Card>
