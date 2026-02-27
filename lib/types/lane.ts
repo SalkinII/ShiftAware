@@ -68,7 +68,7 @@ export function deriveLanesFromTemplates(
     id: t.id,
     templateId: t.id,
     label: t.name || t.type.replace(/_/g, " "),
-    color: getPaletteColor(index),
+    color: t.color || getPaletteColor(index),
     order: t.laneOrder ?? index,
     type: t.type,
   }));

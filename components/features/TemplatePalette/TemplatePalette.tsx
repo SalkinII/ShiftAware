@@ -8,6 +8,7 @@ import { unwrapApiResponse } from "@/lib/api-errors";
 import { ShiftType } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { getPaletteColor } from "@/lib/utils/palette";
 
 interface ShiftTemplate {
   id: string;
@@ -23,10 +24,12 @@ interface ShiftTemplate {
 interface TemplateItemProps {
   template: ShiftTemplate;
   compact?: boolean;
+  index?: number;
 }
 
-function TemplateItem({ template, compact = false }: TemplateItemProps) {
+function TemplateItem({ template, compact = false, index = 0 }: TemplateItemProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const resolvedColor = template.color || getPaletteColor(index);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData(
@@ -55,7 +58,7 @@ function TemplateItem({ template, compact = false }: TemplateItemProps) {
           "shrink-0",
         )}
       >
-        <ColorStripe color={template.color || "#6b7280"} className="h-6" />
+        <ColorStripe color={resolvedColor} className="h-6" />
         <span className="font-medium text-xs text-gray-900 truncate">
           {template.name}
         </span>
@@ -76,7 +79,7 @@ function TemplateItem({ template, compact = false }: TemplateItemProps) {
         isDragging && "opacity-50",
       )}
     >
-      <ColorStripe color={template.color || "#6b7280"} className="h-8" />
+      <ColorStripe color={resolvedColor} className="h-8" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-gray-900 truncate">
           {template.name}
@@ -158,11 +161,12 @@ export function TemplatePalette({
               : "space-y-2 max-h-[400px] overflow-y-auto",
           )}
         >
-          {templates.map((template) => (
+          {templates.map((template, index) => (
             <TemplateItem
               key={template.id}
               template={template}
               compact={isHorizontal}
+              index={index}
             />
           ))}
         </div>

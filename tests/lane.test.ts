@@ -25,6 +25,16 @@ describe("deriveLanesFromTemplates", () => {
     expect(lanes[2].id).toBe(UNASSIGNED_LANE_ID);
     expect(lanes[2].templateId).toBeNull();
   });
+
+  it("prefers template.color over palette when set", () => {
+    const templates = [
+      { id: "t1", name: "Mobile North", type: "MOBILE_TEAM", color: "#ff0000" },
+      { id: "t2", name: "Stationary", type: "STATIONARY", color: null },
+    ];
+    const lanes = deriveLanesFromTemplates(templates);
+    expect(lanes[0].color).toBe("#ff0000"); // DB colour
+    expect(lanes[1].color).not.toBe("#ff0000"); // Falls back to palette
+  });
 });
 
 describe("getLaneColor", () => {
