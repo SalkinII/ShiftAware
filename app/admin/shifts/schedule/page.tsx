@@ -16,6 +16,7 @@ import {
   Lock,
   CheckCircle,
   Archive,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -897,6 +898,32 @@ export default function ShiftsPage() {
                                   </span>
                                 ))}
                               </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                              <Users className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                Capacity
+                              </p>
+                              <p className="text-sm font-bold text-gray-700 leading-none">
+                                {shift.capacity}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                              <CheckCircle className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                Assigned
+                              </p>
+                              <p className="text-sm font-bold text-gray-700 leading-none">
+                                {shift.assignments?.length || 0}/{shift.capacity}
+                              </p>
                             </div>
                           </div>
                         </div>

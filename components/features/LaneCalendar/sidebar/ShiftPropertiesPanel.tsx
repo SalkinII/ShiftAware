@@ -233,9 +233,9 @@ export function ShiftPropertiesPanel({
             {shift?.template?.name || shift?.type?.replace("_", " ")}
           </div>
           <div className="text-sm text-gray-600">
-            {shift &&
-              format(new Date(shift.startTime), "MMM d")}{" "}
-            •{" "}
+            {shift && format(new Date(shift.startTime), "EEE dd.MM.yyyy")}
+          </div>
+          <div className="text-sm text-gray-600">
             {shift && format(new Date(shift.startTime), "HH:mm")}–
             {shift && format(new Date(shift.endTime), "HH:mm")}
           </div>
