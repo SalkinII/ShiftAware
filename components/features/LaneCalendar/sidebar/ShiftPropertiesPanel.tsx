@@ -205,7 +205,9 @@ export function ShiftPropertiesPanel({
     <GlassPanel className="w-80 border-l border-gray-200 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Shift Details</h3>
+        <h3 className="font-semibold text-gray-900 truncate">
+          {shift?.template?.name || "Shift Details"}
+        </h3>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 transition-colors"
