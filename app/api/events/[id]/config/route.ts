@@ -89,6 +89,7 @@ export async function PUT(
       algorithmWeights: validated.algorithmWeights || {},
       balanceThresholds: validated.balanceThresholds || {},
       autoAssignUnfilled: validated.autoAssignUnfilled,
+      allocationRules: validated.allocationRules,
     });
 
     try {
