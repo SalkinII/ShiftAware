@@ -6,10 +6,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ColorStripe } from "@/components/ui/ColorStripe";
 import { AvatarStack } from "@/components/ui/AvatarStack";
 import { useToast } from "@/components/ui/Toast";
+import { cn } from "@/lib/utils";
 import { canManuallyAssign } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
 
@@ -33,6 +33,7 @@ export function ShiftPropertiesPanel({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [capacity, setCapacity] = useState(2);
+  const [desirabilityScore, setDesirabilityScore] = useState(3);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [selectedMemberToAdd, setSelectedMemberToAdd] = useState("");
 
@@ -50,6 +51,7 @@ export function ShiftPropertiesPanel({
       setStartTime(format(new Date(data.startTime), "yyyy-MM-dd'T'HH:mm"));
       setEndTime(format(new Date(data.endTime), "yyyy-MM-dd'T'HH:mm"));
       setCapacity(data.capacity);
+      setDesirabilityScore(data.desirabilityScore ?? 3);
     }
     setLoading(false);
   }
@@ -89,6 +91,7 @@ export function ShiftPropertiesPanel({
         endTime: end.toISOString(),
         durationMinutes,
         capacity,
+        desirabilityScore,
       }),
     });
 
@@ -271,27 +274,34 @@ export function ShiftPropertiesPanel({
           </label>
         </div>
 
-        {/* Team Preference */}
-        {shift?.desirabilityScore != null && shift?.desirabilityScore > 0 && (
-          <div>
-            <SectionLabel className="mb-2">Team Preference</SectionLabel>
-            <ProgressBar
-              value={shift.desirabilityScore}
-              max={5}
-              color={
-                shift.desirabilityScore >= 4
-                  ? "orange"
-                  : shift.desirabilityScore <= 2
-                    ? "blue"
-                    : "gray"
-              }
-            />
-            <div className="flex justify-between mt-1 text-xs text-gray-500">
-              <span>{wantCount} want this</span>
-              <span>{dontWantCount} don&apos;t want</span>
-            </div>
+        {/* Desirability Score */}
+        <div>
+          <SectionLabel className="mb-2">Desirability Score</SectionLabel>
+          <div className="flex gap-2 mt-1">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                onClick={() => setDesirabilityScore(n)}
+                className={cn(
+                  "text-2xl font-bold leading-none transition-colors",
+                  n <= desirabilityScore
+                    ? desirabilityScore >= 4
+                      ? "text-amber-500"
+                      : desirabilityScore <= 2
+                        ? "text-blue-400"
+                        : "text-gray-400"
+                    : "text-gray-200",
+                )}
+              >
+                +
+              </button>
+            ))}
           </div>
-        )}
+          <div className="flex justify-between mt-1 text-xs text-gray-500">
+            <span>{wantCount} want this</span>
+            <span>{dontWantCount} don&apos;t want</span>
+          </div>
+        </div>
 
         {/* Assignments */}
         <div>
