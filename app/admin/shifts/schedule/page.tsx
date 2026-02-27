@@ -465,6 +465,22 @@ export default function ShiftsPage() {
     }
   }
 
+  async function handleExportPng() {
+    if (!canvasRef.current) {
+      toast.error("Canvas not available");
+      return;
+    }
+    const dataUrl = await canvasRef.current.exportToPng();
+    if (!dataUrl) {
+      toast.error("Failed to export PNG");
+      return;
+    }
+    const link = document.createElement("a");
+    link.download = `schedule-${selectedEvent?.name ?? "export"}.png`;
+    link.href = dataUrl;
+    link.click();
+  }
+
   function handleExportCalendar() {
     if (!shifts || shifts.length === 0) {
       toast.error("No shifts to export");
@@ -644,16 +660,30 @@ export default function ShiftsPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleExportCalendar}
-                className={cn(
-                  "flex items-center gap-2",
-                  viewMode !== "calendar" && "invisible pointer-events-none",
-                )}
-              >
-                <Download className="w-4 h-4" /> Export
-              </Button>
+              {viewMode === "calendar" ? (
+                <div className="relative group">
+                  <Button
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" /> Export
+                  </Button>
+                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <button
+                      onClick={handleExportPng}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+                    >
+                      Export as PNG
+                    </button>
+                    <button
+                      onClick={handleExportCalendar}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
+                    >
+                      Export as PDF Table
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               {selectedEvent &&
                 (() => {
                   const nextStatus = getNextStatus(selectedEvent.status);
