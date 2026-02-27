@@ -64,13 +64,14 @@ function mergeNodes(
   const mergedShifts = newShiftNodes.map((newNode) => {
     const existing = currentShiftMap.get(newNode.id);
     if (existing) {
-      // Keep React Flow-owned state, update data from API
       return {
         ...existing,
         data: newNode.data,
         style: newNode.style,
-        // Preserve position — React Flow may have updated it during drag
-        // Preserve measured — React Flow's internal measurement
+        position: {
+          x: existing.position.x,   // Preserve X (time axis, may be mid-drag)
+          y: newNode.position.y,     // Always use calculated Y (lane-determined)
+        },
       };
     }
     return newNode;
