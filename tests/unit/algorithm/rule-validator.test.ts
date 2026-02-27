@@ -133,3 +133,73 @@ describe("validateComplementaryRules", () => {
     expect(violations).toHaveLength(0);
   });
 });
+
+describe("validateComplementaryRules with REQUIRE_RATIO", () => {
+  it("passes when ratio is within bounds", () => {
+    const ratioRule: AllocationRule = {
+      id: "r3",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_RATIO",
+      minRatio: 0.4,
+      maxRatio: 0.6,
+    };
+
+    const state: AssignmentState = {
+      assignments: new Map([
+        ["s1", [
+          { teamMemberId: "m1" } as any,
+          { teamMemberId: "m2" } as any,
+        ]],
+      ]),
+      memberShifts: new Map(),
+      shiftCoverage: new Map(),
+    };
+
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "FINTA"]])],
+      ["m2", new Map([["gender", "M"]])],
+    ]);
+
+    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    expect(violations).toHaveLength(0); // 50% is within 40-60%
+  });
+
+  it("fails when ratio is outside bounds", () => {
+    const ratioRule: AllocationRule = {
+      id: "r3",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_RATIO",
+      minRatio: 0.4,
+      maxRatio: 0.6,
+    };
+
+    const state: AssignmentState = {
+      assignments: new Map([
+        ["s1", [
+          { teamMemberId: "m1" } as any,
+          { teamMemberId: "m2" } as any,
+          { teamMemberId: "m3" } as any,
+        ]],
+      ]),
+      memberShifts: new Map(),
+      shiftCoverage: new Map(),
+    };
+
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "FINTA"]])],
+      ["m2", new Map([["gender", "M"]])],
+      ["m3", new Map([["gender", "M"]])],
+    ]);
+
+    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    expect(violations.length).toBeGreaterThan(0); // 33% FINTA < 40% min
+  });
+});

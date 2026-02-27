@@ -63,17 +63,40 @@ export function validateComplementaryRules(
     const assignments = state.assignments.get(shift.id) || [];
 
     for (const rule of applicableRules) {
-      const hasCoverage = assignments.some((a) => {
-        const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
-        return evaluateRule(rule, attrs);
-      });
+      const balanceMode = rule.balanceMode || "REQUIRE_ONE";
 
-      if (!hasCoverage && assignments.length > 0) {
-        violations.push({
-          type: "COMPLEMENTARY_RULE",
-          message: `Shift ${shift.id}: no member has ${rule.attribute} ${rule.operator} ${rule.value}`,
-          severity: "soft",
+      if (balanceMode === "REQUIRE_ONE") {
+        const hasCoverage = assignments.some((a) => {
+          const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
+          return evaluateRule(rule, attrs);
         });
+
+        if (!hasCoverage && assignments.length > 0) {
+          violations.push({
+            type: "COMPLEMENTARY_RULE",
+            message: `Shift ${shift.id}: no member has ${rule.attribute} ${rule.operator} ${rule.value}`,
+            severity: "soft",
+          });
+        }
+      } else if (balanceMode === "REQUIRE_RATIO") {
+        if (assignments.length === 0) continue;
+
+        const matchCount = assignments.filter((a) => {
+          const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
+          return evaluateRule(rule, attrs);
+        }).length;
+
+        const ratio = matchCount / assignments.length;
+        const minRatio = rule.minRatio ?? 0;
+        const maxRatio = rule.maxRatio ?? 1;
+
+        if (ratio < minRatio || ratio > maxRatio) {
+          violations.push({
+            type: "RATIO_BALANCE",
+            message: `Shift ${shift.id}: ${rule.attribute} ratio ${(ratio * 100).toFixed(0)}% outside ${(minRatio * 100).toFixed(0)}-${(maxRatio * 100).toFixed(0)}% range`,
+            severity: "soft",
+          });
+        }
       }
     }
   }

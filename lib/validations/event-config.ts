@@ -6,6 +6,9 @@ const allocationRuleSchema = z.object({
   attribute: z.string(),
   operator: z.enum(["EQUALS", "NOT_EQUALS", "CONTAINS"]),
   value: z.string(),
+  balanceMode: z.enum(["REQUIRE_ONE", "REQUIRE_RATIO"]).optional(),
+  minRatio: z.number().min(0).max(1).optional(),
+  maxRatio: z.number().min(0).max(1).optional(),
 });
 
 export const eventConfigSchema = z.object({

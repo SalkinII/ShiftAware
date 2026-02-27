@@ -17,6 +17,9 @@ interface AttributeRule {
   attribute: string;
   operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS";
   value: string;
+  balanceMode?: "REQUIRE_ONE" | "REQUIRE_RATIO";
+  minRatio?: number;
+  maxRatio?: number;
 }
 
 interface DistributionConfig {
@@ -157,13 +160,17 @@ export function DistributionSettings() {
   const handleUpdateRule = (
     id: string,
     field: keyof AttributeRule,
-    value: string,
+    value: string | number,
   ) => {
     setConfig({
       ...config,
-      attributeRules: config.attributeRules.map((rule) =>
-        rule.id === id ? { ...rule, [field]: value } : rule,
-      ),
+      attributeRules: config.attributeRules.map((rule) => {
+        if (rule.id !== id) return rule;
+        if (field === "minRatio" || field === "maxRatio") {
+          return { ...rule, [field]: typeof value === "number" ? value : parseFloat(value) };
+        }
+        return { ...rule, [field]: value };
+      }),
     });
   };
 
@@ -426,7 +433,8 @@ export function DistributionSettings() {
                 key={rule.id}
                 className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-200"
               >
-                <div className="flex-1 grid grid-cols-4 gap-2">
+                <div className="flex-1 flex flex-col gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <select
                     value={rule.shiftType}
                     onChange={(e) =>
@@ -529,6 +537,56 @@ export function DistributionSettings() {
                       />
                     );
                   })()}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <select
+                    value={rule.balanceMode || "REQUIRE_ONE"}
+                    onChange={(e) =>
+                      handleUpdateRule(rule.id, "balanceMode", e.target.value)
+                    }
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="REQUIRE_ONE">Require One</option>
+                    <option value="REQUIRE_RATIO">Require Ratio</option>
+                  </select>
+                  {rule.balanceMode === "REQUIRE_RATIO" && (
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={Math.round((rule.minRatio ?? 0) * 100)}
+                        onChange={(e) =>
+                          handleUpdateRule(
+                            rule.id,
+                            "minRatio",
+                            Number(e.target.value) / 100,
+                          )
+                        }
+                        placeholder="Min %"
+                        className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-500">–</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={Math.round((rule.maxRatio ?? 100) * 100)}
+                        onChange={(e) =>
+                          handleUpdateRule(
+                            rule.id,
+                            "maxRatio",
+                            Number(e.target.value) / 100,
+                          )
+                        }
+                        placeholder="Max %"
+                        className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-500">% ratio</span>
+                    </div>
+                  )}
+                </div>
                 </div>
 
                 <Button

@@ -12,7 +12,6 @@ import { scoreAssignment } from "./scorer";
 import {
   validateMinimumShifts,
   validateShiftCapacity,
-  validateGenderBalance,
   validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
@@ -307,19 +306,6 @@ export async function runAssignmentAlgorithm(
     );
     for (const v of compViolations) {
       violations.push(v.message);
-    }
-  }
-
-  for (const shift of shifts) {
-    const assignments = state.assignments.get(shift.id) || [];
-    const genderViolation = validateGenderBalance(
-      shift.id,
-      assignments,
-      membersMap,
-      eventConfig.memberAttributes,
-    );
-    if (genderViolation) {
-      violations.push(`Shift ${shift.id}: ${genderViolation.message}`);
     }
   }
 

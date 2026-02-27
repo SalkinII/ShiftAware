@@ -40,6 +40,9 @@ export interface AllocationRule {
   attribute: string;
   operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS";
   value: string;
+  balanceMode?: "REQUIRE_ONE" | "REQUIRE_RATIO";
+  minRatio?: number;
+  maxRatio?: number;
 }
 
 export type TeamMemberWithRelations = TeamMember & {

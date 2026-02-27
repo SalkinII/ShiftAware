@@ -76,6 +76,7 @@ export function validateShiftCapacity(
   return null;
 }
 
+/** @deprecated Use generic rule-validator with REQUIRE_RATIO mode instead */
 export function validateGenderBalance(
   shiftId: string,
   assignments: Assignment[],
