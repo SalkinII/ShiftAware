@@ -5,6 +5,8 @@
 
 New:
 
+- I think we need to audit this gigantic plan that was implemented
+
 - in the assignment rules the template selector jumps around and goes back to values that weren't selected.
 
 - Sidebar card with shift name now just says shift for all shifts. no matter how the template was called. you are doing something wrong here with the implementation.
@@ -19,6 +21,22 @@ Really unpredictable now. Breaking change.
 - on the event config page the buffer input is stale. does that somehow correspond to our architecture? We used to plan to have buffer days. but the way it is now we could scrap that.
 However, if we get rid of the buffer and all the stuff around it we would probably also need to get rid of those attributes in our data model and sanitize the prisma schema. Like full 3 layer clean up with testing so we don't break stuff.
 
+- 8	4d84d87	Zero-occupancy marker styling: Tried to set 0 occupancy in a template. didn't work. still minimum 1.
+
+- require ratio default upper bound reads 10000. (% in the text behind it)
+
+- I think we need to revamp the seed so we can really test our new architecture. so everything works as intended. We should drop the old seed. just keep a nice little dataset. All compliant with our 3 layer architecture.
+
+- the new export to png viewport jumps to the far right when I click the button. Otherwise it looks amazing.
+
+- the define new shift on the canvas page switches to a cancel button which jumps to another position. It not showing the side panel to the right which is to be expected. But this behaviour is not pretty.
+The button define new shift however also doesn't do anything when I'm in planning mode.
+
+- also on the canvas page when I switch from planning to prefences the card themselves jump to a lower left position. misaligning with the toggle for list/calendar and the event name.
+
+- in the preview results the header should have rounded corners. not square.
+
+- when I ran assignment i got this:  Invalid `prisma.assignment.deleteMany()` invocation: Foreign key constraint violated: `SwapRequest_fromAssignmentId_fkey (index)`
 
 --- should be fixed:
 - With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am messing with the complete structure of the canvas.
