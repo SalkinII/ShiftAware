@@ -94,9 +94,23 @@ export function DistributionSettings() {
         const data = await res.json();
         const cfg = unwrapApiResponse<any>(data);
         if (cfg) {
+          // Reverse-map: check for preserved UI values first, fallback to derivation
+          const weights = cfg.algorithmWeights || {};
+          let fairness = weights._uiFairness ?? 50;
+          let preferences = weights._uiPreferences ?? 30;
+
+          // If no UI values stored, derive from 4-factor weights
+          if (weights._uiFairness === undefined && weights.preferenceMatch !== undefined) {
+            const wb = (weights.workloadFairness || 0) + (weights.experienceBalance || 0);
+            const pm = weights.preferenceMatch || 0;
+            const total = wb + pm;
+            fairness = total > 0 ? Math.round((wb / total) * 100) : 50;
+            preferences = total > 0 ? Math.round((pm / total) * 100) : 30;
+          }
+
           setConfig({
-            fairnessWeight: cfg.algorithmWeights?.fairness || 50,
-            preferenceWeight: cfg.algorithmWeights?.preferences || 30,
+            fairnessWeight: fairness,
+            preferenceWeight: preferences,
             maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
             minRestHours: cfg.balanceThresholds?.minRestHours || 8,
             attributeRules: cfg.allocationRules || [],
@@ -175,6 +189,7 @@ export function DistributionSettings() {
         toast.success(
           `Preview: ${totalAssignments} assignments proposed. ${totalViolations} constraint violations detected.`,
         );
+        await loadConfig();
       } else {
         const error = await res.json();
         toast.error(error.message || "Failed to preview");
@@ -209,6 +224,8 @@ export function DistributionSettings() {
             detail: { keys: ["assignments", "shifts"] },
           }),
         );
+        // Reload config to reflect any changes
+        await loadConfig();
       } else {
         const error = await res.json();
         toast.error(error.message || "Algorithm failed");
@@ -227,13 +244,27 @@ export function DistributionSettings() {
     }
 
     try {
+      // Map UI sliders to 4-factor weights
+      // fairnessWeight controls workloadFairness + experienceBalance
+      // preferenceWeight controls preferenceMatch
+      // coreShiftCoverage stays fixed
+      const total = config.fairnessWeight + config.preferenceWeight + 5; // +5 for core
+      const fairnessNorm = config.fairnessWeight / total;
+      const prefNorm = config.preferenceWeight / total;
+      const coreNorm = 5 / total;
+
       const res = await fetch(`/api/events/${selectedEventId}/config`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           algorithmWeights: {
-            fairness: config.fairnessWeight,
-            preferences: config.preferenceWeight,
+            preferenceMatch: Math.round(prefNorm * 100) / 100,
+            experienceBalance: Math.round((fairnessNorm * 0.6) * 100) / 100,
+            workloadFairness: Math.round((fairnessNorm * 0.4) * 100) / 100,
+            coreShiftCoverage: Math.round(coreNorm * 100) / 100,
+            // Preserve original slider values for round-trip
+            _uiFairness: config.fairnessWeight,
+            _uiPreferences: config.preferenceWeight,
           },
           balanceThresholds: {
             maxShiftsPerPerson: config.maxShiftsPerPerson,
