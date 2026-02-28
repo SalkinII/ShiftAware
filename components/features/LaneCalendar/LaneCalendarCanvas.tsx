@@ -248,7 +248,7 @@ function LaneCalendarCanvasInner(
     }
   }
 
-  const { setViewport, fitView } = useReactFlow();
+  const { setViewport, fitView, getViewport } = useReactFlow();
   const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);
   const canvasHeight = orderedLanes.length * LANE_HEIGHT;
   const shiftNodes = useShiftNodes(shifts, orderedLanes, eventStart, {
@@ -313,6 +313,8 @@ function LaneCalendarCanvasInner(
     const flowNodes = [...laneNodes, ...shiftNodes];
     if (flowNodes.length === 0) return null;
 
+    const savedViewport = getViewport();
+
     const bounds = getNodesBounds(flowNodes);
     const { width, height } = container.getBoundingClientRect();
     const { x, y, zoom } = getViewportForBounds(
@@ -334,8 +336,10 @@ function LaneCalendarCanvasInner(
       });
     } catch {
       return null;
+    } finally {
+      setViewport(savedViewport);
     }
-  }, [laneNodes, shiftNodes, setViewport]);
+  }, [laneNodes, shiftNodes, setViewport, getViewport]);
 
   useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
 
