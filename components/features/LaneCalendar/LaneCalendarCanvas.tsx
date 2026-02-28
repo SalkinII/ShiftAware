@@ -170,29 +170,6 @@ function LaneCalendarCanvasInner(
   const effectiveReadOnly = readOnly || shiftMutationLocked;
 
   const flowContainerRef = useRef<HTMLDivElement>(null);
-  const {
-    handleDrop,
-    handleDragOver,
-    handleNodeDragStop,
-    handleResizeEnd,
-    handleNodeDrag,
-    clearAlignmentGuides,
-    alignmentGuides,
-  } = useCanvasActions({
-    lanes,
-    eventStart,
-    eventId,
-    onShiftCreated,
-    onShiftUpdated,
-  });
-
-  const handleNodeDragStopWithGuides = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      clearAlignmentGuides();
-      handleNodeDragStop(event, node);
-    },
-    [clearAlignmentGuides, handleNodeDragStop],
-  );
 
   const [laneOrderOverride, setLaneOrderOverride] = useState<
     Record<string, number>
@@ -222,6 +199,30 @@ function LaneCalendarCanvasInner(
       }))
       .sort((a, b) => a.order - b.order);
   }, [lanes, laneOrderOverride]);
+
+  const {
+    handleDrop,
+    handleDragOver,
+    handleNodeDragStop,
+    handleResizeEnd,
+    handleNodeDrag,
+    clearAlignmentGuides,
+    alignmentGuides,
+  } = useCanvasActions({
+    lanes: orderedLanes,
+    eventStart,
+    eventId,
+    onShiftCreated,
+    onShiftUpdated,
+  });
+
+  const handleNodeDragStopWithGuides = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      clearAlignmentGuides();
+      handleNodeDragStop(event, node);
+    },
+    [clearAlignmentGuides, handleNodeDragStop],
+  );
 
   function handleReorder(laneId: string, direction: "up" | "down") {
     const sortable = orderedLanes.filter((l) => l.id !== UNASSIGNED_LANE_ID);
