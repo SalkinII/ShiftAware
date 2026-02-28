@@ -254,6 +254,13 @@ export class AssignmentsService {
 
     // 8. Clear old, save new — atomic transaction
     const saved = await prisma.$transaction(async (tx) => {
+      // Delete swap requests referencing this event's assignments first
+      await tx.swapRequest.deleteMany({
+        where: {
+          fromAssignment: { shift: { eventId } },
+        },
+      });
+
       await tx.assignment.deleteMany({
         where: { shift: { eventId } },
       });
