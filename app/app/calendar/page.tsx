@@ -39,6 +39,8 @@ interface Assignment {
 interface Shift {
   id: string;
   type: string;
+  templateId?: string | null;
+  template?: { id: string; name: string } | null;
   startTime: string;
   endTime: string;
   priority: string;
@@ -704,7 +706,7 @@ export default function UserCalendarPage() {
                 <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
                   <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="text-sm font-bold text-gray-900">
-                      {selectedShift.type.replace(/_/g, " ")}
+                      {selectedShift.template?.name ?? selectedShift.type.replace(/_/g, " ")}
                     </h3>
                     <button
                       onClick={() => setSelectedShift(null)}

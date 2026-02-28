@@ -210,6 +210,7 @@ export class ShiftRepository extends BaseRepository {
         where: { id },
         include: {
           event: true,
+          template: { select: { id: true, name: true } },
           requiredRoles: true,
           preferences: {
             include: { teamMember: true },
