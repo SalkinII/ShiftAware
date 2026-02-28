@@ -1,106 +1,81 @@
-# ShiftAware - Project Overview
+# ShiftAware — Documentation Index
 
-## Purpose
+Festival shift planning tool for small teams. Admins build schedules and run allocation; team members vote on preferences and see their assignments.
 
-Shift planning tool for small festival teams (25-35 people) with pseudonymised data, shift preferences, fair automatic assignment, and PNG export.
+**Branch:** main | **Status:** v3.11
 
-## Architecture
+---
+
+## Documentation Map
+
+| Document | Purpose | Key Sections |
+|----------|---------|-------------|
+| [README.md](../README.md) | Setup & quick start | Features, Quick Start, Commands |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design reference | [Three-Layer Pattern](#), [Event Lifecycle](#), [File Structure](#), [Error Handling](#) |
+| [DESIGN.md](./DESIGN.md) | Visual language & components | [Token System](#), [Coordinate System](#), [Component Patterns](#) |
+| [API.md](./API.md) | Endpoint reference | [Auth](#), [Members](#), [Events](#), [Shifts](#), [Algorithm](#) |
+| [ALGORITHM.md](./ALGORITHM.md) | Allocation engine | [Phases](#), [Scoring](#), [Rules](#), [Config Mapping](#) |
+
+---
+
+## Key Concepts Glossary
+
+| Term | Meaning |
+|------|---------|
+| **Event** | A festival or event instance. All data is scoped to an Event. |
+| **ShiftTemplate** | Reusable pattern defining lane type, color, capacity. Global (not event-scoped). |
+| **Shift** | An actual scheduled shift for a specific Event, derived from a template. |
+| **Lane** | Vertical column on the calendar, derived from ShiftTemplate.name. |
+| **Assignment** | A TeamMember assigned to a Shift (by algorithm or manually). |
+| **ShiftPreference** | A member's vote on a shift: `WANT` or `DONT_WANT`. |
+| **EventStatus** | Lifecycle stage of an event. Determines what operations are permitted. |
+| **AllocationRule** | Attribute-based constraint for the algorithm (e.g. "all mobile shifts need first aid"). |
+| **RepositoryError** | Typed error from the Repository layer with code: NOT_FOUND / DUPLICATE / DATABASE_ERROR. |
+
+---
+
+## Event Lifecycle Quick Reference
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Next.js 14                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
-│  │  /admin/*    │  │  /app/*      │  │  /api/*   │  │
-│  │  (admin)     │  │  (user)      │  │  (REST)   │  │
-│  └──────────────┘  └──────────────┘  └───────────┘  │
-└────────────────────────┬────────────────────────────┘
-                         │
-         ┌───────────────┼───────────────┐
-         │               │               │
-    ┌────▼────┐    ┌─────▼─────┐   ┌─────▼─────┐
-    │ Prisma  │    │ DnD-Kit   │   │ Tailwind  │
-    │ ORM     │    │ (drag)    │   │ CSS       │
-    └────┬────┘    └───────────┘   └───────────┘
-         │
-    ┌────▼────┐
-    │ Postgres│
-    │ (Docker)│
-    └─────────┘
+PLANNING ──► OPEN_FOR_PREFERENCES ──► ASSIGNING ──► FINALIZED ──► COMPLETED
+    ◄──              ◄──                  ◄──           ◄──
 ```
 
-## Route Structure (v2.0)
+| Status | Who acts | What's possible |
+|--------|---------|-----------------|
+| PLANNING | Admin | Create/edit shifts, register members |
+| OPEN_FOR_PREFERENCES | Users | Vote WANT/DONT_WANT on shifts |
+| ASSIGNING | Admin | Run algorithm, preview, manual assignment |
+| FINALIZED | Admin | Manual reassignment only (dropouts) |
+| COMPLETED | Nobody | Read-only (revert to FINALIZED if needed) |
 
-### Admin Routes
-| Route | Purpose |
-|-------|---------|
-| `/admin/setup` | Event config, shift templates, team attributes |
-| `/admin/shifts/schedule` | LaneCalendarView - drag-drop shift planning |
-| `/admin/team` | Team members + allocation + distribution logic |
-| `/admin/audit` | Audit log with rollback |
+→ Full permission matrix: [ARCHITECTURE.md — Event Lifecycle](./ARCHITECTURE.md)
 
-### User Routes
-| Route | Purpose |
-|-------|---------|
-| `/app/identity` | Select identity (every login) |
-| `/app/calendar` | View shifts, vote preferences, request swaps |
-| `/app/export` | Download PNG (personal or full schedule) |
+---
 
-### Auth
-| Route | Purpose |
-|-------|---------|
-| `/login` | Password-based event authentication |
-| `/` | Redirect to `/app/identity` or `/login` |
+## Workflow Quick Reference
 
-## Key Components
+| Need to… | Where to look |
+|----------|--------------|
+| Understand system layers | [ARCHITECTURE.md — Three-Layer Pattern](./ARCHITECTURE.md) |
+| Find a component file | [ARCHITECTURE.md — File Structure](./ARCHITECTURE.md) |
+| Add a new API endpoint | [ARCHITECTURE.md — Three-Layer Pattern](./ARCHITECTURE.md) + [API.md](./API.md) |
+| Change a design token | [DESIGN.md — Token System](./DESIGN.md) + `app/globals.css` |
+| Understand algorithm config | [ALGORITHM.md — Config Mapping](./ALGORITHM.md) |
+| Debug a route error | [ARCHITECTURE.md — Error Handling](./ARCHITECTURE.md) |
+| Add a new lane type | [DESIGN.md — Quick Reference](./DESIGN.md) |
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| LaneCalendarView | `/components/features/LaneCalendar/` | Lane-based drag-drop calendar |
-| TemplatePalette | `/components/features/TemplatePalette/` | Draggable shift templates |
-| SwapInterface | `/components/features/SwapInterface/` | Shift swap UI |
-| AdminSidebar | `/components/layout/AdminSidebar.tsx` | Admin navigation |
-| UserSidebar | `/components/layout/UserSidebar.tsx` | User navigation |
+---
 
-## LaneCalendarView Components
+## Quick Debugging Index
 
-| Component | Purpose |
-|-----------|---------|
-| `LaneCalendarView.tsx` | Main grid (lanes x days) |
-| `LaneDropZone.tsx` | Drop target with snap detection |
-| `ShiftBlock.tsx` | Shift visualization with resize/edit |
-| `DragPreview.tsx` | Real-time drag feedback |
-| `TimeRuler.tsx` | Time axis with 15-min ticks |
-| `ViewModeControls.tsx` | Day/week/custom toggle |
-| `CoverageOverlay.tsx` | Coverage heatmap layer |
+**"Lanes not showing"** → Check templates assigned to event via EventTemplate junction. See [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-## Data Models
+**"Algorithm returns empty assignments"** → Check EventRegistration exists for members. Event must be in ASSIGNING status.
 
-| Model | Purpose |
-|-------|---------|
-| `Event` | Festival/event with dates and config |
-| `ShiftTemplate` | Reusable shift patterns with allowed lanes |
-| `Shift` | Actual shift instances |
-| `TeamMember` | Staff with dynamic attributes |
-| `Assignment` | Shift-to-member assignments |
-| `ShiftPreference` | User voting on shifts (wantLevel enum: WANT / DONT_WANT) |
-| `AuditLog` | Change tracking |
+**"RepositoryError not caught in route"** → Add `instanceof RepositoryError` check in catch block. See [ARCHITECTURE.md — Error Handling](./ARCHITECTURE.md).
 
-## Key Patterns
+**"Shifts appear in wrong lane"** → Verify `Shift.templateId` matches a template assigned to the event.
 
-- **ShiftPreference**: `wantLevel: WANT | DONT_WANT` enum replaced legacy numeric priority
-- **API responses**: `{ data: ... }` wrapper, use `unwrapApiResponse()`
-- **Auth (client)**: `isAdminClient()` from `lib/auth-client.ts`
-- **Auth (server)**: `isAuthenticated()` from `lib/auth.ts`
-- **Cache invalidation**: `window.dispatchEvent(new CustomEvent('shiftaware:cache-invalidate'))`
-- **Snap behavior**: Templates snap to previous shift ends (30-min threshold)
-
-## Commands
-
-```bash
-npm run dev          # Start dev server (localhost:3000)
-npm run build        # Production build
-npm test             # Run unit tests
-npx playwright test  # Run E2E tests
-npx prisma studio    # Database GUI
-npx prisma migrate dev  # Run migrations
-```
+→ Full debugging guide: [ARCHITECTURE.md — Quick Debugging](./ARCHITECTURE.md)
+→ Bug register: [docs/Bugs.txt](./Bugs.txt)
