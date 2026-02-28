@@ -55,7 +55,7 @@ export function AlgorithmResultsModal({
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <Card className="max-w-2xl w-full bg-white shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white rounded-t-2xl">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-2xl font-bold mb-2">Preview Results</h3>

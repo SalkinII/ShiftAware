@@ -332,12 +332,12 @@ export function TemplateManager() {
               <Input
                 label="Capacity"
                 type="number"
-                min="1"
+                min="0"
                 value={formData.capacity}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    capacity: parseInt(e.target.value) || 1,
+                    capacity: Math.max(0, parseInt(e.target.value) || 0),
                   })
                 }
               />

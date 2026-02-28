@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   Plus,
+  X,
   Clock,
   Calendar,
   Shield,
@@ -723,14 +724,12 @@ export default function ShiftsPage() {
                 })()}
               <Button
                 onClick={() => setShowForm(!showForm)}
-                className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
+                className="flex items-center gap-2 min-w-[11rem] justify-center shadow-lg shadow-primary-500/20"
               >
                 {showForm ? (
-                  "Cancel"
+                  <><X className="w-4 h-4" /> Cancel</>
                 ) : (
-                  <>
-                    <Plus className="w-4 h-4" /> Define New Shift
-                  </>
+                  <><Plus className="w-4 h-4" /> Define New Shift</>
                 )}
               </Button>
             </div>

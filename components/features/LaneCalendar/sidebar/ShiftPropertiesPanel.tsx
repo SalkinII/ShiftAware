@@ -271,9 +271,9 @@ export function ShiftPropertiesPanel({
             Capacity
             <input
               type="number"
-              min={1}
+              min={0}
               value={capacity}
-              onChange={(e) => setCapacity(parseInt(e.target.value) || 1)}
+              onChange={(e) => setCapacity(Math.max(0, parseInt(e.target.value) || 0))}
               className="mt-1 block w-full border rounded px-2 py-1 text-sm"
             />
           </label>

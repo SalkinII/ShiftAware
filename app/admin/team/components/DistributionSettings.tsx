@@ -572,7 +572,7 @@ export function DistributionSettings() {
                         type="number"
                         min="0"
                         max="100"
-                        value={Math.round((rule.maxRatio ?? 100) * 100)}
+                        value={Math.round((rule.maxRatio ?? 1) * 100)}
                         onChange={(e) =>
                           handleUpdateRule(
                             rule.id,
