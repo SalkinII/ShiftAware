@@ -69,17 +69,6 @@ This document lists known bugs, design gaps, and UX issues. Descriptions follow 
 
 ---
 
-## 1. Profile Create Page — Shift Lead / Supervisor Checkboxes
-
-**Type:** Orphaned UI / Superseded by architecture
-
-**Context:** CreateProfileForm (`app/app/identity/components/CreateProfileForm.tsx`) includes "Shift Lead" and "Supervisor" capability checkboxes. These are wired to form state and submitted to `/api/members` (capabilities are persisted). However, the product direction is to express roles via event-specific attributes rather than global capabilities.
-
-**Symptom:** Checkboxes exist and function, but their purpose is unclear and they duplicate the attributes model. Risk of inconsistent data (capabilities vs attributes).
-
-**Proposed resolution:** Remove capability checkboxes from Create Profile, or clearly mark as deprecated. Rely on event-specific attribute definitions for role assignment.
-
----
 
 ## 2. Attribute Rules — Template Import in Team Management
 

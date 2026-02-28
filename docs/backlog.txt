@@ -121,13 +121,5 @@ All 7 tasks completed in v3.6. See docs/Bugs.txt for individual bug status.
 
 ## v3.10 — Advanced & Audit
 
-- Bug #8: Gender equality / attribute constraint logic
-  Files: Distribution algorithm
-
-- Full UI audit — DESIGN.md & ARCHITECTURE.md compliance (gap report)
-  Ref: NEEDSREVAMP Task 15
-
-- RegistrationStatus workflow — REGISTERED → CONFIRMED → DECLINED
-  Schema exists, no service logic. Ref: brainstorming 2026-02-26.
-
-- Window-switching empty calendar bug — monitor, investigate if recurs
+- Full UI audit — Documentation compliance (gap report)
+ 
