@@ -1,42 +1,59 @@
 # ShiftAware — Bug and Issue Register
 
+**v3.11 Stabilization (2026-02-28):** Bugs #1–12 fixed. See commits with prefix `fix(` or `refactor:`.
 
 ----
 
 New:
 
+- when switching between list view and calendar view in admin the toggle view button jumps around because list has no export button.
+**Status: FIXED in v3.11** — min-height on calendar container prevents layout jump.
+
+________________
+
 - I think we need to audit this gigantic plan that was implemented
 
 - in the assignment rules the template selector jumps around and goes back to values that weren't selected.
+**Status: FIXED in v3.11** — allocation rules now use template ID instead of ShiftType enum.
 
 - Sidebar card with shift name now just says shift for all shifts. no matter how the template was called. you are doing something wrong here with the implementation.
+**Status: FIXED in v3.11** — sidebar displays template name via template include.
 
 - feature: We should lock that lane reorder after the planning phase. consistent with other immutable settings after the shift is done.
 
 - Something about the lane reorder probably broke the drag and drop coordinate calculation. If I drag and drop the shifts appear at random places.
 Really unpredictable now. Breaking change.
+**Status: FIXED in v3.11** — orderedLanes passed to useCanvasActions for correct DnD coordinates.
 
 - the create profile card is still not present on the team manage admin page.
 
 - on the event config page the buffer input is stale. does that somehow correspond to our architecture? We used to plan to have buffer days. but the way it is now we could scrap that.
 However, if we get rid of the buffer and all the stuff around it we would probably also need to get rid of those attributes in our data model and sanitize the prisma schema. Like full 3 layer clean up with testing so we don't break stuff.
+**Status: FIXED in v3.11** — buffer days removed from schema, validation, UI, and calendar.
 
 - 8	4d84d87	Zero-occupancy marker styling: Tried to set 0 occupancy in a template. didn't work. still minimum 1.
+**Status: FIXED in v3.11** — TemplateManager and ShiftPropertiesPanel allow min 0.
 
 - require ratio default upper bound reads 10000. (% in the text behind it)
+**Status: FIXED in v3.11** — maxRatio default changed from 100 to 1.
 
 - I think we need to revamp the seed so we can really test our new architecture. so everything works as intended. We should drop the old seed. just keep a nice little dataset. All compliant with our 3 layer architecture.
 
 - the new export to png viewport jumps to the far right when I click the button. Otherwise it looks amazing.
+**Status: FIXED in v3.11** — viewport saved and restored after PNG capture.
 
 - the define new shift on the canvas page switches to a cancel button which jumps to another position. It not showing the side panel to the right which is to be expected. But this behaviour is not pretty.
 The button define new shift however also doesn't do anything when I'm in planning mode.
+**Status: FIXED in v3.11** — Cancel button has min-w-[11rem] and X icon to prevent jump.
 
 - also on the canvas page when I switch from planning to prefences the card themselves jump to a lower left position. misaligning with the toggle for list/calendar and the event name.
+**Status: FIXED in v3.11** — min-height on calendar container prevents layout jump on mode toggle.
 
 - in the preview results the header should have rounded corners. not square.
+**Status: FIXED in v3.11** — AlgorithmResultsModal header has rounded-t-2xl.
 
 - when I ran assignment i got this:  Invalid `prisma.assignment.deleteMany()` invocation: Foreign key constraint violated: `SwapRequest_fromAssignmentId_fkey (index)`
+**Status: FIXED in v3.11** — SwapRequests deleted before Assignments in transaction.
 
 --- should be fixed:
 - With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am messing with the complete structure of the canvas.
@@ -63,7 +80,7 @@ Task 5+6	e5cff64	Removed four metric cards, filter card at top
 Same logic for the create bar. We want to work with our template names. We can look them up. we can change them. we index them. Why not use them here?
 Also the list view card? How is it that it still says: STATIONARY in the card as hardcoded html? This doesn't correspond to our service architecture or our desing principles.
 
-
+- For the order of the content in the shift nodes: In the first line: Shift name (left) and time (right). Second line: Desirability, vote up down, coverage - we will loose the -check- we will just do normal colour of the numbers if lacking, then green numbers when fully covered. Third line stays as it is.
 
 This document lists known bugs, design gaps, and UX issues. Descriptions follow systematic-debugging: symptom, context, and root cause where identified.
 
