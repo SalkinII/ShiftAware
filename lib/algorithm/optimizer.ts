@@ -122,7 +122,7 @@ export async function runAssignmentAlgorithm(
       // Check allocation rules
       if (allocationRules.length > 0) {
         const memberAttrs = eventConfig.memberAttributes?.get(member.id) || new Map<string, string>();
-        const applicableRules = allocationRules.filter((r) => r.shiftType === shift.type);
+        const applicableRules = allocationRules.filter((r) => r.shiftType === shift.templateId);
         const passesRules = applicableRules.every((rule) => evaluateRule(rule, memberAttrs));
         if (!passesRules) continue;
       }
@@ -225,7 +225,7 @@ export async function runAssignmentAlgorithm(
 
       // Filter by allocation rules
       const filteredCandidates = allocationRules.length > 0
-        ? filterByRules(candidates, shift.type, allocationRules, eventConfig.memberAttributes || new Map())
+        ? filterByRules(candidates, shift.templateId ?? shift.type, allocationRules, eventConfig.memberAttributes || new Map())
         : candidates;
 
       if (filteredCandidates.length === 0) break;

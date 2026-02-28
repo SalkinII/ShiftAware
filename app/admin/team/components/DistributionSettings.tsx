@@ -138,7 +138,7 @@ export function DistributionSettings() {
   const handleAddRule = () => {
     const newRule: AttributeRule = {
       id: Date.now().toString(),
-      shiftType: templates[0]?.type || "",
+      shiftType: templates[0]?.id || "",
       attribute: "experience_level",
       operator: "EQUALS",
       value: "",
@@ -446,7 +446,7 @@ export function DistributionSettings() {
                       <option value="">No templates loaded</option>
                     ) : (
                       templates.map((t) => (
-                        <option key={t.id} value={t.type}>
+                        <option key={t.id} value={t.id}>
                           {t.name}
                         </option>
                       ))

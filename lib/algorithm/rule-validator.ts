@@ -52,14 +52,14 @@ export function filterByRules<T extends { member: { id: string }; score: Assignm
  */
 export function validateComplementaryRules(
   state: AssignmentState,
-  shifts: Array<{ id: string; type: string }>,
+  shifts: Array<{ id: string; type: string; templateId?: string | null }>,
   rules: AllocationRule[],
   memberAttributes: Map<string, Map<string, string>>,
 ): ConstraintViolation[] {
   const violations: ConstraintViolation[] = [];
 
   for (const shift of shifts) {
-    const applicableRules = rules.filter((r) => r.shiftType === shift.type);
+    const applicableRules = rules.filter((r) => r.shiftType === (shift.templateId ?? shift.type));
     const assignments = state.assignments.get(shift.id) || [];
 
     for (const rule of applicableRules) {
