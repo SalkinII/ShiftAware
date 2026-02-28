@@ -1,8 +1,7 @@
 # ShiftAware Architecture Guide
 
-> **Comprehensive reference for system architecture, data flow, and three-layer pattern.**
->
-> Last updated: 2026-02-16 (Full workflow: lifecycle transitions, assignment, export)
+> Comprehensive reference for system architecture, data flow, and the three-layer pattern.
+> Last updated: 2026-02-28
 
 ---
 
@@ -48,11 +47,11 @@
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+Stack: Next.js 15.1.2 App Router | React 19 | @xyflow/react 12.10 | Prisma 5.18 | PostgreSQL | Tailwind v4
+
 ---
 
 ## 2. Three-Layer Architecture Pattern
-
-**Status:** ✅ Phase 3 Complete (Three-layer architecture). ✅ Phase 4 Complete (UI-Service alignment).
 
 ShiftAware uses a clean three-layer architecture to separate concerns:
 
@@ -217,25 +216,26 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 | **FINALIZED** | Published schedule, operational | Admin | Manual reassignment (dropouts/late adds), registration |
 | **COMPLETED** | Archive / read-only | Nobody | Nothing — revertible to FINALIZED if needed |
 
-### Status-Driven UI
+### Permission Matrix
 
-The schedule page header shows a **contextual action button** that advances the workflow:
-- PLANNING → "Publish Shifts" button
-- OPEN_FOR_PREFERENCES → "Close Preferences" button
-- ASSIGNING → "Finalize Schedule" button
-- FINALIZED → "Mark Complete" button
-- Each also has a "Go Back" secondary action
+| EventStatus | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
+|-------------|-------------|-------------------|---------------------|-------------------|-------------------|
+| PLANNING | **yes** | no | no | no | **yes** |
+| OPEN_FOR_PREFERENCES | no | **yes** | no | no | **yes** |
+| ASSIGNING | no | no | **yes** | **yes** | **yes** |
+| FINALIZED | no | no | no | **yes** | **yes** |
+| COMPLETED | no | no | no | no | no |
 
-FestivalSettings shows a **read-only status badge** (no dropdown). Status only changes through the transition button or `POST /api/events/{id}/transition`.
+**Key design decision:** FINALIZED allows manual assignment changes and new registrations. This handles real-world scenarios: dropouts, late additions, and last-minute reassignments. Only COMPLETED locks everything — and even COMPLETED can revert to FINALIZED.
 
-### User Calendar — Status-Dependent Views
+**Status transitions via:** `POST /api/events/{id}/transition` → EventsService.transitionStatus()
 
-| Status | What the user sees |
-|--------|-------------------|
-| PLANNING | "Schedule is being prepared" placeholder |
-| OPEN_FOR_PREFERENCES | Shifts with desirability scores + voting buttons |
-| ASSIGNING | Shifts visible, voting disabled, "in progress" banner |
-| FINALIZED / COMPLETED | Shifts with assigned members, own assignments highlighted |
+**Validation in:** lib/validations/event-transition.ts
+
+**Client-safe helpers** (no Prisma import, safe for `"use client"` components):
+- `canMutateShifts(status)` — checks SHIFT_MUTATE
+- `canRunAlgorithm(status)` — checks ASSIGNMENT_ALGORITHM
+- `canManuallyAssign(status)` — checks ASSIGNMENT_MANUAL
 
 ---
 
@@ -360,12 +360,14 @@ FestivalSettings shows a **read-only status badge** (no dropdown). Status only c
             └── Assign new member to open shift
 ```
 
-### Journey F: Day View Export (any status)
+### Journey F: Export (PNG or PDF table)
 
 ```
 /admin/shifts/schedule → "Export" button
      │
-     └── Generates printable day-grouped schedule
+     └── Generates printable schedule
+         ├── PNG via exportToPng() (html-to-image)
+         ├── PDF table via window.print()
          ├── Shifts sorted by day and time
          ├── Shows template name, time range, assigned members
          └── Opens browser print dialog
@@ -373,7 +375,7 @@ FestivalSettings shows a **read-only status badge** (no dropdown). Status only c
 
 ---
 
-## 6. Component → API → DB Mapping
+## 6. Component → API Mapping
 
 ### Identity Page
 
@@ -391,7 +393,7 @@ FestivalSettings shows a **read-only status badge** (no dropdown). Status only c
 | LaneCalendarCanvas | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
 | ShiftBlockNode (readOnly) | Vote Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
 | ShiftBlockNode (readOnly) | Vote Don't Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
-| SwapModal | Request swap | POST /api/swap-requests | - | - | SwapRequest |
+| SwapInterface | Request swap | POST /api/swap-requests | SwapRequestsService | SwapRequestRepository | SwapRequest |
 
 ### Schedule (Admin)
 
@@ -428,483 +430,110 @@ FestivalSettings shows a **read-only status badge** (no dropdown). Status only c
 | DistributionSettings | Load attributes | GET /api/events/{id}/attributes | EventsService | EventRepository | EventAttributeDefinition |
 | DistributionSettings | Preview | POST /api/assignments?preview=true | AssignmentsService | AssignmentRepository | - |
 | DistributionSettings | Run Algorithm | POST /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
+| AlgorithmResultsModal | Display results | (receives AlgorithmResult from preview) | - | - | - |
 
 ---
 
-## 7. API Architecture
-
-### Current Implementation Status
-
-| Entity | Repository | Service | Routes Refactored |
-|--------|-----------|---------|-------------------|
-| TeamMember | ✅ TeamMemberRepository | ✅ MembersService | ✅ /api/members/* (including attributes) |
-| Event | ✅ EventRepository | ✅ EventsService | ✅ /api/events/* (including sub-routes) |
-| Shift | ✅ ShiftRepository | ✅ ShiftsService | ✅ /api/shifts/* |
-| ShiftPreference | ✅ PreferenceRepository | ✅ PreferencesService | ✅ /api/preferences/* |
-| Assignment | ✅ AssignmentRepository | ✅ AssignmentsService | ✅ /api/assignments |
-| ShiftTemplate | ✅ ShiftTemplateRepository | ✅ ShiftTemplatesService | ✅ /api/shifts/templates/* |
-| SwapRequest | ✅ SwapRequestRepository | ✅ SwapRequestsService | ✅ /api/swap-requests/* |
-
-**Phase 1 Complete:** Base repository pattern, core CRUD operations for Members, Events, Shifts, and Preferences.
-
-**Phase 2 Complete:** All core entity routes refactored to use three-layer architecture. Complex transactions (upsert, cascadeDelete, updateWithRoles) encapsulated in repositories.
-
-**Phase 3 Complete:** All remaining entities refactored. Sub-entities grouped under parent services (EventsService handles config/registrations/templates/attributes). Algorithm orchestration in AssignmentsService. Swap matching logic in SwapRequestsService. **Zero direct Prisma calls in any route.**
-
-**Phase 4 ✅ Complete:** UI-Service alignment complete. `useEventContext` hook created and fully integrated. All UI pages now pass `eventId` to API endpoints. Server-side filtering implemented across all admin and user pages.
-
-**Phase 6 ✅ Complete:** Full event lifecycle workflow. Status-driven UI with contextual transition buttons. Split ASSIGNMENT_MUTATE into ALGORITHM + MANUAL. New `/api/events/{id}/transition` endpoint. Desirability scores on shift blocks. Status-dependent user calendar views. Algorithm run buttons in team page. Admin reassignment via ShiftPropertiesPanel. Day view export. Attribute-aware algorithm config dropdowns.
-
-**Phase 7 ✅ Complete:** Bugfixes and polish. Compact zoom info density (capacity + member names visible at 2-day overview). Preference polling (30s auto-refresh). Removed obsolete Day/Week/Grid toggle. PNG export includes time ruler and lane labels. Audit logging completed for preferences, swap-requests, config, and registrations routes.
-
-**Future Enhancements:**
-- Add caching layer
-- API versioning
-
-### Service Layer Patterns
-
-```typescript
-// Service with dependency injection for testing
-export class MembersService {
-  private repo: TeamMemberRepository;
-
-  constructor(repo?: TeamMemberRepository) {
-    this.repo = repo || new TeamMemberRepository();
-  }
-
-  async listMembers(where?: Prisma.TeamMemberWhereInput) {
-    return this.repo.findAll(where);
-  }
-
-  async createMember(data: Prisma.TeamMemberCreateInput) {
-    return this.repo.create(data);
-  }
-}
-
-// Usage in route
-const service = new MembersService();
-const member = await service.createMember(validated);
-
-// Usage in tests with mock
-const mockRepo = { create: vi.fn() };
-const service = new MembersService(mockRepo);
-```
-
-### Repository Layer Patterns
-
-```typescript
-// Base repository with error handling
-export class BaseRepository {
-  protected throwFormattedException(code: string, message: string): never {
-    throw new RepositoryError(code, message);
-  }
-
-  protected handlePrismaError(error: unknown, defaultMessage: string): RepositoryError {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") return new RepositoryError("NOT_FOUND", "Record not found");
-      if (error.code === "P2002") return new RepositoryError("DUPLICATE", "Record already exists");
-    }
-    return new RepositoryError("DATABASE_ERROR", defaultMessage);
-  }
-}
-
-// Entity repository extends base
-export class TeamMemberRepository extends BaseRepository {
-  async findById(id: string) {
-    try {
-      const member = await prisma.teamMember.findUnique({ where: { id } });
-      if (!member) this.throwFormattedException("NOT_FOUND", `Member ${id} not found`);
-      return member;
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("not found")) throw error;
-      throw this.handlePrismaError(error, "Failed to fetch member");
-    }
-  }
-}
-```
-
----
-
-## 7. API Quick Reference
-
-### All Endpoints (Three-Layer Architecture Complete)
-
-| Endpoint | Methods | Service | Repository | Status |
-|----------|---------|---------|------------|--------|
-| `/api/members` | GET, POST | MembersService | TeamMemberRepository | ✅ Complete |
-| `/api/members/{id}` | GET, PUT, DELETE | MembersService | TeamMemberRepository | ✅ Complete |
-| `/api/members/{id}/attributes` | GET, POST | MembersService | TeamMemberRepository | ✅ Complete |
-| `/api/events` | GET, POST | EventsService | EventRepository | ✅ Complete |
-| `/api/events/{id}` | GET, PUT, DELETE | EventsService | EventRepository | ✅ Complete |
-| `/api/events/{id}/config` | GET, PUT | EventsService | EventRepository | ✅ Complete |
-| `/api/events/{id}/registrations` | GET, POST | EventsService | EventRepository | ✅ Complete |
-| `/api/events/{id}/templates` | GET, POST | EventsService | EventRepository | ✅ Complete |
-| `/api/events/{id}/attributes` | GET, POST | EventsService | EventRepository | ✅ Complete |
-| `/api/shifts` | GET, POST | ShiftsService | ShiftRepository | ✅ Complete |
-| `/api/shifts/{id}` | GET, PUT, DELETE | ShiftsService | ShiftRepository | ✅ Complete |
-| `/api/shifts/templates` | GET, POST | ShiftTemplatesService | ShiftTemplateRepository | ✅ Complete |
-| `/api/shifts/templates/{id}` | GET, PUT, DELETE | ShiftTemplatesService | ShiftTemplateRepository | ✅ Complete |
-| `/api/shifts/templates/{id}/schedule` | POST | ShiftTemplatesService | ShiftTemplateRepository | ✅ Complete |
-| `/api/preferences` | GET, POST, DELETE | PreferencesService | PreferenceRepository | ✅ Complete |
-| `/api/assignments` | GET, POST | AssignmentsService | AssignmentRepository | ✅ Complete |
-| `/api/swap-requests` | GET, POST | SwapRequestsService | SwapRequestRepository | ✅ Complete |
-| `/api/swap-requests/{id}` | GET, PUT, DELETE | SwapRequestsService | SwapRequestRepository | ✅ Complete |
-
-### Query Parameters
-
-| Endpoint | Param | Effect |
-|----------|-------|--------|
-| `/api/shifts` | `eventId` | Filter by event |
-| `/api/members` | `eventId` | Filter registered members |
-| `/api/members` | `includeUnregistered=true` | Include non-registered |
-| `/api/assignments` | `preview=true` | Return proposal without saving |
-| `/api/assignments` | `eventId` | Required for POST |
-
----
-
-## 8. Data Flow: Dynamic Lanes
-
-**Lanes are NOT hardcoded.** They derive from ShiftTemplate records:
-
-```
-ShiftTemplate (DB)
-    │
-    ├── name: "Mobile North"     ─┐
-    ├── color: "#0ea5e9"          │
-    ├── laneOrder: 1              ├──► Lane { id, name, color, order }
-    └── type: MOBILE_TEAM        ─┘
-
-GET /api/events/{id}/templates
-    │
-    └──► { assigned: [...], eventSpecific: [...] }
-              │
-              ▼
-         deriveLanesFromTemplates(templates)
-              │
-              ▼
-         lanes: Lane[]
-              │
-              ▼
-         <LaneCalendarCanvas lanes={lanes} />  ← React Flow v12+
-              │
-              └──► Renders as React Flow nodes (not CSS grid)
-```
-
-**Shift → Lane mapping:**
-```
-Shift.templateId ──► find Lane where Lane.id === templateId
-                 ──► Position as React Flow node at (timeToX, laneIndexToY)
-```
-
-**React Flow Implementation (2026-02-15):**
-- Lanes rendered as `LaneZoneNode` background stripes
-- Shifts rendered as `ShiftBlockNode` draggable/resizable nodes
-- Native pan/zoom, snap-to-grid, semantic zoom
-- Replaced @dnd-kit with React Flow native drag-drop
-
-**React Flow Coordinate System:**
-All canvas positioning uses a single coordinate model:
-- Flow-space elements (nodes) → positioned via `position: { x, y }` prop, React Flow applies viewport transforms automatically
-- Screen-space overlays (panels) → use `useScreenCoordinates()` hook for all viewport math
-- See [DESIGN.md § Coordinate System Architecture](./DESIGN.md#3-coordinate-system-architecture) for details
-
----
-
-## 9. Algorithm Flow
-
-### Service Orchestration Pattern
-
-```
-POST /api/assignments?eventId=X
-         │
-         ▼
-    Route: auth + parse params
-         │
-         ▼
-    AssignmentsService.runAllocation(eventId, preview)
-         │
-         ├── EventRepository.findById(eventId) → load config
-         ├── Load members (Prisma direct - shared query)
-         ├── Load shifts (Prisma direct - shared query)
-         ├── Parse config & weights
-         ├── runAssignmentAlgorithm() → { assignments, violations, scores }
-         │
-         ├── If preview: return results (no DB writes)
-         │
-         └── If full:
-             ├── AssignmentRepository.deleteByEvent(eventId)
-             └── AssignmentRepository.bulkCreate(assignments, scores, explanations)
-         │
-         ▼
-    Route: audit log + response
-```
-
-**Key Design:**
-- Algorithm orchestration lives in **AssignmentsService**
-- Repository handles batch operations (deleteByEvent, bulkCreate)
-- Route remains thin (auth, params, audit logging)
-- Preview mode skips DB writes for testing allocations
-
-### Swap Request Auto-Matching Flow
-
-```
-POST /api/swap-requests
-         │
-         ▼
-    SwapRequestsService.createSwapRequest(fromAssignmentId, toShiftId)
-         │
-         ├── Validate assignment & shift exist
-         ├── Verify same event
-         ├── SwapRequestRepository.create() → new request
-         │
-         ├── SwapRequestRepository.findMatchingRequest()
-         │    (Find complementary pending request)
-         │
-         └── If match found:
-             └── SwapRequestRepository.executeAutoMatch()
-                 (Transaction: mark both as MATCHED)
-         │
-         ▼
-    Route: return created swap request
-
-PUT /api/swap-requests/{id} (status: APPROVED)
-         │
-         ▼
-    SwapRequestsService.approveSwapRequest(id)
-         │
-         ├── Load request with match details
-         │
-         └── If status === MATCHED:
-             └── SwapRequestRepository.executeApprovedSwap()
-                 (Transaction: swap assignments + approve both requests)
-         │
-         ▼
-    Route: return updated swap request
-```
-
-**Preview mode** (`?preview=true`): Algorithm runs but skips DB writes, returns proposal for review.
-
----
-
-## 10. Route Map
-
-### User Routes (`/app/*`)
-
-| Route | Page | Purpose |
-|-------|------|---------|
-| `/app/identity` | Identity | Select/create member, choose event |
-| `/app/calendar` | Calendar | View shifts, vote, request swaps |
-
-### Admin Routes (`/admin/*`)
-
-| Route | Page | Purpose |
-|-------|------|---------|
-| `/admin/setup` | Event Setup | Event settings, templates, attributes |
-| `/admin/shifts/schedule` | Schedule | Create/edit shifts via calendar |
-| `/admin/team` | Team | Members, allocation settings |
-| `/admin/audit` | Audit | View/rollback changes |
-
----
-
-## 11. File Structure Reference
+## 7. File Structure
 
 ```
 app/
 ├── api/                       # API routes (Route Layer)
 │   ├── members/
-│   │   ├── route.ts          # ✅ Uses MembersService
-│   │   ├── [id]/route.ts     # ✅ Uses MembersService
-│   │   └── [id]/attributes/  # ✅ Uses MembersService
 │   ├── events/
-│   │   ├── route.ts          # ✅ Uses EventsService
-│   │   ├── [id]/route.ts     # ✅ Uses EventsService
-│   │   └── [id]/             # ✅ All use EventsService:
-│   │       ├── config/       #    - config
-│   │       ├── registrations/#    - registrations
-│   │       ├── templates/    #    - templates
-│   │       └── attributes/   #    - attributes
 │   ├── shifts/
-│   │   ├── route.ts          # ✅ Uses ShiftsService
-│   │   ├── [id]/route.ts     # ✅ Uses ShiftsService
-│   │   └── templates/        # ✅ Uses ShiftTemplatesService
-│   │       ├── route.ts
-│   │       └── [id]/
-│   ├── preferences/          # ✅ Uses PreferencesService
-│   ├── assignments/          # ✅ Uses AssignmentsService (algorithm orchestration)
-│   └── swap-requests/        # ✅ Uses SwapRequestsService (auto-matching)
-│       ├── route.ts
-│       └── [id]/route.ts
-├── app/                       # User pages
-│   ├── identity/
-│   └── calendar/
-└── admin/                     # Admin pages
-    ├── setup/
-    ├── shifts/schedule/
-    ├── team/
-    └── audit/
+│   ├── preferences/
+│   ├── assignments/
+│   │   └── swap/
+│   ├── swap-requests/
+│   ├── audit/
+│   ├── auth/
+│   ├── conflicts/
+│   └── health/
+├── admin/
+│   ├── setup/
+│   ├── shifts/schedule/
+│   ├── team/
+│   └── audit/
+└── app/
+    ├── identity/
+    └── calendar/
+        └── MyShiftsList.tsx   # Two-section list: assignments + preferences
 
 components/
 ├── features/
-│   ├── LaneCalendar/          # React Flow calendar (v12+)
-│   │   ├── LaneCalendarCanvas.tsx       # Main wrapper
-│   │   ├── nodes/                       # Custom React Flow nodes
-│   │   │   ├── LaneZoneNode.tsx
-│   │   │   ├── DaySeparatorNode.tsx
-│   │   │   └── ShiftBlockNode.tsx
-│   │   ├── panels/                      # Overlay panels
-│   │   │   ├── TimeRulerPanel.tsx
-│   │   │   └── LaneLabelsColumn.tsx
-│   │   ├── hooks/                       # Calendar logic
-│   │   │   ├── useLaneNodes.ts
-│   │   │   ├── useShiftNodes.ts
-│   │   │   └── useCanvasActions.ts
-│   │   ├── utils/                       # Coordinate system
-│   │   │   ├── constants.ts
-│   │   │   └── coordinates.ts
-│   │   └── sidebar/
-│   │       └── ShiftPropertiesPanel.tsx
-│   └── TemplatePalette/       # Native HTML5 drag
-├── layout/                    # Header, sidebars
-└── ui/                        # Buttons, inputs, etc.
+│   ├── AlgorithmResultsModal.tsx      # Preview results (v3.8)
+│   ├── LaneCalendar/                  # React Flow canvas (@xyflow/react 12)
+│   │   ├── LaneCalendarCanvas.tsx     # Main wrapper + exportToPng()
+│   │   ├── nodes/                     # LaneZoneNode, ShiftBlockNode, DaySeparatorNode, HourGridNode
+│   │   ├── panels/                    # TimeRulerPanel, LaneLabelPanel
+│   │   ├── hooks/                     # useLaneNodes, useShiftNodes, useCanvasActions, useScreenCoordinates
+│   │   ├── utils/                     # constants.ts, coordinates.ts, laneName.ts
+│   │   └── sidebar/                   # ShiftPropertiesPanel
+│   ├── TemplatePalette/
+│   ├── Identity/
+│   │   └── ProfileDetailCard.tsx      # Read-only member info on avatar click
+│   ├── SwapInterface/
+│   ├── AvailabilityHeatmap/
+│   └── ConflictWizard/
+├── layout/
+└── ui/
 
 lib/
-├── repositories/              # ✅ Repository Layer (Complete)
-│   ├── base.repository.ts    # Base class with error handling
+├── algorithm/                 # Allocation engine
+│   ├── types.ts               # Interfaces: AssignmentState, AllocationRule, AlgorithmWeights, ...
+│   ├── optimizer.ts           # 3-phase algorithm orchestration
+│   ├── scorer.ts              # Scoring functions
+│   ├── validator.ts           # Constraint validation functions
+│   └── rule-validator.ts      # Attribute-based rule enforcement (v3.10)
+├── repositories/              # Repository Layer
+│   ├── base.repository.ts
 │   ├── team-member.repository.ts
 │   ├── event.repository.ts
 │   ├── shift.repository.ts
 │   ├── preference.repository.ts
-│   ├── shift-template.repository.ts  # ✅ Phase 3
-│   ├── assignment.repository.ts      # ✅ Phase 3
-│   └── swap-request.repository.ts    # ✅ Phase 3
-│
-├── services/                  # ✅ Service Layer (Complete)
+│   ├── shift-template.repository.ts
+│   ├── assignment.repository.ts
+│   └── swap-request.repository.ts
+├── services/                  # Service Layer
 │   ├── members.service.ts
 │   ├── events.service.ts
 │   ├── shifts.service.ts
 │   ├── preferences.service.ts
-│   ├── shift-templates.service.ts    # ✅ Phase 3
-│   ├── assignments.service.ts        # ✅ Phase 3 (orchestration)
-│   ├── swap-requests.service.ts      # ✅ Phase 3 (auto-match)
-│   └── audit.ts              # Existing audit service
-│
-├── types/
-│   └── lane.ts                # Lane types + deriveLanesFromTemplates()
-├── validations/               # Zod schemas
-│   ├── event-config.ts        # ✅ Phase 3
-│   ├── event-template.ts      # ✅ Phase 3
-│   └── member-attribute.ts    # ✅ Phase 3
+│   ├── shift-templates.service.ts
+│   ├── assignments.service.ts        # Orchestrates algorithm
+│   ├── swap-requests.service.ts
+│   ├── event-status-guard.ts         # assertEventStatusAllows()
+│   ├── event-status-permissions.ts   # canMutateShifts(), canRunAlgorithm(), ...
+│   ├── audit.ts
+│   └── export.ts
 ├── hooks/
 │   ├── useEventContext.ts
 │   └── useMemberContext.ts
+├── types/
+│   └── lane.ts                # Lane type + deriveLanesFromTemplates()
+├── validations/
+│   ├── event-config.ts        # AllocationRule Zod schema
+│   ├── event-transition.ts    # isValidTransition(), STATUS_ORDER
+│   └── member-attribute.ts
 ├── db.ts                      # Prisma client
 └── api-errors.ts              # Response helpers
 
 tests/
-├── unit/                      # ✅ NEW: Unit tests
-│   ├── repositories/         # Repository tests (mock Prisma)
-│   └── services/             # Service tests (mock repositories)
-├── integration.test.ts        # Integration tests
-└── *.test.ts                  # Other tests
+├── unit/
+│   ├── algorithm/             # scorer, validator, optimizer, rule-validator tests
+│   ├── repositories/          # Repository unit tests (mock Prisma)
+│   └── services/              # Service unit tests (mock repos)
+└── integration.test.ts
 
 prisma/
-├── schema.prisma              # DB schema (source of truth)
-└── seed.ts                    # Test data
+├── schema.prisma
+└── seed.ts
 ```
 
 ---
 
-## 11.5. Complete API Route Inventory
-
-**Total Routes: 34** | **Service-Backed: 29** | **Analytical Utilities: 3** | **Auth/Health: 2**
-
-### Core Entity Routes (Service-Backed ✅)
-
-#### Team Members (`/api/members`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/members` | GET, POST | MembersService | List/create members with event filtering |
-| `/members/[id]` | GET, PUT, DELETE | MembersService | Individual member CRUD |
-| `/members/[id]/attributes` | GET, POST, PUT, DELETE | MembersService | Member attribute management |
-
-#### Events (`/api/events`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/events` | GET, POST | EventsService | List/create events |
-| `/events/current` | GET | EventsService | Get current active event |
-| `/events/[id]` | GET, PUT, DELETE | EventsService | Individual event CRUD |
-| `/events/[id]/config` | GET, PUT | EventsService | Event configuration |
-| `/events/[id]/registrations` | GET, POST | EventsService | Event member registrations |
-| `/events/[id]/registrations/[memberId]` | GET, PUT, DELETE | EventsService | Individual registration |
-| `/events/[id]/templates` | GET, POST | EventsService | Event template assignments |
-| `/events/[id]/templates/[templateId]` | DELETE | EventsService | Unassign template |
-| `/events/[id]/attributes` | GET, POST | EventsService | Event attribute definitions |
-| `/events/[id]/attributes/[attrId]` | PUT, DELETE | EventsService | Individual attribute |
-
-#### Shifts (`/api/shifts`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/shifts` | GET, POST | ShiftsService | List/create shifts with event filtering |
-| `/shifts/[id]` | GET, PUT, DELETE | ShiftsService | Individual shift CRUD |
-| `/shifts/templates` | GET, POST | ShiftTemplatesService | Shift template management |
-| `/shifts/templates/[id]` | GET, PUT, DELETE | ShiftTemplatesService | Individual template CRUD |
-| `/shifts/templates/[id]/schedule` | POST | ShiftTemplatesService | Schedule template instance |
-| `/shifts/from-scheduled/[scheduledId]` | POST | ShiftTemplatesService | Convert scheduled → actual shift |
-
-#### Preferences (`/api/preferences`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/preferences` | GET, POST, DELETE | PreferencesService | Member shift preferences |
-
-#### Assignments (`/api/assignments`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/assignments` | GET, POST, DELETE | AssignmentsService | Assignment CRUD + algorithm |
-| `/assignments/swap` | POST | AssignmentsService | Direct assignment swap |
-
-#### Swap Requests (`/api/swap-requests`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/swap-requests` | GET, POST | SwapRequestsService | Swap request workflow |
-| `/swap-requests/[id]` | GET, PUT, DELETE | SwapRequestsService | Individual request management |
-
-#### Audit (`/api/audit`)
-| Route | Methods | Service | Purpose |
-|-------|---------|---------|---------|
-| `/audit` | GET | Audit Service | Audit log listing |
-| `/audit/rollback` | POST | Audit Service (complex) | Rollback audit entries |
-
-### Analytical & Utility Routes (Direct Prisma - Complex Logic)
-
-| Route | Methods | Lines | Purpose | Decision |
-|-------|---------|-------|---------|----------|
-| `/members/availability` | GET | 370 | Availability heatmap matrix | Keep as-is (analytical utility) |
-| `/conflicts` | GET | 508 | Constraint violation detection | Keep as-is (diagnostic utility) |
-| `/conflicts/resolve` | POST | 309 | Conflict resolution actions | Keep as-is (orchestration utility) |
-| `/shifts/[id]/cleanup` | DELETE | 99 | Force-delete orphaned shifts | Keep as-is (maintenance tool) |
-
-**Note:** These routes contain embedded business logic and complex calculations. Refactoring to service layer would provide minimal benefit given their specialized, isolated nature.
-
-### Authentication & Health
-
-| Route | Methods | Purpose |
-|-------|---------|---------|
-| `/auth/login` | POST | User authentication |
-| `/auth/logout` | POST | Session termination |
-| `/auth/check` | GET | Auth status check |
-| `/health` | GET | Health check endpoint |
-
-### Refactoring Status Summary
-
-✅ **Phase 3 Complete** - All core entity routes now use service layer
-- Zero direct Prisma calls in 29 core routes
-- Consistent error handling via RepositoryError
-- Full test coverage (106 unit tests passing)
-- Analytical utilities evaluated and kept as-is
-
----
-
-## 12. Error Handling
+## 8. Error Handling
 
 ### Repository Error Pattern
 
@@ -955,385 +584,74 @@ try {
 | P2002 | DUPLICATE | Unique constraint violation |
 | P2003 | INVALID_DATA | Foreign key constraint |
 
-### EventStatus Guard Pattern
+### StatusGuardError
 
-Services enforce EventStatus before mutations. `assertEventStatusAllows(eventId, action)` loads event status and throws `StatusGuardError` (403) if not allowed.
-
-**Guard actions:** `SHIFT_MUTATE`, `PREFERENCE_MUTATE`, `ASSIGNMENT_ALGORITHM`, `ASSIGNMENT_MANUAL`, `REGISTRATION_MUTATE`
-
-Note: `ASSIGNMENT_MUTATE` was split into `ASSIGNMENT_ALGORITHM` (bulk algorithm run) and `ASSIGNMENT_MANUAL` (individual add/remove/swap) to support operational flexibility in FINALIZED status.
-
-**Permission Matrix:**
-
-| EventStatus | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
-|-------------|-------------|-------------------|---------------------|-------------------|-------------------|
-| PLANNING | **yes** | no | no | no | **yes** |
-| OPEN_FOR_PREFERENCES | no | **yes** | no | no | **yes** |
-| ASSIGNING | no | no | **yes** | **yes** | **yes** |
-| FINALIZED | no | no | no | **yes** | **yes** |
-| COMPLETED | no | no | no | no | no |
-
-**Key design decision:** FINALIZED allows manual assignment changes and new registrations. This handles real-world scenarios: dropouts, late additions, and last-minute reassignments. Only COMPLETED locks everything — and even COMPLETED can revert to FINALIZED.
-
-**Client-safe helpers** (no Prisma import, safe for `"use client"` components):
-- `canMutateShifts(status)` — checks SHIFT_MUTATE
-- `canRunAlgorithm(status)` — checks ASSIGNMENT_ALGORITHM
-- `canManuallyAssign(status)` — checks ASSIGNMENT_MANUAL
-
-**Integration:** ShiftsService, PreferencesService, AssignmentsService call the guard before create/update/delete. Routes catch `StatusGuardError` and return 403.
-
-### Status Transition Pattern
-
-Status changes go through a dedicated endpoint with validation:
-
-```
-POST /api/events/{id}/transition  →  EventsService.transitionStatus()
-     │                                     │
-     ├── Validates one-step transition      ├── Forward: checks prerequisites
-     │   (forward or backward)              │   (e.g., at least 1 shift to publish)
-     │                                      │
-     ├── Audit-logged                       ├── Backward: always allowed
-     │                                      │
-     └── Returns updated event              └── Updates via EventRepository
-```
-
-**Transition validation** is in `lib/validations/event-transition.ts`:
-- `isValidTransition(current, target)` — one step forward or backward
-- `getNextStatus(current)` / `getPreviousStatus(current)` — for UI buttons
-- `STATUS_ORDER` constant — canonical status sequence
+- Thrown by `assertEventStatusAllows()` in lib/services/event-status-guard.ts
+- HTTP 403 in routes that catch it
 
 ---
 
-## 13. TypeScript Considerations
+## 9. TypeScript Patterns
 
-### Known Issues
+### Prisma-Generated Types
 
-1. **Schema Mismatches**: Some test fixtures use old schema (name/emoji vs alias/avatarId)
-   - **Solution**: Update tests to match current Prisma schema
-
-2. **Enum Type Safety**: Strict typing for enums (ShiftType, Role, etc.)
-   - **Solution**: Use `as const` in tests for enum values
-
-3. **Prisma Type Exports**: Use Prisma-generated types for consistency
-   ```typescript
-   import type { Prisma } from "@prisma/client";
-
-   async createMember(data: Prisma.TeamMemberCreateInput) {
-     return this.repo.create(data);
-   }
-   ```
-
-4. **Pre-existing Errors**: Some unrelated TypeScript errors exist in codebase
-   - 2026-02-11 bugfix sweep resolved: Card onClick, event creation (minExperienceMix), gender balance (memberAttributesMap), priority→wantLevel migration
-   - Focus on maintaining type safety in new three-layer code
-   - Use `npx tsc --noEmit` to check types
-
-### Type Safety Patterns
+Use Prisma-generated types for consistency:
 
 ```typescript
-// Good: Use Prisma-generated types
 import type { Prisma } from "@prisma/client";
 
-export class MembersService {
-  async listMembers(where?: Prisma.TeamMemberWhereInput) {
-    return this.repo.findAll(where);
-  }
-}
-
-// Good: Proper enum typing in tests
-const mockMember = {
-  experienceLevel: "INTERMEDIATE" as const,
-  capabilities: ["TEAM_MEMBER" as const],
-};
-
-// Bad: Manual type definitions that drift from schema
-interface Member {
-  name: string;  // Schema uses 'alias'
-  emoji: string; // Schema uses 'avatarId'
+async createMember(data: Prisma.TeamMemberCreateInput) {
+  return this.repo.create(data);
 }
 ```
 
 ---
 
-## 14. Testing Strategy
+## 10. Testing Strategy
 
-### Unit Testing (Vitest)
+Current test count: ~230 unit tests, 28 test files
+Test runner: Vitest 2.1.4
 
-**Repository Tests** - Mock Prisma client:
-```typescript
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    teamMember: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-  },
-}));
+Layers:
+- Repository tests: mock Prisma client via vi.mock('@/lib/db')
+- Service tests: mock repositories directly
+- Algorithm tests: pure function tests in tests/unit/algorithm/ — no mocking needed
 
-describe("TeamMemberRepository", () => {
-  it("should find member by ID", async () => {
-    vi.mocked(prisma.teamMember.findUnique).mockResolvedValue(mockMember);
-    const result = await repo.findById("member-1");
-    expect(result).toEqual(mockMember);
-  });
-});
-```
-
-**Service Tests** - Mock repositories:
-```typescript
-describe("MembersService", () => {
-  let service: MembersService;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    mockRepo = {
-      findById: vi.fn(),
-      findAll: vi.fn(),
-      create: vi.fn(),
-    };
-    service = new MembersService(mockRepo);
-  });
-
-  it("should list all members", async () => {
-    mockRepo.findAll.mockResolvedValue(mockMembers);
-    const result = await service.listMembers();
-    expect(result).toEqual(mockMembers);
-  });
-});
-```
-
-### Test Coverage
-
-| Layer | Test Type | Mock | Verify |
-|-------|-----------|------|--------|
-| Repository | Unit | Prisma client | Data access logic |
-| Service | Unit | Repository | Business logic |
-| Route | Integration | Database | End-to-end flow |
-
-### Running Tests
-
-```bash
-# All tests
-npm test
-
-# Specific test file
-npm test -- tests/unit/repositories/team-member.repository.test.ts
-
-# Watch mode
-npm test -- --watch
-
-# Coverage
-npm test -- --coverage
-```
-
-### Current Test Status
-
-- 230 tests passing (28 test files)
-- 3 known pre-existing failures (robustness, event.validation)
-- 6 skipped (integration tests)
+Run tests: `npm test` | `npx vitest run --reporter=verbose` | `npx vitest run tests/unit/algorithm/`
 
 ---
 
-## 15. Context Management
-
-**Status:** ✅ Consolidated. Complete.
-
-Two React context hooks persist user state via localStorage:
+## 11. Context Management
 
 ### useEventContext
 
-```typescript
-// Admin: localStorage key = 'adminSelectedEventId'
-// User: localStorage key = 'selectedEventId'
-
-const {
-  selectedEventId,      // Current event ID or null
-  selectedEvent,        // Full event object
-  events,               // All events list
-  setSelectedEventId,   // Update selection
-  refreshEvents,        // Reload events
-  loading               // Loading state
-} = useEventContext(isAdmin);
-```
-
-**Where used:**
-- Header: displays event selector (admin mode) ✅
-- Schedule page: reads context ✅ passes eventId to API ✅ no local dropdown ✅
-- Allocation page: reads context ✅ passes eventId to API ✅ no local selector ✅
-- FestivalSettings: reads context ✅ uses header selector + create button ✅
-- TemplateManager: reads context ✅ and passes eventId correctly ✅
-- Calendar page: reads context ✅ passes eventId to API ✅ has no-event guard ✅
-- UserSidebar, Sidebar: use useEventContext for event display ✅
+- Admin: localStorage key = 'adminSelectedEventId'
+- User: localStorage key = 'selectedEventId'
+- Returns: { selectedEventId, selectedEvent, events, setSelectedEventId, refreshEvents, loading }
 
 ### useMemberContext
 
-```typescript
-// localStorage key = 'selectedMemberId'
-
-const { selectedMemberId, setSelectedMemberId, selectedMember } = useMemberContext();
-```
-
-**Where used:**
-- Header: member identity display
-- Calendar: filter "My Shifts" by selectedMemberId
+- localStorage key = 'selectedMemberId'
+- Returns: { selectedMemberId, setSelectedMemberId, selectedMember }
 
 ### Preference Polling
 
-The user calendar uses a 30-second polling interval to auto-refresh shift data:
-
-```typescript
-useEffect(() => {
-  if (!selectedEventId) return;
-  const interval = setInterval(() => {
-    refetchShifts();
-  }, 30_000);
-  return () => clearInterval(interval);
-}, [selectedEventId, refetchShifts]);
-```
-
-This keeps preference counts current across all users without requiring manual refresh.
+User calendar auto-refreshes shifts every 30 seconds (setInterval in useEffect).
 
 ---
 
-## 16. Server-Side Filtering
+## 12. Quick Debugging
 
-**Status:** ✅ Complete. API and UI fully aligned.
+**"Lanes not showing"** → Check templates assigned to event via EventTemplate junction table.
 
-### API-Level Support (Done)
+**"Shifts in wrong lane"** → Verify Shift.templateId matches a template assigned to the event.
 
-| Endpoint | Query Params | Example |
-|----------|-------------|---------|
-| `/api/members` | `eventId`, `includeUnregistered`, `search` | `/api/members?eventId=e1&search=alice` |
-| `/api/shifts` | `eventId`, `startDate`, `endDate` | `/api/shifts?eventId=e1&startDate=2026-06-26` |
-| `/api/assignments` | `eventId` | `/api/assignments?eventId=e1` |
-| `/api/audit` | `search`, `action`, `entityType` | `/api/audit?search=john&action=UPDATE` |
+**"Algorithm returns empty"** → Check EventRegistration exists for members + event is ASSIGNING status.
 
-### UI-Level Usage (Done)
+**"Can't vote on shifts"** → Verify selectedMemberId in localStorage.
 
-| Page | Passes eventId to API? | Client-side filter? | Status |
-|------|----------------------|-------------------|--------|
-| Schedule | Yes | No | ✅ Done |
-| Allocation | Yes | No | ✅ Done |
-| Calendar | Yes | No | ✅ Done |
-| MemberListByEvent | Yes | No | ✅ Done |
-| TemplateManager | Yes | No | ✅ Done |
+**"RepositoryError not handled"** → Add `instanceof RepositoryError && error.code === 'NOT_FOUND'` to catch block.
 
-### Target Pattern
+**"Tests fail with schema mismatch"** → Update fixtures to use current schema (alias/avatarId not name/emoji).
 
-```typescript
-// UI passes filter criteria as query params
-const { data: shifts } = useCache({
-  key: `shifts-${selectedEventId}`,
-  fetchFn: async () => {
-    const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
-    return unwrapApiResponse(await res.json());
-  },
-  enabled: !!selectedEventId,
-});
-// No client-side filtering needed -- data arrives pre-filtered
-```
-
----
-
-## 17. Enums Reference
-
-### ShiftType
-`MOBILE_TEAM | STATIONARY | SHIFT_LEAD | SUPER | BUFFER | EXTENDED`
-
-### Role
-`TEAM_MEMBER | SHIFT_LEAD | SUPER`
-
-### ExperienceLevel
-`JUNIOR | INTERMEDIATE | SENIOR`
-
-### EventStatus
-`PLANNING | OPEN_FOR_PREFERENCES | ASSIGNING | FINALIZED | COMPLETED`
-
-### PreferenceLevel
-`WANT | DONT_WANT`
-
----
-
-## 17. Quick Debugging
-
-### Common Issues
-
-**"TypeError: Cannot read property of undefined in service/repository"**
-→ Check import paths use `@/` alias correctly
-→ Verify vitest.config.ts has path alias configured
-
-**"Dropdown shows old events"**
-→ Database has stale data. Run `npx prisma migrate reset --force`
-
-**"Lanes not showing"**
-→ Check if templates are assigned to event via EventTemplate junction
-
-**"Shifts in wrong lane"**
-→ Verify Shift.templateId is set and matches a template
-
-**"Calendar empty"**
-→ Check eventId filter on GET /api/shifts
-
-**"Can't vote on shifts"**
-→ Verify selectedMemberId in localStorage
-
-**"Algorithm returns empty"**
-→ Check EventRegistration exists for members
-
-**"RepositoryError not handled in route"**
-→ Add error handling in catch block:
-```typescript
-if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
-  return createNotFoundResponse("Entity name");
-}
-```
-
-**"Tests fail with schema mismatch"**
-→ Update test fixtures to use current schema (alias/avatarId vs name/emoji)
-
----
-
-## 18. Next Steps
-
-### Recent (2026-02-11 Bugfix Sweep ✅)
-- Card onClick support for event selection
-- Event creation balanceThresholds (minExperienceMix numeric)
-- Gender balance detection (memberAttributesMap)
-- ShiftPreference: priority → wantLevel migration complete
-
-### Planned Improvements
-
-1. **Advanced Features**
-   - Transaction management utilities
-   - Caching layer (Redis or in-memory)
-   - API versioning (/api/v1/)
-   - Structured logging
-   - Rate limiting
-
-2. **Testing Enhancements**
-   - Integration tests for full API flows
-   - E2E tests with Playwright
-   - Performance benchmarks
-
-3. **Documentation**
-   - API documentation (OpenAPI/Swagger)
-   - Migration guide for breaking changes
-   - Contribution guidelines
-
----
-
-## Resources
-
-- **Prisma Schema:** `prisma/schema.prisma` - Source of truth for data models
-- **Architecture Layers:** `docs/ARCHITECTURE-LAYERS.md` - Detailed layer guide
-- **Implementation Plans:** `docs/plans/` - Feature specs and roadmap
-- **Test Files:** `tests/unit/` - Unit test examples
-
----
-
-**Last Updated:** 2026-02-17
-**Phase:** Phase 7 ✅ Bugfixes, polish, audit completion
-**Next Review:** As needed for future enhancements
+**"Config appears lost after algorithm run"** → UI calls loadConfig() after run; check DistributionSettings.tsx.
