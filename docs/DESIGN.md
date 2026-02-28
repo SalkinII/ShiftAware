@@ -2,7 +2,7 @@
 
 > **Visual language reference for the "Command Center" aesthetic.**
 >
-> Last updated: 2026-02-25 (KIMI treatment implementation)
+> Last updated: 2026-02-28
 
 ---
 
@@ -185,9 +185,10 @@ bg-white/80 backdrop-blur-sm border-l-4
 shadow-[var(--shift-shadow)] hover:shadow-[var(--shift-shadow-hover)]
 ```
 
-**Density thresholds:**
+**Density thresholds:** (from `components/features/LaneCalendar/utils/constants.ts`)
 - `zoom < ZOOM_COMPACT (0.7)`: CompactContent with scale(1/zoom)
 - `zoom >= ZOOM_COMPACT`: DetailedContent (no scaling needed)
+- `ZOOM_MINIMAL (0.3)`: Below this, colored bar only
 
 ### Template Palette Items
 
@@ -232,6 +233,38 @@ bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]
 backgroundColor: ${color}1A   /* 10% opacity tint */
 backgroundImage: var(--lane-stripe)
 ```
+
+### Algorithm Results Modal
+
+**Structure:** Full-screen modal with gradient header and three content sections.
+
+- Summary bar: total assignments count, violation count, preference satisfaction %
+- Violations list: severity badges (hard/soft), constraint type, message
+- Per-shift breakdown: grouped by template type, alias + score per member
+- Member coverage: each member → shift count, average score
+
+**Key classes:**
+bg-gradient-to-r from-blue-600 to-purple-600 (header)
+Severity badges reuse ConflictWizard badge pattern
+
+**Triggered by:** "Preview" button in DistributionSettings, only in ASSIGNING status
+**File:** components/features/AlgorithmResultsModal.tsx
+
+### User List View (Calendar)
+
+**Structure:** Two-section list in user calendar sidebar.
+
+Section 1 — My Assignments:
+- Cards: template name, date, time, lane color stripe, assignment type badge (ALGORITHM / MANUAL)
+- Action: "Request Swap" (when event is FINALIZED)
+- Sort: chronological
+
+Section 2 — My Preferences:
+- Cards: WANT/DONT_WANT status, shift name, date
+- Fulfilled indicator: green check (assigned to a WANT shift) / red X (assigned to a DONT_WANT shift)
+- Sort: chronological
+
+**File:** app/app/calendar/components/MyShiftsList.tsx
 
 ---
 
@@ -360,5 +393,4 @@ Use `GlassPanel` wrapper with standard sections:
 
 ---
 
-**Last Updated:** 2026-02-25
-**Design System Version:** KIMI Treatment v1.0
+**Last Updated:** 2026-02-28
