@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock prisma before importing service
 vi.mock("@/lib/db", () => {
   const txMock = {
+    swapRequest: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     assignment: {
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       create: vi.fn().mockImplementation((args: any) =>

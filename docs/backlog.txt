@@ -1,125 +1,98 @@
 ShiftAware Backlog
 ==================
 
-Ref: docs/plans/2026-02-27-v3.5-visual-truth-design.md (roadmap)
-Ref: docs/plans/arch/2026-02-26_NEEDSREVAMP-backlog-list-plan.md (full inventory)
-Ref: docs/Bugs.txt (bug register)
+Ref: docs/Bugs.txt (bug register with open items and fix history)
 
 ## Roadmap Overview
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| v3.5 | Visual Truth — navigation, colours, labels, cleanup | PLANNED |
-| v3.6 | Canvas Consistency & UX Polish | ✓ COMPLETE |
-| v3.7 | Admin Data & Sidebar | ✓ COMPLETE |
-| v3.8 | Algorithm & Assignment | PLANNED |
-| v3.9 | User View & Export | PLANNED |
+| v3.6  | Canvas Consistency & UX Polish | ✓ COMPLETE |
+| v3.7  | Admin Data & Sidebar | ✓ COMPLETE |
+| v3.11 | Stabilization — bug fixes, seed revamp, buffer days removal | ✓ COMPLETE |
+| v3.8  | Algorithm & Assignment | NEXT |
+| v3.9  | User View & Export | PLANNED |
 | v3.10 | Advanced & Audit | PLANNED |
 
 ---
 
-## v3.5 — Visual Truth (PLANNED)
+## v3.11 — Stabilization ✓ COMPLETE (2026-02-28)
 
-- [x→PLANNED] Bug #17: Event navigation escape — auto-forward guard + "Change" link
-  Files: `EventSelectionStep.tsx`, `app/app/calendar/page.tsx`
+All 12 planned bugs fixed. 305/305 tests pass. 0 production TS errors.
 
-- [x→PLANNED] Bug #3 + Colour harmonization — prefer template.color, palette fallback
-  Files: `lib/types/lane.ts`, `TemplatePalette.tsx`, `ShiftPropertiesPanel.tsx`
+- [x] Bug #12: FK constraint on SwapRequest — delete before Assignment in transaction
+- [x] Bug #3: DnD coordinate calculation after lane reorder — pass orderedLanes
+- [x] Bug #7: Require ratio default upper bound reads 10000 — maxRatio ?? 1
+- [x] Bug #6: Zero-occupancy minimum 1 enforced — allow min 0 in template + panel
+- [x] Bug #9: "Define New Shift" → "Cancel" button layout jump — min-width fix
+- [x] Bug #11: Preview results header square corners — rounded-t-2xl
+- [x] Bug #1: Template selector in assignment rules uses non-unique ShiftType — use template ID
+- [x] Bug #2: Sidebar card shows "Shift" instead of template name — template include
+- [x] Bug #8: PNG export viewport jumps to far right — save/restore viewport
+- [x] Bug #10: Planning → Preferences card layout jump — min-height container
+- [x] Bug #5: Buffer days — full 3-layer removal (schema migration, validation, UI, calendar)
+- [x] Bug #13: Seed revamp — templateId links, valid config, 5-day compact event
 
-- [x→PLANNED] Bug #6: Template name in sidebar header
-  Files: `ShiftPropertiesPanel.tsx`
-
-- [x→PLANNED] Bug #15: Desirability colour in ShiftBlockNode — 3-tier (blue/grey/amber)
-  Files: `ShiftBlockNode.tsx`
-
-- [x→PLANNED] Lane name abbreviations — initials for multi-word, first 3 for single
-  Files: `laneName.ts`, `LaneLabelPanel.tsx`
-
-- [x→PLANNED] Time ruler dates — dd.MM.yyyy format
-  Files: `TimeRulerPanel.tsx`, `constants.ts`
-
-- [x→PLANNED] Bug #1: Remove orphaned capability checkboxes
-  Files: `CreateProfileForm.tsx`
-
----
-
-## v3.6 — Canvas Consistency & UX Polish ✓ COMPLETE
-
-All 7 tasks completed in v3.6. See docs/Bugs.txt for individual bug status.
+**Open items carried from v3.11 scope (not in original plan):**
+- UI-1: Admin view toggle button jumps laterally (list has no export button)
+- UI-2: Admin schedule list view still shows raw ShiftType enum (line 843)
+- UI-3: "Define New Shift" non-functional in planning mode (layout fixed, behaviour not)
+- FEAT-1: Lock lane reorder after planning phase
+- FEAT-2: Shift node content layout redesign (name+time row 1, desirability+coverage row 2)
 
 ---
 
-## v3.5b — Post-v3.7 Fixes ✓ COMPLETE
+## v3.5b + v3.7 — Post-v3.6 Fixes ✓ COMPLETE
 
-- [x] Lane reorder: shift Y-position sync on lane reorder (mergeNodes)
-- [x] Template palette: remove colour stripes, show always-visible grip handle
+- [x] Lane reorder: shift Y-position sync (mergeNodes)
+- [x] Template palette: remove colour stripes, show grip handle
 - [x] Distribution rules: persist allocationRules (Prisma + Zod + route)
-- [x] ProfileDetailCard: full member info with attributes on admin team page
-- [x] User calendar: remove dead staffed/partially-staffed legend cards
-- [x] ShiftPropertiesPanel: template name fallback (no Prisma enum)
-- [x] CreateProfileForm reuse: verified in admin team manage page
+- [x] ProfileDetailCard: full member info with attributes
+- [x] User calendar: remove dead staffed/partially-staffed cards
+- [x] ShiftPropertiesPanel: template name fallback
+- [x] CreateProfileForm reuse in admin team manage page
+- [x] Attribute rules: import event templates in team management
+- [x] Members lack event attributes on new event — attribute prompt on registration
 
 ---
 
-## v3.7 — Admin Data & Sidebar ✓ COMPLETE
+## v3.8 — Algorithm & Assignment (NEXT)
 
-- [x] Bug #2: Attribute rules — import event templates in team management
-  Files: Team management UI, template API
-
-- [x] Bug #11b: Members lack event attributes when added to new event
-  Files: Registration flow, attribute prompt
-
-- [x] Admin team — same detail/create logic as identity claim page
-  Files: `app/admin/team/`, reuse `CreateProfileForm`
-  Ref: NEEDSREVAMP Task 12
-
-- [x] Profile card read-only on avatar click (user + admin)
-  Files: new `components/features/Identity/ProfileDetailCard.tsx`
-  Ref: NEEDSREVAMP Task 13
-
----
-
-## v3.8 — Algorithm & Assignment
-
-- Bug #9: Assignment preview — render results in UI
+- Assignment preview — render results in UI
   Files: Assignment preview components, API
 
-- Bug #11a: Configured logic lost after assignment run
-  Files: Allocation config storage, cache
+- Configured logic lost after assignment run
+  Files: Allocation config storage, cache invalidation
 
-- Bug #11c: Resting period constraint violated
-  Files: Distribution algorithm, constraint handling
+- Resting period constraint violated
+  Files: `lib/algorithm/optimizer.ts`, constraint handling
 
-- Bug #10: Algorithm logic documentation + tests
+- Algorithm logic documentation + tests
   Files: `assignments.service.ts`, test files
 
 - Attribute/skill validation during assignment
-  Files: `lib/services/assignments.service.ts`, `lib/utils/attribute-check.ts`
-  Ref: NEEDSREVAMP Task 14
+  Files: `lib/services/assignments.service.ts`
 
 ---
 
 ## v3.9 — User View & Export
 
 - User list view — preferences + assigned shifts
-  Files: new `app/app/calendar/components/MyShiftsList.tsx`
-  Ref: NEEDSREVAMP Task 10
+  Files: `app/app/calendar/components/MyShiftsList.tsx`
 
 - Password-based event selection
   Files: `prisma/schema.prisma` (accessCode), `EventSelectionStep.tsx`
-  Ref: NEEDSREVAMP Task 11
 
-- Export choice — PNG vs PDF table (includes Bug #7)
-  Files: `schedule/page.tsx`, export logic
-  Ref: NEEDSREVAMP Task 8
+- Export choice — PNG vs PDF table
+  Files: `app/admin/shifts/schedule/page.tsx`, export logic
 
 - Zero-occupancy shifts as markers (verify v3.2 work)
   Files: `assignments.service.ts`, `ShiftBlockNode.tsx`
-  Ref: NEEDSREVAMP Task 9
 
 ---
 
 ## v3.10 — Advanced & Audit
 
-- Full UI audit — Documentation compliance (gap report)
- 
+- Full UI audit — documentation compliance gap report
+- Canvas viewport reset on shift drop (root cause documented, fix deferred)
+- Template reservoir colour schema

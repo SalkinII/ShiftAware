@@ -187,6 +187,8 @@ export class AssignmentsService {
         workloadFairness: 0.15,
         coreShiftCoverage: 0.05,
       },
+      balanceThresholds: {} as any,
+      allocationRules: [] as any,
     };
 
     const weights =

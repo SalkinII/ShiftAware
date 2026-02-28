@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/db", () => {
   const txMock = {
+    swapRequest: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     assignment: {
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
       create: vi.fn().mockImplementation((args: any) =>

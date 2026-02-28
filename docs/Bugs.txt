@@ -1,308 +1,134 @@
 # ShiftAware — Bug and Issue Register
 
-**v3.11 Stabilization (2026-02-28):** Bugs #1–12 fixed. See commits with prefix `fix(` or `refactor:`.
+---
 
-----
+## Open Issues
 
-New:
+### UI-1: Admin view toggle button jumps laterally
 
-- when switching between list view and calendar view in admin the toggle view button jumps around because list has no export button.
-**Status: FIXED in v3.11** — min-height on calendar container prevents layout jump.
+**Type:** Layout bug
 
-________________
+**Symptom:** Switching between list view and calendar view on the admin schedule page causes the toggle button to jump laterally. The list view has no export button; when switching back to calendar view the export button re-appears and the toggle shifts position.
 
-- I think we need to audit this gigantic plan that was implemented
+**Root cause:** The export button is only shown in calendar mode. No width reservation for the absent button in list mode.
 
-- in the assignment rules the template selector jumps around and goes back to values that weren't selected.
-**Status: FIXED in v3.11** — allocation rules now use template ID instead of ShiftType enum.
+**Proposed resolution:** Reserve space for the export button slot (e.g. `invisible` placeholder) or restructure the toolbar layout so the toggle position is independent of surrounding buttons.
 
-- Sidebar card with shift name now just says shift for all shifts. no matter how the template was called. you are doing something wrong here with the implementation.
-**Status: FIXED in v3.11** — sidebar displays template name via template include.
-
-- feature: We should lock that lane reorder after the planning phase. consistent with other immutable settings after the shift is done.
-
-- Something about the lane reorder probably broke the drag and drop coordinate calculation. If I drag and drop the shifts appear at random places.
-Really unpredictable now. Breaking change.
-**Status: FIXED in v3.11** — orderedLanes passed to useCanvasActions for correct DnD coordinates.
-
-- the create profile card is still not present on the team manage admin page.
-
-- on the event config page the buffer input is stale. does that somehow correspond to our architecture? We used to plan to have buffer days. but the way it is now we could scrap that.
-However, if we get rid of the buffer and all the stuff around it we would probably also need to get rid of those attributes in our data model and sanitize the prisma schema. Like full 3 layer clean up with testing so we don't break stuff.
-**Status: FIXED in v3.11** — buffer days removed from schema, validation, UI, and calendar.
-
-- 8	4d84d87	Zero-occupancy marker styling: Tried to set 0 occupancy in a template. didn't work. still minimum 1.
-**Status: FIXED in v3.11** — TemplateManager and ShiftPropertiesPanel allow min 0.
-
-- require ratio default upper bound reads 10000. (% in the text behind it)
-**Status: FIXED in v3.11** — maxRatio default changed from 100 to 1.
-
-- I think we need to revamp the seed so we can really test our new architecture. so everything works as intended. We should drop the old seed. just keep a nice little dataset. All compliant with our 3 layer architecture.
-
-- the new export to png viewport jumps to the far right when I click the button. Otherwise it looks amazing.
-**Status: FIXED in v3.11** — viewport saved and restored after PNG capture.
-
-- the define new shift on the canvas page switches to a cancel button which jumps to another position. It not showing the side panel to the right which is to be expected. But this behaviour is not pretty.
-The button define new shift however also doesn't do anything when I'm in planning mode.
-**Status: FIXED in v3.11** — Cancel button has min-w-[11rem] and X icon to prevent jump.
-
-- also on the canvas page when I switch from planning to prefences the card themselves jump to a lower left position. misaligning with the toggle for list/calendar and the event name.
-**Status: FIXED in v3.11** — min-height on calendar container prevents layout jump on mode toggle.
-
-- in the preview results the header should have rounded corners. not square.
-**Status: FIXED in v3.11** — AlgorithmResultsModal header has rounded-t-2xl.
-
-- when I ran assignment i got this:  Invalid `prisma.assignment.deleteMany()` invocation: Foreign key constraint violated: `SwapRequest_fromAssignmentId_fkey (index)`
-**Status: FIXED in v3.11** — SwapRequests deleted before Assignments in transaction.
-
---- should be fixed:
-- With the reordering of the shift lanes something significant broke. So the lanes move independently of the shifts that are in them. So basically I am messing with the complete structure of the canvas.
-We would need to look at how the lanes, shiftnodes and so forth are organised. whe want this to be consistent. This was a breaking change.
-It does reorder itslef if I drop shifts into it.
-- Also can we just loose the colours for the templates in the template reservoir. This get's messed up always. And it is nothing that is really important. Let's just do other pretty visuals and a handle in keeping with our general design principles.
-- Don't know whether that's in the Bug list already but the rules for distribute settings are not persisted even when save config is hit. How does that correspond to our service architecture?
-
-- The profile detail I see when I click the avatar is useless. I thought I would get all the information about that member. I would only want that for the admin team manage page. but there one should be able to see all attributes that member has with their values.
-
-- Can't see where that should be: Task 3: Admin team create — reuse CreateProfileForm
-Exported ProfileData from CreateProfileForm.tsx
-app/admin/team/manage/page.tsx: replaced inline form with CreateProfileForm, removed formData/formErrors/validateForm
-Commit: refactor(admin/team): reuse CreateProfileForm for member creation
-**Status: Verified working in v3.5b** — CreateProfileForm is used in app/admin/team/manage/page.tsx. Add Member flow shows CreateProfileForm; submit creates member via POST /api/members.
-
-- This wasn't removed from the Team Calendar view:
-<div class="flex items-center gap-3 p-4 rounded-2xl border bg-success-50 text-success-700 border-success-100"><div class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] bg-success-500"></div><span class="text-xs font-bold uppercase tracking-widest">Fully Staffed</span></div><div class="flex items-center gap-3 p-4 rounded-2xl border bg-accent-50 text-accent-700 border-accent-100"><div class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] bg-accent-500"></div><span class="text-xs font-bold uppercase tracking-widest">Partially Staffed</span></div><div class="flex items-center gap-3 p-4 rounded-2xl border bg-red-50 text-red-700 border-red-100"><div class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] bg-red-500"></div><span class="text-xs font-bold uppercase tracking-widest">Unstaffed</span></div>
-however it says:
-Task 5+6	e5cff64	Removed four metric cards, filter card at top
-
-- this side bar in the LaneCalendarCanvas still doesn't show the shift name but rather the old prsima types:
-<div class="flex items-center gap-2 mb-2"><div class="w-1 rounded-full flex-shrink-0 h-4" style="background-color: rgb(107, 114, 128);"></div><span class="text-xs font-medium text-sky-900 uppercase tracking-wider">STATIONARY</span></div><div class="text-lg font-bold text-gray-900">STATIONARY</div><div class="text-sm text-gray-600">Tue 14.07.2026</div><div class="text-sm text-gray-600">09:15–21:15</div>
-Same logic for the create bar. We want to work with our template names. We can look them up. we can change them. we index them. Why not use them here?
-Also the list view card? How is it that it still says: STATIONARY in the card as hardcoded html? This doesn't correspond to our service architecture or our desing principles.
-
-- For the order of the content in the shift nodes: In the first line: Shift name (left) and time (right). Second line: Desirability, vote up down, coverage - we will loose the -check- we will just do normal colour of the numbers if lacking, then green numbers when fully covered. Third line stays as it is.
-
-This document lists known bugs, design gaps, and UX issues. Descriptions follow systematic-debugging: symptom, context, and root cause where identified.
+**Files:** `app/admin/shifts/schedule/page.tsx` (toolbar area)
 
 ---
 
+### UI-2: Admin schedule list view shows raw ShiftType enum
 
-## 2. Attribute Rules — Template Import in Team Management
+**Type:** Data display bug
 
-**Type:** Feature gap / Data flow
+**Symptom:** The list view card on the admin schedule page shows `STATIONARY` / `MOBILE_TEAM` etc. instead of the human-readable template name.
 
-**Context:** Attribute rules in team management define which members can fill which shifts. Shift eligibility is defined by templates (ShiftTemplate + attribute requirements). Team management UI does not load or display the event's templates when configuring attribute rules.
+**Root cause:** The `Shift` interface in `schedule/page.tsx` does not include a `template` field, so line 843 falls back to `shift.type.replace("_", " ")`.
 
-**Symptom:** Admin cannot see which templates apply when defining attribute rules. Rules are configured without template context, leading to mismatched or invalid rules.
+**Proposed resolution:** Add `template?: { id: string; name: string } | null` to the local `Shift` interface and update the API fetch to include the template relation. Replace line 843 with `shift.template?.name ?? shift.type.replace("_", " ")`.
 
-**Proposed resolution:** When configuring attribute rules for an event, import and display that event's templates. Attribute rules should reference templates so eligibility is explicit and verifiable.
-
-**Status: FIXED in v3.7** — shiftType dropdown now loads from event templates.
-
----
-
-## 3. Template Reservoir — Colour Schema
-
-**Type:** Visual inconsistency / Semantic mapping
-
-**Context:** Template reservoir (top of schedule canvas) shows templates with a colour scheme that does not align with lane colours. Lanes have semantic colours (mobile-north, mobile-south, stationary, etc.). Templates that map to lanes should inherit those colours.
-
-**Symptom:** Template palette colours appear arbitrary; user cannot quickly match a template to its intended lane.
-
-**Proposed resolution:** Inherit template reservoir colours from the lanes to which those templates belong. Establish single source of truth for lane→template colour mapping.
+**Files:** `app/admin/shifts/schedule/page.tsx:53-66, 843`
 
 ---
 
-## 4. Canvas Viewport Reset on Shift Drop / Reposition
+### UI-3: "Define New Shift" button non-functional in planning mode
 
-**Type:** Bug — Root cause documented
+**Type:** Feature gap / Bug
 
-**Context:** See `docs/plans/arch/2026-02-26_NEEDSREVAMP-backlog-list-plan.md` and `2026-02-26-v3.3-canvas-fixes-design.md`.
+**Symptom:** In planning mode on the canvas schedule page, clicking "Define New Shift" does nothing (no panel opens). The button layout has been fixed (min-width, icon) but the functional behaviour is missing.
 
-**Root causes:**
-- `LaneCalendarCanvas.tsx`: `setNodes([...laneNodes, ...shiftNodes])` replaces all nodes on every `shiftNodes` change. After drag-stop, `onShiftUpdated` → cache invalidation → `refetchShifts()` → new `shiftNodes` → full replacement discards React Flow's in-flight position.
-- `fitView` runs when `shiftNodes.length` (or related) changes; refetch can trigger this, resetting viewport and zoom to default.
+**Root cause:** Not investigated — the button likely needs a mode guard or a different action in planning vs open-for-preferences mode.
 
-**Symptom:** On dropping or repositioning a shift at max zoom, canvas viewport resets to origin (upper-left) at default zoom. User loses focus area.
-
-**Proposed resolution:** ID-based merge of nodes (preserve position from current nodes when ID matches); guard `fitView` so it runs only on initial load or event change, never on refetch within same event.
+**Files:** `app/admin/shifts/schedule/page.tsx`
 
 ---
 
-## 5. Reorder Lanes (Feature Request)
+### FEAT-1: Lock lane reorder after planning phase
 
-**Type:** Feature gap
+**Type:** Feature request
 
-**Context:** Lanes are displayed in fixed order. Users want to customise lane order.
+**Symptom:** Lane order should become immutable once the event moves past PLANNING, consistent with other locked settings (shift templates, event dates, etc.).
 
-**Symptom:** No way to reorder lanes (e.g. via up/down buttons and lock).
+**Proposed resolution:** Disable lane reorder controls when `event.status !== 'PLANNING'`.
 
-**Proposed resolution:** Add lane reorder controls; persist user preference (e.g. per event or global).
-**Status: FIXED in v3.6**
-
----
-
-## 6. Shift Template Names in Sidebar Detail View
-
-**Type:** Missing data display
-
-**Context:** Right sidebar (ShiftPropertiesPanel) shows shift details. Template name is not surfaced; only Prisma-backed attributes are shown.
-
-**Symptom:** User cannot see which shift template a shift belongs to when viewing details. Template name is critical for identification and assignment logic.
-
-**Proposed resolution:** Include `templateName` (from ShiftTemplate) in the sidebar detail view alongside other shift attributes.
+**Files:** `components/features/LaneCalendar/LaneCalendarCanvas.tsx`, lane reorder UI
 
 ---
 
-## 7. PNG Export Missing
+### FEAT-2: Shift node content layout redesign
 
-**Type:** Feature gap
+**Type:** UX / Design
 
-**Context:** Canvas export currently supports PDF only.
+**Symptom:** Requested layout for shift block nodes: Row 1 — name (left) + time (right). Row 2 — desirability, vote up/down, coverage count (colour-coded: red when understaffed, green when fully staffed). Row 3 — stays as-is.
 
-**Symptom:** No option to export schedule as PNG. Users may need raster export for sharing or embedding.
-
-**Proposed resolution:** Add PNG export option alongside PDF.
+**Files:** `components/features/LaneCalendar/nodes/ShiftBlockNode.tsx`
 
 ---
 
-## 8. Gender Equality Logic (Feature Request)
+## Pre-existing TypeScript warnings (test tsconfig only)
 
-**Type:** Algorithm / constraint requirement
+The following test files use Vitest globals (`describe`, `it`, `expect`) without importing them. They run fine at runtime because Vitest injects globals, but `tsc` does not know about them. These are not production code errors.
 
-**Context:** Distribution algorithm does not enforce diversity constraints such as "at least one of every N team members must have attribute Y".
+- `tests/unit/DesirabilityBadge.test.tsx`
+- `tests/unit/laneReorder.test.ts`
+- `tests/unit/ProfileDetailCard.test.tsx`
+- `tests/unit/services/assignments.service.test.ts`
 
-**Symptom:** No built-in way to require e.g. gender balance across shifts.
-
-**Proposed resolution:** Add attribute-based constraint rule: "One out of N team members must have attribute Y". Integrate into assignment algorithm.
-
----
-
-## 9. Assignment Preview — No Visible Results
-
-**Type:** Bug — Feature malfunction
-
-**Context:** Preview feature runs assignment logic in the background but does not render results in the UI.
-
-**Symptom:** User triggers preview; nothing is displayed. No feedback on what the assignment would look like. Feature appears incomplete or broken.
-
-**Proposed resolution:** Reuse or harmonise an older preview/assignment view with current design and architecture. Preview must show resulting assignments in a meaningful way.
+**Resolution:** Add `"types": ["vitest/globals"]` to `tsconfig.json` compilerOptions, or add explicit `import { describe, it, expect } from "vitest"` to each file.
 
 ---
 
-## 10. Assignment Algorithm — Logic, Tests, Transparency
+## Fixed — v3.11 Stabilization (2026-02-28)
 
-**Type:** Documentation / testing gap
+All fixes committed to branch `v3.11`. Tests: 305/305 pass. Production TS errors: 0.
 
-**Context:** Assignment algorithm behaviour is not documented or easily inspectable. No clear specification of weights, constraints, and tie-breaking.
-
-**Symptom:** Users cannot verify correctness; developers cannot safely refactor. Behaviour is opaque.
-
-**Proposed resolution:** Document algorithm logic; add tests (unit and/or integration); expose "How are shifts assigned?" summary in UI (as per design).
-
----
-
-## 11. Assignment Run — Configuration Loss, Attributes, Resting Period
-
-**Type:** Multiple interrelated bugs
-
-**Context:** Several issues observed when running assignment:
-
-### 11a. Configured logic lost after run
-
-**Symptom:** Saved allocation logic (weights, rules, constraints) disappears after running assignment. Unclear trigger: cache refresh, new members added, or other state reset.
-
-**Investigation needed:** Trace where allocation config is stored (localStorage, DB, session). Identify what invalidates or overwrites it.
-
-### 11b. Existing members lack event attributes when added to new event
-
-**Symptom:** Adding existing team members to a new event does not populate event-specific attributes. Assignment rules that depend on those attributes fail or behave incorrectly.
-
-**Proposed resolution:** Reuse the attribute prompt from "Assume Identity" when an admin adds an existing member to a new event. Prompt for missing attributes before assignment.
-
-### 11c. Resting period constraint violated
-
-**Symptom:** With resting period set to 6 hours, a member receives two consecutive shifts without the required gap.
-
-**Context:** Indicates distribution algorithm may not correctly enforce min-rest-between-shifts.
-
-**Proposed resolution:** Refactor distribution algorithm with clear constraint handling. Add tests for resting period. Consider architectural review if multiple constraint violations persist.
+| Bug | Description | Commit |
+|-----|-------------|--------|
+| #12 | FK constraint `SwapRequest_fromAssignmentId_fkey` — delete SwapRequests before Assignments | `ef6efe6` |
+| #3  | DnD coordinate calculation after lane reorder — pass `orderedLanes` to `useCanvasActions` | `baad209` |
+| #7  | Require ratio default upper bound reads 10000 — `maxRatio ?? 1` | `1ef71a7` |
+| #6  | Zero-occupancy minimum 1 enforced — `min="0"`, remove `|| 1` coercions | `1ef71a7` |
+| #9  | "Define New Shift" → "Cancel" button jump — `min-w-[11rem]` + X icon | `1ef71a7` |
+| #11 | Preview results header square corners — `rounded-t-2xl` | `1ef71a7` |
+| #1  | Template selector in assignment rules jumps / non-unique values — use `t.id` not `t.type` | `054f400` |
+| #2  | Sidebar card shows "Shift" — add `template` include to shift repository + user calendar | `cab530f` |
+| #8  | PNG export viewport jumps to far right — save/restore viewport around capture | `911efb6` |
+| #10 | Planning → Preferences card layout jump — `min-h-[700px]` on content container | `776a393` |
+| #5  | Buffer days stale input — full 3-layer removal (schema, validation, UI, calendar) | `b0045e9` |
+| #13 | Seed missing `templateId` links and stale config keys — full rewrite | `cc72e51` |
 
 ---
 
-## 12. User Calendar — Role Filter Inappropriate
+## Fixed — earlier versions
 
-**Type:** UX / feature mismatch
-
-**Context:** User calendar has a role filter. Roles (capabilities) are being superseded by attributes. Filter may not map well to current data model.
-
-**Symptom:** Filter does not align with how shifts are actually described (attributes). May be more appropriate for admin views.
-
-**Proposed resolution:** Consider attribute-based filter for user calendar, or move role filter to admin-only. Clarify admin vs user filtering needs.
-**Status: FIXED in v3.6**
-
----
-
-## 13. User Calendar — Filter Card and Counter Layout
-
-**Type:** UX improvement
-
-**Context:** Filter card placement and counter prominence were designed for a different layout.
-
-**Symptom:** Filter card should move to top; staffed/partially staffed counters should be at bottom, smaller and less dominant.
-
-**Proposed resolution:** Adjust layout per design notes.
-**Status: FIXED in v3.6**
+| Bug | Description | Version |
+|-----|-------------|---------|
+| Lane reorder: shifts move independently of lanes | Merged `mergeNodes` fix | v3.5b |
+| Template palette: colour stripes causing confusion | Removed colours, added grip handle | v3.5b |
+| Distribution rules not persisted on save | `allocationRules` persisted via Prisma + Zod + route | v3.5b |
+| ProfileDetailCard: avatar click showed useless info | Full member info with attributes on admin team page | v3.5b / v3.7 |
+| User calendar: dead staffed/partially-staffed cards | Removed from Team Calendar view | v3.6 |
+| ShiftPropertiesPanel: shows raw Prisma enum | Template name fallback added | v3.5b |
+| CreateProfileForm reuse in admin team page | Verified working | v3.5b |
+| Attribute rules: no template import in team management | shiftType dropdown loads from event templates | v3.7 |
+| Members lack event attributes on new event | Attribute prompt reused from Assume Identity | v3.7 |
+| Canvas view consistency | Unified canvas patterns | v3.6 |
+| Desirability colour mismatch (yellow vs grey) | Unified badge + hotfix | v3.6 |
+| User calendar role filter inappropriate | Replaced with attribute filter | v3.6 |
+| User calendar filter/counter layout | Adjusted layout per design | v3.6 |
+| PNG export missing (PDF only) | PNG export added | v3.6 / v3.11 |
+| Lane reorder feature | Up/down buttons + lock | v3.6 |
+| Identity/event selection auto-forward | Escape affordance added | v3.6 |
 
 ---
 
-## 14. Partially / Fully Staffed Cards — Dead UI
+## Out of scope — future phases
 
-**Type:** Design cleanup
-
-**Context:** Staffed/partially staffed cards with colour coding exist but are not used in current design.
-
-**Symptom:** Unused UI adds noise; design has evolved.
-
-**Proposed resolution:** Remove or repurpose. Align with current design system.
-**Status: FIXED in v3.6**
-
----
-
-## 15. Desirability Colour Coding — Legend Mismatch
-
-**Type:** Bug — Visual mapping
-
-**Context:** Design specifies: 1–2 = easier (blue), 3 = moderate (grey), 4–5 = popular/harder (orange). Implemented in `DesirabilityBadge.tsx` and `ShiftPropertiesPanel.tsx`. User calendar legend uses `bg-blue-400/30`, `bg-gray-400/30`, `bg-orange-400/30`.
-
-**Symptom:** User reports 3+ appears yellow instead of grey. Possible causes: different component using amber/yellow; `gray-400/30` perceived as yellowish on some displays; inconsistent mapping in another view.
-
-**Investigation needed:** Audit all components that render desirability (ShiftBlockNode, sidebar, legend, heatmap). Ensure single mapping: 1–2 blue, 3 grey, 4–5 orange. Fix any drift.
-**Status: FIXED in v3.6** (edit added, badge unified, + hotfix)
-
----
-
-## 16. Canvas View Consistency
-
-**Type:** Design system violation
-
-**Context:** Multiple canvas views (admin schedule, user calendar, etc.) may use different layouts, controls, or visual treatment.
-
-**Symptom:** Inconsistent experience across canvas contexts.
-
-**Proposed resolution:** Define and apply consistent canvas view patterns. Document in design system.
-**Status: FIXED in v3.6**
-
----
-
-## 17. Identity / Event Selection — No Escape to Choose Different Event
-
-**Type:** Bug — Navigation flow
-
-**Context:** Flow: MemberList → EventSelectionStep → Calendar. When member has a single registered event, `EventSelectionStep` auto-calls `onEventSelected` (see `EventSelectionStep.tsx`). After selecting an event or registering for one, returning to member selection and re-selecting the same member triggers the same auto-forward.
-
-**Symptom:** User cannot choose a different event. If they want to switch events after picking one, there is no affordance. "Back" returns to member selection; selecting the same member again auto-forwards to the same event.
-
-**Proposed resolution:** Add explicit "Choose different event" action, or refrain from auto-forwarding when user has returned from Calendar. Allow event list to be shown even when member has one registration, so user can confirm or change selection.
-
----
+- **v3.8:** Assignment preview UI, configured logic lost after run, resting period constraint, algorithm tests and transparency
+- **v3.8:** Attribute/skill validation during assignment
+- **v3.9:** User list view (preferences + assigned shifts), password-based event selection, export choice (PNG vs PDF table), zero-occupancy marker verification
+- **v3.10:** Full UI audit, documentation compliance gap report
+- **General:** Gender equality / attribute balance constraint (partially implemented via `fa8a232`)
+- **General:** Canvas viewport reset on shift drop — root cause documented in `docs/plans/arch/`, fix deferred
+- **General:** Template reservoir colour schema
