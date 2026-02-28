@@ -271,8 +271,6 @@ model EventConfig {
   algorithmWeights   Json
   balanceThresholds  Json
   autoAssignUnfilled Boolean @default(true)
-  bufferDaysBefore   Int     @default(1)
-  bufferDaysAfter    Int     @default(1)
   allocationRules    Json    @default("[]")
 
   createdAt DateTime @default(now())

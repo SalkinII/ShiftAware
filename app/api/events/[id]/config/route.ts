@@ -38,8 +38,6 @@ export async function GET(
         config: null,
         defaults: {
           minShiftsPerPerson: 2,
-          bufferDaysBefore: 1,
-          bufferDaysAfter: 1,
           algorithmWeights: {},
           balanceThresholds: {},
           autoAssignUnfilled: true,
@@ -84,8 +82,6 @@ export async function PUT(
 
     const config = await service.upsertConfig(id, {
       minShiftsPerPerson: validated.minShiftsPerPerson,
-      bufferDaysBefore: validated.bufferDaysBefore,
-      bufferDaysAfter: validated.bufferDaysAfter,
       algorithmWeights: validated.algorithmWeights || {},
       balanceThresholds: validated.balanceThresholds || {},
       autoAssignUnfilled: validated.autoAssignUnfilled,

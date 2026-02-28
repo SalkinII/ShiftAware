@@ -11,7 +11,6 @@ import {
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import { updateEventSchema } from "@/lib/validations/event";
-import { prisma } from "@/lib/db";
 
 const service = new EventsService();
 
@@ -56,13 +55,7 @@ export async function PUT(
       );
     }
 
-    const {
-      bufferDaysBefore,
-      bufferDaysAfter,
-      startDate,
-      endDate,
-      ...eventFields
-    } = validation.data;
+    const { startDate, endDate, ...eventFields } = validation.data;
 
     // Convert date strings to Date objects for Prisma
     const eventData: Record<string, unknown> = { ...eventFields };
@@ -73,26 +66,6 @@ export async function PUT(
     delete eventData.id;
 
     const event = await service.updateEvent(id, eventData as any);
-
-    // Update config fields if present
-    if (bufferDaysBefore !== undefined || bufferDaysAfter !== undefined) {
-      const configUpdate: Record<string, number> = {};
-      if (bufferDaysBefore !== undefined)
-        configUpdate.bufferDaysBefore = bufferDaysBefore;
-      if (bufferDaysAfter !== undefined)
-        configUpdate.bufferDaysAfter = bufferDaysAfter;
-
-      await prisma.eventConfig.upsert({
-        where: { eventId: id },
-        update: configUpdate,
-        create: {
-          eventId: id,
-          ...configUpdate,
-          algorithmWeights: {},
-          balanceThresholds: {},
-        },
-      });
-    }
 
     await createAuditLog({
       action: AuditAction.UPDATE,

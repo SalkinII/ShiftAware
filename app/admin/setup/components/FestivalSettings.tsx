@@ -14,10 +14,6 @@ interface Event {
   startDate: string;
   endDate: string;
   status: string;
-  config?: {
-    bufferDaysBefore: number;
-    bufferDaysAfter: number;
-  };
 }
 
 export function FestivalSettings() {
@@ -38,8 +34,6 @@ export function FestivalSettings() {
     status: "PLANNING",
     startDate: "",
     endDate: "",
-    bufferDaysBefore: 1,
-    bufferDaysAfter: 1,
   });
 
   useEffect(() => {
@@ -49,8 +43,6 @@ export function FestivalSettings() {
         status: "PLANNING",
         startDate: "",
         endDate: "",
-        bufferDaysBefore: 1,
-        bufferDaysAfter: 1,
       });
     } else {
       const event = events.find((e) => e.id === selectedEventId);
@@ -60,8 +52,6 @@ export function FestivalSettings() {
           status: event.status,
           startDate: event.startDate.split("T")[0],
           endDate: event.endDate.split("T")[0],
-          bufferDaysBefore: event.config?.bufferDaysBefore ?? 1,
-          bufferDaysAfter: event.config?.bufferDaysAfter ?? 1,
         });
       }
     }
@@ -79,8 +69,6 @@ export function FestivalSettings() {
         name: formData.name,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        bufferDaysBefore: formData.bufferDaysBefore,
-        bufferDaysAfter: formData.bufferDaysAfter,
       };
 
       const url = isCreatingNew
@@ -197,33 +185,6 @@ export function FestivalSettings() {
               setFormData({ ...formData, endDate: e.target.value })
             }
             required
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Buffer Days Before"
-            type="number"
-            min="0"
-            value={formData.bufferDaysBefore}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                bufferDaysBefore: parseInt(e.target.value) || 0,
-              })
-            }
-          />
-          <Input
-            label="Buffer Days After"
-            type="number"
-            min="0"
-            value={formData.bufferDaysAfter}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                bufferDaysAfter: parseInt(e.target.value) || 0,
-              })
-            }
           />
         </div>
       </div>

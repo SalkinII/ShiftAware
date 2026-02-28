@@ -4,6 +4,9 @@ import { AssignmentsService } from "@/lib/services/assignments.service";
 // Mock dependencies
 vi.mock("@/lib/db", () => {
   const txMock = {
+    swapRequest: {
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     assignment: {
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       create: vi.fn().mockImplementation((args: any) =>

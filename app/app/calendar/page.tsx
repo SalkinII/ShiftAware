@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/Toast";
 import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 import { MyShiftsList } from "./components/MyShiftsList";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
@@ -169,15 +169,10 @@ export default function UserCalendarPage() {
     }
   }, [cachedShifts, cacheLoading]);
 
-  // Set calendar anchor date based on selected event config (with buffer) or fallback to earliest shift
+  // Set calendar anchor date based on selected event or fallback to earliest shift
   useEffect(() => {
     if (selectedEvent?.startDate) {
-      const bufferDays = selectedEvent.config?.bufferDaysBefore || 0;
-      const festivalStart = addDays(
-        new Date(selectedEvent.startDate),
-        -bufferDays,
-      );
-      setCurrentEventDate(format(festivalStart, "yyyy-MM-dd"));
+      setCurrentEventDate(format(new Date(selectedEvent.startDate), "yyyy-MM-dd"));
     } else if (shifts.length > 0) {
       const earliest = shifts.reduce(
         (earliestDate: string | undefined, shift: Shift) => {

@@ -49,8 +49,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, startDate, endDate, bufferDaysBefore, bufferDaysAfter } =
-      validation.data;
+    const { name, startDate, endDate } = validation.data;
 
     const service = new EventsService();
 
@@ -64,8 +63,6 @@ export async function POST(request: Request) {
       },
       {
         minShiftsPerPerson: 2,
-        bufferDaysBefore,
-        bufferDaysAfter,
         algorithmWeights: {
           preferenceMatch: 0.35,
           experienceBalance: 0.25,
