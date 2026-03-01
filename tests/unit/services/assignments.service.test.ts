@@ -182,10 +182,22 @@ describe("AssignmentsService", () => {
     mockEventRepo.findById.mockResolvedValue(mockEvent);
     vi.mocked(prisma.event.findUnique).mockResolvedValue({
       id: "event-1",
+      name: "Test Event",
+      startDate: new Date(),
+      endDate: new Date(),
       status: "ASSIGNING",
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
     vi.mocked(prisma.eventRegistration.findMany).mockResolvedValue(
-      mockMembers.map((member) => ({ member })),
+      mockMembers.map((member) => ({
+        id: "reg-1",
+        eventId: "event-1",
+        memberId: member.id,
+        status: "REGISTERED",
+        registeredAt: new Date(),
+        member,
+      })),
     );
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts);
     vi.mocked(runAssignmentAlgorithm).mockResolvedValue(mockResult);
@@ -286,10 +298,22 @@ describe("AssignmentsService", () => {
     mockEventRepo.findById.mockResolvedValue(mockEvent);
     vi.mocked(prisma.event.findUnique).mockResolvedValue({
       id: "event-1",
+      name: "Test Event",
+      startDate: new Date(),
+      endDate: new Date(),
       status: "ASSIGNING",
-    });
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
     vi.mocked(prisma.eventRegistration.findMany).mockResolvedValue(
-      mockMembers.map((member) => ({ member })),
+      mockMembers.map((member) => ({
+        id: "reg-1",
+        eventId: "event-1",
+        memberId: member.id,
+        status: "REGISTERED",
+        registeredAt: new Date(),
+        member,
+      })),
     );
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts);
     vi.mocked(runAssignmentAlgorithm).mockResolvedValue(mockResult);
