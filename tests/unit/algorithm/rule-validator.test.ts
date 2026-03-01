@@ -288,4 +288,98 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
     const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
     expect(violations.length).toBeGreaterThan(0); // 33% FINTA < 40% min
   });
+
+  it("ratio boundary: 0/0 (empty) passes", () => {
+    const ratioRule: AllocationRule = {
+      id: "r3",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_RATIO",
+      minRatio: 0,
+      maxRatio: 0,
+    };
+    const state: AssignmentState = {
+      assignments: new Map([["s1", []]]),
+      memberShifts: new Map(),
+      shiftCoverage: new Map(),
+    };
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
+    const memberAttrs = new Map<string, Map<string, string>>();
+    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    expect(violations).toHaveLength(0); // empty assignments skipped
+  });
+
+  it("ratio boundary: 1/2 = 0.5 at exact minRatio", () => {
+    const ratioRule: AllocationRule = {
+      id: "r3",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_RATIO",
+      minRatio: 0.4,
+      maxRatio: 0.6,
+    };
+    const state: AssignmentState = {
+      assignments: new Map([
+        ["s1", [
+          { teamMemberId: "m1" } as any,
+          { teamMemberId: "m2" } as any,
+          { teamMemberId: "m3" } as any,
+          { teamMemberId: "m4" } as any,
+          { teamMemberId: "m5" } as any,
+        ]],
+      ]),
+      memberShifts: new Map(),
+      shiftCoverage: new Map(),
+    };
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "FINTA"]])],
+      ["m2", new Map([["gender", "FINTA"]])],
+      ["m3", new Map([["gender", "M"]])],
+      ["m4", new Map([["gender", "M"]])],
+      ["m5", new Map([["gender", "M"]])],
+    ]);
+    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    expect(violations).toHaveLength(0); // 2/5 = 0.4 exactly at boundary
+  });
+
+  it("ratio boundary: 3/5 = 0.6 at exact maxRatio", () => {
+    const ratioRule: AllocationRule = {
+      id: "r3",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_RATIO",
+      minRatio: 0.4,
+      maxRatio: 0.6,
+    };
+    const state: AssignmentState = {
+      assignments: new Map([
+        ["s1", [
+          { teamMemberId: "m1" } as any,
+          { teamMemberId: "m2" } as any,
+          { teamMemberId: "m3" } as any,
+          { teamMemberId: "m4" } as any,
+          { teamMemberId: "m5" } as any,
+        ]],
+      ]),
+      memberShifts: new Map(),
+      shiftCoverage: new Map(),
+    };
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "FINTA"]])],
+      ["m2", new Map([["gender", "FINTA"]])],
+      ["m3", new Map([["gender", "FINTA"]])],
+      ["m4", new Map([["gender", "M"]])],
+      ["m5", new Map([["gender", "M"]])],
+    ]);
+    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    expect(violations).toHaveLength(0); // 3/5 = 0.6 exactly at boundary
+  });
 });
