@@ -94,7 +94,7 @@ function ShiftContent({
             "truncate font-semibold min-w-0 text-[100px] leading-[1.15]",
             isMarker ? "text-gray-400" : "text-gray-900"
           )}>
-            {isMarker ? "Marker" : templateName}
+            {templateName}
           </span>
           {showTime && !isMarker && (
             <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">

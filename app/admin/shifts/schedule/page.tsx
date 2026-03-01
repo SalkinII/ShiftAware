@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Archive,
   Users,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -974,10 +975,21 @@ export default function ShiftsPage() {
                                 Capacity
                               </p>
                             </div> */}
-                            <ShiftCardActions
+                            {/* <ShiftCardActions
                               shiftId={shift.id}
                               onDelete={() => handleDeleteShift(shift.id)}
                             />
+                             */}
+                            <button
+                            type="button"
+                              onClick={e => {
+                              e.stopPropagation();
+                              handleDeleteShift(shift.id);
+                              }}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              aria-label="Delete shift">
+                            <Trash2 className="w-4 h-4" />
+                              </button>            
                           </div>
                         </div>
 

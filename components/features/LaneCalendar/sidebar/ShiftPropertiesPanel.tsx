@@ -214,9 +214,9 @@ export function ShiftPropertiesPanel({
     <GlassPanel className="w-80 border-l border-gray-200 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900 truncate">
+        <h2 className="font-semibold text-gray-900 truncate">
           {shift?.template?.name || "Shift Details"}
-        </h3>
+        </h2>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -231,8 +231,7 @@ export function ShiftPropertiesPanel({
         <div className="bg-sky-50 rounded-lg p-3 border border-sky-100">
           <div className="flex items-center gap-2 mb-2">
             <ColorStripe color={laneColor} className="h-4" />
-          </div>
-          {(() => {
+           {(() => {
             const info = getShiftDisplayInfo(shift);
             return (
               <>
@@ -244,6 +243,7 @@ export function ShiftPropertiesPanel({
               </>
             );
           })()}
+          </div>
         </div>
 
         {/* Time & Capacity inputs */}
@@ -278,6 +278,7 @@ export function ShiftPropertiesPanel({
             />
           </label>
         </div>
+        <div className="h-1 bg-gray-200 my-2"></div>
 
         {/* Desirability Score */}
         <div>
@@ -302,20 +303,24 @@ export function ShiftPropertiesPanel({
               </button>
             ))}
           </div>
+          <div className="h-1 bg-gray-200 my-2"></div>
           <div className="flex justify-between mt-1 text-xs text-gray-500">
-            <span>{wantCount} want this</span>
-            <span>{dontWantCount} don&apos;t want</span>
+            <span>{wantCount} people want this shift</span>
+          </div>
+          <div className="flex justify-between mt-1 text-xs text-gray-500">
+            <span>{dontWantCount} people don't want this shift</span>
           </div>
         </div>
+        <div className="h-1 bg-gray-200 my-2"></div>
 
         {/* Assignments */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          {/* <div className="flex items-center justify-between mb-2">
             <SectionLabel>Assigned</SectionLabel>
             <span className="text-xs text-gray-400">
               {shift?.assignments?.length || 0}/{shift?.capacity}
             </span>
-          </div>
+          </div> */}
 
           <div className="space-y-2">
             {shift?.assignments?.map((assignment: any) => (
