@@ -219,7 +219,9 @@ function LaneCalendarCanvasInner(
   const handleNodeDragStopWithGuides = useCallback(
     (event: React.MouseEvent, node: Node) => {
       clearAlignmentGuides();
-      handleNodeDragStop(event, node);
+      handleNodeDragStop(event, node).catch(() => {
+        // Errors already handled inside handleNodeDragStop via toast
+      });
     },
     [clearAlignmentGuides, handleNodeDragStop],
   );
