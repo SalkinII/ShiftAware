@@ -38,7 +38,7 @@ export interface AllocationRule {
   id: string;
   shiftType: string;
   attribute: string;
-  operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS";
+  operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS" | "ONE_OF";
   value: string;
   balanceMode?: "REQUIRE_ONE" | "REQUIRE_RATIO";
   minRatio?: number;

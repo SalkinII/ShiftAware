@@ -22,6 +22,10 @@ export function evaluateRule(
       return attrValue !== rule.value;
     case "CONTAINS":
       return attrValue.includes(rule.value);
+    case "ONE_OF": {
+      const options = rule.value.split(",").map((s) => s.trim());
+      return options.includes(attrValue);
+    }
     default:
       return false;
   }

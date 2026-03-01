@@ -4,7 +4,7 @@ const allocationRuleSchema = z.object({
   id: z.string(),
   shiftType: z.string(),
   attribute: z.string(),
-  operator: z.enum(["EQUALS", "NOT_EQUALS", "CONTAINS"]),
+  operator: z.enum(["EQUALS", "NOT_EQUALS", "CONTAINS", "ONE_OF"]),
   value: z.string(),
   balanceMode: z.enum(["REQUIRE_ONE", "REQUIRE_RATIO"]).optional(),
   minRatio: z.number().min(0).max(1).optional(),

@@ -15,7 +15,7 @@ interface AttributeRule {
   id: string;
   shiftType: string;
   attribute: string;
-  operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS";
+  operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS" | "ONE_OF";
   value: string;
   balanceMode?: "REQUIRE_ONE" | "REQUIRE_RATIO";
   minRatio?: number;
@@ -251,7 +251,7 @@ export function DistributionSettings() {
         const data = await res.json();
         const result = unwrapApiResponse<any>(data);
         setPreviewResult(result);
-        await loadConfig();
+        // Do NOT call loadConfig() after preview — preserves user's slider values (#14)
       } else {
         const error = await res.json();
         toast.error(error.message || "Failed to preview");
@@ -538,6 +538,7 @@ export function DistributionSettings() {
                     <option value="EQUALS">Equals</option>
                     <option value="NOT_EQUALS">Not Equals</option>
                     <option value="CONTAINS">Contains</option>
+                    <option value="ONE_OF">One Of</option>
                   </select>
 
                   {(() => {
@@ -557,6 +558,19 @@ export function DistributionSettings() {
                           <option value="true">Yes</option>
                           <option value="false">No</option>
                         </select>
+                      );
+                    }
+                    if (rule.operator === "ONE_OF") {
+                      return (
+                        <input
+                          type="text"
+                          value={rule.value}
+                          onChange={(e) =>
+                            handleUpdateRule(rule.id, "value", e.target.value)
+                          }
+                          placeholder="e.g. FINTA, M (comma-separated)"
+                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 flex-1 min-w-0"
+                        />
                       );
                     }
                     if (

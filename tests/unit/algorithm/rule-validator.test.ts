@@ -44,6 +44,30 @@ describe("evaluateRule", () => {
     expect(evaluateRule(r, attrs)).toBe(true);
   });
 
+  it("ONE_OF: returns true when attribute matches one of comma-separated values", () => {
+    const r: AllocationRule = {
+      id: "r3",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "ONE_OF",
+      value: "FINTA, M",
+    };
+    expect(evaluateRule(r, new Map([["gender", "FINTA"]]))).toBe(true);
+    expect(evaluateRule(r, new Map([["gender", "M"]]))).toBe(true);
+    expect(evaluateRule(r, new Map([["gender", "OTHER"]]))).toBe(false);
+  });
+
+  it("ONE_OF: trims whitespace in options", () => {
+    const r: AllocationRule = {
+      id: "r4",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "ONE_OF",
+      value: " FINTA , M ",
+    };
+    expect(evaluateRule(r, new Map([["gender", "FINTA"]]))).toBe(true);
+  });
+
   it("returns false when attribute is missing", () => {
     const attrs = new Map<string, string>();
     expect(evaluateRule(rule, attrs)).toBe(false);
