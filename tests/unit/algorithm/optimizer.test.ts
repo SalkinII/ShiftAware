@@ -109,4 +109,97 @@ describe("runAssignmentAlgorithm", () => {
 
     expect(result.assignments.length).toBe(0);
   });
+
+  it("preference conflict: two members want same last slot — higher score wins", async () => {
+    const s1 = makeShift({ capacity: 1 });
+    const m1 = makeMember({
+      alias: "Alice",
+      preferences: [{ shiftId: s1.id, wantLevel: "WANT", shift: s1 }],
+    });
+    const m2 = makeMember({
+      alias: "Bob",
+      preferences: [{ shiftId: s1.id, wantLevel: "WANT", shift: s1 }],
+    });
+
+    const result = await runAssignmentAlgorithm([m1, m2], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+    });
+
+    expect(result.assignments.length).toBe(1);
+    expect([m1.id, m2.id]).toContain(result.assignments[0].teamMemberId);
+  });
+
+  it("capacity exhaustion: more candidates than slots", async () => {
+    const s1 = makeShift({ capacity: 2 });
+    const m1 = makeMember({ alias: "Alice" });
+    const m2 = makeMember({ alias: "Bob" });
+    const m3 = makeMember({ alias: "Carol" });
+
+    const result = await runAssignmentAlgorithm([m1, m2, m3], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+    });
+
+    expect(result.assignments.length).toBe(2);
+  });
+
+  it("max shifts cap reached mid-assignment", async () => {
+    const s1 = makeShift({ capacity: 1 });
+    const s2 = makeShift({ capacity: 1 });
+    const s3 = makeShift({ capacity: 1 });
+    const m1 = makeMember({ alias: "Alice" });
+    const m2 = makeMember({ alias: "Bob" });
+
+    const result = await runAssignmentAlgorithm([m1, m2], [s1, s2, s3], {
+      minShiftsPerPerson: 0,
+      maxShiftsPerPerson: 1,
+      coreShifts: [],
+    });
+
+    expect(result.assignments.length).toBe(2);
+    const counts = new Map<string, number>();
+    for (const a of result.assignments) {
+      counts.set(a.teamMemberId, (counts.get(a.teamMemberId) || 0) + 1);
+    }
+    expect(Math.max(...counts.values())).toBe(1);
+  });
+
+  it("empty inputs: no members, no shifts", async () => {
+    const result = await runAssignmentAlgorithm([], [], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+    });
+    expect(result.assignments).toHaveLength(0);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("ONE_OF operator in rules — matching member assigned", async () => {
+    const s1 = makeShift({ capacity: 1, type: "STATIONARY" });
+    const m1 = makeMember({ alias: "Alice" });
+    const m2 = makeMember({ alias: "Bob" });
+    const allocationRules = [
+      {
+        id: "r1",
+        shiftType: "STATIONARY",
+        attribute: "role",
+        operator: "ONE_OF" as const,
+        value: "medic,driver",
+      },
+    ];
+    const memberAttributes = new Map([
+      [m1.id, new Map([["role", "medic"]])],
+      [m2.id, new Map([["role", "other"]])],
+    ]);
+
+    const result = await runAssignmentAlgorithm([m1, m2], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+      allocationRules,
+      memberAttributes,
+    });
+
+    expect(result.assignments.length).toBe(1);
+    expect(result.assignments[0].teamMemberId).toBe(m1.id);
+  });
 });

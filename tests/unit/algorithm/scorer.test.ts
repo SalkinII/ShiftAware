@@ -68,4 +68,56 @@ describe("scoreAssignment", () => {
     expect(result.overall).toBeGreaterThan(0);
     expect(result.preferenceMatch).toBe(100);
   });
+
+  it("all weights = 0 → overall = 0", () => {
+    const member = makeMember();
+    const shift = makeShift();
+    const state = emptyState();
+    const membersMap = new Map([[member.id, member]]);
+    const prefs = [{ shiftId: shift.id, wantLevel: "WANT" }];
+    const weights = {
+      preferenceMatch: 0,
+      experienceBalance: 0,
+      workloadFairness: 0,
+      coreShiftCoverage: 0,
+    };
+
+    const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
+    expect(result.overall).toBe(0);
+  });
+
+  it("single weight = 1, rest = 0 → that factor dominates", () => {
+    const member = makeMember();
+    const shift = makeShift();
+    const state = emptyState();
+    const membersMap = new Map([[member.id, member]]);
+    const prefs = [{ shiftId: shift.id, wantLevel: "WANT" }];
+    const weights = {
+      preferenceMatch: 1,
+      experienceBalance: 0,
+      workloadFairness: 0,
+      coreShiftCoverage: 0,
+    };
+
+    const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
+    expect(result.overall).toBe(100);
+  });
+
+  it("DONT_WANT produces negative preference score", () => {
+    const member = makeMember();
+    const shift = makeShift();
+    const prefs = [{ shiftId: shift.id, wantLevel: "DONT_WANT" }];
+    const state = emptyState();
+    const membersMap = new Map([[member.id, member]]);
+    const weights = {
+      preferenceMatch: 1,
+      experienceBalance: 0,
+      workloadFairness: 0,
+      coreShiftCoverage: 0,
+    };
+
+    const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
+    expect(result.preferenceMatch).toBe(-50);
+    expect(result.overall).toBe(-50);
+  });
 });

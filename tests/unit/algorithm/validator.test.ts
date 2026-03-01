@@ -108,4 +108,76 @@ describe("validateRestPeriod (post-hoc)", () => {
     const violations = validateRestPeriod("m1", state, allShifts, 6 * 3600000);
     expect(violations.length).toBe(0);
   });
+
+  it("shifts spanning midnight", () => {
+    const state: AssignmentState = {
+      assignments: new Map(),
+      memberShifts: new Map([["m1", ["s1", "s2"]]]),
+      shiftCoverage: new Map(),
+    };
+    const allShifts = new Map<string, Shift>([
+      ["s1", {
+        id: "s1",
+        type: "STATIONARY",
+        startTime: new Date("2026-07-01T22:00:00Z"),
+        endTime: new Date("2026-07-02T02:00:00Z"),
+      } as Shift],
+      ["s2", {
+        id: "s2",
+        type: "MOBILE_TEAM",
+        startTime: new Date("2026-07-02T06:00:00Z"),
+        endTime: new Date("2026-07-02T10:00:00Z"),
+      } as Shift],
+    ]);
+    const violations = validateRestPeriod("m1", state, allShifts, 4 * 3600000);
+    expect(violations.length).toBe(0);
+  });
+
+  it("zero-duration gap (back-to-back) with 0 rest required", () => {
+    const state: AssignmentState = {
+      assignments: new Map(),
+      memberShifts: new Map([["m1", ["s1", "s2"]]]),
+      shiftCoverage: new Map(),
+    };
+    const allShifts = new Map<string, Shift>([
+      ["s1", {
+        id: "s1",
+        type: "STATIONARY",
+        startTime: new Date("2026-07-01T08:00:00Z"),
+        endTime: new Date("2026-07-01T12:00:00Z"),
+      } as Shift],
+      ["s2", {
+        id: "s2",
+        type: "MOBILE_TEAM",
+        startTime: new Date("2026-07-01T12:00:00Z"),
+        endTime: new Date("2026-07-01T16:00:00Z"),
+      } as Shift],
+    ]);
+    const violations = validateRestPeriod("m1", state, allShifts, 0);
+    expect(violations.length).toBe(0);
+  });
+
+  it("very long rest period requirement (24h)", () => {
+    const state: AssignmentState = {
+      assignments: new Map(),
+      memberShifts: new Map([["m1", ["s1", "s2"]]]),
+      shiftCoverage: new Map(),
+    };
+    const allShifts = new Map<string, Shift>([
+      ["s1", {
+        id: "s1",
+        type: "STATIONARY",
+        startTime: new Date("2026-07-01T08:00:00Z"),
+        endTime: new Date("2026-07-01T12:00:00Z"),
+      } as Shift],
+      ["s2", {
+        id: "s2",
+        type: "MOBILE_TEAM",
+        startTime: new Date("2026-07-01T20:00:00Z"),
+        endTime: new Date("2026-07-02T00:00:00Z"),
+      } as Shift],
+    ]);
+    const violations = validateRestPeriod("m1", state, allShifts, 24 * 3600000);
+    expect(violations.length).toBe(1);
+  });
 });

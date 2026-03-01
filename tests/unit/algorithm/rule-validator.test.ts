@@ -58,6 +58,17 @@ describe("evaluateRule", () => {
     expect(evaluateRule(r, new Map([["gender", "OTHER"]]))).toBe(false);
   });
 
+  it("ONE_OF: empty values list — no match", () => {
+    const r: AllocationRule = {
+      id: "r4",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "ONE_OF",
+      value: "",
+    };
+    expect(evaluateRule(r, new Map([["gender", "FINTA"]]))).toBe(false);
+  });
+
   it("ONE_OF: trims whitespace in options", () => {
     const r: AllocationRule = {
       id: "r4",
