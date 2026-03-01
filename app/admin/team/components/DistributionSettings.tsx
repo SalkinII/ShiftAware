@@ -60,10 +60,66 @@ export function DistributionSettings() {
 
   // Load config when event changes
   useEffect(() => {
-    if (selectedEventId) {
-      loadConfig();
-      fetchAttributeDefinitions(selectedEventId);
-    }
+    if (!selectedEventId) return;
+    const ac = new AbortController();
+    const signal = ac.signal;
+
+    (async () => {
+      try {
+        const [attrRes, tplRes] = await Promise.all([
+          fetch(`/api/events/${selectedEventId}/attributes`, { signal }),
+          fetch(`/api/events/${selectedEventId}/templates`, { signal }),
+        ]);
+        if (signal.aborted) return;
+        if (attrRes.ok) {
+          const data = await attrRes.json();
+          setAttributeDefinitions(data.data || []);
+        }
+        if (tplRes.ok) {
+          const data = await tplRes.json();
+          const tplData = data.data || {};
+          const all = [
+            ...(tplData.assigned || []),
+            ...(tplData.eventSpecific || []),
+          ];
+          setTemplates(all);
+        }
+
+        const cfgRes = await fetch(`/api/events/${selectedEventId}/config`, { signal });
+        if (signal.aborted) return;
+        if (cfgRes.ok) {
+          const data = await cfgRes.json();
+          const cfg = unwrapApiResponse<any>(data);
+          if (signal.aborted) return;
+          if (cfg) {
+            const weights = cfg.algorithmWeights || {};
+            let fairness = weights._uiFairness ?? 50;
+            let preferences = weights._uiPreferences ?? 30;
+            if (weights._uiFairness === undefined && weights.preferenceMatch !== undefined) {
+              const wb = (weights.workloadFairness || 0) + (weights.experienceBalance || 0);
+              const pm = weights.preferenceMatch || 0;
+              const total = wb + pm;
+              fairness = total > 0 ? Math.round((wb / total) * 100) : 50;
+              preferences = total > 0 ? Math.round((pm / total) * 100) : 30;
+            }
+            setConfig({
+              fairnessWeight: fairness,
+              preferenceWeight: preferences,
+              maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
+              minRestHours: cfg.balanceThresholds?.minRestHours || 8,
+              attributeRules: cfg.allocationRules || [],
+            });
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Failed to fetch attribute definitions:", error);
+      }
+    })();
+
+    return () => {
+      ac.abort();
+    };
   }, [selectedEventId]);
 
   async function fetchAttributeDefinitions(eventId: string) {

@@ -65,22 +65,52 @@ export function MemberListByEvent({
   } | null>(null);
 
   useEffect(() => {
-    loadMembers();
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`/api/members?eventId=${eventId}`);
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          setMembers(unwrapApiResponse<Member[]>(data) || []);
+        }
+        const allRes = await fetch(
+          `/api/members?eventId=${eventId}&includeUnregistered=true`,
+        );
+        if (cancelled) return;
+        if (allRes.ok) {
+          const data = await allRes.json();
+          setAllMembers(unwrapApiResponse<Member[]>(data) || []);
+        }
+      } catch (error) {
+        if (!cancelled) console.error("Failed to load members:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   useEffect(() => {
-    async function loadAttributeDefinitions() {
+    let cancelled = false;
+    (async function loadAttributeDefinitions() {
       try {
         const res = await fetch(`/api/events/${eventId}/attributes`);
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
           setAttributeDefinitions(data.data || []);
         }
       } catch (error) {
-        console.error("Failed to load attribute definitions:", error);
+        if (!cancelled) console.error("Failed to load attribute definitions:", error);
       }
-    }
-    loadAttributeDefinitions();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   async function loadMembers() {

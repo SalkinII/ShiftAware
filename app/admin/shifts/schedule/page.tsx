@@ -661,7 +661,7 @@ export default function ShiftsPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              {viewMode === "calendar" ? (
+              <div className={viewMode === "list" ? "invisible pointer-events-none" : ""}>
                 <div className="relative group">
                   <Button
                     variant="secondary"
@@ -684,7 +684,7 @@ export default function ShiftsPage() {
                     </button>
                   </div>
                 </div>
-              ) : null}
+              </div>
               {selectedEvent &&
                 (() => {
                   const nextStatus = getNextStatus(selectedEvent.status);

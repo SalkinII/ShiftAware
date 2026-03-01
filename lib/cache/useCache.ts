@@ -69,22 +69,49 @@ export function useCache<T = any>({
   }, [key, cache]);
 
   useEffect(() => {
+    let cancelled = false;
+
     // Check cache first
     const cached = cache.get(key);
     if (cached) {
       setData(cached.data);
       setLoading(false);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     // If not in cache and enabled, fetch
     if (enabled) {
-      fetchData();
+      setLoading(true);
+      setError(null);
+      fetchFn()
+        .then((result) => {
+          if (!cancelled) {
+            cache.set(key, result, ttl);
+            setData(result);
+          }
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            const error =
+              err instanceof Error ? err : new Error("Failed to fetch data");
+            setError(error);
+            console.error(`Cache fetch error for key "${key}":`, error);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
     } else {
       setLoading(false);
     }
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, enabled]); // Exclude cache and fetchData - cache.get is stable, fetchData is memoized
+  }, [key, enabled]); // Exclude cache, fetchFn - cache methods stable; fetchFn from caller
 
   return {
     data: data as T | null,
