@@ -577,7 +577,7 @@ export default function ShiftsPage() {
     },
   ]);
 
-  if (loading) {
+  if (loading && !cachedShifts) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" variant="text" />
