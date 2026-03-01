@@ -199,6 +199,14 @@ export default function ShiftsPage() {
     enabled: !!selectedEventId,
   });
 
+  const handleShiftCreated = useCallback(() => {
+    refetchShifts();
+  }, [refetchShifts]);
+
+  const handleShiftUpdated = useCallback(() => {
+    refetchShifts();
+  }, [refetchShifts]);
+
   // Fetch templates for the selected event to derive lanes
   const { data: eventTemplates } = useCache<any[]>({
     key: selectedEventId
@@ -779,8 +787,8 @@ export default function ShiftsPage() {
                     eventEnd={eventEndDate}
                     eventId={selectedEventId}
                     onShiftSelected={setSelectedShiftId}
-                    onShiftCreated={() => refetchShifts()}
-                    onShiftUpdated={() => refetchShifts()}
+                    onShiftCreated={handleShiftCreated}
+                    onShiftUpdated={handleShiftUpdated}
                     shiftMutationLocked={shiftMutationLocked}
                   />
                 )}
@@ -793,7 +801,7 @@ export default function ShiftsPage() {
                     shiftId={selectedShiftId}
                     eventStatus={selectedEvent?.status}
                     onClose={() => setSelectedShiftId(null)}
-                    onUpdated={() => refetchShifts()}
+                    onUpdated={handleShiftUpdated}
                   />
                 </div>
               )}
