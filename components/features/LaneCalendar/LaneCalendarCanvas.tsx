@@ -250,7 +250,7 @@ function LaneCalendarCanvasInner(
     }
   }
 
-  const { setViewport: setFlowViewport, getViewport, fitView } = useReactFlow();
+  const { fitView } = useReactFlow();
   const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);
   const canvasHeight = orderedLanes.length * LANE_HEIGHT;
   const shiftNodes = useShiftNodes(shifts, orderedLanes, eventStart, {
@@ -309,9 +309,6 @@ function LaneCalendarCanvasInner(
     const flowNodes = [...laneNodes, ...shiftNodes];
     if (flowNodes.length === 0) return null;
 
-    // Save current viewport from React Flow's internal state (always current)
-    const savedViewport = getViewport();
-
     // Compute viewport that fits all nodes
     const bounds = getNodesBounds(flowNodes);
     const { width, height } = container.getBoundingClientRect();
@@ -324,8 +321,18 @@ function LaneCalendarCanvasInner(
       0.1,
     );
 
-    // Set export viewport and wait for DOM to update
-    setFlowViewport(exportViewport);
+    // Manipulate the CSS transform directly on the viewport element.
+    // This bypasses d3-zoom entirely — React Flow's internal viewport
+    // state is never changed, so no viewport jump or state desync.
+    const vpEl = target.querySelector(
+      ".react-flow__viewport",
+    ) as HTMLElement | null;
+    if (!vpEl) return null;
+
+    const savedTransform = vpEl.style.transform;
+    vpEl.style.transform = `translate(${exportViewport.x}px, ${exportViewport.y}px) scale(${exportViewport.zoom})`;
+
+    // Wait for browser to paint the export transform
     await new Promise((r) => setTimeout(r, 150));
 
     try {
@@ -336,10 +343,10 @@ function LaneCalendarCanvasInner(
     } catch {
       return null;
     } finally {
-      // Restore from the imperative snapshot — always accurate
-      setFlowViewport(savedViewport);
+      // Restore — d3-zoom never knew we changed, so no side effects
+      vpEl.style.transform = savedTransform;
     }
-  }, [laneNodes, shiftNodes, getViewport, setFlowViewport]);
+  }, [laneNodes, shiftNodes]);
 
   useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
 
