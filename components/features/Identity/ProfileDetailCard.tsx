@@ -60,7 +60,7 @@ export function ProfileDetailCard({ member, onClose }: ProfileDetailCardProps) {
           <h2 className="text-2xl font-black text-gray-900">{member.alias}</h2>
         </div>
 
-        {/* Experience Level */}
+       {/*  Experience Level
         {member.experienceLevel && (
           <div className="mb-4 flex justify-center">
             <span
@@ -74,7 +74,7 @@ export function ProfileDetailCard({ member, onClose }: ProfileDetailCardProps) {
           </div>
         )}
 
-        {/* Capabilities */}
+        {/* Capabilities */}{/*
         {member.capabilities && member.capabilities.length > 0 && (
           <div className="flex flex-wrap gap-1.5 justify-center">
             {member.capabilities.map((cap) => (
@@ -86,7 +86,7 @@ export function ProfileDetailCard({ member, onClose }: ProfileDetailCardProps) {
               </span>
             ))}
           </div>
-        )}
+        )} */}
 
         {/* Attributes */}
         {member.attributes && member.attributes.length > 0 && (
