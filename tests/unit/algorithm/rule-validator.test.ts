@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   evaluateRule,
   filterByRules,
+  getRuleFilterExclusionReason,
   validateComplementaryRules,
 } from "../../../lib/algorithm/rule-validator";
 import type { AllocationRule } from "../../../lib/algorithm/types";
@@ -102,6 +103,67 @@ describe("filterByRules", () => {
 
     const filtered = filterByRules(candidates, "MOBILE", [rule], memberAttrs);
     expect(filtered).toHaveLength(1);
+  });
+
+  it("filters with multiple rules — all must pass", () => {
+    const rules: AllocationRule[] = [
+      { ...rule, id: "r1", attribute: "firstAid", value: "true" },
+      { ...rule, id: "r2", attribute: "gender", operator: "EQUALS" as const, value: "M" },
+    ];
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+      { member: { id: "m2" }, score: { overall: 90 } },
+    ] as any;
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["firstAid", "true"], ["gender", "M"]])],
+      ["m2", new Map([["firstAid", "true"], ["gender", "FINTA"]])],
+    ]);
+    const filtered = filterByRules(candidates, "STATIONARY", rules, memberAttrs);
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].member.id).toBe("m1");
+  });
+
+  it("returns empty when all candidates fail rules", () => {
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+      { member: { id: "m2" }, score: { overall: 90 } },
+    ] as any;
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["firstAid", "false"]])],
+      ["m2", new Map([["firstAid", "false"]])],
+    ]);
+    const filtered = filterByRules(candidates, "STATIONARY", [rule], memberAttrs);
+    expect(filtered).toHaveLength(0);
+  });
+});
+
+describe("getRuleFilterExclusionReason", () => {
+  it("returns null when some candidates pass", () => {
+    const candidates = [{ member: { id: "m1" } }];
+    const memberAttrs = new Map([["m1", new Map([["firstAid", "true"]])]]);
+    const reason = getRuleFilterExclusionReason(
+      candidates,
+      "s1",
+      "STATIONARY",
+      [rule],
+      memberAttrs,
+    );
+    expect(reason).toBeNull();
+  });
+
+  it("returns explanation when all candidates fail", () => {
+    const candidates = [{ member: { id: "m1" } }];
+    const memberAttrs = new Map([["m1", new Map([["firstAid", "false"]])]]);
+    const reason = getRuleFilterExclusionReason(
+      candidates,
+      "s1",
+      "STATIONARY",
+      [rule],
+      memberAttrs,
+    );
+    expect(reason).toContain("s1");
+    expect(reason).toContain("firstAid");
+    expect(reason).toContain("EQUALS");
   });
 });
 

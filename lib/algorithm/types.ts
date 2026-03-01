@@ -26,6 +26,7 @@ export interface AlgorithmResult {
   scores: Map<string, AssignmentScore>; // assignmentId -> score
   violations: string[];
   explanations: Map<string, string>; // assignmentId -> explanation
+  ruleMatchSummaries?: string[]; // per-shift rule filter exclusion reasons
 }
 
 export interface ConstraintViolation {

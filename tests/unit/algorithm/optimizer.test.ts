@@ -70,6 +70,34 @@ describe("runAssignmentAlgorithm", () => {
     expect(result.assignments.length).toBe(1);
   });
 
+  it("rule filtering removes all candidates — reports ruleMatchSummaries", async () => {
+    const m1 = makeMember({ alias: "Alice" });
+    const s1 = makeShift({ capacity: 1, type: "STATIONARY" });
+    const allocationRules = [
+      {
+        id: "r1",
+        shiftType: "STATIONARY",
+        attribute: "firstAid",
+        operator: "EQUALS" as const,
+        value: "true",
+      },
+    ];
+    const memberAttributes = new Map([
+      [m1.id, new Map([["firstAid", "false"]])],
+    ]);
+
+    const result = await runAssignmentAlgorithm([m1], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+      allocationRules,
+      memberAttributes,
+    });
+
+    expect(result.assignments.length).toBe(0);
+    expect(result.ruleMatchSummaries?.length).toBeGreaterThan(0);
+    expect(result.ruleMatchSummaries?.[0]).toMatch(/firstAid|no candidate matched/i);
+  });
+
   it("skips capacity=0 marker shifts (no assignments)", async () => {
     const m1 = makeMember({ alias: "Alice" });
     const s1 = makeShift({ capacity: 0 }); // Marker shift

@@ -15,7 +15,7 @@ import {
   validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
-import { evaluateRule, filterByRules, validateComplementaryRules } from "./rule-validator";
+import { evaluateRule, filterByRules, getRuleFilterExclusionReason, validateComplementaryRules } from "./rule-validator";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
   preferenceMatch: 0.35,
@@ -80,6 +80,7 @@ export async function runAssignmentAlgorithm(
   const allShiftsMap = new Map(shifts.map((s) => [s.id, s]));
   const membersMap = new Map(members.map((m) => [m.id, m]));
   const violations: string[] = [];
+  const ruleMatchSummaries: string[] = [];
   const explanations = new Map<string, string>();
   const scores = new Map<string, AssignmentScore>();
 
@@ -228,7 +229,19 @@ export async function runAssignmentAlgorithm(
         ? filterByRules(candidates, shift.templateId ?? shift.type, allocationRules, eventConfig.memberAttributes || new Map())
         : candidates;
 
-      if (filteredCandidates.length === 0) break;
+      if (filteredCandidates.length === 0) {
+        if (candidates.length > 0 && allocationRules.length > 0) {
+          const reason = getRuleFilterExclusionReason(
+            candidates.map((c) => ({ member: c.member })),
+            shift.id,
+            shift.templateId ?? shift.type,
+            allocationRules,
+            eventConfig.memberAttributes || new Map(),
+          );
+          if (reason) ruleMatchSummaries.push(reason);
+        }
+        break;
+      }
 
       const best = filteredCandidates[0];
       // Find first available role requirement
@@ -320,5 +333,6 @@ export async function runAssignmentAlgorithm(
     scores,
     violations,
     explanations,
+    ruleMatchSummaries,
   };
 }

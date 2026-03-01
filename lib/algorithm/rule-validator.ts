@@ -51,6 +51,34 @@ export function filterByRules<T extends { member: { id: string }; score: Assignm
 }
 
 /**
+ * Returns an explanation when rule filtering excludes all candidates.
+ * Used for algorithm transparency in the preview modal.
+ */
+export function getRuleFilterExclusionReason(
+  candidates: Array<{ member: { id: string } }>,
+  shiftId: string,
+  shiftType: string,
+  rules: AllocationRule[],
+  memberAttributes: Map<string, Map<string, string>>,
+): string | null {
+  if (candidates.length === 0) return null;
+  const applicableRules = rules.filter((r) => r.shiftType === shiftType);
+  if (applicableRules.length === 0) return null;
+
+  const withScores = candidates.map((c) => ({
+    member: c.member,
+    score: { preferenceMatch: 0, experienceBalance: 0, workloadFairness: 0, coreShiftCoverage: 0, overall: 0 },
+  }));
+  const filtered = filterByRules(withScores, shiftType, rules, memberAttributes);
+  if (filtered.length > 0) return null;
+
+  const ruleDescs = applicableRules.map(
+    (r) => `${r.attribute} ${r.operator} ${r.value}`,
+  );
+  return `Shift ${shiftId}: no candidate matched rule(s) [${ruleDescs.join("; ")}]`;
+}
+
+/**
  * Post-hoc validation: checks that each shift has at least one member satisfying
  * each applicable rule (complementary coverage).
  */

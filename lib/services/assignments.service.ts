@@ -251,6 +251,7 @@ export class AssignmentsService {
         violations: result.violations,
         scores: Object.fromEntries(result.scores),
         explanations: Object.fromEntries(result.explanations),
+        ruleMatchSummaries: result.ruleMatchSummaries ?? [],
       };
     }
 
