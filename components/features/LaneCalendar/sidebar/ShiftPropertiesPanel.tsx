@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { X } from "lucide-react";
+import { getShiftDisplayInfo } from "@/lib/utils/shift-display";
 import { Button } from "@/components/ui/Button";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -231,13 +232,18 @@ export function ShiftPropertiesPanel({
           <div className="flex items-center gap-2 mb-2">
             <ColorStripe color={laneColor} className="h-4" />
           </div>
-          <div className="text-sm text-gray-600">
-            {shift && format(new Date(shift.startTime), "EEE dd.MM.yyyy")}
-          </div>
-          <div className="text-sm text-gray-600">
-            {shift && format(new Date(shift.startTime), "HH:mm")}–
-            {shift && format(new Date(shift.endTime), "HH:mm")}
-          </div>
+          {(() => {
+            const info = getShiftDisplayInfo(shift);
+            return (
+              <>
+                <div className="text-sm text-gray-600">{info.date}</div>
+                <div className="text-sm text-gray-600">{info.timeRange}</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  {info.assignedCount}/{info.capacity} assigned
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Time & Capacity inputs */}

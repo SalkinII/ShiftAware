@@ -402,7 +402,7 @@ function LaneCalendarCanvasInner(
           <LaneLabelPanel
             lanes={orderedLanes}
             canvasHeight={canvasHeight}
-            onReorder={handleReorder}
+            onReorder={!shiftMutationLocked ? handleReorder : undefined}
           />
           <Controls position="bottom-right" />
           <MiniMap

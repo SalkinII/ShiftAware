@@ -41,6 +41,7 @@ import { getShiftsCacheKey } from "@/lib/cache/utils";
 import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
+import { getShiftDisplayInfo } from "@/lib/utils/shift-display";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format, addMinutes, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -917,7 +918,9 @@ export default function ShiftsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
-                {shifts.map((shift) => (
+                {shifts.map((shift) => {
+                  const info = getShiftDisplayInfo(shift);
+                  return (
                   <Card
                     key={shift.id}
                     className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
@@ -934,7 +937,7 @@ export default function ShiftsPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-1">
                               <h3 className="text-lg font-bold text-gray-900">
-                                {shift.template?.name ?? shift.type.replace("_", " ")}
+                                {info.templateName}
                               </h3>
                               <span
                                 className={cn(
@@ -975,9 +978,7 @@ export default function ShiftsPage() {
                                 Timing
                               </p>
                               <p className="text-sm font-bold text-gray-700 leading-none">
-                                {shift.startTime && shift.endTime
-                                  ? `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
-                                  : "TBD"}
+                                {info.timeRange}
                               </p>
                             </div>
                           </div>
@@ -990,12 +991,7 @@ export default function ShiftsPage() {
                                 Date
                               </p>
                               <p className="text-sm font-bold text-gray-700 leading-none">
-                                {shift.startTime
-                                  ? format(
-                                      new Date(shift.startTime),
-                                      "MMM do, yyyy",
-                                    )
-                                  : "TBD"}
+                                {info.date}
                               </p>
                             </div>
                           </div>
@@ -1013,7 +1009,7 @@ export default function ShiftsPage() {
                                     key={i}
                                     className={cn(
                                       "text-xs",
-                                      i >= shift.desirabilityScore &&
+                                      i >= info.desirabilityScore &&
                                         "text-gray-200",
                                     )}
                                   >
@@ -1032,7 +1028,7 @@ export default function ShiftsPage() {
                                 Capacity
                               </p>
                               <p className="text-sm font-bold text-gray-700 leading-none">
-                                {shift.capacity}
+                                {info.assignedCount}/{info.capacity}
                               </p>
                             </div>
                           </div>
@@ -1045,7 +1041,7 @@ export default function ShiftsPage() {
                                 Assigned
                               </p>
                               <p className="text-sm font-bold text-gray-700 leading-none">
-                                {shift.assignments?.length || 0}/{shift.capacity}
+                                {info.assignedCount}/{info.capacity}
                               </p>
                             </div>
                           </div>
@@ -1063,7 +1059,8 @@ export default function ShiftsPage() {
                       </button>
                     </div>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
           </div>
 

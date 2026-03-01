@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { humanize } from "@/lib/utils/humanize";
 
 interface ProfileMember {
   alias: string;
@@ -100,7 +101,7 @@ export function ProfileDetailCard({ member, onClose }: ProfileDetailCardProps) {
                   className="flex justify-between items-center px-3 py-1.5 bg-gray-50 rounded-lg"
                 >
                   <span className="text-xs font-medium text-gray-600">
-                    {attr.name}
+                    {humanize(attr.name)}
                   </span>
                   <span className="text-xs font-bold text-gray-900">
                     {attr.value}
