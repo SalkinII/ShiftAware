@@ -25,6 +25,8 @@ interface PreviewResult {
   scores: Record<string, PreviewScore>;
   explanations: Record<string, string>;
   ruleMatchSummaries?: string[];
+  memberAliases?: Record<string, string>;
+  shiftCoverage?: Record<string, { assigned: number; capacity: number }>;
 }
 
 interface AlgorithmResultsModalProps {
@@ -51,6 +53,9 @@ export function AlgorithmResultsModal({
   for (const a of result.assignments) {
     memberCounts.set(a.teamMemberId, (memberCounts.get(a.teamMemberId) || 0) + 1);
   }
+
+  const getMemberLabel = (id: string) =>
+    result.memberAliases?.[id] ?? id;
 
   return (
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -190,6 +195,70 @@ export function AlgorithmResultsModal({
             ) : null;
           })()}
 
+          {/* Per-assignment score breakdown */}
+          {Object.keys(result.scores).length > 0 && (
+            <div>
+              <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-primary-500" />
+                Score Breakdown
+              </h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {result.assignments.map((a, i) => {
+                  const key = `${a.teamMemberId}-${a.shiftId}`;
+                  const score = result.scores[key];
+                  if (!score) return null;
+                  return (
+                    <div
+                      key={i}
+                      className="p-3 bg-gray-50 rounded-lg text-sm border border-gray-200"
+                    >
+                      <div className="font-medium text-gray-900 mb-1">
+                        {getMemberLabel(a.teamMemberId)} → Shift {a.shiftId.slice(0, 8)}…
+                      </div>
+                      <div className="grid grid-cols-5 gap-1 text-xs text-gray-600">
+                        <span>Pref: {score.preferenceMatch}</span>
+                        <span>Exp: {score.experienceBalance}</span>
+                        <span>Work: {score.workloadFairness}</span>
+                        <span>Core: {score.coreShiftCoverage}</span>
+                        <span className="font-bold text-gray-900">Overall: {score.overall.toFixed(1)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Understaffed shifts */}
+          {result.shiftCoverage && Object.keys(result.shiftCoverage).length > 0 && (
+            (() => {
+              const understaffed = Object.entries(result.shiftCoverage).filter(
+                ([_, { assigned, capacity }]) => assigned < capacity,
+              );
+              return understaffed.length > 0 ? (
+                <div>
+                  <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                    Understaffed Shifts
+                  </h4>
+                  <div className="space-y-2">
+                    {understaffed.map(([shiftId, { assigned, capacity }]) => (
+                      <div
+                        key={shiftId}
+                        className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800"
+                      >
+                        <span>Shift {shiftId.slice(0, 8)}…</span>
+                        <span className="font-bold">
+                          {assigned}/{capacity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()
+          )}
+
           {/* Member Coverage */}
           <div>
             <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
@@ -205,7 +274,7 @@ export function AlgorithmResultsModal({
                     className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
                   >
                     <span className="text-gray-700 truncate">
-                      {memberId.slice(0, 8)}...
+                      {getMemberLabel(memberId)}
                     </span>
                     <span className="font-bold text-gray-900">
                       {count} shifts

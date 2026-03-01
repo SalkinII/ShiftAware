@@ -246,12 +246,22 @@ export class AssignmentsService {
 
     // 7. If preview, return without saving
     if (preview) {
+      const memberAliases = Object.fromEntries(
+        members.map((m) => [m.id, m.alias]),
+      );
+      const shiftCoverage: Record<string, { assigned: number; capacity: number }> = {};
+      for (const s of assignableShifts) {
+        const assigned = result.assignments.filter((a) => a.shiftId === s.id).length;
+        shiftCoverage[s.id] = { assigned, capacity: s.capacity };
+      }
       return {
         assignments: result.assignments,
         violations: result.violations,
         scores: Object.fromEntries(result.scores),
         explanations: Object.fromEntries(result.explanations),
         ruleMatchSummaries: result.ruleMatchSummaries ?? [],
+        memberAliases,
+        shiftCoverage,
       };
     }
 
