@@ -69,4 +69,16 @@ describe("runAssignmentAlgorithm", () => {
     // With 1h gap and 6h rest required, second shift should not be assigned
     expect(result.assignments.length).toBe(1);
   });
+
+  it("skips capacity=0 marker shifts (no assignments)", async () => {
+    const m1 = makeMember({ alias: "Alice" });
+    const s1 = makeShift({ capacity: 0 }); // Marker shift
+
+    const result = await runAssignmentAlgorithm([m1], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+    });
+
+    expect(result.assignments.length).toBe(0);
+  });
 });
