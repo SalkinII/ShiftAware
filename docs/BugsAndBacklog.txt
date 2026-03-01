@@ -1,97 +1,43 @@
-## Open Issues
+1. **User Profile attribute naming** — The read-only user profile shows the database attribute name instead of the human-readable name. Must be consistently human-readable everywhere, including in all business logic.
 
-- User Profile read only has attribute database name, not human readable name. Should be consistently human readable name across all usage (also in logics)
+2. **Multi-select attribute logic** — No mechanism exists to allow several attributes ("one of") for multi-select attributes or broader logic when assigning shifts.
 
-- How do we allow several attributes (one of) for multiselect attributes or wider logics when assigning
+3. **Seed revamp incomplete** — The seed revamp was never fully run; the live database still reflects the old pre-revamp state.
 
-- seed revamp never ran through as planned. still the old db from before the seed revamp.
+4. **Console error on admin area navigation** — An empty/spurious console error fires when switching from Manage Team to Calendar in the admin area.
 
-- empty console error when switching from manage team to calendar in admin area. 
+5. **Drag and drop broken on canvas** — Shift nodes cannot be picked up and dropped on the canvas. Resize handles still work. Nodes can be stretched across multiple lanes via resize but snap back to their original lane on drop — that snap is also an error. (Template drag-and-drop is unaffected.)
 
-- drag and drop now broken. resize handles still work. but cannot pick up and drop in the canvas. also I can extend the nodes accross several lanes with resize. they stick to the lane after dropping. but that's clearly an error. The template drag drop still works fine.
+6. **Canvas sidebar shows shift name three times** — The right-side canvas sidebar displays the shift name three times. Only the largest card instance should remain; the duplicate occurrences must be removed.
 
-- the canvas sidebar to the right now has the shift name 3 time. We just need it once (the one in the card that is largest) we will loose the other occurences.
-- we will also see that the same coherent retrieval logic for the shift infos is present in the list view. (user and admin) So the cards with the shifts on the left in the list will have the exact same info as the detail view in the right panel in canvas. Also the create shift side panel to the right in shift view will have the same information as the detail view in the right panel in canvas.
+7. **Inconsistent shift info retrieval across views** — The shift card info shown in the list view (user and admin left-side cards) must be identical to the canvas detail panel (right side) and the "create shift" side panel. A single coherent retrieval logic must cover all three surfaces.
 
+8. **UI-1: Admin view toggle button jumps laterally** — Switching between list and calendar view causes the toggle button to shift position because the export button (calendar-only) is absent in list mode with no reserved space. Fix: use an invisible placeholder or restructure the toolbar so toggle position is independent of surrounding buttons. File: `app/admin/shifts/schedule/page.tsx` (toolbar area).
 
+9. **UI-2: Admin schedule list view shows raw ShiftType enum** — List view cards display `STATIONARY` / `MOBILE_TEAM` etc. instead of the human-readable template name. Fix: add `template` field to the local `Shift` interface, fetch the template relation, and replace the raw enum fallback at line 843 with `shift.template?.name`. Files: `app/admin/shifts/schedule/page.tsx:53-66, 843`.
 
-### UI-1: Admin view toggle button jumps laterally
+10. **UI-3: "Define New Shift" button non-functional in planning mode** — Clicking the button in planning mode does nothing; no panel opens. Root cause not yet investigated — likely a missing mode guard or incorrect action binding. File: `app/admin/shifts/schedule/page.tsx`.
 
-**Type:** Layout bug
+11. **FEAT-1: Lock lane reorder after planning phase** — Lane order must become immutable once the event moves past PLANNING status, consistent with other locked settings. Fix: disable lane reorder controls when `event.status !== 'PLANNING'`. Files: `components/features/LaneCalendar/LaneCalendarCanvas.tsx` and lane reorder UI.
 
-**Symptom:** Switching between list view and calendar view on the admin schedule page causes the toggle button to jump laterally. The list view has no export button; when switching back to calendar view the export button re-appears and the toggle shifts position.
+12. **FEAT-2: Shift node content layout redesign** — Shift block nodes need a new layout: Row 1 — name (left) + time (right). Row 2 — desirability, vote up/down, coverage count (colour-coded red when understaffed, green when fully staffed). Row 3 — unchanged. File: `components/features/LaneCalendar/nodes/ShiftBlockNode.tsx`.
 
-**Root cause:** The export button is only shown in calendar mode. No width reservation for the absent button in list mode.
+13. **TypeScript warnings in test files** — Four test files use Vitest globals (`describe`, `it`, `expect`) without importing them; `tsc` does not recognise them. Fix: add `"types": ["vitest/globals"]` to `tsconfig.json`, or add explicit imports to each file. Affected files:
+    - `tests/unit/DesirabilityBadge.test.tsx`
+    - `tests/unit/laneReorder.test.ts`
+    - `tests/unit/ProfileDetailCard.test.tsx`
+    - `tests/unit/services/assignments.service.test.ts`
 
-**Proposed resolution:** Reserve space for the export button slot (e.g. `invisible` placeholder) or restructure the toolbar layout so the toggle position is independent of surrounding buttons.
+14. **Assignment preview UI — configured logic lost after run** — After the assignment algorithm runs, the previously configured logic/settings are lost in the preview UI.
 
-**Files:** `app/admin/shifts/schedule/page.tsx` (toolbar area)
+15. **Assignment preview UI — resting period constraint** — Resting period constraint is not enforced or reflected in the assignment preview.
 
----
+16. **Assignment algorithm tests and transparency** — No automated tests for the assignment algorithm; algorithm behaviour is opaque to users and developers.
 
-### UI-2: Admin schedule list view shows raw ShiftType enum
+17. **Attribute/skill validation during assignment** — Attribute and skill requirements are not validated when performing assignments.
 
-**Type:** Data display bug
+18. **Zero-occupancy marker verification** — The zero-occupancy markers have not been verified as working correctly.
 
-**Symptom:** The list view card on the admin schedule page shows `STATIONARY` / `MOBILE_TEAM` etc. instead of the human-readable template name.
+19. **Gender equality / attribute balance constraint** — Partially implemented (via `fa8a232`); must be completed to a fully working state.
 
-**Root cause:** The `Shift` interface in `schedule/page.tsx` does not include a `template` field, so line 843 falls back to `shift.type.replace("_", " ")`.
-
-**Proposed resolution:** Add `template?: { id: string; name: string } | null` to the local `Shift` interface and update the API fetch to include the template relation. Replace line 843 with `shift.template?.name ?? shift.type.replace("_", " ")`.
-
-**Files:** `app/admin/shifts/schedule/page.tsx:53-66, 843`
-
----
-
-### UI-3: "Define New Shift" button non-functional in planning mode
-
-**Type:** Feature gap / Bug
-
-**Symptom:** In planning mode on the canvas schedule page, clicking "Define New Shift" does nothing (no panel opens). The button layout has been fixed (min-width, icon) but the functional behaviour is missing.
-
-**Root cause:** Not investigated — the button likely needs a mode guard or a different action in planning vs open-for-preferences mode.
-
-**Files:** `app/admin/shifts/schedule/page.tsx`
-
----
-
-### FEAT-1: Lock lane reorder after planning phase
-
-**Type:** Feature request
-
-**Symptom:** Lane order should become immutable once the event moves past PLANNING, consistent with other locked settings (shift templates, event dates, etc.).
-
-**Proposed resolution:** Disable lane reorder controls when `event.status !== 'PLANNING'`.
-
-**Files:** `components/features/LaneCalendar/LaneCalendarCanvas.tsx`, lane reorder UI
-
----
-
-### FEAT-2: Shift node content layout redesign
-
-**Type:** UX / Design
-
-**Symptom:** Requested layout for shift block nodes: Row 1 — name (left) + time (right). Row 2 — desirability, vote up/down, coverage count (colour-coded: red when understaffed, green when fully staffed). Row 3 — stays as-is.
-
-**Files:** `components/features/LaneCalendar/nodes/ShiftBlockNode.tsx`
-
----
-
-## Pre-existing TypeScript warnings (test tsconfig only)
-
-The following test files use Vitest globals (`describe`, `it`, `expect`) without importing them. They run fine at runtime because Vitest injects globals, but `tsc` does not know about them. These are not production code errors.
-
-- `tests/unit/DesirabilityBadge.test.tsx`
-- `tests/unit/laneReorder.test.ts`
-- `tests/unit/ProfileDetailCard.test.tsx`
-- `tests/unit/services/assignments.service.test.ts`
-
-**Resolution:** Add `"types": ["vitest/globals"]` to `tsconfig.json` compilerOptions, or add explicit `import { describe, it, expect } from "vitest"` to each file.
-
----
-
-- Assignment preview UI, configured logic lost after run, resting period constraint, algorithm tests and transparency
-- Attribute/skill validation during assignment
-- zero-occupancy marker verification
-- **General:** Gender equality / attribute balance constraint (partially implemented via `fa8a232`)
-- **IMPORTANT:** Canvas viewport reset on shift drop or png export — root cause analysis and definite fix! No deferral
+20. **Canvas viewport reset on shift drop or PNG export** — The canvas viewport resets unexpectedly when a shift is dropped or when a PNG export is triggered. Root cause must be identified and definitively fixed — no deferral.
