@@ -181,9 +181,12 @@ export function validateRestPeriod(
     const nextStart = new Date(shifts[i + 1].startTime).getTime();
     const gap = nextStart - end;
     if (gap < minRestMs && gap >= 0) {
+      const s1 = shifts[i];
+      const s2 = shifts[i + 1];
+      const fmt = (d: Date) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       violations.push({
         type: "REST_PERIOD",
-        message: `Insufficient rest between shifts: ${Math.round(gap / 3600000)}h gap, ${Math.round(minRestMs / 3600000)}h required`,
+        message: `${s1.type} (ends ${fmt(new Date(s1.endTime))}) → ${s2.type} (starts ${fmt(new Date(s2.startTime))}): ${Math.round(gap / 3600000)}h gap, ${Math.round(minRestMs / 3600000)}h required`,
         severity: "hard",
       });
     }

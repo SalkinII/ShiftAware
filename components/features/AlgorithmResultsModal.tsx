@@ -116,26 +116,57 @@ export function AlgorithmResultsModal({
             </div>
           </div>
 
-          {/* Violations */}
-          {totalViolations > 0 && (
-            <div>
-              <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                Constraint Violations
-              </h4>
-              <div className="space-y-2">
-                {result.violations.map((v, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
-                  >
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    {v}
-                  </div>
-                ))}
+          {/* Rest Period Violations */}
+          {(() => {
+            const restViolations = result.violations.filter((v) =>
+              /rest|insufficient/i.test(v),
+            );
+            return restViolations.length > 0 ? (
+              <div>
+                <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Rest Period Violations
+                </h4>
+                <div className="space-y-2">
+                  {restViolations.map((v, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
+                    >
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      {v}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            ) : null;
+          })()}
+
+          {/* Other Constraint Violations */}
+          {(() => {
+            const otherViolations = result.violations.filter(
+              (v) => !/rest|insufficient/i.test(v),
+            );
+            return otherViolations.length > 0 ? (
+              <div>
+                <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Other Constraint Violations
+                </h4>
+                <div className="space-y-2">
+                  {otherViolations.map((v, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
+                    >
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      {v}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null;
+          })()}
 
           {/* Member Coverage */}
           <div>

@@ -47,7 +47,7 @@ describe("runAssignmentAlgorithm", () => {
     expect(result.violations[0]).toContain("minimum");
   });
 
-  it("enforces rest period constraint", async () => {
+  it("enforces rest period constraint in Phase 2", async () => {
     const m1 = makeMember({ alias: "Alice" });
     const s1 = makeShift({
       capacity: 1,

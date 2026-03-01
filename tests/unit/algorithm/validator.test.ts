@@ -67,11 +67,13 @@ describe("validateRestPeriod (post-hoc)", () => {
     const allShifts = new Map<string, Shift>([
       ["s1", {
         id: "s1",
+        type: "STATIONARY",
         startTime: new Date("2026-07-01T08:00:00Z"),
         endTime: new Date("2026-07-01T12:00:00Z"),
       } as Shift],
       ["s2", {
         id: "s2",
+        type: "MOBILE_TEAM",
         startTime: new Date("2026-07-01T14:00:00Z"),
         endTime: new Date("2026-07-01T18:00:00Z"),
       } as Shift],
@@ -91,11 +93,13 @@ describe("validateRestPeriod (post-hoc)", () => {
     const allShifts = new Map<string, Shift>([
       ["s1", {
         id: "s1",
+        type: "STATIONARY",
         startTime: new Date("2026-07-01T06:00:00Z"),
         endTime: new Date("2026-07-01T10:00:00Z"),
       } as Shift],
       ["s2", {
         id: "s2",
+        type: "MOBILE_TEAM",
         startTime: new Date("2026-07-01T18:00:00Z"),
         endTime: new Date("2026-07-01T22:00:00Z"),
       } as Shift],
