@@ -171,8 +171,6 @@ function LaneCalendarCanvasInner(
 
   const flowContainerRef = useRef<HTMLDivElement>(null);
 
-  const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: DEFAULT_ZOOM });
-
   const [laneOrderOverride, setLaneOrderOverride] = useState<
     Record<string, number>
   >({});
@@ -250,7 +248,7 @@ function LaneCalendarCanvasInner(
     }
   }
 
-  const { setViewport: setFlowViewport, fitView } = useReactFlow();
+  const { setViewport: setFlowViewport, getViewport, fitView } = useReactFlow();
   const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);
   const canvasHeight = orderedLanes.length * LANE_HEIGHT;
   const shiftNodes = useShiftNodes(shifts, orderedLanes, eventStart, {
@@ -309,8 +307,10 @@ function LaneCalendarCanvasInner(
     const flowNodes = [...laneNodes, ...shiftNodes];
     if (flowNodes.length === 0) return null;
 
-    const savedViewport = viewport;
+    // Save current viewport from React Flow's internal state (always current)
+    const savedViewport = getViewport();
 
+    // Compute viewport that fits all nodes
     const bounds = getNodesBounds(flowNodes);
     const { width, height } = container.getBoundingClientRect();
     const exportViewport = getViewportForBounds(
@@ -321,9 +321,10 @@ function LaneCalendarCanvasInner(
       MAX_ZOOM,
       0.1,
     );
-    setFlowViewport(exportViewport);
 
-    await new Promise((r) => setTimeout(r, 100));
+    // Set export viewport and wait for DOM to update
+    setFlowViewport(exportViewport);
+    await new Promise((r) => setTimeout(r, 150));
 
     try {
       return await toPng(target, {
@@ -333,9 +334,10 @@ function LaneCalendarCanvasInner(
     } catch {
       return null;
     } finally {
+      // Restore from the imperative snapshot — always accurate
       setFlowViewport(savedViewport);
     }
-  }, [laneNodes, shiftNodes, viewport, setFlowViewport]);
+  }, [laneNodes, shiftNodes, getViewport, setFlowViewport]);
 
   useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
 
@@ -392,8 +394,7 @@ function LaneCalendarCanvasInner(
           nodesDraggable={!effectiveReadOnly}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
-          viewport={viewport}
-          onViewportChange={setViewport}
+          defaultViewport={{ x: 0, y: 0, zoom: DEFAULT_ZOOM }}
           snapToGrid
           snapGrid={[SNAP_PIXELS, LANE_HEIGHT]}
           proOptions={{ hideAttribution: true }}
