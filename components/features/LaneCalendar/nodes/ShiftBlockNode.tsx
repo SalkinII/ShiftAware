@@ -6,6 +6,7 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SNAP_PIXELS } from "../utils/constants";
+import { DesirabilityBadge } from "@/components/ui/DesirabilityBadge";
 
 export type ShiftBlockData = {
   shiftId: string;
@@ -74,8 +75,6 @@ function ShiftContent({
   }, []);
 
   const isMarker = capacity === 0;
-  const isFull = assignmentCount >= capacity;
-  const needed = capacity - assignmentCount;
 
   const showNames = mW >= W_NAMES;
   const showTime = mW >= W_TIME;
@@ -83,59 +82,34 @@ function ShiftContent({
   const showRow2 = mH >= H_ROW2;
   const showRow3 = mH >= H_ROW3;
 
-  const nameText = isMarker
-    ? "Marker"
-    : assignedMembers && assignedMembers.length > 0
-      ? assignedMembers.map((m) => m.alias).join(", ")
-      : "—";
-
   return (
     <div
       ref={containerRef}
       className="h-full w-full flex flex-col px-[16px] py-[8px] gap-[8px] overflow-hidden"
     >
-      {/* Row 1: Names + Time (left) | Count + Status (right) */}
+      {/* Row 1: name (left) + time (right) */}
       {showNames && (
-        <div className="flex items-center gap-[16px] min-w-0">
-          <div className="flex items-center gap-[12px] flex-1 min-w-0">
-            <span className={cn(
-              "truncate font-semibold min-w-0 text-[100px] leading-[1.15]",
-              isMarker ? "text-gray-400" : "text-gray-900"
-            )}>
-              {isMarker ? "Marker" : templateName}
+        <div className="flex justify-between items-center gap-2 min-w-0">
+          <span className={cn(
+            "truncate font-semibold min-w-0 text-[100px] leading-[1.15]",
+            isMarker ? "text-gray-400" : "text-gray-900"
+          )}>
+            {isMarker ? "Marker" : templateName}
+          </span>
+          {showTime && !isMarker && (
+            <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">
+              {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
             </span>
-            {showTime && !isMarker && (
-              <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">
-                {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
-              </span>
-            )}
-          </div>
-          {!isMarker && (
-            <div className="flex items-center gap-[8px] flex-shrink-0">
-              <span className="text-[100px] leading-[1.15] font-medium text-gray-500">
-                {assignmentCount}/{capacity}
-              </span>
-              {isFull && (
-                <span className="text-[100px] leading-[1.15] text-green-600">
-                  -check-
-                </span>
-              )}
-            </div>
           )}
         </div>
       )}
 
-      {/* Row 2: Desirability stars (left) | Vote buttons (right) */}
-      {showRow2 && showNames && !isMarker && (showStars || (readOnly && onVoteWant && onVoteDontWant)) && (
-        <div className="flex items-center gap-[16px] min-w-0">
-          <span className={cn(
-            "text-[100px] leading-[1.15] flex-1 min-w-0 truncate",
-            desirabilityScore! >= 4 ? "text-amber-500" :
-            desirabilityScore! <= 2 ? "text-blue-400" :
-            "text-gray-400"
-          )}>
-            {showStars ? "+".repeat(desirabilityScore!) : ""}
-          </span>
+      {/* Row 2: DesirabilityBadge (left) + vote buttons (center) + coverage (right) */}
+      {showRow2 && showNames && !isMarker && (
+        <div className="flex items-center gap-2 min-w-0">
+          {showStars && desirabilityScore != null && (
+            <DesirabilityBadge score={desirabilityScore} className="flex-shrink-0" />
+          )}
           {readOnly && onVoteWant && onVoteDontWant && (
             <div className="flex items-center gap-[8px] flex-shrink-0">
               <button
@@ -156,6 +130,12 @@ function ShiftContent({
               </button>
             </div>
           )}
+          <span className={cn(
+            "text-[100px] leading-[1.15] font-medium ml-auto flex-shrink-0",
+            assignmentCount < capacity ? "text-red-600" : "text-green-600"
+          )}>
+            {assignmentCount}/{capacity}
+          </span>
         </div>
       )}
 

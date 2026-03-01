@@ -70,7 +70,7 @@ function mergeNodes(
         style: newNode.style,
         position: {
           x: existing.position.x,   // Preserve X (time axis, may be mid-drag)
-          y: newNode.position.y,     // Always use calculated Y (lane-determined)
+          y: existing.position.y,   // Preserve Y (lane) — avoid overwriting drag-updated position
         },
       };
     }
@@ -171,6 +171,8 @@ function LaneCalendarCanvasInner(
 
   const flowContainerRef = useRef<HTMLDivElement>(null);
 
+  const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: DEFAULT_ZOOM });
+
   const [laneOrderOverride, setLaneOrderOverride] = useState<
     Record<string, number>
   >({});
@@ -248,7 +250,7 @@ function LaneCalendarCanvasInner(
     }
   }
 
-  const { setViewport, fitView, getViewport } = useReactFlow();
+  const { setViewport: setFlowViewport, fitView } = useReactFlow();
   const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);
   const canvasHeight = orderedLanes.length * LANE_HEIGHT;
   const shiftNodes = useShiftNodes(shifts, orderedLanes, eventStart, {
@@ -268,22 +270,16 @@ function LaneCalendarCanvasInner(
 
   // fitView only on initial load and event change — never on refetch
   const fitViewDoneRef = useRef<string | null>(null);
-  const fitViewRef = useRef(fitView);
-  fitViewRef.current = fitView;
 
   useEffect(() => {
     if (shiftNodes.length > 0 && fitViewDoneRef.current !== eventId) {
       fitViewDoneRef.current = eventId;
       const timer = setTimeout(() => {
-        fitViewRef.current({
-          nodes: shiftNodes.map((n) => ({ id: n.id })),
-          padding: 0.15,
-          duration: 300,
-        });
+        fitView({ padding: 0.15, duration: 300 });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [shiftNodes.length, eventId]);
+  }, [shiftNodes.length, eventId, fitView]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
@@ -313,11 +309,11 @@ function LaneCalendarCanvasInner(
     const flowNodes = [...laneNodes, ...shiftNodes];
     if (flowNodes.length === 0) return null;
 
-    const savedViewport = getViewport();
+    const savedViewport = viewport;
 
     const bounds = getNodesBounds(flowNodes);
     const { width, height } = container.getBoundingClientRect();
-    const { x, y, zoom } = getViewportForBounds(
+    const exportViewport = getViewportForBounds(
       bounds,
       width,
       height,
@@ -325,7 +321,7 @@ function LaneCalendarCanvasInner(
       MAX_ZOOM,
       0.1,
     );
-    setViewport({ x, y, zoom });
+    setFlowViewport(exportViewport);
 
     await new Promise((r) => setTimeout(r, 100));
 
@@ -337,9 +333,9 @@ function LaneCalendarCanvasInner(
     } catch {
       return null;
     } finally {
-      setViewport(savedViewport);
+      setFlowViewport(savedViewport);
     }
-  }, [laneNodes, shiftNodes, setViewport, getViewport]);
+  }, [laneNodes, shiftNodes, viewport, setFlowViewport]);
 
   useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
 
@@ -396,7 +392,8 @@ function LaneCalendarCanvasInner(
           nodesDraggable={!effectiveReadOnly}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
-          defaultViewport={{ x: 0, y: 0, zoom: DEFAULT_ZOOM }}
+          viewport={viewport}
+          onViewportChange={setViewport}
           snapToGrid
           snapGrid={[SNAP_PIXELS, LANE_HEIGHT]}
           proOptions={{ hideAttribution: true }}

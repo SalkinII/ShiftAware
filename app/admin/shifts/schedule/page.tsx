@@ -61,6 +61,7 @@ interface Shift {
   capacity: number;
   eventId: string;
   event: { id: string; name: string };
+  template?: { id: string; name: string; color?: string };
   requiredRoles: { role: Role; count: number }[];
   assignments?: Array<{ id: string; teamMember?: { alias: string } }>;
 }
@@ -395,7 +396,7 @@ export default function ShiftsPage() {
     setDeleteDialog({
       isOpen: true,
       shiftId,
-      shiftName: `${shift.type.replace("_", " ")} - ${shift.event.name}`,
+      shiftName: `${shift.template?.name ?? shift.type.replace("_", " ")} - ${shift.event.name}`,
       isLoading: false,
     });
   }
@@ -780,7 +781,7 @@ export default function ShiftsPage() {
               </div>
 
               {/* Shift properties panel — beside canvas when shift is selected */}
-              {selectedShiftId && (
+              {selectedShiftId && !showForm && (
                 <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
                   <ShiftPropertiesPanel
                     shiftId={selectedShiftId}
@@ -788,6 +789,99 @@ export default function ShiftsPage() {
                     onClose={() => setSelectedShiftId(null)}
                     onUpdated={() => refetchShifts()}
                   />
+                </div>
+              )}
+              {/* Create shift form panel — when showForm in calendar view */}
+              {showForm && selectedEvent && canMutateShifts(selectedEvent.status as import("@prisma/client").EventStatus) && (
+                <div className="w-96 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-white p-6">
+                  <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-primary-500" /> New Shift
+                  </h2>
+                  <form
+                    onSubmit={handleSubmit}
+                    className="space-y-5"
+                    aria-label="Create new shift form"
+                  >
+                    <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
+                      Event: <span className="font-bold">{selectedEvent.name}</span>
+                    </div>
+                    <Select
+                      label="Shift Type"
+                      value={formData.type}
+                      onChange={(e) =>
+                        setFormData({ ...formData, type: e.target.value as ShiftType })
+                      }
+                      className="bg-gray-50 border-gray-100 font-medium"
+                    >
+                      <option value="MOBILE_TEAM">Mobile Team</option>
+                      <option value="STATIONARY">Stationary</option>
+                      <option value="SUPER">SUPER</option>
+                    </Select>
+                    <DateTimePicker
+                      label="Start Date & Time"
+                      value={formData.startTime}
+                      onChange={(value) => {
+                        if (formErrors.startTime) setFormErrors({ ...formErrors, startTime: "" });
+                        if (!value) {
+                          setFormData({ ...formData, startTime: "", endTime: "" });
+                          return;
+                        }
+                        const start = new Date(value);
+                        if (isNaN(start.getTime())) return;
+                        const duration = formData.durationMinutes || 360;
+                        const end = new Date(start.getTime() + duration * 60000);
+                        setFormData({
+                          ...formData,
+                          startTime: value,
+                          endTime: end.toISOString().slice(0, 16),
+                        });
+                      }}
+                      error={formErrors.startTime}
+                      required
+                      use24Hour={true}
+                    />
+                    <DateTimePicker
+                      label="End Date & Time"
+                      value={formData.endTime}
+                      onChange={(value) => {
+                        if (formErrors.endTime) setFormErrors({ ...formErrors, endTime: "" });
+                        setFormData({ ...formData, endTime: value || "" });
+                      }}
+                      error={formErrors.endTime}
+                      required
+                      use24Hour={true}
+                    />
+                    <label className="block text-xs text-gray-600">
+                      Capacity
+                      <input
+                        type="number"
+                        min={0}
+                        value={formData.capacity}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            capacity: Math.max(0, parseInt(e.target.value) || 0),
+                          })
+                        }
+                        className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+                      />
+                    </label>
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1">
+                        Create Shift
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                          setShowForm(false);
+                          setFormErrors({});
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               )}
             </div>
@@ -840,7 +934,7 @@ export default function ShiftsPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-1">
                               <h3 className="text-lg font-bold text-gray-900">
-                                {shift.type.replace("_", " ")}
+                                {shift.template?.name ?? shift.type.replace("_", " ")}
                               </h3>
                               <span
                                 className={cn(

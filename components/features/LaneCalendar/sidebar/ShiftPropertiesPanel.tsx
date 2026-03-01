@@ -230,12 +230,6 @@ export function ShiftPropertiesPanel({
         <div className="bg-sky-50 rounded-lg p-3 border border-sky-100">
           <div className="flex items-center gap-2 mb-2">
             <ColorStripe color={laneColor} className="h-4" />
-            <span className="text-xs font-medium text-sky-900 uppercase tracking-wider">
-              {shift?.template?.name || "Shift"}
-            </span>
-          </div>
-          <div className="text-lg font-bold text-gray-900">
-            {shift?.template?.name || "Shift"}
           </div>
           <div className="text-sm text-gray-600">
             {shift && format(new Date(shift.startTime), "EEE dd.MM.yyyy")}
