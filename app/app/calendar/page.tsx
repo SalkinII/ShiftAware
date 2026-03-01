@@ -86,6 +86,15 @@ export default function UserCalendarPage() {
   >(null);
   const [availableShifts, setAvailableShifts] = useState<Shift[]>([]);
 
+  const eventStartDate = useMemo(
+    () => (selectedEvent ? new Date(selectedEvent.startDate) : null),
+    [selectedEvent?.startDate],
+  );
+  const eventEndDate = useMemo(
+    () => (selectedEvent ? new Date(selectedEvent.endDate) : null),
+    [selectedEvent?.endDate],
+  );
+
   const eventRange = useMemo(() => {
     if (shifts.length === 0) return null;
     const dates = shifts.map((shift) => shift.startTime.split("T")[0]).sort();
@@ -658,12 +667,8 @@ export default function UserCalendarPage() {
                 <LaneCalendarCanvas
                   shifts={filteredShifts}
                   lanes={derivedLanes}
-                  eventStart={
-                    selectedEvent ? new Date(selectedEvent.startDate) : null
-                  }
-                  eventEnd={
-                    selectedEvent ? new Date(selectedEvent.endDate) : null
-                  }
+                  eventStart={eventStartDate}
+                  eventEnd={eventEndDate}
                   eventId={selectedEventId}
                   readOnly
                   selectedMemberId={userId || null}

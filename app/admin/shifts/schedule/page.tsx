@@ -92,6 +92,15 @@ export default function ShiftsPage() {
       )
     : false;
 
+  const eventStartDate = useMemo(
+    () => (selectedEvent ? new Date(selectedEvent.startDate) : null),
+    [selectedEvent?.startDate],
+  );
+  const eventEndDate = useMemo(
+    () => (selectedEvent ? new Date(selectedEvent.endDate) : null),
+    [selectedEvent?.endDate],
+  );
+
   const STATUS_ACTION_LABELS: Record<
     string,
     { label: string; icon: typeof Zap }
@@ -766,12 +775,8 @@ export default function ShiftsPage() {
                     ref={canvasRef}
                     shifts={shifts}
                     lanes={derivedLanes}
-                    eventStart={
-                      selectedEvent ? new Date(selectedEvent.startDate) : null
-                    }
-                    eventEnd={
-                      selectedEvent ? new Date(selectedEvent.endDate) : null
-                    }
+                    eventStart={eventStartDate}
+                    eventEnd={eventEndDate}
                     eventId={selectedEventId}
                     onShiftSelected={setSelectedShiftId}
                     onShiftCreated={() => refetchShifts()}
@@ -939,28 +944,28 @@ export default function ShiftsPage() {
                               <h3 className="text-lg font-bold text-gray-900">
                                 {info.templateName}
                               </h3>
-                              <span
+                              {/* <span
                                 className={cn(
                                   "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
                                   getPriorityColor(shift.priority),
                                 )}
                               >
                                 {shift.priority}
-                              </span>
+                              </span> */}
                             </div>
                             <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
                               <Tag className="w-3.5 h-3.5" /> {shift.event.name}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="text-right">
+{/*                             <div className="text-right">
                               <p className="text-xl font-black text-gray-900 leading-none">
                                 {shift.capacity}
                               </p>
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
                                 Capacity
                               </p>
-                            </div>
+                            </div> */}
                             <ShiftCardActions
                               shiftId={shift.id}
                               onDelete={() => handleDeleteShift(shift.id)}
@@ -1019,7 +1024,7 @@ export default function ShiftsPage() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+{/*                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
                               <Users className="w-4 h-4" />
                             </div>
@@ -1031,7 +1036,7 @@ export default function ShiftsPage() {
                                 {info.assignedCount}/{info.capacity}
                               </p>
                             </div>
-                          </div>
+                          </div> */}
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
                               <CheckCircle className="w-4 h-4" />
