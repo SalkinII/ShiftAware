@@ -672,8 +672,8 @@ export function DistributionSettings() {
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Example: "SUPER requires experience_level = Senior" ensures only
-          senior members are assigned to SUPER shifts.
+          Example: "Driver requires can_drive = YES" ensures only
+          members are assigned to shifts they can cover.
         </p>
       </Card>
 
