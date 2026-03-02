@@ -22,8 +22,7 @@ export function DesirabilityBadge({ score, className }: DesirabilityBadgeProps) 
       )}
       title={`Desirability: ${score}/5 — ${score <= 2 ? "easy to get" : score >= 4 ? "hard to get" : "moderate"}`}
     >
-      <span>{score}</span>
-      <span>{"+".repeat(score)}</span>
+      <span className="text-[100px] leading-[1.15]">{"+".repeat(score)}</span>
     </div>
   );
 }
