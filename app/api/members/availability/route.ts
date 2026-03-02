@@ -53,6 +53,7 @@ interface MemberSummary {
 interface ShiftSummary {
   id: string;
   type: string;
+  templateName: string;
   startTime: Date;
   endTime: Date;
   capacity: number;
@@ -252,6 +253,7 @@ export async function GET(request: NextRequest) {
       where: shiftsWhere,
       include: {
         requiredRoles: true,
+        template: { select: { id: true, name: true } },
         assignments: {
           include: {
             teamMember: true,
@@ -333,6 +335,7 @@ export async function GET(request: NextRequest) {
       shifts: shifts.map((s) => ({
         id: s.id,
         type: s.type,
+        templateName: s.template?.name ?? s.type.replace(/_/g, " "),
         startTime: s.startTime,
         endTime: s.endTime,
         capacity: s.capacity,

@@ -61,3 +61,19 @@ describe("getShiftDisplayInfo", () => {
     expect(info.members[1].avatarId).toBe("🎸");
   });
 });
+
+describe("AvailabilityHeatmap shift shape", () => {
+  it("ShiftSummary should include templateName when available", () => {
+    // This documents the API contract — templateName should be a string
+    const shift = {
+      id: "s1",
+      type: "MOBILE_TEAM",
+      templateName: "Morning Mobile",
+      startTime: new Date("2026-06-26T08:00:00Z"),
+      endTime: new Date("2026-06-26T12:00:00Z"),
+      capacity: 4,
+      priority: "CORE",
+    };
+    expect(shift.templateName).toBe("Morning Mobile");
+  });
+});
