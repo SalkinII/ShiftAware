@@ -36,6 +36,7 @@ interface TeamMember {
 interface Shift {
   id: string;
   type: string;
+  templateName: string;
   startTime: string;
   endTime: string;
   capacity: number;
@@ -194,7 +195,7 @@ export function AvailabilityHeatmap({
     // Header with member and shift info
     lines.push(`${member.alias} (${member.experienceLevel})`);
     lines.push(
-      `${shift.type.replace("_", " ")} • ${format(new Date(shift.startTime), "MMM d, HH:mm")}`,
+      `${shift.templateName} • ${format(new Date(shift.startTime), "MMM d, HH:mm")}`,
     );
     lines.push("─".repeat(20));
 
@@ -390,7 +391,7 @@ export function AvailabilityHeatmap({
                 >
                   <div className="flex flex-col leading-none">
                     <span className="text-[8px] font-bold text-gray-600 truncate">
-                      {shift.type.replace("_", " ").slice(0, 8)}
+                      {shift.templateName.slice(0, 8)}
                     </span>
                     <span className="text-[8px] text-gray-400">
                       {format(new Date(shift.startTime), "d/M")}
@@ -453,7 +454,7 @@ export function AvailabilityHeatmap({
                             onCellClick?.(member.id, shift.id, status);
                           }
                         }}
-                        aria-label={`${member.alias} - ${shift.type}: ${getStatusLabel(status.status)}`}
+                        aria-label={`${member.alias} - ${shift.templateName}: ${getStatusLabel(status.status)}`}
                       >
                         {getStatusIcon(status.status, status.isAssigned)}
                       </div>
