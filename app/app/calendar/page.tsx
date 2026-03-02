@@ -789,7 +789,7 @@ export default function UserCalendarPage() {
                         className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left"
                       >
                         <div className="font-bold text-gray-900">
-                          {shift.type.replace(/_/g, " ")}
+                          {shift.template?.name ?? shift.type.replace(/_/g, " ")}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           {format(

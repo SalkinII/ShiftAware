@@ -21,6 +21,7 @@ interface ShiftPreference {
   shift: {
     id: string;
     type: string;
+    template?: { id: string; name: string } | null;
     startTime: string;
     endTime: string;
   };
@@ -36,6 +37,8 @@ interface Assignment {
 interface Shift {
   id: string;
   type: string;
+  templateId?: string | null;
+  template?: { id: string; name: string } | null;
   startTime: string;
   endTime: string;
   priority: string;
@@ -131,7 +134,7 @@ export function MyShiftsList({
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="text-lg font-bold text-gray-900">
-                          {shift.type.replace(/_/g, " ")}
+                          {shift.template?.name ?? shift.type.replace(/_/g, " ")}
                         </h4>
                         {assignment && (
                           <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-primary-100 text-primary-700">
@@ -212,7 +215,7 @@ export function MyShiftsList({
                   )}
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-gray-900">
-                      {pref.shift.type.replace(/_/g, " ")}
+                      {pref.shift.template?.name ?? pref.shift.type.replace(/_/g, " ")}
                     </span>
                     <span className="text-xs text-gray-500 ml-2">
                       {format(new Date(pref.shift.startTime), "EEE dd.MM HH:mm")}
