@@ -429,6 +429,7 @@ export default function UserCalendarPage() {
           shift: {
             id: shift.id,
             type: shift.type,
+            template: shift.template,
             startTime: shift.startTime,
             endTime: shift.endTime,
           },
