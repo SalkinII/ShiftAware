@@ -176,6 +176,8 @@ function LaneCalendarCanvasInner(
     Record<string, number>
   >({});
 
+  const reorderCountRef = useRef(0);
+
   useEffect(() => {
     if (!eventId) return;
     const stored = localStorage.getItem(`shiftaware:laneOrder:${eventId}`);
@@ -242,6 +244,7 @@ function LaneCalendarCanvasInner(
       newOverride[lane.id] = i;
     });
 
+    reorderCountRef.current += 1;
     setLaneOrderOverride(newOverride);
     if (eventId) {
       localStorage.setItem(
@@ -264,9 +267,13 @@ function LaneCalendarCanvasInner(
 
   const [nodes, setNodes] = useState<Node[]>([]);
 
+  const lastReorderCountRef = useRef(0);
+
   // Merge shift nodes into current state, preserving React Flow position during drag
   useEffect(() => {
-    setNodes((current) => mergeNodes(current, laneNodes, shiftNodes));
+    const forceY = reorderCountRef.current !== lastReorderCountRef.current;
+    lastReorderCountRef.current = reorderCountRef.current;
+    setNodes((current) => mergeNodes(current, laneNodes, shiftNodes, forceY));
   }, [laneNodes, shiftNodes]);
 
   // fitView only on initial load and event change — never on refetch

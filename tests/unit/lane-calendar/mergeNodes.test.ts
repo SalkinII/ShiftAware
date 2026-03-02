@@ -77,3 +77,26 @@ describe("mergeNodes", () => {
     expect(result[0].id).toBe("shift-s1");
   });
 });
+
+describe("reorder + shift position integration", () => {
+  it("shift Y follows lane after reorder when forceYUpdate=true", () => {
+    // Simulate: 2 lanes [A(idx 0), B(idx 1)] with shift in lane A at Y=0
+    const existingNodes = [
+      makeLaneNode("a", 0),
+      makeLaneNode("b", 480),
+      makeShiftNode("s1", 1600, 0),   // in lane A, Y=0
+    ];
+
+    // After reorder: [B(idx 0), A(idx 1)] — shift should move to Y=480
+    const newLanes = [makeLaneNode("b", 0), makeLaneNode("a", 480)];
+    const newShifts = [makeShiftNode("s1", 1600, 480)]; // buildShiftNodes would compute Y=480
+
+    // Without forceYUpdate — shift stays at Y=0 (BUG)
+    const bugResult = mergeNodes(existingNodes, newLanes, newShifts, false);
+    expect(bugResult.find((n) => n.id === "shift-s1")!.position.y).toBe(0);
+
+    // With forceYUpdate — shift follows lane to Y=480 (FIX)
+    const fixResult = mergeNodes(existingNodes, newLanes, newShifts, true);
+    expect(fixResult.find((n) => n.id === "shift-s1")!.position.y).toBe(480);
+  });
+});
