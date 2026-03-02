@@ -49,10 +49,11 @@ import { Shield } from "lucide-react";
  * Preserves React Flow-owned state (position, measured) for existing shift nodes.
  * Lane/grid nodes are always replaced. New shifts are added; deleted shifts removed.
  */
-function mergeNodes(
+export function mergeNodes(
   currentNodes: Node[],
   laneNodes: Node[],
   newShiftNodes: Node[],
+  forceYUpdate = false,
 ): Node[] {
   const currentShiftMap = new Map<string, Node>();
   for (const node of currentNodes) {
@@ -69,8 +70,8 @@ function mergeNodes(
         data: newNode.data,
         style: newNode.style,
         position: {
-          x: existing.position.x,   // Preserve X (time axis, may be mid-drag)
-          y: existing.position.y,   // Preserve Y (lane) — avoid overwriting drag-updated position
+          x: existing.position.x,
+          y: forceYUpdate ? newNode.position.y : existing.position.y,
         },
       };
     }
