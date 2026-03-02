@@ -2,6 +2,7 @@ import { format } from "date-fns";
 
 export interface ShiftDisplayInfo {
   templateName: string;
+  color: string;
   timeRange: string;
   date: string;
   capacity: number;
@@ -15,7 +16,7 @@ export interface ShiftDisplayInfo {
  * canvas sidebar, and create-shift panel.
  */
 export function getShiftDisplayInfo(shift: {
-  template?: { name?: string } | null;
+  template?: { name?: string; color?: string } | null;
   type?: string;
   startTime?: string | Date;
   endTime?: string | Date;
@@ -27,6 +28,7 @@ export function getShiftDisplayInfo(shift: {
   if (!shift) {
     return {
       templateName: "Shift",
+      color: "#6b7280",
       timeRange: "—",
       date: "—",
       capacity: 0,
@@ -38,6 +40,7 @@ export function getShiftDisplayInfo(shift: {
 
   const templateName =
     shift.template?.name ?? (shift.type ?? "Shift").replace(/_/g, " ");
+  const color = shift.template?.color ?? "#6b7280";
   const start = shift.startTime ? new Date(shift.startTime) : null;
   const end = shift.endTime ? new Date(shift.endTime) : null;
   const timeRange =
@@ -58,6 +61,7 @@ export function getShiftDisplayInfo(shift: {
 
   return {
     templateName,
+    color,
     timeRange,
     date,
     capacity,
