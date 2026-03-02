@@ -138,8 +138,7 @@ export function ModifySlotDialog({
             <div>
               <p className="font-medium text-gray-900">{template.name}</p>
               <p className="text-sm text-gray-500">
-                {template.type.replace(/_/g, " ")} &bull;{" "}
-                {template.durationMinutes / 60}h
+                {template.durationMinutes / 60}h &bull; {template.capacity} capacity
               </p>
             </div>
           </div>

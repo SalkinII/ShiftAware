@@ -166,7 +166,7 @@ export function exportScheduleToPDF(
           : "Unstaffed";
 
     // Cache shift type replacement
-    const shiftType = shift.type?.replace("_", " ") || "Shift";
+    const shiftType = shift.template?.name ?? shift.type?.replace("_", " ") ?? "Shift";
 
     return [startTime, endTime, shiftType, assignments, staffed, status];
   });

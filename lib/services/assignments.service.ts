@@ -63,13 +63,13 @@ export class AssignmentsService {
 
     if (wouldConflict1) {
       throw new Error(
-        `Member is already assigned to shift ${a1.shift.type}. Cannot swap.`,
+        `Member is already assigned to this shift. Cannot swap.`,
       );
     }
 
     if (wouldConflict2) {
       throw new Error(
-        `Member is already assigned to shift ${a2.shift.type}. Cannot swap.`,
+        `Member is already assigned to this shift. Cannot swap.`,
       );
     }
 
