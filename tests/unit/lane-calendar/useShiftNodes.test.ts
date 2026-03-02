@@ -73,3 +73,53 @@ describe("buildShiftNodes", () => {
     expect(nodes[0].position.y).toBe(480); // lane 1 (Unassigned)
   });
 });
+
+describe("buildShiftNodes with reordered lanes", () => {
+  const eventStart = new Date("2026-06-26T00:00:00Z");
+
+  const laneA: LaneConfig = {
+    id: "tpl-a", templateId: "tpl-a", label: "Lane A",
+    color: "#0ea5e9", order: 0, type: "MOBILE_TEAM",
+  };
+  const laneB: LaneConfig = {
+    id: "tpl-b", templateId: "tpl-b", label: "Lane B",
+    color: "#22c55e", order: 1, type: "STATIONARY",
+  };
+  const unassigned: LaneConfig = {
+    id: "unassigned", templateId: null, label: "Unassigned",
+    color: "#6b7280", order: 999, type: "MOBILE_TEAM",
+  };
+
+  const shift = {
+    id: "shift-1", type: "MOBILE_TEAM",
+    startTime: "2026-06-26T08:00:00Z", endTime: "2026-06-26T12:00:00Z",
+    durationMinutes: 240, capacity: 4, templateId: "tpl-a",
+  };
+
+  it("positions shift in lane A at Y=0 with original order [A, B]", () => {
+    const nodes = buildShiftNodes([shift] as any, [laneA, laneB, unassigned], eventStart);
+    expect(nodes[0].position.y).toBe(0); // lane index 0 * 480 = 0
+  });
+
+  it("positions shift in lane A at Y=480 with reordered [B, A]", () => {
+    const reordered = [
+      { ...laneB, order: 0 },
+      { ...laneA, order: 1 },
+      unassigned,
+    ];
+    const nodes = buildShiftNodes([shift] as any, reordered, eventStart);
+    // tpl-a is now at index 1 in the lanes array → Y = 1 * 480 = 480
+    expect(nodes[0].position.y).toBe(480);
+  });
+
+  it("preserves shift data (templateName, color) from the correct lane after reorder", () => {
+    const reordered = [
+      { ...laneB, order: 0 },
+      { ...laneA, order: 1 },
+      unassigned,
+    ];
+    const nodes = buildShiftNodes([shift] as any, reordered, eventStart);
+    expect((nodes[0].data as any).templateName).toBe("Lane A");
+    expect((nodes[0].data as any).color).toBe("#0ea5e9");
+  });
+});
