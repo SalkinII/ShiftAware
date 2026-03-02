@@ -6,7 +6,7 @@ export class ShiftRepository extends BaseRepository {
   private readonly fullIncludes = {
     event: true,
     requiredRoles: true,
-    template: { select: { id: true, name: true } },
+    template: { select: { id: true, name: true, color: true } },
     assignments: {
       select: {
         id: true,
@@ -210,7 +210,7 @@ export class ShiftRepository extends BaseRepository {
         where: { id },
         include: {
           event: true,
-          template: { select: { id: true, name: true } },
+          template: { select: { id: true, name: true, color: true } },
           requiredRoles: true,
           preferences: {
             include: { teamMember: true },

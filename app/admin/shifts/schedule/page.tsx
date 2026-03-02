@@ -55,6 +55,7 @@ import { ShiftPropertiesPanel } from "@/components/features/LaneCalendar/sidebar
 interface Shift {
   id: string;
   type: ShiftType;
+  templateId?: string | null;
   startTime: string;
   endTime: string;
   durationMinutes: number;
@@ -63,7 +64,7 @@ interface Shift {
   capacity: number;
   eventId: string;
   event: { id: string; name: string };
-  template?: { id: string; name: string; color?: string };
+  template?: { id: string; name: string; color?: string } | null;
   requiredRoles: { role: Role; count: number }[];
   assignments?: Array<{ id: string; teamMember?: { alias: string } }>;
 }
@@ -1302,24 +1303,36 @@ export default function ShiftsPage() {
                     Slot Breakdown
                   </h4>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
-                        Mobile
-                      </span>
-                      <span className="text-sm font-black text-gray-900">
-                        {shifts.filter((s) => s.type === "MOBILE_TEAM").length}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-success-500"></div>{" "}
-                        Stationary
-                      </span>
-                      <span className="text-sm font-black text-gray-900">
-                        {shifts.filter((s) => s.type === "STATIONARY").length}
-                      </span>
-                    </div>
+                    {(() => {
+                      const counts = new Map<string, { name: string; color: string; count: number }>();
+                      for (const s of shifts) {
+                        const name = s.template?.name ?? s.type.replace(/_/g, " ");
+                        const color = s.template?.color ?? "#6b7280";
+                        const key = s.templateId ?? s.type;
+                        const entry = counts.get(key);
+                        if (entry) {
+                          entry.count++;
+                        } else {
+                          counts.set(key, { name, color, count: 1 });
+                        }
+                      }
+                      return Array.from(counts.values())
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(({ name, color, count }) => (
+                          <div key={name} className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: color }}
+                              />{" "}
+                              {name}
+                            </span>
+                            <span className="text-sm font-black text-gray-900">
+                              {count}
+                            </span>
+                          </div>
+                        ));
+                    })()}
                   </div>
                 </Card>
               </div>
