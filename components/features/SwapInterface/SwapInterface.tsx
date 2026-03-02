@@ -48,6 +48,8 @@ interface Assignment {
   shift: {
     id: string;
     type: string;
+    templateId?: string | null;
+    template?: { id: string; name: string } | null;
     startTime: string;
     endTime: string;
     capacity?: number;
@@ -141,7 +143,7 @@ function CompactAssignmentCard({
           </div>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-              {assignment.shift.type.replace("_", " ")}
+              {assignment.shift.template?.name ?? assignment.shift.type.replace("_", " ")}
             </span>
             <span className="text-xs text-gray-400">
               {assignment.role.replace("_", " ")}
@@ -207,11 +209,14 @@ export function SwapInterface({
   }, [assignments]);
 
   const uniqueTypes = useMemo(() => {
-    const types = new Set<string>();
+    const types = new Map<string, string>();
     assignments.forEach((a) => {
-      types.add(a.shift.type);
+      const key = a.shift.templateId ?? a.shift.type;
+      const label = a.shift.template?.name ?? a.shift.type.replace("_", " ");
+      if (!types.has(key)) types.set(key, label);
     });
-    return Array.from(types).sort();
+    return Array.from(types.entries())
+      .sort(([, a], [, b]) => a.localeCompare(b));
   }, [assignments]);
 
   const filteredAssignments = useMemo(() => {
@@ -232,7 +237,9 @@ export function SwapInterface({
     }
 
     if (filterType) {
-      filtered = filtered.filter((a) => a.shift.type === filterType);
+      filtered = filtered.filter(
+        (a) => (a.shift.templateId ?? a.shift.type) === filterType,
+      );
     }
 
     return filtered;
@@ -557,9 +564,9 @@ export function SwapInterface({
             onChange={(e) => setFilterType(e.target.value)}
           >
             <option value="">All types</option>
-            {uniqueTypes.map((type) => (
-              <option key={type} value={type}>
-                {type.replace("_", " ")}
+            {uniqueTypes.map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
               </option>
             ))}
           </Select>
@@ -707,7 +714,7 @@ export function SwapInterface({
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="text-sm font-bold text-gray-900">
-                    {activeSwapShift.type.replace("_", " ")} Assignments
+                    {activeSwapShift.template?.name ?? activeSwapShift.type.replace("_", " ")} Assignments
                   </h3>
                   <p className="text-xs text-gray-500">
                     {format(
