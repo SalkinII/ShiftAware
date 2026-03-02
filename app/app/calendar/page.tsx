@@ -695,6 +695,7 @@ export default function UserCalendarPage() {
                   <ShiftPreferencePanel
                     shift={{
                       ...selectedShift,
+                      templateName: selectedShift.template?.name,
                       assignmentCount: selectedShift.assignments?.length ?? 0,
                     }}
                     currentVote={userVoteForShift}
