@@ -308,6 +308,7 @@ export class EventRepository extends BaseRepository {
       const assignments = await prisma.eventTemplate.findMany({
         where: { eventId },
         include: { template: { include: { requiredRoles: true } } },
+        orderBy: { order: "asc" },
       });
 
       const eventSpecific = await prisma.shiftTemplate.findMany({
@@ -320,6 +321,7 @@ export class EventRepository extends BaseRepository {
           ...a.template,
           assignmentId: a.id,
           isGlobal: true,
+          laneOrder: a.order,
         })),
         eventSpecific: eventSpecific.map((t) => ({
           ...t,

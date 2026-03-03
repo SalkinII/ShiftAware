@@ -413,6 +413,73 @@ describe("EventRepository", () => {
     expect(result.eventSpecific[0].isGlobal).toBe(false);
   });
 
+  it("should return assigned templates sorted by order with laneOrder field", async () => {
+    const mockAssignments = [
+      {
+        id: "et-1",
+        eventId: "event-1",
+        templateId: "template-a",
+        order: 2,
+        createdAt: new Date(),
+        template: {
+          id: "template-a",
+          name: "Lane A",
+          type: ShiftType.MOBILE_TEAM,
+          eventId: null,
+          color: "#0ea5e9",
+          startTime: "08:00",
+          capacity: 4,
+          durationMinutes: 480,
+          desirabilityScore: 3,
+          priority: ShiftPriority.CORE,
+          allowedLanes: [],
+          requiredRoles: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+      {
+        id: "et-2",
+        eventId: "event-1",
+        templateId: "template-b",
+        order: 0,
+        createdAt: new Date(),
+        template: {
+          id: "template-b",
+          name: "Lane B",
+          type: ShiftType.STATIONARY,
+          eventId: null,
+          color: "#22c55e",
+          startTime: "10:00",
+          capacity: 2,
+          durationMinutes: 480,
+          desirabilityScore: 3,
+          priority: ShiftPriority.CORE,
+          allowedLanes: [],
+          requiredRoles: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+    ];
+
+    vi.mocked(prisma.eventTemplate.findMany).mockResolvedValue(mockAssignments);
+    vi.mocked(prisma.shiftTemplate.findMany).mockResolvedValue([]);
+
+    const result = await repo.listEventTemplates("event-1");
+
+    // Should include laneOrder from EventTemplate.order
+    expect(result.assigned[0].laneOrder).toBe(2);
+    expect(result.assigned[1].laneOrder).toBe(0);
+
+    // Verify query was called with orderBy
+    expect(prisma.eventTemplate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: { order: "asc" },
+      }),
+    );
+  });
+
   it("should assign template to event", async () => {
     const mockAssignment = {
       id: "et-2",
