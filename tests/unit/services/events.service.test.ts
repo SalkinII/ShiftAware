@@ -14,6 +14,7 @@ describe("EventsService", () => {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      reorderEventTemplates: vi.fn(),
     };
 
     service = new EventsService(mockRepo);
@@ -96,6 +97,20 @@ describe("EventsService", () => {
 
     expect(mockRepo.findCurrent).toHaveBeenCalled();
     expect(result).toEqual(mockEvent);
+  });
+
+  it("should reorder event templates", async () => {
+    mockRepo.reorderEventTemplates.mockResolvedValue(undefined);
+
+    await service.reorderEventTemplates("event-1", [
+      { templateId: "tpl-a", order: 0 },
+      { templateId: "tpl-b", order: 1 },
+    ]);
+
+    expect(mockRepo.reorderEventTemplates).toHaveBeenCalledWith("event-1", [
+      { templateId: "tpl-a", order: 0 },
+      { templateId: "tpl-b", order: 1 },
+    ]);
   });
 });
 

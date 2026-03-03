@@ -136,6 +136,13 @@ export class EventsService {
     return this.repo.deleteEventTemplate(eventId, templateId);
   }
 
+  async reorderEventTemplates(
+    eventId: string,
+    entries: { templateId: string; order: number }[],
+  ) {
+    return this.repo.reorderEventTemplates(eventId, entries);
+  }
+
   // --- Attributes ---
   async listEventAttributes(eventId: string) {
     return this.repo.listEventAttributes(eventId);

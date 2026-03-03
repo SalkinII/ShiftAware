@@ -364,6 +364,24 @@ export class EventRepository extends BaseRepository {
     }
   }
 
+  async reorderEventTemplates(
+    eventId: string,
+    entries: { templateId: string; order: number }[],
+  ) {
+    try {
+      await Promise.all(
+        entries.map((entry) =>
+          prisma.eventTemplate.updateMany({
+            where: { eventId, templateId: entry.templateId },
+            data: { order: entry.order },
+          }),
+        ),
+      );
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to reorder templates");
+    }
+  }
+
   // --- EventAttributeDefinition ---
   async listEventAttributes(eventId: string) {
     try {
