@@ -146,6 +146,62 @@ describe("filterByRules", () => {
     const filtered = filterByRules(candidates, "STATIONARY", [rule], memberAttrs);
     expect(filtered).toHaveLength(0);
   });
+
+  it("ignores BALANCE rules — only applies FILTER rules", () => {
+    const filterRule: AllocationRule = {
+      id: "r1",
+      ruleKind: "FILTER",
+      shiftType: "STATIONARY",
+      attribute: "firstAid",
+      operator: "EQUALS",
+      value: "true",
+    };
+    const balanceRule: AllocationRule = {
+      id: "r2",
+      ruleKind: "BALANCE",
+      shiftType: "STATIONARY",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_ONE",
+    };
+
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+      { member: { id: "m2" }, score: { overall: 90 } },
+    ] as any;
+
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["firstAid", "true"], ["gender", "M"]])],
+      ["m2", new Map([["firstAid", "true"], ["gender", "M"]])],
+    ]);
+
+    // Both pass firstAid filter. Both are male, but BALANCE rule should NOT filter them out.
+    const filtered = filterByRules(candidates, "STATIONARY", [filterRule, balanceRule], memberAttrs);
+    expect(filtered).toHaveLength(2);
+  });
+
+  it("rules without ruleKind default to FILTER behavior", () => {
+    // Existing rule shape — no ruleKind field. Should still filter.
+    const legacyRule: AllocationRule = {
+      id: "r1",
+      shiftType: "STATIONARY",
+      attribute: "firstAid",
+      operator: "EQUALS",
+      value: "true",
+    };
+
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+    ] as any;
+
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["firstAid", "false"]])],
+    ]);
+
+    const filtered = filterByRules(candidates, "STATIONARY", [legacyRule], memberAttrs);
+    expect(filtered).toHaveLength(0); // Still filtered — backward compat
+  });
 });
 
 describe("getRuleFilterExclusionReason", () => {

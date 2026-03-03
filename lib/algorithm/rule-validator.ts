@@ -5,6 +5,16 @@ import type {
   ConstraintViolation,
 } from "./types";
 
+/** Returns only FILTER-kind rules (default for rules without ruleKind). */
+export function getFilterRules(rules: AllocationRule[]): AllocationRule[] {
+  return rules.filter((r) => (r.ruleKind ?? "FILTER") === "FILTER");
+}
+
+/** Returns only BALANCE-kind rules. */
+export function getBalanceRules(rules: AllocationRule[]): AllocationRule[] {
+  return rules.filter((r) => r.ruleKind === "BALANCE");
+}
+
 /**
  * Evaluates whether a member's attributes satisfy a single allocation rule.
  */
@@ -41,7 +51,9 @@ export function filterByRules<T extends { member: { id: string }; score: Assignm
   rules: AllocationRule[],
   memberAttributes: Map<string, Map<string, string>>,
 ): T[] {
-  const applicableRules = rules.filter((r) => r.shiftType === shiftTemplateType);
+  const applicableRules = rules.filter(
+    (r) => r.shiftType === shiftTemplateType && (r.ruleKind ?? "FILTER") === "FILTER",
+  );
   if (applicableRules.length === 0) return candidates;
 
   return candidates.filter((c) => {
