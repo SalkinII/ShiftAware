@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   useRef,
   useImperativeHandle,
@@ -172,36 +171,25 @@ function LaneCalendarCanvasInner(
 
   const flowContainerRef = useRef<HTMLDivElement>(null);
 
-  const [laneOrderOverride, setLaneOrderOverride] = useState<
-    Record<string, number>
-  >({});
-
   const reorderCountRef = useRef(0);
 
+  // Optimistic lane order: null = use lanes prop as-is (from DB)
+  const [optimisticLanes, setOptimisticLanes] = useState<LaneConfig[] | null>(
+    null,
+  );
+
+  // When lanes prop changes (after refetch), clear optimistic state
+  useEffect(() => {
+    setOptimisticLanes(null);
+  }, [lanes]);
+
+  const orderedLanes = optimisticLanes ?? lanes;
+
+  // One-time cleanup of legacy localStorage lane order
   useEffect(() => {
     if (!eventId) return;
-    const stored = localStorage.getItem(`shiftaware:laneOrder:${eventId}`);
-    if (stored) {
-      try {
-        setLaneOrderOverride(JSON.parse(stored));
-      } catch {
-        // Ignore invalid JSON
-      }
-    } else {
-      setLaneOrderOverride({});
-    }
+    localStorage.removeItem(`shiftaware:laneOrder:${eventId}`);
   }, [eventId]);
-
-  const orderedLanes = useMemo(() => {
-    if (Object.keys(laneOrderOverride).length === 0) return lanes;
-    return [...lanes]
-      .map((lane) => ({
-        ...lane,
-        order:
-          lane.id in laneOrderOverride ? laneOrderOverride[lane.id] : lane.order,
-      }))
-      .sort((a, b) => a.order - b.order);
-  }, [lanes, laneOrderOverride]);
 
   const {
     handleDrop,
@@ -239,18 +227,29 @@ function LaneCalendarCanvasInner(
     const next = [...sortable];
     [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
 
-    const newOverride: Record<string, number> = {};
-    next.forEach((lane, i) => {
-      newOverride[lane.id] = i;
-    });
+    // Build reordered lanes with updated order values
+    const reordered = next.map((lane, i) => ({ ...lane, order: i }));
+    const unassigned = orderedLanes.find((l) => l.id === UNASSIGNED_LANE_ID);
+    if (unassigned) reordered.push(unassigned);
 
+    // Optimistic update for instant feedback
     reorderCountRef.current += 1;
-    setLaneOrderOverride(newOverride);
+    setOptimisticLanes(reordered);
+
+    // Persist to database
     if (eventId) {
-      localStorage.setItem(
-        `shiftaware:laneOrder:${eventId}`,
-        JSON.stringify(newOverride),
-      );
+      const order = next.map((lane, i) => ({
+        templateId: lane.templateId!,
+        order: i,
+      }));
+      fetch(`/api/events/${eventId}/templates/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order }),
+      }).then(() => {
+        // Trigger parent to refetch templates (updates lanes prop from DB)
+        onShiftUpdated?.();
+      });
     }
   }
 
