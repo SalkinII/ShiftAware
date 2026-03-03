@@ -322,12 +322,13 @@ export async function runAssignmentAlgorithm(
     }
   }
 
-  // Validate complementary rules
-  if (allocationRules.length > 0) {
+  // Validate complementary rules (only BALANCE rules — FILTER rules are already enforced)
+  const balanceRules = getBalanceRules(allocationRules);
+  if (balanceRules.length > 0) {
     const compViolations = validateComplementaryRules(
       state,
       shifts,
-      allocationRules,
+      balanceRules,
       eventConfig.memberAttributes || new Map(),
     );
     for (const v of compViolations) {

@@ -259,6 +259,41 @@ describe("runAssignmentAlgorithm", () => {
     expect(hasFinta).toBe(true);
   });
 
+  it("Phase 3 does not report complementary violations for FILTER rules", async () => {
+    const s1 = makeShift({ capacity: 2, templateId: "tpl-1" });
+    const m1 = makeMember({ alias: "Alice" });
+    const m2 = makeMember({ alias: "Bob" });
+
+    // FILTER rule: firstAid EQUALS true. Both members pass.
+    const allocationRules = [
+      {
+        id: "r1",
+        ruleKind: "FILTER" as const,
+        shiftType: "tpl-1",
+        attribute: "firstAid",
+        operator: "EQUALS" as const,
+        value: "true",
+      },
+    ];
+    const memberAttributes = new Map([
+      [m1.id, new Map([["firstAid", "true"]])],
+      [m2.id, new Map([["firstAid", "true"]])],
+    ]);
+
+    const result = await runAssignmentAlgorithm([m1, m2], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+      allocationRules,
+      memberAttributes,
+    });
+
+    // No complementary violations — FILTER rules shouldn't be checked post-hoc
+    const compViolations = result.violations.filter((v) =>
+      v.includes("no member has") || v.includes("ratio"),
+    );
+    expect(compViolations).toHaveLength(0);
+  });
+
   it("ONE_OF operator in rules — matching member assigned", async () => {
     const s1 = makeShift({ capacity: 1, type: "STATIONARY" });
     const m1 = makeMember({ alias: "Alice" });
