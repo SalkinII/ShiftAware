@@ -10,9 +10,11 @@ import { canRunAlgorithm } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { AlgorithmResultsModal } from "@/components/features/AlgorithmResultsModal";
+import { getValidOperators, isBalanceModeAvailable } from "@/lib/algorithm/rule-compatibility";
 
 interface AttributeRule {
   id: string;
+  ruleKind?: "FILTER" | "BALANCE";
   shiftType: string;
   attribute: string;
   operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS" | "ONE_OF";
@@ -107,7 +109,10 @@ export function DistributionSettings() {
               preferenceWeight: preferences,
               maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
               minRestHours: cfg.balanceThresholds?.minRestHours || 8,
-              attributeRules: cfg.allocationRules || [],
+              attributeRules: (cfg.allocationRules || []).map((r: AttributeRule) => ({
+                ...r,
+                ruleKind: r.ruleKind || "FILTER",
+              })),
             });
           }
         }
@@ -174,7 +179,10 @@ export function DistributionSettings() {
             preferenceWeight: preferences,
             maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
             minRestHours: cfg.balanceThresholds?.minRestHours || 8,
-            attributeRules: cfg.allocationRules || [],
+            attributeRules: (cfg.allocationRules || []).map((r: AttributeRule) => ({
+              ...r,
+              ruleKind: r.ruleKind || "FILTER",
+            })),
           });
         }
       }
@@ -194,8 +202,9 @@ export function DistributionSettings() {
   const handleAddRule = () => {
     const newRule: AttributeRule = {
       id: Date.now().toString(),
+      ruleKind: "FILTER",
       shiftType: templates[0]?.id || "",
-      attribute: "experience_level",
+      attribute: "",
       operator: "EQUALS",
       value: "",
     };
@@ -484,196 +493,259 @@ export function DistributionSettings() {
               No attribute rules defined. Click "Add Rule" to create one.
             </p>
           ) : (
-            config.attributeRules.map((rule) => (
-              <div
-                key={rule.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-200"
-              >
-                <div className="flex-1 flex flex-col gap-2">
-                <div className="grid grid-cols-4 gap-2">
-                  <select
-                    value={rule.shiftType}
-                    onChange={(e) =>
-                      handleUpdateRule(rule.id, "shiftType", e.target.value)
-                    }
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    {templates.length === 0 ? (
-                      <option value="">No templates loaded</option>
-                    ) : (
-                      templates.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
+            config.attributeRules.map((rule) => {
+              const selectedAttr = attributeDefinitions.find(
+                (a) => a.name === rule.attribute,
+              );
+              const attrType = selectedAttr?.type || "TEXT";
+              const canBalance = isBalanceModeAvailable(attrType);
+              const validOperators = getValidOperators(
+                attrType,
+                rule.ruleKind || "FILTER",
+              );
 
-                  <select
-                    value={rule.attribute}
-                    onChange={(e) =>
-                      handleUpdateRule(rule.id, "attribute", e.target.value)
-                    }
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="">Select attribute...</option>
-                    {attributeDefinitions.map((attr) => (
-                      <option key={attr.id} value={attr.name}>
-                        {attr.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={rule.operator}
-                    onChange={(e) =>
-                      handleUpdateRule(
-                        rule.id,
-                        "operator",
-                        e.target.value as AttributeRule["operator"],
-                      )
-                    }
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="EQUALS">Equals</option>
-                    <option value="NOT_EQUALS">Not Equals</option>
-                    <option value="CONTAINS">Contains</option>
-                    <option value="ONE_OF">One Of</option>
-                  </select>
-
-                  {(() => {
-                    const selectedAttr = attributeDefinitions.find(
-                      (a) => a.name === rule.attribute,
-                    );
-                    if (selectedAttr?.type === "BOOLEAN") {
-                      return (
-                        <select
-                          value={rule.value}
-                          onChange={(e) =>
-                            handleUpdateRule(rule.id, "value", e.target.value)
-                          }
-                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        >
-                          <option value="">Select...</option>
-                          <option value="true">Yes</option>
-                          <option value="false">No</option>
-                        </select>
-                      );
-                    }
-                    if (rule.operator === "ONE_OF") {
-                      return (
-                        <input
-                          type="text"
-                          value={rule.value}
-                          onChange={(e) =>
-                            handleUpdateRule(rule.id, "value", e.target.value)
-                          }
-                          placeholder="e.g. FINTA, M (comma-separated)"
-                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 flex-1 min-w-0"
-                        />
-                      );
-                    }
-                    if (
-                      selectedAttr &&
-                      selectedAttr.options &&
-                      selectedAttr.options.length > 0
-                    ) {
-                      return (
-                        <select
-                          value={rule.value}
-                          onChange={(e) =>
-                            handleUpdateRule(rule.id, "value", e.target.value)
-                          }
-                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        >
-                          <option value="">Select value...</option>
-                          {selectedAttr.options.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      );
-                    }
-                    return (
-                      <input
-                        type="text"
-                        value={rule.value}
-                        onChange={(e) =>
-                          handleUpdateRule(rule.id, "value", e.target.value)
-                        }
-                        placeholder="Value..."
-                        className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      />
-                    );
-                  })()}
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <select
-                    value={rule.balanceMode || "REQUIRE_ONE"}
-                    onChange={(e) =>
-                      handleUpdateRule(rule.id, "balanceMode", e.target.value)
-                    }
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="REQUIRE_ONE">Require One</option>
-                    <option value="REQUIRE_RATIO">Require Ratio</option>
-                  </select>
-                  {rule.balanceMode === "REQUIRE_RATIO" && (
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={Math.round((rule.minRatio ?? 0) * 100)}
-                        onChange={(e) =>
-                          handleUpdateRule(
-                            rule.id,
-                            "minRatio",
-                            Number(e.target.value) / 100,
-                          )
-                        }
-                        placeholder="Min %"
-                        className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-500">–</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={Math.round((rule.maxRatio ?? 1) * 100)}
-                        onChange={(e) =>
-                          handleUpdateRule(
-                            rule.id,
-                            "maxRatio",
-                            Number(e.target.value) / 100,
-                          )
-                        }
-                        placeholder="Max %"
-                        className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-500">% ratio</span>
-                    </div>
-                  )}
-                </div>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteRule(rule.id)}
+              return (
+                <div
+                  key={rule.id}
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-200"
                 >
-                  <Trash2 className="w-4 h-4 text-error-600" />
-                </Button>
-              </div>
-            ))
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="grid grid-cols-5 gap-2">
+                      <select
+                        value={rule.ruleKind || "FILTER"}
+                        onChange={(e) => {
+                          const newKind = e.target.value as "FILTER" | "BALANCE";
+                          const updates: Partial<AttributeRule> = { ruleKind: newKind };
+                          if (newKind === "FILTER") {
+                            updates.balanceMode = undefined;
+                          }
+                          const newValidOps = getValidOperators(attrType, newKind);
+                          if (!newValidOps.includes(rule.operator)) {
+                            updates.operator = (newValidOps[0] || "EQUALS") as AttributeRule["operator"];
+                          }
+                          setConfig({
+                            ...config,
+                            attributeRules: config.attributeRules.map((r) =>
+                              r.id === rule.id ? { ...r, ...updates } : r,
+                            ),
+                          });
+                        }}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="FILTER">Filter</option>
+                        {canBalance && <option value="BALANCE">Balance</option>}
+                      </select>
+
+                      <select
+                        value={rule.shiftType}
+                        onChange={(e) =>
+                          handleUpdateRule(rule.id, "shiftType", e.target.value)
+                        }
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        {templates.length === 0 ? (
+                          <option value="">No templates loaded</option>
+                        ) : (
+                          templates.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+
+                      <select
+                        value={rule.attribute}
+                        onChange={(e) => {
+                          const newAttrName = e.target.value;
+                          const newAttr = attributeDefinitions.find(
+                            (a) => a.name === newAttrName,
+                          );
+                          const newType = newAttr?.type || "TEXT";
+                          const newKind = rule.ruleKind || "FILTER";
+                          const updates: Partial<AttributeRule> = { attribute: newAttrName };
+                          if (newKind === "BALANCE" && !isBalanceModeAvailable(newType)) {
+                            updates.ruleKind = "FILTER";
+                            updates.balanceMode = undefined;
+                          }
+                          const ops = getValidOperators(newType, updates.ruleKind || newKind);
+                          if (!ops.includes(rule.operator)) {
+                            updates.operator = (ops[0] || "EQUALS") as AttributeRule["operator"];
+                          }
+                          setConfig({
+                            ...config,
+                            attributeRules: config.attributeRules.map((r) =>
+                              r.id === rule.id ? { ...r, ...updates } : r,
+                            ),
+                          });
+                        }}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">Select attribute...</option>
+                        {attributeDefinitions.map((attr) => (
+                          <option key={attr.id} value={attr.name}>
+                            {attr.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={validOperators.includes(rule.operator) ? rule.operator : validOperators[0] || ""}
+                        onChange={(e) =>
+                          handleUpdateRule(
+                            rule.id,
+                            "operator",
+                            e.target.value as AttributeRule["operator"],
+                          )
+                        }
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        {validOperators.map((op) => (
+                          <option key={op} value={op}>
+                            {op === "EQUALS"
+                              ? "Equals"
+                              : op === "NOT_EQUALS"
+                                ? "Not Equals"
+                                : op === "CONTAINS"
+                                  ? "Contains"
+                                  : "One Of"}
+                          </option>
+                        ))}
+                      </select>
+
+                      {(() => {
+                        if (selectedAttr?.type === "BOOLEAN") {
+                          return (
+                            <select
+                              value={rule.value}
+                              onChange={(e) =>
+                                handleUpdateRule(rule.id, "value", e.target.value)
+                              }
+                              className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            >
+                              <option value="">Select...</option>
+                              <option value="true">Yes</option>
+                              <option value="false">No</option>
+                            </select>
+                          );
+                        }
+                        if (rule.operator === "ONE_OF") {
+                          return (
+                            <input
+                              type="text"
+                              value={rule.value}
+                              onChange={(e) =>
+                                handleUpdateRule(rule.id, "value", e.target.value)
+                              }
+                              placeholder="e.g. FINTA, M (comma-separated)"
+                              className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 flex-1 min-w-0"
+                            />
+                          );
+                        }
+                        if (
+                          selectedAttr &&
+                          selectedAttr.options &&
+                          selectedAttr.options.length > 0
+                        ) {
+                          return (
+                            <select
+                              value={rule.value}
+                              onChange={(e) =>
+                                handleUpdateRule(rule.id, "value", e.target.value)
+                              }
+                              className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            >
+                              <option value="">Select value...</option>
+                              {selectedAttr.options.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        }
+                        return (
+                          <input
+                            type="text"
+                            value={rule.value}
+                            onChange={(e) =>
+                              handleUpdateRule(rule.id, "value", e.target.value)
+                            }
+                            placeholder="Value..."
+                            className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        );
+                      })()}
+                    </div>
+
+                    {(rule.ruleKind || "FILTER") === "BALANCE" && (
+                      <div className="flex items-center gap-3">
+                        <select
+                          value={rule.balanceMode || "REQUIRE_ONE"}
+                          onChange={(e) =>
+                            handleUpdateRule(rule.id, "balanceMode", e.target.value)
+                          }
+                          className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value="REQUIRE_ONE">Require One</option>
+                          <option value="REQUIRE_RATIO">Require Ratio</option>
+                        </select>
+                        {rule.balanceMode === "REQUIRE_RATIO" && (
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={Math.round((rule.minRatio ?? 0) * 100)}
+                              onChange={(e) =>
+                                handleUpdateRule(
+                                  rule.id,
+                                  "minRatio",
+                                  Number(e.target.value) / 100,
+                                )
+                              }
+                              placeholder="Min %"
+                              className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-500">–</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={Math.round((rule.maxRatio ?? 1) * 100)}
+                              onChange={(e) =>
+                                handleUpdateRule(
+                                  rule.id,
+                                  "maxRatio",
+                                  Number(e.target.value) / 100,
+                                )
+                              }
+                              placeholder="Max %"
+                              className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-500">% ratio</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteRule(rule.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-error-600" />
+                  </Button>
+                </div>
+              );
+            })
           )}
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Example: "Driver requires can_drive = YES" ensures only
-          members are assigned to shifts they can cover.
+          <strong>Filter</strong> rules gate individual candidates (e.g., &quot;Driver requires can_drive = YES&quot;).{" "}
+          <strong>Balance</strong> rules enforce shift composition (e.g., &quot;At least one FINTA member per shift&quot;).
         </p>
       </Card>
 
