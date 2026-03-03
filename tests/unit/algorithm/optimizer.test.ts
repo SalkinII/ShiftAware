@@ -174,6 +174,42 @@ describe("runAssignmentAlgorithm", () => {
     expect(result.violations).toHaveLength(0);
   });
 
+  it("BALANCE rules do not block preference-based assignment in Phase 1", async () => {
+    const s1 = makeShift({ capacity: 3, templateId: "tpl-1" });
+    const m1 = makeMember({
+      alias: "Alice",
+      preferences: [{ shiftId: s1.id, wantLevel: "WANT", shift: s1 }],
+    });
+
+    // BALANCE rule: require one FINTA. Alice is male.
+    // This should NOT block Alice's WANT preference in Phase 1.
+    const allocationRules = [
+      {
+        id: "b1",
+        ruleKind: "BALANCE" as const,
+        shiftType: "tpl-1",
+        attribute: "gender",
+        operator: "EQUALS" as const,
+        value: "FINTA",
+        balanceMode: "REQUIRE_ONE" as const,
+      },
+    ];
+    const memberAttributes = new Map([
+      [m1.id, new Map([["gender", "M"]])],
+    ]);
+
+    const result = await runAssignmentAlgorithm([m1], [s1], {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+      allocationRules,
+      memberAttributes,
+    });
+
+    // Alice should be assigned via preference despite not matching balance rule
+    expect(result.assignments.length).toBe(1);
+    expect(result.assignments[0].teamMemberId).toBe(m1.id);
+  });
+
   it("ONE_OF operator in rules — matching member assigned", async () => {
     const s1 = makeShift({ capacity: 1, type: "STATIONARY" });
     const m1 = makeMember({ alias: "Alice" });

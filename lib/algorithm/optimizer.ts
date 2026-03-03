@@ -15,7 +15,7 @@ import {
   validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
-import { evaluateRule, filterByRules, getRuleFilterExclusionReason, validateComplementaryRules } from "./rule-validator";
+import { evaluateRule, filterByRules, getRuleFilterExclusionReason, validateComplementaryRules, getFilterRules, getBalanceRules, enforceBalanceReservation } from "./rule-validator";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
   preferenceMatch: 0.35,
@@ -120,10 +120,11 @@ export async function runAssignmentAlgorithm(
       );
       if (capacityViolation) continue;
 
-      // Check allocation rules
-      if (allocationRules.length > 0) {
+      // Check hard FILTER allocation rules (BALANCE rules are handled separately)
+      const filterRules = getFilterRules(allocationRules);
+      if (filterRules.length > 0) {
         const memberAttrs = eventConfig.memberAttributes?.get(member.id) || new Map<string, string>();
-        const applicableRules = allocationRules.filter((r) => r.shiftType === shift.templateId);
+        const applicableRules = filterRules.filter((r) => r.shiftType === shift.templateId);
         const passesRules = applicableRules.every((rule) => evaluateRule(rule, memberAttrs));
         if (!passesRules) continue;
       }
