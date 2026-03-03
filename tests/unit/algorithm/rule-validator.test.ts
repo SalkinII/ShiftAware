@@ -4,6 +4,7 @@ import {
   filterByRules,
   getRuleFilterExclusionReason,
   validateComplementaryRules,
+  enforceBalanceReservation,
 } from "../../../lib/algorithm/rule-validator";
 import type { AllocationRule } from "../../../lib/algorithm/types";
 import type { AssignmentState } from "../../../lib/algorithm/types";
@@ -448,5 +449,226 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
     ]);
     const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
     expect(violations).toHaveLength(0); // 3/5 = 0.6 exactly at boundary
+  });
+});
+
+describe("enforceBalanceReservation", () => {
+  it("returns all candidates when no BALANCE rules exist", () => {
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+      { member: { id: "m2" }, score: { overall: 90 } },
+    ] as any;
+
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [],                                          // no balance rules
+      [],                                          // no current assignments
+      new Map(),                                   // no member attributes
+      3,                                           // remaining capacity
+    );
+    expect(result).toHaveLength(2);
+  });
+
+  it("returns all candidates when remaining slots exceed unsatisfied balance rules", () => {
+    const balanceRule: AllocationRule = {
+      id: "b1",
+      ruleKind: "BALANCE",
+      shiftType: "tpl-1",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_ONE",
+    };
+
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+      { member: { id: "m2" }, score: { overall: 90 } },
+    ] as any;
+
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "M"]])],
+      ["m2", new Map([["gender", "FINTA"]])],
+    ]);
+
+    // 3 remaining slots, 1 unsatisfied rule — no need to restrict yet
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [balanceRule],
+      [],                                          // no one assigned yet
+      memberAttrs,
+      3,
+    );
+    expect(result).toHaveLength(2);
+  });
+
+  it("restricts candidates when remaining slots equal unsatisfied balance rules", () => {
+    const balanceRule: AllocationRule = {
+      id: "b1",
+      ruleKind: "BALANCE",
+      shiftType: "tpl-1",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_ONE",
+    };
+
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 90 } },
+      { member: { id: "m2" }, score: { overall: 80 } },
+    ] as any;
+
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "M"]])],
+      ["m2", new Map([["gender", "FINTA"]])],
+    ]);
+
+    // 1 remaining slot, 1 unsatisfied rule — must pick someone who satisfies it
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [balanceRule],
+      [],                                          // no one satisfies rule yet
+      memberAttrs,
+      1,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].member.id).toBe("m2"); // only FINTA candidate
+  });
+
+  it("does not restrict when balance rule is already satisfied", () => {
+    const balanceRule: AllocationRule = {
+      id: "b1",
+      ruleKind: "BALANCE",
+      shiftType: "tpl-1",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_ONE",
+    };
+
+    const candidates = [
+      { member: { id: "m3" }, score: { overall: 80 } },
+    ] as any;
+
+    const currentAssignments = [{ teamMemberId: "m1" } as any];
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "FINTA"]])],      // already satisfies
+      ["m3", new Map([["gender", "M"]])],
+    ]);
+
+    // Rule already satisfied by m1 — m3 (male) is fine
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [balanceRule],
+      currentAssignments,
+      memberAttrs,
+      1,
+    );
+    expect(result).toHaveLength(1);
+  });
+
+  it("REQUIRE_RATIO: restricts when ratio cannot reach target", () => {
+    const ratioRule: AllocationRule = {
+      id: "b2",
+      ruleKind: "BALANCE",
+      shiftType: "tpl-1",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_RATIO",
+      minRatio: 0.4,
+      maxRatio: 0.6,
+    };
+
+    const candidates = [
+      { member: { id: "m3" }, score: { overall: 90 } },
+      { member: { id: "m4" }, score: { overall: 80 } },
+    ] as any;
+
+    const currentAssignments = [
+      { teamMemberId: "m1" } as any,
+      { teamMemberId: "m2" } as any,
+    ];
+
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "FINTA"]])],       // 1 FINTA
+      ["m2", new Map([["gender", "M"]])],            // 1 M
+      ["m3", new Map([["gender", "M"]])],            // candidate: M
+      ["m4", new Map([["gender", "FINTA"]])],        // candidate: FINTA
+    ]);
+
+    // Currently: 1/2 FINTA. 1 remaining slot. Total will be 3.
+    // Need minRatio 0.4 → need ≥ ceil(0.4*3)=2 FINTA. Currently have 1. Need 1 more.
+    // remaining=1, still_needed=1 → must pick FINTA
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [ratioRule],
+      currentAssignments,
+      memberAttrs,
+      1,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].member.id).toBe("m4"); // only FINTA candidate
+  });
+
+  it("ignores non-applicable balance rules (different shiftType)", () => {
+    const balanceRule: AllocationRule = {
+      id: "b1",
+      ruleKind: "BALANCE",
+      shiftType: "tpl-OTHER",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_ONE",
+    };
+
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+    ] as any;
+
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [balanceRule],
+      [],
+      new Map(),
+      1,
+    );
+    expect(result).toHaveLength(1); // rule doesn't apply to this shift type
+  });
+
+  it("falls back to all candidates when no candidate satisfies needed balance rule", () => {
+    const balanceRule: AllocationRule = {
+      id: "b1",
+      ruleKind: "BALANCE",
+      shiftType: "tpl-1",
+      attribute: "gender",
+      operator: "EQUALS",
+      value: "FINTA",
+      balanceMode: "REQUIRE_ONE",
+    };
+
+    const candidates = [
+      { member: { id: "m1" }, score: { overall: 80 } },
+    ] as any;
+
+    const memberAttrs = new Map<string, Map<string, string>>([
+      ["m1", new Map([["gender", "M"]])],
+    ]);
+
+    // Must pick FINTA but only candidate is M — fallback to all candidates
+    const result = enforceBalanceReservation(
+      candidates,
+      "tpl-1",
+      [balanceRule],
+      [],
+      memberAttrs,
+      1,
+    );
+    expect(result).toHaveLength(1); // graceful degradation
   });
 });
