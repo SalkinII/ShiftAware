@@ -335,8 +335,9 @@ export class EventRepository extends BaseRepository {
 
   async assignTemplate(eventId: string, templateId: string) {
     try {
+      const count = await prisma.eventTemplate.count({ where: { eventId } });
       return await prisma.eventTemplate.create({
-        data: { eventId, templateId },
+        data: { eventId, templateId, order: count },
         include: { template: true },
       });
     } catch (error) {

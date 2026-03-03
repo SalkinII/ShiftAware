@@ -33,6 +33,7 @@ vi.mock("@/lib/db", () => ({
       create: vi.fn(),
       findUnique: vi.fn(),
       updateMany: vi.fn(),
+      count: vi.fn(),
     },
     shiftTemplate: {
       findMany: vi.fn(),
@@ -498,6 +499,29 @@ describe("EventRepository", () => {
     const result = await repo.assignTemplate("event-1", "template-1");
 
     expect(result).toEqual(mockAssignment);
+  });
+
+  it("should assign template with next order value", async () => {
+    vi.mocked(prisma.eventTemplate.count).mockResolvedValue(3);
+    vi.mocked(prisma.eventTemplate.create).mockResolvedValue({
+      id: "et-new",
+      eventId: "event-1",
+      templateId: "template-new",
+      order: 3,
+      createdAt: new Date(),
+      template: { id: "template-new", name: "New Template" },
+    } as any);
+
+    const result = await repo.assignTemplate("event-1", "template-new");
+
+    expect(prisma.eventTemplate.count).toHaveBeenCalledWith({
+      where: { eventId: "event-1" },
+    });
+    expect(prisma.eventTemplate.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { eventId: "event-1", templateId: "template-new", order: 3 },
+      }),
+    );
   });
 
   it("should reorder event templates", async () => {
