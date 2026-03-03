@@ -225,12 +225,12 @@ export async function runAssignmentAlgorithm(
         )
         .sort((a, b) => b.score.overall - a.score.overall);
 
-      // Filter by allocation rules
-      const filteredCandidates = allocationRules.length > 0
+      // Filter by hard FILTER rules
+      const filteredByFilter = allocationRules.length > 0
         ? filterByRules(candidates, shift.templateId ?? shift.type, allocationRules, eventConfig.memberAttributes || new Map())
         : candidates;
 
-      if (filteredCandidates.length === 0) {
+      if (filteredByFilter.length === 0) {
         if (candidates.length > 0 && allocationRules.length > 0) {
           const reason = getRuleFilterExclusionReason(
             candidates.map((c) => ({ member: c.member })),
@@ -243,6 +243,18 @@ export async function runAssignmentAlgorithm(
         }
         break;
       }
+
+      // Apply balance reservation constraints
+      const remainingCapacity = shift.capacity - (state.shiftCoverage.get(shift.id) || 0);
+      const currentShiftAssignments = state.assignments.get(shift.id) || [];
+      const filteredCandidates = enforceBalanceReservation(
+        filteredByFilter,
+        shift.templateId ?? shift.type,
+        getBalanceRules(allocationRules),
+        currentShiftAssignments,
+        eventConfig.memberAttributes || new Map(),
+        remainingCapacity,
+      );
 
       const best = filteredCandidates[0];
       // Find first available role requirement
