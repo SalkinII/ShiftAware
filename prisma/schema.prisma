@@ -154,6 +154,7 @@ model EventTemplate {
   event      Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   templateId String
   template   ShiftTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  order      Int           @default(0)
 
   createdAt DateTime @default(now())
 
