@@ -37,6 +37,7 @@ export interface ConstraintViolation {
 
 export interface AllocationRule {
   id: string;
+  ruleKind?: "FILTER" | "BALANCE";  // defaults to "FILTER" for backward compat
   shiftType: string;
   attribute: string;
   operator: "EQUALS" | "NOT_EQUALS" | "CONTAINS" | "ONE_OF";

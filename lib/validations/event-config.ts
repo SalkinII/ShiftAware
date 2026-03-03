@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const allocationRuleSchema = z.object({
   id: z.string(),
+  ruleKind: z.enum(["FILTER", "BALANCE"]).default("FILTER"),
   shiftType: z.string(),
   attribute: z.string(),
   operator: z.enum(["EQUALS", "NOT_EQUALS", "CONTAINS", "ONE_OF"]),
