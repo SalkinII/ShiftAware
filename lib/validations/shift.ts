@@ -28,7 +28,7 @@ export const shiftSchemaBase = z.object({
   priority: z.nativeEnum(ShiftPriority).default("CORE"),
   desirabilityScore: z.number().int().min(1).max(5).default(3),
   requiredRoles: z.array(shiftRoleSchema).min(0),
-  capacity: z.number().int().nonnegative().default(2),
+  capacity: z.number().int().nonnegative().default(0),
   isTemplate: z.boolean().optional().default(false),
   templateId: z.string().cuid().nullable().optional(),
 });
