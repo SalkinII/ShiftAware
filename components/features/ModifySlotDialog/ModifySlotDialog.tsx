@@ -206,8 +206,8 @@ export function ModifySlotDialog({
             />
           </div>
 
-          {/* Priority */}
-          <div>
+          {/* Priority - Hidden as requested */}
+          {/* <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">
               Priority
             </label>
@@ -235,7 +235,7 @@ export function ModifySlotDialog({
                 <span className="text-sm text-gray-700">Buffer</span>
               </label>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}
