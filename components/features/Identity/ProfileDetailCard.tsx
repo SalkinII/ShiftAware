@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { EmojiPicker } from "@/components/ui/EmojiPicker";
 import { useToast } from "@/components/ui/Toast";
-import { ExperienceLevel, Role } from "@prisma/client";
-
 interface ProfileMember {
   id?: string;
   alias: string;
@@ -34,28 +32,8 @@ interface ProfileDetailCardProps {
   onUpdate?: (updates: Partial<ProfileMember>) => Promise<void>;
   eventId?: string;
   attributeDefinitions?: AttributeDefinition[];
+  variant?: "modal" | "inline";
 }
-
-const expBadgeColor = (level: string) => {
-  switch (level) {
-    case "SENIOR":
-      return "bg-primary-100 text-primary-700";
-    case "INTERMEDIATE":
-      return "bg-accent-50 text-accent-700";
-    case "JUNIOR":
-      return "bg-success-50 text-success-700";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-};
-
-const EXPERIENCE_LEVELS: { value: string; label: string }[] = [
-  { value: "JUNIOR", label: "Junior" },
-  { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "SENIOR", label: "Senior" },
-];
-
-const ROLE_OPTIONS: Role[] = ["TEAM_MEMBER", "ADMIN"];
 
 function AttributeList({ attributes }: { attributes: { name: string; value: string }[] }) {
   return (
@@ -82,7 +60,9 @@ export function ProfileDetailCard({
   onUpdate,
   eventId,
   attributeDefinitions = [],
+  variant = "modal",
 }: ProfileDetailCardProps) {
+  const isInline = variant === "inline";
   const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<ProfileMember | null>(null);
@@ -167,16 +147,15 @@ export function ProfileDetailCard({
   const displayMember = isEditing ? draft : member;
   if (!displayMember) return null;
 
-  return (
+  const content = (
     <div
-      data-testid="profile-card-backdrop"
-      className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      className={cn(
+        "bg-white rounded-2xl p-8 max-w-xs w-full",
+        isInline && "shadow-none border-none",
+        !isInline && "shadow-2xl",
+      )}
+      onClick={(e) => !isInline && e.stopPropagation()}
     >
-      <div
-        className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* Avatar */}
         <div className="flex flex-col items-center gap-3 mb-6">
           {isEditing && draft ? (
@@ -203,71 +182,6 @@ export function ProfileDetailCard({
             </h2>
           )}
         </div>
-
-        {/* Experience Level */}
-        {displayMember.experienceLevel && (
-          <div className="mb-4 flex justify-center">
-            {isEditing && draft ? (
-              <select
-                value={draft.experienceLevel}
-                onChange={(e) =>
-                  setDraft({ ...draft, experienceLevel: e.target.value })
-                }
-                className="px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border border-gray-200"
-              >
-                {EXPERIENCE_LEVELS.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span
-                className={cn(
-                  "text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full",
-                  expBadgeColor(displayMember.experienceLevel),
-                )}
-              >
-                {displayMember.experienceLevel}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Capabilities */}
-        {displayMember.capabilities && displayMember.capabilities.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-1.5 justify-center">
-            {isEditing && draft ? (
-              <div className="flex flex-wrap gap-2">
-                {ROLE_OPTIONS.map((r) => (
-                  <label key={r} className="flex items-center gap-1 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={draft.capabilities?.includes(r) ?? false}
-                      onChange={(e) => {
-                        const next = e.target.checked
-                          ? [...(draft.capabilities || []), r]
-                          : (draft.capabilities || []).filter((c) => c !== r);
-                        setDraft({ ...draft, capabilities: next });
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                    {r.replace(/_/g, " ")}
-                  </label>
-                ))}
-              </div>
-            ) : (
-              displayMember.capabilities.map((cap) => (
-                <span
-                  key={cap}
-                  className="text-xs font-bold bg-gray-50 text-gray-600 px-2 py-1 rounded-lg border border-gray-100"
-                >
-                  {cap.replace(/_/g, " ")}
-                </span>
-              ))
-            )}
-          </div>
-        )}
 
         {/* Attributes */}
         {isEditing && attributeDefinitions.length > 0 ? (
@@ -371,12 +285,25 @@ export function ProfileDetailCard({
         )}
 
         {/* Close hint */}
-        {!isEditing && (
+        {!isEditing && !isInline && (
           <p className="text-xs text-gray-400 text-center mt-6">
             Click outside or press Esc to close
           </p>
         )}
       </div>
+  );
+
+  if (isInline) {
+    return <div className="w-full">{content}</div>;
+  }
+
+  return (
+    <div
+      data-testid="profile-card-backdrop"
+      className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {content}
     </div>
   );
 }

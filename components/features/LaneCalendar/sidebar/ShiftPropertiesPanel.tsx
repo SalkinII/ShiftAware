@@ -415,6 +415,7 @@ export function ShiftPropertiesPanel({
       <ProfileDetailCard
         member={profileCardMember}
         onClose={() => setProfileCardMember(null)}
+        variant="inline"
       />
     </GlassPanel>
   );

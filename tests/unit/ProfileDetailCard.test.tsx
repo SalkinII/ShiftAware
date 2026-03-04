@@ -25,16 +25,6 @@ describe("ProfileDetailCard", () => {
     expect(screen.getByText("🐺")).toBeTruthy();
   });
 
-  it("renders experience level badge", () => {
-    renderWithToast(<ProfileDetailCard member={member} onClose={() => {}} />);
-    expect(screen.getByText("SENIOR")).toBeTruthy();
-  });
-
-  it("renders capability tags", () => {
-    renderWithToast(<ProfileDetailCard member={member} onClose={() => {}} />);
-    expect(screen.getByText("TEAM MEMBER")).toBeTruthy();
-  });
-
   it("calls onClose when backdrop is clicked", () => {
     const onClose = vi.fn();
     renderWithToast(<ProfileDetailCard member={member} onClose={onClose} />);
@@ -56,7 +46,7 @@ describe("ProfileDetailCard", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders without experienceLevel if not provided", () => {
+  it("renders minimal member (alias and avatar only)", () => {
     renderWithToast(
       <ProfileDetailCard
         member={{ alias: "Fox", avatarId: "🦊" }}
@@ -64,6 +54,6 @@ describe("ProfileDetailCard", () => {
       />,
     );
     expect(screen.getByText("Fox")).toBeTruthy();
-    expect(screen.queryByText("SENIOR")).toBeNull();
+    expect(screen.getByText("🦊")).toBeTruthy();
   });
 });
