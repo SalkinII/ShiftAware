@@ -39,8 +39,10 @@ export function ShiftPropertiesPanel({
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [selectedMemberToAdd, setSelectedMemberToAdd] = useState("");
   const [profileCardMember, setProfileCardMember] = useState<{
+    id?: string;
     alias: string;
     avatarId?: string;
+    attributes?: { name: string; value: string }[];
   } | null>(null);
 
   const canManualAssign = eventStatus
@@ -332,6 +334,7 @@ export function ShiftPropertiesPanel({
                   className="flex items-center gap-2 text-left hover:bg-sky-50 rounded-lg px-1 -mx-1 transition-colors"
                   onClick={() =>
                     setProfileCardMember({
+                      id: assignment.teamMember?.id,
                       alias: assignment.teamMember?.alias || "Unknown",
                       avatarId: assignment.teamMember?.avatarId,
                     })
