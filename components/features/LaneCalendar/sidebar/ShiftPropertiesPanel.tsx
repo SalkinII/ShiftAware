@@ -294,7 +294,7 @@ export function ShiftPropertiesPanel({
                     ? desirabilityScore >= 4
                       ? "text-amber-500"
                       : desirabilityScore <= 2
-                        ? "text-blue-400"
+                        ? "text-[var(--color-primary-400)]"
                         : "text-gray-400"
                     : "text-gray-200",
                 )}
@@ -405,7 +405,7 @@ export function ShiftPropertiesPanel({
         </Button>
         <Button
           variant="ghost"
-          className="w-full text-red-600 hover:bg-red-50"
+          className="w-full text-[var(--color-unfilled)] hover:bg-red-50"
           onClick={handleDelete}
         >
           Delete Shift

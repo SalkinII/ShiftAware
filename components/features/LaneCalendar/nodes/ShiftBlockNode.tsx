@@ -115,7 +115,7 @@ function ShiftContent({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onVoteWant(shiftId); }}
-                className="p-[8px] rounded bg-gray-100 hover:bg-green-100 hover:text-green-600 transition-colors"
+                className="p-[8px] rounded bg-[var(--color-primary-100)] hover:bg-[var(--color-success-100)] hover:text-[var(--color-success-600)] transition-colors"
                 title="Want this shift"
               >
                 <ThumbsUp style={{ width: 60, height: 60 }} />
@@ -123,7 +123,7 @@ function ShiftContent({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onVoteDontWant(shiftId); }}
-                className="p-[8px] rounded bg-gray-100 hover:bg-red-100 hover:text-red-600 transition-colors"
+                className="p-[8px] rounded bg-[var(--color-primary-100)] hover:bg-red-100 hover:text-[var(--color-unfilled)] transition-colors"
                 title="Don't want this shift"
               >
                 <ThumbsDown style={{ width: 60, height: 60 }} />
@@ -132,7 +132,7 @@ function ShiftContent({
           )}
           <span className={cn(
             "text-[100px] leading-[1.15] font-medium ml-auto flex-shrink-0",
-            assignmentCount < capacity ? "text-red-600" : "text-green-600"
+            assignmentCount < capacity ? "text-[var(--color-unfilled)]" : "text-[var(--color-covered)]"
           )}>
             {assignmentCount}/{capacity}
           </span>
@@ -145,7 +145,7 @@ function ShiftContent({
           {assignedMembers.slice(0, 4).map((m, i) => (
             <div key={i} className="flex items-center gap-[8px] flex-shrink-0">
               <div
-                className="w-[100px] h-[100px] rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[60px] leading-none border-[3px] border-white flex-shrink-0"
+                className="w-[100px] h-[100px] rounded-full bg-gradient-to-br from-[var(--color-primary-400)] to-[var(--color-primary-600)] flex items-center justify-center text-white text-[60px] leading-none border-[3px] border-white flex-shrink-0"
                 title={m.alias}
               >
                 {m.avatarId || m.alias.slice(0, 2).toUpperCase()}
@@ -212,8 +212,8 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           "bg-white/80 backdrop-blur-sm",
           "shadow-[var(--shift-shadow)] hover:shadow-[var(--shift-shadow-hover)]",
           "transition-shadow",
-          selected && "ring-2 ring-blue-500",
-          isAssignedToCurrentUser && "ring-2 ring-green-500",
+          selected && "ring-2 ring-[var(--color-primary-500)]",
+          isAssignedToCurrentUser && "ring-2 ring-[var(--color-success-500)]",
           capacity === 0 && "opacity-60 border-dashed",
         )}
         style={{ borderLeftColor: color }}
