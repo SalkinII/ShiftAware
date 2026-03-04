@@ -259,14 +259,14 @@ export function useCanvasActions({
           }
         }
       } catch (err) {
-        console.error("Resize update failed:", err);
         const message =
           err instanceof Error
             ? err.message
             : typeof err === "string"
               ? err
               : "Failed to update shift (unknown error)";
-        toast.error(message);
+        console.error("Resize update failed:", message || "unknown error");
+        toast.error(message || "Failed to update shift");
       }
     },
     [eventStart, eventId, onShiftUpdated, toast, getNode],

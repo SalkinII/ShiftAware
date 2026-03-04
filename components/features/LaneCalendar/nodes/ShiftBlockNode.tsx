@@ -190,17 +190,21 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           keepAspectRatio={false}
           onResizeEnd={(_e, p) => {
             try {
+              const width = typeof p?.width === "number" ? p.width : 0;
+              const x = typeof p?.x === "number" ? p.x : undefined;
               const result = onResizeEnd?.(
                 `shift-${shiftId}`,
-                { width: p.width, x: p.x },
+                { width, x },
               );
               if (result instanceof Promise) {
                 result.catch((err: unknown) => {
-                  if (err) console.error("Resize failed:", err);
+                  const msg = err instanceof Error ? err.message : String(err ?? "");
+                  console.error("Resize failed:", msg || "unknown error");
                 });
               }
             } catch (err) {
-              if (err) console.error("Resize failed:", err);
+              const msg = err instanceof Error ? err.message : String(err ?? "");
+              console.error("Resize failed:", msg || "unknown error");
             }
           }}
         />
