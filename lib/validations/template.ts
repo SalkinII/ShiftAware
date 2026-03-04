@@ -20,7 +20,7 @@ export const shiftTemplateSchema = z.object({
     ),
   priority: z.nativeEnum(ShiftPriority).default("CORE"),
   desirabilityScore: z.number().int().min(1).max(5).default(3),
-  capacity: z.number().int().positive().default(2),
+  capacity: z.number().int().nonnegative().default(2),
   color: z.string().optional(),
   eventId: z.string().cuid().nullable().optional(), // NEW: for event-specific templates
   requiredRoles: z
