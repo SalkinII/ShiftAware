@@ -109,8 +109,6 @@ export function ProfileDetailCard({
           id: draft.id,
           alias: draft.alias,
           avatarId: draft.avatarId || "👤",
-          experienceLevel: draft.experienceLevel || "INTERMEDIATE",
-          capabilities: draft.capabilities?.length ? draft.capabilities : ["TEAM_MEMBER"],
         }),
       });
       if (!res.ok) {
