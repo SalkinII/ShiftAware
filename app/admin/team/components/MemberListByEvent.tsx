@@ -300,9 +300,6 @@ export function MemberListByEvent({
                 </button>
                 <div>
                   <div className="font-bold text-gray-900">{member.alias}</div>
-                  <div className="text-sm text-gray-500">
-                    {member.experienceLevel}
-                  </div>
                 </div>
               </div>
               <Button
@@ -345,9 +342,6 @@ export function MemberListByEvent({
                     <div>
                       <div className="font-medium text-gray-900">
                         {member.alias}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {member.experienceLevel}
                       </div>
                     </div>
                   </button>

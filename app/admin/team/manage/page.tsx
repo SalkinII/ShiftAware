@@ -281,19 +281,6 @@ export default function MembersPage() {
     m.alias.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const getExpBadgeColor = (level: ExperienceLevel) => {
-    switch (level) {
-      case "SENIOR":
-        return "bg-primary-100 text-primary-700";
-      case "INTERMEDIATE":
-        return "bg-accent-50 text-accent-700";
-      case "JUNIOR":
-        return "bg-success-50 text-success-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
   return (
     <>
       <ConfirmDialog
@@ -416,16 +403,6 @@ export default function MembersPage() {
                           <h3 className="text-lg font-bold text-gray-900 leading-tight">
                             {member.alias}
                           </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span
-                              className={cn(
-                                "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
-                                getExpBadgeColor(member.experienceLevel),
-                              )}
-                            >
-                              {member.experienceLevel}
-                            </span>
-                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -521,18 +498,6 @@ export default function MembersPage() {
                         </span>
                         <span className="text-sm font-black text-success-600">
                           {(members || []).filter((m) => m.isActive).length}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
-                          Senior Staff
-                        </span>
-                        <span className="text-sm font-black text-primary-600">
-                          {
-                            (members || []).filter(
-                              (m) => m.experienceLevel === "SENIOR",
-                            ).length
-                          }
                         </span>
                       </div>
                     </div>
