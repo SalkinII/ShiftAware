@@ -10,7 +10,6 @@ import {
   Download,
   Search,
   UserCircle2,
-  Shield,
   UserX,
   UserCheck,
 } from "lucide-react";
@@ -431,23 +430,6 @@ export default function MembersPage() {
                             <UserX className="w-4 h-4" />
                           </button>
                         )}
-                      </div>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-gray-50">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                        <Shield className="w-3 h-3 text-primary-400" />{" "}
-                        Capabilities
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {member.capabilities.map((cap) => (
-                          <span
-                            key={cap}
-                            className="text-[10px] font-bold bg-gray-50 text-gray-600 px-2 py-1 rounded-lg border border-gray-100"
-                          >
-                            {cap.replace("_", " ")}
-                          </span>
-                        ))}
                       </div>
                     </div>
                   </Card>
