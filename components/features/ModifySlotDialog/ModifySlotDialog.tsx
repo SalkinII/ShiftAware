@@ -44,7 +44,7 @@ export function ModifySlotDialog({
   const [date, setDate] = useState<string>("");
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
-  const [capacity, setCapacity] = useState<number>(2);
+  const [capacity, setCapacity] = useState<number>(0);
   const [priority, setPriority] = useState<string>("CORE");
 
   // Reset form when dialog opens with new template
@@ -60,7 +60,7 @@ export function ModifySlotDialog({
       const endDate = addMinutes(startDate, template.durationMinutes || 360);
       setEndTime(format(endDate, "HH:mm"));
 
-      setCapacity(template.capacity || 2);
+      setCapacity(template.capacity ?? 0);
       setPriority(template.priority || "CORE");
     }
   }, [isOpen, template, targetDate]);
@@ -198,10 +198,10 @@ export function ModifySlotDialog({
             </label>
             <input
               type="number"
-              min="1"
+              min="0"
               max="10"
               value={capacity}
-              onChange={(e) => setCapacity(parseInt(e.target.value) || 1)}
+              onChange={(e) => setCapacity(Math.max(0, parseInt(e.target.value) || 0))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>

@@ -98,9 +98,9 @@ export function useCanvasActions({
             durationMinutes: template.durationMinutes,
             priority: template.priority || "CORE",
             desirabilityScore: template.desirabilityScore || 3,
-            capacity: template.capacity || 2,
+            capacity: template.capacity ?? 0,
             requiredRoles: template.requiredRoles || [
-              { role: "TEAM_MEMBER", count: template.capacity || 2 },
+              { role: "TEAM_MEMBER", count: template.capacity ?? 0 },
             ],
           }),
         });

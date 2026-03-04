@@ -200,7 +200,7 @@ model Shift {
   template         ShiftTemplate? @relation("ShiftFromTemplate", fields: [templateId], references: [id])
 
   requiredRoles ShiftRole[]
-  capacity      Int         @default(2)
+  capacity      Int         @default(0)
 
   preferences    ShiftPreference[]
   assignments    Assignment[]
@@ -316,7 +316,7 @@ model ShiftTemplate {
   startTime         String // "08:00" - time only, no date
   priority          ShiftPriority @default(CORE)
   desirabilityScore Int           @default(3)
-  capacity          Int           @default(2)
+  capacity          Int           @default(0)
   color             String? // For UI display
 
   // Optional event for event-specific templates

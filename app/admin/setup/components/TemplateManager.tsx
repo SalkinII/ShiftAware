@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Save, X, Clock, Users, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { useEventContext } from "@/lib/hooks/useEventContext";
@@ -41,7 +41,7 @@ export function TemplateManager() {
     durationMinutes: 360,
     startTime: "08:00",
     priority: "CORE",
-    capacity: 2,
+    capacity: 0,
   });
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export function TemplateManager() {
       durationMinutes: 360,
       startTime: "08:00",
       priority: "CORE",
-      capacity: 2,
+      capacity: 0,
     });
   }
 
@@ -284,29 +284,7 @@ export function TemplateManager() {
                 setFormData({ ...formData, name: e.target.value })
               }
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="Shift Type"
-                value={formData.type}
-                onChange={(e) =>
-                  setFormData({ ...formData, type: e.target.value })
-                }
-              >
-                <option value="MOBILE_TEAM">Mobile Team</option>
-                <option value="STATIONARY">Stationary</option>
-                <option value="SUPER">Supervision</option>
-              </Select>
-              <Select
-                label="Priority"
-                value={formData.priority}
-                onChange={(e) =>
-                  setFormData({ ...formData, priority: e.target.value })
-                }
-              >
-                <option value="CORE">Core</option>
-                <option value="BUFFER">Buffer</option>
-              </Select>
-            </div>
+            {/* Shift Type and Priority are set by defaults — hidden from UI */}
             <div className="grid grid-cols-3 gap-4">
               <Input
                 label="Start Time"
@@ -408,9 +386,6 @@ export function TemplateManager() {
                         <Users className="w-3 h-3" />
                         {template.capacity} people
                       </span>
-                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                        {template.priority}
-                      </span>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -473,9 +448,6 @@ export function TemplateManager() {
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
                       {template.capacity} people
-                    </span>
-                    <span className="text-xs bg-blue-100 px-2 py-0.5 rounded">
-                      {template.priority}
                     </span>
                     <span className="text-xs bg-blue-200 px-2 py-0.5 rounded font-semibold">
                       EVENT-SPECIFIC
