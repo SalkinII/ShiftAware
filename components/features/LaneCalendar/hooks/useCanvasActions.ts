@@ -248,18 +248,25 @@ export function useCanvasActions({
           const data = await res.json().catch(() => ({}));
           if (res.status === 403) {
             toast.error("Shifts can't be edited in the current event state");
-          } else if (Array.isArray(data.details) && data.details.length > 0) {
-            toast.error(
-              data.details.map((d: { message?: string }) => d.message).join("; "),
-            );
+          } else if (data.details && Array.isArray(data.details)) {
+            const detailMsg = data.details
+              .map((d: { message?: string }) => d.message)
+              .filter(Boolean)
+              .join("; ");
+            toast.error(detailMsg || data.message || "Validation failed");
           } else {
             toast.error(data.message || data.error || "Failed to update shift");
           }
         }
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to update shift",
-        );
+        console.error("Resize update failed:", err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Failed to update shift (unknown error)";
+        toast.error(message);
       }
     },
     [eventStart, eventId, onShiftUpdated, toast, getNode],
