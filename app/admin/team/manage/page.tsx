@@ -44,12 +44,7 @@ interface TeamMember {
 export default function MembersPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
-  const [profileCardMember, setProfileCardMember] = useState<{
-    alias: string;
-    avatarId: string;
-    experienceLevel: string;
-    capabilities: Role[];
-  } | null>(null);
+  const [profileCardMember, setProfileCardMember] = useState<TeamMember | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "heatmap">("list");
@@ -552,6 +547,8 @@ export default function MembersPage() {
       <ProfileDetailCard
         member={profileCardMember}
         onClose={() => setProfileCardMember(null)}
+        editable
+        onUpdate={loadMembers}
       />
     </>
   );

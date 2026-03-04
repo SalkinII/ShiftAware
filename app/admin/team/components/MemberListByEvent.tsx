@@ -57,6 +57,7 @@ export function MemberListByEvent({
   );
   const [savingAttributes, setSavingAttributes] = useState(false);
   const [profileCardMember, setProfileCardMember] = useState<{
+    id: string;
     alias: string;
     avatarId: string;
     experienceLevel?: string;
@@ -274,6 +275,7 @@ export function MemberListByEvent({
                 <button
                   onClick={() =>
                     setProfileCardMember({
+                      id: member.id,
                       alias: member.alias,
                       avatarId: member.avatarId,
                       experienceLevel: member.experienceLevel,
@@ -484,6 +486,10 @@ export function MemberListByEvent({
       <ProfileDetailCard
         member={profileCardMember}
         onClose={() => setProfileCardMember(null)}
+        editable
+        onUpdate={loadMembers}
+        eventId={eventId}
+        attributeDefinitions={attributeDefinitions}
       />
     </div>
   );
