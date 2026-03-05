@@ -37,9 +37,9 @@ export function DistributionSettings() {
   const { selectedEventId, selectedEvent } = useEventContext(true);
   const [config, setConfig] = useState<DistributionConfig>({
     fairnessWeight: 50,
-    preferenceWeight: 30,
-    maxShiftsPerPerson: 12,
-    minRestHours: 8,
+    preferenceWeight: 50,
+    maxShiftsPerPerson: 2,
+    minRestHours: 6,
     attributeRules: [],
   });
 
