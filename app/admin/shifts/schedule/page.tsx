@@ -167,25 +167,6 @@ export default function ShiftsPage() {
     requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
   });
 
-  useEffect(() => {
-    const origConsoleError = console.error;
-    console.error = (...args: unknown[]) => {
-      console.warn("[DIAGNOSTIC] console.error intercepted:", ...args);
-      console.warn("[DIAGNOSTIC] stack:", new Error().stack);
-      origConsoleError.apply(console, args);
-    };
-
-    const handleWindowError = (event: ErrorEvent) => {
-      console.warn("[DIAGNOSTIC] window error event:", event.message, event.filename, event.lineno);
-    };
-    window.addEventListener("error", handleWindowError);
-
-    return () => {
-      console.error = origConsoleError;
-      window.removeEventListener("error", handleWindowError);
-    };
-  }, []);
-
   // Sync formData.eventId with header event selection
   useEffect(() => {
     if (selectedEventId) {
