@@ -265,7 +265,9 @@ export function useCanvasActions({
             : typeof err === "string"
               ? err
               : "Failed to update shift (unknown error)";
-        console.error("Resize update failed:", message || "unknown error");
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Resize update failed:", message || "unknown error");
+        }
         toast.error(message || "Failed to update shift");
       }
     },
