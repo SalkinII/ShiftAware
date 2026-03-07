@@ -288,13 +288,21 @@ export default function ShiftsPage() {
       ...prev,
       templateId: template.id,
       type: template.type as ShiftType,
-      capacity: template.defaultCapacity ?? prev.capacity,
-      durationMinutes: template.defaultDurationMinutes ?? prev.durationMinutes,
+      desirabilityScore: template.desirabilityScore ?? prev.desirabilityScore,
+      capacity: template.capacity ?? prev.capacity,
+      durationMinutes: template.durationMinutes ?? prev.durationMinutes,
+      requiredRoles:
+        template.requiredRoles?.length > 0
+          ? template.requiredRoles.map((r: { role: string; count: number }) => ({
+              role: r.role,
+              count: r.count,
+            }))
+          : prev.requiredRoles,
       endTime:
-        prev.startTime && template.defaultDurationMinutes
+        prev.startTime && template.durationMinutes
           ? new Date(
               new Date(prev.startTime).getTime() +
-                template.defaultDurationMinutes * 60000,
+                template.durationMinutes * 60000,
             )
               .toISOString()
               .slice(0, 16)
