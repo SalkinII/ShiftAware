@@ -789,6 +789,7 @@ export function DistributionSettings() {
         <AlgorithmResultsModal
           result={previewResult}
           onClose={() => setPreviewResult(null)}
+          eventId={selectedEventId ?? undefined}
         />
       )}
     </div>

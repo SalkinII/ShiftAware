@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { X, AlertTriangle, CheckCircle, Users } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +15,6 @@ interface PreviewAssignment {
 interface PreviewScore {
   preferenceMatch: number;
   workloadFairness: number;
-  coreShiftCoverage: number;
   overall: number;
 }
 
@@ -31,12 +31,15 @@ interface PreviewResult {
 interface AlgorithmResultsModalProps {
   result: PreviewResult;
   onClose: () => void;
+  eventId?: string;
 }
 
 export function AlgorithmResultsModal({
   result,
   onClose,
+  eventId,
 }: AlgorithmResultsModalProps) {
+  const [exporting, setExporting] = useState(false);
   const totalAssignments = result.assignments.length;
   const totalViolations = result.violations.length;
 
@@ -55,6 +58,96 @@ export function AlgorithmResultsModal({
 
   const getMemberLabel = (id: string) =>
     result.memberAliases?.[id] ?? id;
+
+  async function handleExportPdf() {
+    if (!eventId) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/shifts?eventId=${eventId}`);
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      const json = await res.json();
+      const shifts: any[] = json.data ?? [];
+
+      // Group proposed assignments by shiftId
+      const assignmentsByShift = new Map<string, string[]>();
+      for (const a of result.assignments) {
+        const alias = getMemberLabel(a.teamMemberId);
+        if (!assignmentsByShift.has(a.shiftId)) {
+          assignmentsByShift.set(a.shiftId, []);
+        }
+        assignmentsByShift.get(a.shiftId)!.push(alias);
+      }
+
+      // Build HTML grouped by day — same structure as schedule page "Export as PDF Table"
+      const shiftsByDay = new Map<string, any[]>();
+      for (const shift of shifts) {
+        const day = shift.startTime.slice(0, 10); // "yyyy-MM-dd"
+        if (!shiftsByDay.has(day)) shiftsByDay.set(day, []);
+        shiftsByDay.get(day)!.push(shift);
+      }
+
+      const html = Array.from(shiftsByDay.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, dayShifts]) => {
+          const rows = dayShifts
+            .sort(
+              (a: any, b: any) =>
+                new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+            )
+            .map((s: any) => {
+              const proposed = assignmentsByShift.get(s.id) ?? [];
+              const startHHMM = new Date(s.startTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+              const endHHMM = new Date(s.endTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+              return `<tr>
+              <td>${s.template?.name ?? s.type ?? "—"}</td>
+              <td>${startHHMM} – ${endHHMM}</td>
+              <td>${proposed.join(", ") || "—"}</td>
+              <td>${proposed.length}/${s.capacity}</td>
+            </tr>`;
+            })
+            .join("");
+
+          const dateLabel = new Date(day + "T12:00:00").toLocaleDateString(
+            undefined,
+            { weekday: "long", day: "numeric", month: "long", year: "numeric" },
+          );
+
+          return `<h2>${dateLabel}</h2>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">
+          <thead><tr><th>Shift</th><th>Time</th><th>Proposed</th><th>Capacity</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+        })
+        .join("");
+
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(`
+        <html><head><title>Preview Export</title>
+        <style>body{font-family:sans-serif;padding:20px}table{margin-bottom:20px}th{background:#f3f4f6}</style>
+        </head><body>
+        <h1>Algorithm Preview — Proposed Schedule</h1>
+        <p style="color:#666;font-size:14px">No assignments saved — simulation only</p>
+        ${html}
+        </body></html>
+      `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    } catch {
+      // Silent fail — export is best-effort
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -214,10 +307,9 @@ export function AlgorithmResultsModal({
                       <div className="font-medium text-gray-900 mb-1">
                         {getMemberLabel(a.teamMemberId)} → Shift {a.shiftId.slice(0, 8)}…
                       </div>
-                      <div className="grid grid-cols-4 gap-1 text-xs text-gray-600">
+                      <div className="grid grid-cols-3 gap-1 text-xs text-gray-600">
                         <span>Pref: {score.preferenceMatch}</span>
                         <span>Work: {score.workloadFairness}</span>
-                        <span>Core: {score.coreShiftCoverage}</span>
                         <span className="font-bold text-gray-900">Overall: {score.overall.toFixed(1)}</span>
                       </div>
                     </div>
@@ -284,8 +376,18 @@ export function AlgorithmResultsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200">
-          <Button onClick={onClose} variant="primary" className="w-full">
+        <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-2">
+          {eventId && (
+            <Button
+              onClick={handleExportPdf}
+              variant="secondary"
+              className="flex-1"
+              disabled={exporting}
+            >
+              {exporting ? "Exporting…" : "Export as PDF"}
+            </Button>
+          )}
+          <Button onClick={onClose} variant="primary" className={eventId ? "flex-1" : "w-full"}>
             Close Preview
           </Button>
         </div>
