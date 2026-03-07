@@ -223,7 +223,7 @@ export default function ShiftsPage() {
         assigned: any[];
         eventSpecific?: any[];
       }>(json);
-      return result?.assigned || [];
+      return [...(result?.assigned || []), ...(result?.eventSpecific || [])];
     },
     enabled: !!selectedEventId,
   });

@@ -111,8 +111,8 @@ export default function UserCalendarPage() {
       const res = await fetch(`/api/events/${selectedEventId}/templates`);
       if (!res.ok) return [];
       const json = await res.json();
-      const result = unwrapApiResponse<{ assigned?: any[] }>(json);
-      return result?.assigned ?? [];
+      const result = unwrapApiResponse<{ assigned?: any[]; eventSpecific?: any[] }>(json);
+      return [...(result?.assigned ?? []), ...(result?.eventSpecific ?? [])];
     },
     enabled: !!selectedEventId,
   });
