@@ -13,6 +13,7 @@ Festival shift planning tool for small teams. Admins build schedules and run all
 | [README.md](../README.md) | Setup & quick start | Features, Quick Start, Commands |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design reference | [Three-Layer Pattern](#), [Event Lifecycle](#), [File Structure](#), [Error Handling](#) |
 | [DESIGN.md](./DESIGN.md) | Visual language & components | [Token System](#), [Coordinate System](#), [Component Patterns](#) |
+| [FRONTEND.md](./FRONTEND.md) | Frontend patterns reference | [Coordinate System](#), [Component Registry](#), [Reusability Rules](#), [Prop Conventions](#) |
 | [API.md](./API.md) | Endpoint reference | [Auth](#), [Members](#), [Events](#), [Shifts](#), [Algorithm](#) |
 | [ALGORITHM.md](./ALGORITHM.md) | Allocation engine | [Phases](#), [Scoring](#), [Rules](#), [Config Mapping](#) |
 
@@ -61,6 +62,8 @@ PLANNING ──► OPEN_FOR_PREFERENCES ──► ASSIGNING ──► FINALIZED 
 | Find a component file | [ARCHITECTURE.md — File Structure](./ARCHITECTURE.md) |
 | Add a new API endpoint | [ARCHITECTURE.md — Three-Layer Pattern](./ARCHITECTURE.md) + [API.md](./API.md) |
 | Change a design token | [DESIGN.md — Token System](./DESIGN.md) + `app/globals.css` |
+| Add a new UI component | [FRONTEND.md — Component Registry](./FRONTEND.md) |
+| Understand component reuse rules | [FRONTEND.md — Reusability Rules](./FRONTEND.md) |
 | Understand algorithm config | [ALGORITHM.md — Config Mapping](./ALGORITHM.md) |
 | Debug a route error | [ARCHITECTURE.md — Error Handling](./ARCHITECTURE.md) |
 | Add a new lane type | [DESIGN.md — Quick Reference](./DESIGN.md) |
