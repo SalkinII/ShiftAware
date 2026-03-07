@@ -66,12 +66,19 @@ function ShiftContent({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let rafId = 0;
     const ro = new ResizeObserver(([entry]) => {
-      setMW(entry.contentRect.width);
-      setMH(entry.contentRect.height);
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        setMW(entry.contentRect.width);
+        setMH(entry.contentRect.height);
+      });
     });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
+    };
   }, []);
 
   const isMarker = capacity === 0;
@@ -199,12 +206,16 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
               if (result instanceof Promise) {
                 result.catch((err: unknown) => {
                   const msg = err instanceof Error ? err.message : String(err ?? "");
-                  console.error("Resize failed:", msg || "unknown error");
+                  if (process.env.NODE_ENV === "development") {
+                    console.warn("Resize failed:", msg || "unknown error");
+                  }
                 });
               }
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err ?? "");
-              console.error("Resize failed:", msg || "unknown error");
+              if (process.env.NODE_ENV === "development") {
+                console.warn("Resize failed:", msg || "unknown error");
+              }
             }
           }}
         />
