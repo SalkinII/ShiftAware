@@ -58,6 +58,36 @@ export function ShiftPropertiesPanel({
     if (res.ok) {
       const json = await res.json();
       const data = json.data || json;
+
+      // Enrich each assigned member with their attributes
+      if (data.assignments?.length) {
+        const enriched = await Promise.all(
+          data.assignments.map(async (assignment: any) => {
+            if (!assignment.teamMember?.id) return assignment;
+            try {
+              const attrRes = await fetch(
+                `/api/members/${assignment.teamMember.id}/attributes`,
+              );
+              if (!attrRes.ok) return assignment;
+              const attrJson = await attrRes.json();
+              const attrs: Array<{ name: string; value: string }> = (
+                attrJson.data || attrJson
+              ).map((a: any) => ({
+                name: a.definition?.name ?? a.name ?? "",
+                value: typeof a.value === "string" ? a.value : String(a.value),
+              }));
+              return {
+                ...assignment,
+                teamMember: { ...assignment.teamMember, attributes: attrs },
+              };
+            } catch {
+              return assignment;
+            }
+          }),
+        );
+        data.assignments = enriched;
+      }
+
       setShift(data);
       setStartTime(format(new Date(data.startTime), "yyyy-MM-dd'T'HH:mm"));
       setEndTime(format(new Date(data.endTime), "yyyy-MM-dd'T'HH:mm"));
@@ -344,6 +374,7 @@ export function ShiftPropertiesPanel({
                       id: assignment.teamMember?.id,
                       alias: assignment.teamMember?.alias || "Unknown",
                       avatarId: assignment.teamMember?.avatarId,
+                      attributes: assignment.teamMember?.attributes || [],
                     })
                   }
                   title={`View ${assignment.teamMember?.alias}'s profile`}
