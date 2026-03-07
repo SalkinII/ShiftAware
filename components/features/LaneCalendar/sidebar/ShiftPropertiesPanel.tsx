@@ -11,7 +11,7 @@ import { ColorStripe } from "@/components/ui/ColorStripe";
 import { AvatarStack } from "@/components/ui/AvatarStack";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
-import { canManuallyAssign } from "@/lib/services/event-status-permissions";
+import { canManuallyAssign, canMutateShifts } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
@@ -47,6 +47,9 @@ export function ShiftPropertiesPanel({
 
   const canManualAssign = eventStatus
     ? canManuallyAssign(eventStatus as EventStatus)
+    : false;
+  const canEditShift = eventStatus
+    ? canMutateShifts(eventStatus as EventStatus)
     : false;
 
   async function fetchShift() {
@@ -248,70 +251,74 @@ export function ShiftPropertiesPanel({
           </div>
         </div>
 
-        {/* Time & Capacity inputs */}
-        <div className="space-y-2">
-          <SectionLabel className="mb-2">Edit Times</SectionLabel>
-          <label className="block text-xs text-gray-600">
-            Start
-            <input
-              type="datetime-local"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="block text-xs text-gray-600">
-            End
-            <input
-              type="datetime-local"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="block text-xs text-gray-600">
-            Capacity
-            <input
-              type="number"
-              min={0}
-              value={capacity}
-              onChange={(e) => setCapacity(Math.max(0, parseInt(e.target.value) || 0))}
-              className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-            />
-          </label>
-        </div>
-        <div className="h-1 bg-gray-200 my-2"></div>
+        {/* Time & Capacity inputs — visible in PLANNING only */}
+        {canEditShift && (
+          <div className="space-y-2">
+            <SectionLabel className="mb-2">Edit Times</SectionLabel>
+            <label className="block text-xs text-gray-600">
+              Start
+              <input
+                type="datetime-local"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+              />
+            </label>
+            <label className="block text-xs text-gray-600">
+              End
+              <input
+                type="datetime-local"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+              />
+            </label>
+            <label className="block text-xs text-gray-600">
+              Capacity
+              <input
+                type="number"
+                min={0}
+                value={capacity}
+                onChange={(e) => setCapacity(Math.max(0, parseInt(e.target.value) || 0))}
+                className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+              />
+            </label>
+          </div>
+        )}
+        {canEditShift && <div className="h-1 bg-gray-200 my-2"></div>}
 
         {/* Desirability Score */}
-        <div>
-          <SectionLabel className="mb-2">Desirability Score</SectionLabel>
-          <div className="flex gap-2 mt-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                onClick={() => setDesirabilityScore(n)}
-                className={cn(
-                  "text-2xl font-bold leading-none transition-colors",
-                  n <= desirabilityScore
-                    ? desirabilityScore >= 4
-                      ? "text-amber-500"
-                      : desirabilityScore <= 2
-                        ? "text-[var(--color-primary-400)]"
-                        : "text-gray-400"
-                    : "text-gray-200",
-                )}
-              >
-                +
-              </button>
-            ))}
+        {canEditShift && (
+          <div>
+            <SectionLabel className="mb-2">Desirability Score</SectionLabel>
+            <div className="flex gap-2 mt-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setDesirabilityScore(n)}
+                  className={cn(
+                    "text-2xl font-bold leading-none transition-colors",
+                    n <= desirabilityScore
+                      ? desirabilityScore >= 4
+                        ? "text-amber-500"
+                        : desirabilityScore <= 2
+                          ? "text-[var(--color-primary-400)]"
+                          : "text-gray-400"
+                      : "text-gray-200",
+                  )}
+                >
+                  +
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="h-1 bg-gray-200 my-2"></div>
-          <div className="flex justify-between mt-1 text-xs text-gray-500">
-            <span>{wantCount} people want this shift</span>
-          </div>
-          <div className="flex justify-between mt-1 text-xs text-gray-500">
-            <span>{dontWantCount} people don't want this shift</span>
-          </div>
+        )}
+        {canEditShift && <div className="h-1 bg-gray-200 my-2"></div>}
+        <div className="flex justify-between mt-1 text-xs text-gray-500">
+          <span>{wantCount} people want this shift</span>
+        </div>
+        <div className="flex justify-between mt-1 text-xs text-gray-500">
+          <span>{dontWantCount} people don't want this shift</span>
         </div>
         <div className="h-1 bg-gray-200 my-2"></div>
 
@@ -402,18 +409,20 @@ export function ShiftPropertiesPanel({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
-        <Button className="w-full" onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save Changes"}
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full text-[var(--color-unfilled)] hover:bg-red-50"
-          onClick={handleDelete}
-        >
-          Delete Shift
-        </Button>
-      </div>
+      {canEditShift && (
+        <div className="p-4 border-t border-gray-200 space-y-2">
+          <Button className="w-full" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-[var(--color-unfilled)] hover:bg-red-50"
+            onClick={handleDelete}
+          >
+            Delete Shift
+          </Button>
+        </div>
+      )}
 
       <ProfileDetailCard
         member={profileCardMember}
