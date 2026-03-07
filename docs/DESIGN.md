@@ -219,7 +219,25 @@ Section 2 — My Preferences:
 
 ---
 
-## 5. Typography Hierarchy
+## 5. Feature Components
+
+Domain-level components in `components/features/`. Before building a new feature component, check this list.
+
+| Component | Purpose | Mounted in |
+|-----------|---------|------------|
+| `LaneCalendar/LaneCalendarCanvas` | React Flow schedule canvas (editable + read-only) | Admin schedule, User calendar |
+| `TemplatePalette` | Drag source for creating shifts from templates | Admin schedule (above canvas) |
+| `LaneCalendar/sidebar/ShiftPropertiesPanel` | Edit and view shift details, manage assignments | Admin schedule sidebar |
+| `AlgorithmResultsModal` | Display algorithm preview results | Admin team (DistributionSettings) |
+| `SwapInterface` | Swap request workflow with conflict detection | User calendar |
+| `AvailabilityHeatmap` | Member availability matrix | Admin team |
+| `ConflictWizard` | Conflict detection and resolution flow | Admin team |
+| `Identity/ProfileDetailCard` | Read-only member profile card (avatar, alias, attributes) | Canvas sidebar, team views |
+| `ShiftPropertiesPanel/ShiftPreferencePanel` | User preference voting (WANT/DONT_WANT) on a shift | User calendar |
+
+---
+
+## 6. Typography Hierarchy
 
 | Element | Classes |
 |---------|---------|
@@ -231,7 +249,7 @@ Section 2 — My Preferences:
 
 ---
 
-## 6. Interaction Patterns
+## 7. Interaction Patterns
 
 ### Hover States
 
@@ -255,7 +273,7 @@ Active statuses (OPEN_FOR_PREFERENCES, ASSIGNING) use `animate-pulse` on the Sta
 
 ---
 
-## 7. Color Scale Reference
+## 8. Color Scale Reference
 
 ### Desirability Scoring
 
@@ -277,18 +295,17 @@ Generated from alias using consistent mapping:
 
 ---
 
-## 8. Quick Reference
+## 9. Quick Reference
 
 ### Adding a New Lane Type
 
-1. Add tokens to `globals.css @theme`:
-   ```css
-   --lane-{name}: #hexcolor;
-   --lane-{name}-dark: #darker;
-   --lane-{name}-light: #lighter;
-   ```
+All color is derived from the template, not from CSS. Follow this flow:
 
-2. Update `ShiftTemplate` in database with new color
+1. **Create the template** via Setup → TemplateManager (sets name, type, capacity, duration in DB).
+2. **Optionally pin a color** — set `template.color` (hex string) in the DB if this template needs a fixed visual identity.
+3. **Color resolves automatically** — `deriveLanesFromTemplates()` computes `LaneConfig.color` as `template.color || getPaletteColor(index)`.
+4. **Color flows as a prop** to: `LaneZoneNode` (background tint), `ShiftBlockNode` (left border), `TemplatePalette` items.
+5. **No CSS changes required.** Do not add new `--lane-*` tokens unless you need a CSS variable accessible outside of component props.
 
 ### Adding a New Status
 
@@ -325,7 +342,7 @@ Use `GlassPanel` wrapper with standard sections:
 
 - **Token Source:** `app/globals.css`
 - **Architecture:** `docs/ARCHITECTURE.md`
-- **Design Evolution Plan:** `docs/plans/2026-02-25-ui-design-evolution.md`
+- **Frontend Patterns:** `docs/FRONTEND.md`
 - **KIMI Mockup:** `docs/plans/arch/260223_UImockup_ShiftAware_KIMI.html`
 
 ---
