@@ -157,6 +157,7 @@ export default function ShiftsPage() {
   });
   const [formData, setFormData] = useState({
     eventId: "",
+    templateId: "",
     type: "MOBILE_TEAM" as ShiftType,
     startTime: "",
     endTime: "",
@@ -277,11 +278,39 @@ export default function ShiftsPage() {
 
   // Removed DnD context - React Flow handles drag/drop natively
 
+  function handleTemplateSelect(templateId: string) {
+    const template = (eventTemplates || []).find((t: any) => t.id === templateId);
+    if (!template) {
+      setFormData((prev) => ({ ...prev, templateId: "" }));
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      templateId: template.id,
+      type: template.type as ShiftType,
+      capacity: template.defaultCapacity ?? prev.capacity,
+      durationMinutes: template.defaultDurationMinutes ?? prev.durationMinutes,
+      endTime:
+        prev.startTime && template.defaultDurationMinutes
+          ? new Date(
+              new Date(prev.startTime).getTime() +
+                template.defaultDurationMinutes * 60000,
+            )
+              .toISOString()
+              .slice(0, 16)
+          : prev.endTime,
+    }));
+  }
+
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
 
     if (!formData.eventId) {
       errors.eventId = "Please select an event";
+    }
+
+    if (eventTemplates && eventTemplates.length > 0 && !formData.templateId) {
+      errors.templateId = "Please select a template";
     }
 
     if (!formData.startTime) {
@@ -337,6 +366,7 @@ export default function ShiftsPage() {
     // Prepare payload with ISO datetime strings and matching duration
     const payload = {
       ...formData,
+      templateId: formData.templateId || undefined,
       startTime: startDate.toISOString(),
       endTime: endDate.toISOString(),
       durationMinutes: calculatedDuration, // Use calculated duration to match validation
@@ -361,6 +391,7 @@ export default function ShiftsPage() {
         // Reset form
         setFormData({
           eventId: selectedEventId || "",
+          templateId: "",
           type: "MOBILE_TEAM" as ShiftType,
           startTime: "",
           endTime: "",
@@ -821,18 +852,36 @@ export default function ShiftsPage() {
                     <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
                       Event: <span className="font-bold">{selectedEvent.name}</span>
                     </div>
-                    <Select
-                      label="Shift Type"
-                      value={formData.type}
-                      onChange={(e) =>
-                        setFormData({ ...formData, type: e.target.value as ShiftType })
-                      }
-                      className="bg-gray-50 border-gray-100 font-medium"
-                    >
-                      <option value="MOBILE_TEAM">Mobile Team</option>
-                      <option value="STATIONARY">Stationary</option>
-                      <option value="SUPER">SUPER</option>
-                    </Select>
+                    {(eventTemplates && eventTemplates.length > 0) ? (
+                      <Select
+                        label="Template"
+                        value={formData.templateId}
+                        onChange={(e) => handleTemplateSelect(e.target.value)}
+                        className="bg-gray-50 border-gray-100 font-medium"
+                        required
+                        error={formErrors.templateId}
+                      >
+                        <option value="">Select a template…</option>
+                        {(eventTemplates || []).map((t: any) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <Select
+                        label="Shift Type"
+                        value={formData.type}
+                        onChange={(e) =>
+                          setFormData({ ...formData, type: e.target.value as ShiftType })
+                        }
+                        className="bg-gray-50 border-gray-100 font-medium"
+                      >
+                        <option value="MOBILE_TEAM">Mobile Team</option>
+                        <option value="STATIONARY">Stationary</option>
+                        <option value="SUPER">SUPER</option>
+                      </Select>
+                    )}
                     <DateTimePicker
                       label="Start Date & Time"
                       value={formData.startTime}
@@ -1112,21 +1161,39 @@ export default function ShiftsPage() {
                     </div>
                   )}
 
-                  <Select
-                    label="Shift Type"
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        type: e.target.value as ShiftType,
-                      })
-                    }
-                    className="bg-gray-50 border-gray-100 font-medium"
-                  >
-                    <option value="MOBILE_TEAM">Mobile Team</option>
-                    <option value="STATIONARY">Stationary</option>
-                    <option value="SUPER">SUPER</option>
-                  </Select>
+                  {(eventTemplates && eventTemplates.length > 0) ? (
+                    <Select
+                      label="Template"
+                      value={formData.templateId}
+                      onChange={(e) => handleTemplateSelect(e.target.value)}
+                      className="bg-gray-50 border-gray-100 font-medium"
+                      required
+                      error={formErrors.templateId}
+                    >
+                      <option value="">Select a template…</option>
+                      {(eventTemplates || []).map((t: any) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Select
+                      label="Shift Type"
+                      value={formData.type}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          type: e.target.value as ShiftType,
+                        })
+                      }
+                      className="bg-gray-50 border-gray-100 font-medium"
+                    >
+                      <option value="MOBILE_TEAM">Mobile Team</option>
+                      <option value="STATIONARY">Stationary</option>
+                      <option value="SUPER">SUPER</option>
+                    </Select>
+                  )}
 
                   <div className="grid grid-cols-1 gap-4">
                     <DateTimePicker
