@@ -318,7 +318,7 @@ function LaneCalendarCanvasInner(
 
     // Compute viewport that fits all nodes
     const bounds = getNodesBounds(flowNodes);
-    const { width, height } = container.getBoundingClientRect();
+    const { width, height } = target.getBoundingClientRect();
     const exportViewport = getViewportForBounds(
       bounds,
       width,
@@ -328,30 +328,44 @@ function LaneCalendarCanvasInner(
       0.1,
     );
 
-    // Manipulate the CSS transform directly on the viewport element.
-    // This bypasses d3-zoom entirely — React Flow's internal viewport
-    // state is never changed, so no viewport jump or state desync.
-    const vpEl = target.querySelector(
+    // Clone the element off-screen — live canvas is never mutated, no visible flash.
+    // html-to-image captures from the clone, so the user sees no viewport jump.
+    const clone = target.cloneNode(true) as HTMLElement;
+    Object.assign(clone.style, {
+      position: "fixed",
+      // Position far off-screen to the left (not visible to user)
+      top: "0",
+      left: `-${width + 10}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      pointerEvents: "none",
+      zIndex: "-1",
+    });
+    document.body.appendChild(clone);
+
+    const cloneVp = clone.querySelector(
       ".react-flow__viewport",
     ) as HTMLElement | null;
-    if (!vpEl) return null;
+    if (cloneVp) {
+      cloneVp.style.transform = `translate(${exportViewport.x}px, ${exportViewport.y}px) scale(${exportViewport.zoom})`;
+    }
 
-    const savedTransform = vpEl.style.transform;
-    vpEl.style.transform = `translate(${exportViewport.x}px, ${exportViewport.y}px) scale(${exportViewport.zoom})`;
-
-    // Wait for browser to paint the export transform
-    await new Promise((r) => setTimeout(r, 150));
+    // Two frames to let the browser layout the clone before capture
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
 
     try {
-      return await toPng(target, {
+      return await toPng(clone, {
         pixelRatio: 2,
         backgroundColor: "#ffffff",
+        width,
+        height,
       });
     } catch {
       return null;
     } finally {
-      // Restore — d3-zoom never knew we changed, so no side effects
-      vpEl.style.transform = savedTransform;
+      document.body.removeChild(clone);
     }
   }, [laneNodes, shiftNodes]);
 
