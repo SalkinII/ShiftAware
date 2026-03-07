@@ -5,9 +5,9 @@ import { render, screen } from "@testing-library/react";
 import { DesirabilityBadge } from "@/components/ui/DesirabilityBadge";
 
 describe("DesirabilityBadge", () => {
-  it("renders integer score, not decimal", () => {
+  it("renders + characters for score, not decimal", () => {
     render(<DesirabilityBadge score={3} />);
-    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getByText("+++")).toBeTruthy();
     expect(screen.queryByText("3.0")).toBeNull();
   });
 

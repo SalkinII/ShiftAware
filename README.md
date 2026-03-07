@@ -1,5 +1,7 @@
 # ShiftAware
 
+![Version](https://img.shields.io/badge/version-3.12-blue)
+
 Festival shift planning tool for small teams (25–35 people). Admins build a shift schedule, team members vote on preferences, an allocation algorithm assigns shifts fairly, and the result is published as a printable PNG or PDF.
 
 ## Features
