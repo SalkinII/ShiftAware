@@ -33,14 +33,15 @@ All tokens defined in `app/globals.css` via Tailwind v4 `@theme` and `@layer bas
 
 | Lane | Default | Dark | Light |
 |------|---------|------|-------|
-| Mobile North | `#0ea5e9` | `#0284c7` | `#7dd3fc` |
-| Mobile South | `#f59e0b` | `#d97706` | `#fcd34d` |
-| Stationary | `#10b981` | `#059669` | `#6ee7b7` |
-| Shift Lead | `#8b5cf6` | `#7c3aed` | `#c4b5fd` |
-| Super | `#ef4444` | `#dc2626` | `#fca5a5` |
-| Buffer | `#6b7280` | `#4b5563` | `#d1d5db` |
+| A | `#0ea5e9` | `#0284c7` | `#7dd3fc` |
+| B | `#f59e0b` | `#d97706` | `#fcd34d` |
+| C | `#10b981` | `#059669` | `#6ee7b7` |
+| D | `#8b5cf6` | `#7c3aed` | `#c4b5fd` |
+| E | `#ef4444` | `#dc2626` | `#fca5a5` |
+| F | `#6b7280` | `#4b5563` | `#d1d5db` |
+| ... | ... | ... | ... |
 
-CSS usage: `var(--lane-mobile-north)`, `var(--lane-mobile-north-dark)`, etc.
+CSS usage: `var(--lane-A)`, `var(--lane-A-dark)`, etc.
 
 ### Status Ambient Theming
 

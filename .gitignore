@@ -17,6 +17,7 @@
 
 #IDE
 .cursor/
+.agent/
 !.cursor/skills/
 !.cursor/rules/
 
