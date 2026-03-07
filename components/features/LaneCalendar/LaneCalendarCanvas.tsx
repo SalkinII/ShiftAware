@@ -18,8 +18,6 @@ import {
   applyNodeChanges,
   ReactFlowProvider,
   useReactFlow,
-  getNodesBounds,
-  getViewportForBounds,
 } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import "@xyflow/react/dist/style.css";
@@ -313,47 +311,44 @@ function LaneCalendarCanvasInner(
       (container.querySelector(".react-flow") as HTMLElement) ?? container;
     if (!target) return null;
 
-    const flowNodes = [...laneNodes, ...shiftNodes];
-    if (flowNodes.length === 0) return null;
-
-    // Compute viewport that fits all nodes
-    const bounds = getNodesBounds(flowNodes);
     const { width, height } = target.getBoundingClientRect();
-    const exportViewport = getViewportForBounds(
-      bounds,
-      width,
-      height,
-      MIN_ZOOM,
-      MAX_ZOOM,
-      0.1,
-    );
 
-    // Clone the element off-screen — live canvas is never mutated, no visible flash.
-    // html-to-image captures from the clone, so the user sees no viewport jump.
-    const clone = target.cloneNode(true) as HTMLElement;
-    Object.assign(clone.style, {
+    // Wrapper positions the clone off-screen so the user sees no change.
+    // The clone itself has no off-screen offset — html-to-image serialises it
+    // into a <foreignObject>, where `position:fixed` becomes `position:absolute`,
+    // so any left/top on the captured element would shift the image off-canvas.
+    const wrapper = document.createElement("div");
+    Object.assign(wrapper.style, {
       position: "fixed",
-      // Position far off-screen to the left (not visible to user)
       top: "0",
       left: `-${width + 10}px`,
       width: `${width}px`,
       height: `${height}px`,
+      overflow: "hidden",
       pointerEvents: "none",
       zIndex: "-1",
     });
-    document.body.appendChild(clone);
+    document.body.appendChild(wrapper);
 
-    const cloneVp = clone.querySelector(
-      ".react-flow__viewport",
-    ) as HTMLElement | null;
-    if (cloneVp) {
-      cloneVp.style.transform = `translate(${exportViewport.x}px, ${exportViewport.y}px) scale(${exportViewport.zoom})`;
-    }
+    const clone = target.cloneNode(true) as HTMLElement;
+    // No viewport mutation on the clone — TimeRulerPanel and LaneLabelPanel
+    // bake pixel positions from useViewport() at React render time. Changing
+    // the CSS transform after cloning would move nodes but not the panels,
+    // causing misalignment. Capturing at the current live viewport guarantees
+    // panels and nodes are always in sync.
+    Object.assign(clone.style, {
+      position: "relative",
+      top: "0",
+      left: "0",
+      width: `${width}px`,
+      height: `${height}px`,
+    });
+    wrapper.appendChild(clone);
 
-    // Two frames to let the browser layout the clone before capture
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve)),
-    );
+    // Two frames to let the browser lay out the clone
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
 
     try {
       return await toPng(clone, {
@@ -365,9 +360,9 @@ function LaneCalendarCanvasInner(
     } catch {
       return null;
     } finally {
-      document.body.removeChild(clone);
+      document.body.removeChild(wrapper);
     }
-  }, [laneNodes, shiftNodes]);
+  }, []);
 
   useImperativeHandle(ref, () => ({ exportToPng }), [exportToPng]);
 
