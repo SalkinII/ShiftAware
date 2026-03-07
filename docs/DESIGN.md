@@ -2,7 +2,7 @@
 
 > **Visual language reference for the "Command Center" aesthetic.**
 >
-> Last updated: 2026-02-28
+> Last updated: 2026-03-05
 
 ---
 
@@ -29,19 +29,34 @@
 
 All tokens defined in `app/globals.css` via Tailwind v4 `@theme` and `@layer base`.
 
-### Lane Colors (3-tier)
+### Lane Color Resolution
 
-| Lane | Default | Dark | Light |
-|------|---------|------|-------|
-| A | `#0ea5e9` | `#0284c7` | `#7dd3fc` |
-| B | `#f59e0b` | `#d97706` | `#fcd34d` |
-| C | `#10b981` | `#059669` | `#6ee7b7` |
-| D | `#8b5cf6` | `#7c3aed` | `#c4b5fd` |
-| E | `#ef4444` | `#dc2626` | `#fca5a5` |
-| F | `#6b7280` | `#4b5563` | `#d1d5db` |
-| ... | ... | ... | ... |
+Lane color flows from one source: `deriveLanesFromTemplates()` in `lib/types/lane.ts`.
 
-CSS usage: `var(--lane-A)`, `var(--lane-A-dark)`, etc.
+**Resolution order:**
+1. `template.color` — hex value pinned in DB via the Setup page (TemplateManager)
+2. `getPaletteColor(index)` — cycling 12-color palette from `lib/utils/palette.ts` (fallback when no color is set)
+
+The resolved color lives on `LaneConfig.color` and is the single source of truth for all downstream rendering. Components receive `color: string` as a prop and never resolve it themselves.
+
+### Base Palette (12 entries in `globals.css @theme`)
+
+| Index | Hex | Tailwind equivalent |
+|-------|-----|---------------------|
+| 0 | `#0ea5e9` | sky-500 |
+| 1 | `#22c55e` | green-500 |
+| 2 | `#f59e0b` | amber-500 |
+| 3 | `#ef4444` | red-500 |
+| 4 | `#8b5cf6` | violet-500 |
+| 5 | `#ec4899` | pink-500 |
+| 6 | `#06b6d4` | cyan-500 |
+| 7 | `#84cc16` | lime-500 |
+| 8 | `#f97316` | orange-500 |
+| 9 | `#6366f1` | indigo-500 |
+| 10 | `#14b8a6` | teal-500 |
+| 11 | `#a855f7` | purple-500 |
+
+To extend the palette: add entries to `LANE_PALETTE` in `lib/utils/palette.ts`.
 
 ### Status Ambient Theming
 
