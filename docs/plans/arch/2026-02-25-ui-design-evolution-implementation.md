@@ -1585,7 +1585,7 @@ CSS usage: `var(--status-bg)`, `var(--status-accent)`
 
 ```
 ┌─────────────────────────────────────────┐
-│██ Title                    [Score ★]   │
+│██ Title                    [Score +]   │
 │██ Time range                           │
 │██ ●●● Assignments                      │
 │██ ─────────────────────────────────    │

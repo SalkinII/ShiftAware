@@ -30,8 +30,8 @@ export type ShiftBlockData = {
 /** Minimum screen-pixel thresholds for progressive content reveal */
 const W_NAMES = 40;   // show member names
 const W_TIME = 100;   // add time range
-const W_STARS = 130;  // add desirability stars
-const H_ROW2 = 20;    // show second row (stars + votes)
+const W_token = 130;  // add desirability token
+const H_ROW2 = 20;    // show second row (token + votes)
 const H_ROW3 = 38;    // show third row (avatars + names)
 
 function ShiftContent({
@@ -78,7 +78,7 @@ function ShiftContent({
 
   const showNames = mW >= W_NAMES;
   const showTime = mW >= W_TIME;
-  const showStars = mW >= W_STARS && desirabilityScore != null;
+  const showtoken = mW >= W_token && desirabilityScore != null;
   const showRow2 = mH >= H_ROW2;
   const showRow3 = mH >= H_ROW3;
 
@@ -107,7 +107,7 @@ function ShiftContent({
       {/* Row 2: DesirabilityBadge (left) + vote buttons (center) + coverage (right) */}
       {showRow2 && showNames && !isMarker && (
         <div className="flex items-center gap-2 min-w-0">
-          {showStars && desirabilityScore != null && (
+          {showtoken && desirabilityScore != null && (
             <DesirabilityBadge score={desirabilityScore} className="flex-shrink-0" />
           )}
           {readOnly && onVoteWant && onVoteDontWant && (

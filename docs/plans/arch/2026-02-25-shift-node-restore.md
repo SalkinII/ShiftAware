@@ -279,7 +279,7 @@ function CompactContent({
         {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
         {desirabilityScore != null && (
           <span className="ml-2 text-2xl font-bold text-amber-500">
-            {"★".repeat(desirabilityScore)}
+            {"+".repeat(desirabilityScore)}
           </span>
         )}
       </div>
@@ -337,7 +337,7 @@ function DetailedContent({
         </div>
         {desirabilityScore != null && (
           <span className="text-2xl font-bold text-amber-500 flex-shrink-0 ml-2">
-            {"★".repeat(desirabilityScore)}
+            {"+".repeat(desirabilityScore)}
           </span>
         )}
       </div>
@@ -840,14 +840,14 @@ Replace section "4. Component Patterns > Shift Visualization (Two-Node Pattern)"
 
 ```
 ┌──┬──────────────────────────────┐
-│██│ 08:00–16:00  ★★★             │  ← CompactContent (zoom < 0.7)
+│██│ 08:00–16:00  +++             │  ← CompactContent (zoom < 0.7)
 │██│ Morning Shift                │     scale(1/zoom), text-2xl+
 │██│ 3/5                          │
 └──┴──────────────────────────────┘
 
 ┌──┬──────────────────────────────┐
 │██│ Morning Shift                │  ← DetailedContent (zoom >= 0.7)
-│██│ 08:00 – 16:00         ★★★   │     native size, text-2xl+
+│██│ 08:00 – 16:00         +++   │     native size, text-2xl+
 │██│ ●● John, Mary               │
 │██│ 3/5 — needs 2 more    👍👎  │
 └──┴──────────────────────────────┘

@@ -173,7 +173,7 @@ Replace the density section (CompactContent/DetailedContent zoom model) with:
 ```
 ┌──┬──────────────────────────────┐
 │  │ Template Name    08:00–16:00 │  ← Row 1: name + time (mW ≥ W_NAMES/W_TIME)
-│  │ ★★★              3/5         │  ← Row 2: stars + count (mH ≥ H_ROW2)
+│  │ +++              3/5         │  ← Row 2: token + count (mH ≥ H_ROW2)
 │  │ 😀 Alice  😀 Bob             │  ← Row 3: avatars + names (mH ≥ H_ROW3)
 └──┴──────────────────────────────┘
 ```
@@ -184,8 +184,8 @@ Replace the density section (CompactContent/DetailedContent zoom model) with:
 |----------|-------|---------------|
 | `W_NAMES` | 40px | Template name (Row 1) |
 | `W_TIME` | 100px | Time range added to Row 1 |
-| `W_STARS` | 130px | Desirability stars in Row 2 |
-| `H_ROW2` | 20px | Row 2 visible (stars + votes + count) |
+| `W_token` | 130px | Desirability token in Row 2 |
+| `H_ROW2` | 20px | Row 2 visible (token + votes + count) |
 | `H_ROW3` | 38px | Row 3 visible (avatars + names) |
 
 **Note:** `ZOOM_COMPACT` / `ZOOM_MINIMAL` constants apply to `TimeRulerPanel` tick density and date label format — not to shift card content.

@@ -152,7 +152,7 @@ export const RULER_HEIGHT = 28;       // px, top ruler height
 | Threshold | Tier | Content |
 |-----------|------|---------|
 | `zoom < ZOOM_MINIMAL (0.3)` | **Occupation** | Assigned member names/avatars ONLY |
-| `0.3 ≤ zoom < ZOOM_COMPACT (0.7)` | **Core** | Time range + shift name + desirability ★ + count `3/5` + member names |
+| `0.3 ≤ zoom < ZOOM_COMPACT (0.7)` | **Core** | Time range + shift name + desirability + + count `3/5` + member names |
 | `zoom ≥ ZOOM_COMPACT (0.7)` | **Full** | Everything + `"fully staffed / needs N more"` + vote buttons |
 
 All tiers with `zoom < ZOOM_COMPACT` use `scale(1/zoom)` with explicit `width * zoom` /
@@ -173,7 +173,7 @@ from the lane label — the node's unique information is WHO is staffed.
 Layout priority top-to-bottom:
 1. Time range: `HH:mm – HH:mm` (most critical unique info at this zoom)
 2. Shift name
-3. Desirability ★ + capacity count `3/5`
+3. Desirability + + capacity count `3/5`
 4. Member names (if space permits)
 
 Font: current CompactContent sizes (`text-2xl`, `text-3xl`). No change.

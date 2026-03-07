@@ -167,14 +167,14 @@ const show30min = zoom > ZOOM_MINIMAL;     // Show baseline at zoom > 0.3
 
 ```
 ┌──┬──────────────────────────────┐
-│██│ 08:00–16:00  ★★★             │  ← CompactContent (zoom < 0.7)
+│██│ 08:00–16:00  +++             │  ← CompactContent (zoom < 0.7)
 │██│ Morning Shift                │     scale(1/zoom), text-2xl+
 │██│ 3/5                          │
 └──┴──────────────────────────────┘
 
 ┌──┬──────────────────────────────┐
 │██│ Morning Shift                │  ← DetailedContent (zoom >= 0.7)
-│██│ 08:00 – 16:00         ★★★   │     native size, text-2xl+
+│██│ 08:00 – 16:00         +++   │     native size, text-2xl+
 │██│ ●● John, Mary               │
 │██│ 3/5 — needs 2 more    👍👎  │
 └──┴──────────────────────────────┘

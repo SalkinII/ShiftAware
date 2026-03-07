@@ -53,8 +53,8 @@ Replace the zoom-threshold model (`zoom < ZOOM_COMPACT` → CompactContent) with
 |--------------------|-------|-----------|
 | `W_NAMES` | 40px | Show template name |
 | `W_TIME` | 100px | Add time range |
-| `W_STARS` | 130px | Add desirability stars |
-| `H_ROW2` | 20px | Show second row (stars + votes) |
+| `W_token` | 130px | Add desirability token |
+| `H_ROW2` | 20px | Show second row (token + votes) |
 | `H_ROW3` | 38px | Show third row (avatars + names) |
 
 Note: `ZOOM_COMPACT` / `ZOOM_MINIMAL` still apply — to `TimeRulerPanel` tick density and date label format, **not** to shift card content density.

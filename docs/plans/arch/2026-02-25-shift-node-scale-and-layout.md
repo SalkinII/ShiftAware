@@ -111,7 +111,7 @@ function ScaledScore({ score, s }: { score: number; s: (n: number) => number }) 
         flexShrink: 0,
       }}
     >
-      {score} ★
+      {score} +
     </span>
   );
 }
