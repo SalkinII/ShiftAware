@@ -86,54 +86,65 @@ CSS usage: `var(--status-bg)`, `var(--status-accent)`
 
 ## 3. Component Patterns
 
-### Shift Visualization (Single-Node Glass Card)
+### Template Palette Items
 
-**ShiftBlockNode** — Glass card with colored left border, scale(1/zoom) for zoom-independent text.
+Horizontal strip **above** the canvas. Items are draggable chips with a grip handle. No color stripe.
+
+**Two render modes:**
+
+Full item (vertical layout):
+```
+┌─────────────────────────────────────┐
+│ ⠿ Template Name                     │
+│   Xh (start time)                   │
+└─────────────────────────────────────┘
+```
+
+Compact chip (`compact` prop — used in horizontal strip):
+```
+┌────────────────────┐
+│ ⠿ Template Name    │
+└────────────────────┘
+```
+
+**Key Classes:**
+```css
+group flex items-center gap-2 px-3 py-1.5 rounded-lg
+bg-white hover:bg-gray-50 cursor-grab active:cursor-grabbing
+border border-transparent hover:border-gray-200 transition-colors
+```
+
+Grip icon: always visible (`GripVertical` from lucide-react).
+
+### Shift Visualization (Glass Card with Width-Based Density)
+
+**ShiftBlockNode** — glass card with colored left border. Content density responds to the card's rendered pixel dimensions via `ResizeObserver`, not zoom level.
 
 ```
 ┌──┬──────────────────────────────┐
-│██│ 08:00–16:00  +++             │  ← CompactContent (zoom < 0.7)
-│██│ Morning Shift                │     scale(1/zoom), text-2xl+
-│██│ 3/5                          │
-└──┴──────────────────────────────┘
-
-┌──┬──────────────────────────────┐
-│██│ Morning Shift                │  ← DetailedContent (zoom >= 0.7)
-│██│ 08:00 – 16:00         +++   │     native size, text-2xl+
-│██│ ●● John, Mary               │
-│██│ 3/5 — needs 2 more    👍👎  │
+│  │ Template Name    08:00–16:00 │  ← Row 1: name + time (mW ≥ W_NAMES/W_TIME)
+│  │ +++              3/5         │  ← Row 2: token + count (mH ≥ H_ROW2)
+│  │ 😀 Alice  😀 Bob             │  ← Row 3: avatars + names (mH ≥ H_ROW3)
 └──┴──────────────────────────────┘
 ```
+
+**Density thresholds** (from `components/features/LaneCalendar/nodes/ShiftBlockNode.tsx`):
+
+| Constant | Value | Content shown |
+|----------|-------|---------------|
+| `W_NAMES` | 40px | Template name (Row 1) |
+| `W_TIME` | 100px | Time range added to Row 1 |
+| `W_token` | 130px | Desirability token in Row 2 |
+| `H_ROW2` | 20px | Row 2 visible (token + votes + count) |
+| `H_ROW3` | 38px | Row 3 visible (avatars + names) |
+
+**Note:** `ZOOM_COMPACT` / `ZOOM_MINIMAL` constants apply to `TimeRulerPanel` tick density and date label format — not to shift card content.
 
 **Key Classes:**
 ```css
 bg-white/80 backdrop-blur-sm border-l-4
 shadow-[var(--shift-shadow)] hover:shadow-[var(--shift-shadow-hover)]
 ```
-
-**Density thresholds:** (from `components/features/LaneCalendar/utils/constants.ts`)
-- `zoom < ZOOM_COMPACT (0.7)`: CompactContent with scale(1/zoom)
-- `zoom >= ZOOM_COMPACT`: DetailedContent (no scaling needed)
-- `ZOOM_MINIMAL (0.3)`: Below this, colored bar only
-
-### Template Palette Items
-
-**Structure:** Horizontal row with color stripe on left.
-
-```
-┌─────────────────────────────────────┐
-│ ██ Template Name                 ⋮⋮ │
-│    X shifts                         │
-└─────────────────────────────────────┘
-```
-
-**Key Classes:**
-```css
-group flex items-center gap-3 p-2 rounded-lg
-hover:bg-gray-50 border border-transparent hover:border-gray-200
-```
-
-Grip icon: `opacity-0 group-hover:opacity-100`
 
 ### Properties Panel
 
@@ -170,7 +181,7 @@ backgroundImage: var(--lane-stripe)
 - Member coverage: each member → shift count, average score
 
 **Key classes:**
-bg-gradient-to-r from-blue-600 to-purple-600 (header)
+bg-gradient-to-r from-primary-500 to-primary-600 (header)
 Severity badges reuse ConflictWizard badge pattern
 
 **Triggered by:** "Preview" button in DistributionSettings, only in ASSIGNING status
