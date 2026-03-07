@@ -18,9 +18,8 @@ import {
 import { evaluateRule, filterByRules, getRuleFilterExclusionReason, validateComplementaryRules, getFilterRules, getBalanceRules, enforceBalanceReservation } from "./rule-validator";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
-  preferenceMatch: 0.64,
-  workloadFairness: 0.27,
-  coreShiftCoverage: 0.09,
+  preferenceMatch: 0.70,
+  workloadFairness: 0.30,
 };
 
 /**
@@ -47,7 +46,7 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
  *   {
  *     minShiftsPerPerson: 2,
  *     coreShifts: coreShiftsArray,
- *     weights: { preferenceMatch: 0.64, workloadFairness: 0.27, coreShiftCoverage: 0.09 }
+ *     weights: { preferenceMatch: 0.70, workloadFairness: 0.30 }
  *   }
  * );
  * ```

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   calculatePreferenceScore,
   calculateWorkloadFairness,
-  calculateCoreShiftCoverage,
   scoreAssignment,
 } from "../../../lib/algorithm/scorer";
 import { makeMember, makeShift, emptyState, resetIds } from "./helpers";
@@ -28,18 +27,6 @@ describe("calculatePreferenceScore", () => {
     const member = makeMember();
     const shift = makeShift();
     expect(calculatePreferenceScore(member, shift, [])).toBe(0);
-  });
-});
-
-describe("calculateCoreShiftCoverage", () => {
-  it("returns 100 for CORE priority", () => {
-    const shift = makeShift({ priority: "CORE" } as any);
-    expect(calculateCoreShiftCoverage(shift)).toBe(100);
-  });
-
-  it("returns 50 for BUFFER priority", () => {
-    const shift = makeShift({ priority: "BUFFER" } as any);
-    expect(calculateCoreShiftCoverage(shift)).toBe(50);
   });
 });
 
@@ -77,7 +64,6 @@ describe("scoreAssignment", () => {
     const weights = {
       preferenceMatch: 0,
       workloadFairness: 0,
-      coreShiftCoverage: 0,
     };
 
     const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
@@ -93,7 +79,6 @@ describe("scoreAssignment", () => {
     const weights = {
       preferenceMatch: 1,
       workloadFairness: 0,
-      coreShiftCoverage: 0,
     };
 
     const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
@@ -109,7 +94,6 @@ describe("scoreAssignment", () => {
     const weights = {
       preferenceMatch: 1,
       workloadFairness: 0,
-      coreShiftCoverage: 0,
     };
 
     const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);

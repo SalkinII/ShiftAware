@@ -627,12 +627,6 @@ export default function ShiftsPage() {
     );
   }
 
-  const getPriorityColor = (p: ShiftPriority) => {
-    return p === "CORE"
-      ? "bg-primary-100 text-primary-700"
-      : "bg-gray-100 text-gray-600";
-  };
-
   const getShiftTypeColor = (type: ShiftType) => {
     switch (type) {
       case "MOBILE_TEAM":
@@ -1011,14 +1005,6 @@ export default function ShiftsPage() {
                               <h3 className="text-lg font-bold text-gray-900">
                                 {info.templateName}
                               </h3>
-                              {/* <span
-                                className={cn(
-                                  "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
-                                  getPriorityColor(shift.priority),
-                                )}
-                              >
-                                {shift.priority}
-                              </span> */}
                             </div>
                             <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
                               <Tag className="w-3.5 h-3.5" /> {shift.event.name}
@@ -1292,22 +1278,7 @@ export default function ShiftsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <Select
-                      label="Priority"
-                      value={formData.priority}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          priority: e.target.value as ShiftPriority,
-                        })
-                      }
-                      className="bg-gray-50 border-gray-100 font-medium"
-                    >
-                      <option value="CORE">Core</option>
-                      <option value="BUFFER">Buffer</option>
-                    </Select>
-                    <Input
+                  <Input
                       label="Score (1-5)"
                       type="number"
                       min="1"
@@ -1329,7 +1300,6 @@ export default function ShiftsPage() {
                       required
                       className="bg-gray-50 border-gray-100 font-medium"
                     />
-                  </div>
 
                   <Input
                     label="Staff Capacity"

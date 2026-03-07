@@ -9,14 +9,12 @@ export interface AssignmentState {
 export interface AssignmentScore {
   preferenceMatch: number;
   workloadFairness: number;
-  coreShiftCoverage: number;
   overall: number;
 }
 
 export interface AlgorithmWeights {
   preferenceMatch: number;
   workloadFairness: number;
-  coreShiftCoverage: number;
 }
 
 export interface AlgorithmResult {

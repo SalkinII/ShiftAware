@@ -98,7 +98,7 @@ export function DistributionSettings() {
             let fairness = weights._uiFairness ?? 50;
             let preferences = weights._uiPreferences ?? 30;
             if (weights._uiFairness === undefined && weights.preferenceMatch !== undefined) {
-              const wb = (weights.workloadFairness || 0) + (weights.experienceBalance || 0);
+              const wb = weights.workloadFairness || 0;
               const pm = weights.preferenceMatch || 0;
               const total = wb + pm;
               fairness = total > 0 ? Math.round((wb / total) * 100) : 50;
@@ -167,7 +167,7 @@ export function DistributionSettings() {
 
           // If no UI values stored, derive from 4-factor weights
           if (weights._uiFairness === undefined && weights.preferenceMatch !== undefined) {
-            const wb = (weights.workloadFairness || 0) + (weights.experienceBalance || 0);
+            const wb = weights.workloadFairness || 0;
             const pm = weights.preferenceMatch || 0;
             const total = wb + pm;
             fairness = total > 0 ? Math.round((wb / total) * 100) : 50;
@@ -315,14 +315,10 @@ export function DistributionSettings() {
     }
 
     try {
-      // Map UI sliders to 4-factor weights
-      // fairnessWeight controls workloadFairness + experienceBalance
-      // preferenceWeight controls preferenceMatch
-      // coreShiftCoverage stays fixed
-      const total = config.fairnessWeight + config.preferenceWeight + 5; // +5 for core
+      // Map UI sliders to 2-factor weights
+      const total = config.fairnessWeight + config.preferenceWeight;
       const fairnessNorm = config.fairnessWeight / total;
       const prefNorm = config.preferenceWeight / total;
-      const coreNorm = 5 / total;
 
       const res = await fetch(`/api/events/${selectedEventId}/config`, {
         method: "PUT",
@@ -330,10 +326,7 @@ export function DistributionSettings() {
         body: JSON.stringify({
           algorithmWeights: {
             preferenceMatch: Math.round(prefNorm * 100) / 100,
-            experienceBalance: Math.round((fairnessNorm * 0.6) * 100) / 100,
-            workloadFairness: Math.round((fairnessNorm * 0.4) * 100) / 100,
-            coreShiftCoverage: Math.round(coreNorm * 100) / 100,
-            // Preserve original slider values for round-trip
+            workloadFairness: Math.round(fairnessNorm * 100) / 100,
             _uiFairness: config.fairnessWeight,
             _uiPreferences: config.preferenceWeight,
           },

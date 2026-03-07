@@ -259,9 +259,8 @@ describe("Correctness Benchmarks", () => {
 
       // Run with heavy preference weight
       const prefWeights: AlgorithmWeights = {
-        preferenceMatch: 0.9,
-        workloadFairness: 0.03,
-        coreShiftCoverage: 0.07,
+        preferenceMatch: 0.70,
+        workloadFairness: 0.30,
       };
 
       const result = await runAssignmentAlgorithm([m1, m2], [s1, s2], {
@@ -292,9 +291,8 @@ describe("Correctness Benchmarks", () => {
       const m2 = makeMember({ alias: "Bob" });
 
       const fairWeights: AlgorithmWeights = {
-        preferenceMatch: 0.05,
-        workloadFairness: 0.9,
-        coreShiftCoverage: 0.05,
+        preferenceMatch: 0.70,
+        workloadFairness: 0.30,
       };
 
       const result = await runAssignmentAlgorithm([m1, m2], [s1, s2], {

@@ -2,9 +2,8 @@ import { TeamMember, Shift } from "@prisma/client";
 import { AssignmentState, AssignmentScore, AlgorithmWeights } from "./types";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
-  preferenceMatch: 0.64,
-  workloadFairness: 0.27,
-  coreShiftCoverage: 0.09,
+  preferenceMatch: 0.70,
+  workloadFairness: 0.30,
 };
 
 /**
@@ -63,18 +62,6 @@ export function calculateWorkloadFairness(
 }
 
 /**
- * Calculates core shift coverage score.
- * Core shifts receive higher priority in the assignment algorithm.
- *
- * @param shift - Shift being scored
- * @returns Score of 100 for CORE shifts, 50 for others
- */
-export function calculateCoreShiftCoverage(shift: Shift): number {
-  // Core shifts are more important
-  return shift.priority === "CORE" ? 100 : 50;
-}
-
-/**
  * Calculates overall assignment score for a member-shift pair.
  * Combines multiple scoring factors using weighted average.
  *
@@ -96,17 +83,14 @@ export function scoreAssignment(
 ): AssignmentScore {
   const preferenceMatch = calculatePreferenceScore(member, shift, preferences);
   const workloadFairness = calculateWorkloadFairness(member, currentState);
-  const coreShiftCoverage = calculateCoreShiftCoverage(shift);
 
   const overall =
     preferenceMatch * weights.preferenceMatch +
-    workloadFairness * weights.workloadFairness +
-    coreShiftCoverage * weights.coreShiftCoverage;
+    workloadFairness * weights.workloadFairness;
 
   return {
     preferenceMatch,
     workloadFairness,
-    coreShiftCoverage,
     overall,
   };
 }

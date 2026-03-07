@@ -64,10 +64,8 @@ export async function POST(request: Request) {
       {
         minShiftsPerPerson: 2,
         algorithmWeights: {
-          preferenceMatch: 0.35,
-          experienceBalance: 0.25,
-          workloadFairness: 0.15,
-          coreShiftCoverage: 0.05,
+          preferenceMatch: 0.70,
+          workloadFairness: 0.30,
         },
         balanceThresholds: {
           minGenderBalance: 0.3,

@@ -105,9 +105,8 @@ describe("AssignmentsService", () => {
       config: {
         minShiftsPerPerson: 2,
         algorithmWeights: {
-          preferenceMatch: 0.35,
-          workloadFairness: 0.27,
-          coreShiftCoverage: 0.09,
+          preferenceMatch: 0.70,
+          workloadFairness: 0.30,
         },
       },
     };
@@ -171,7 +170,6 @@ describe("AssignmentsService", () => {
           {
             preferenceMatch: 0.9,
             workloadFairness: 0.85,
-            coreShiftCoverage: 1,
             overall: 0.85,
           },
         ],
@@ -278,7 +276,6 @@ describe("AssignmentsService", () => {
           {
             preferenceMatch: 0.9,
             workloadFairness: 0.85,
-            coreShiftCoverage: 1,
             overall: 0.85,
           },
         ],
