@@ -260,9 +260,8 @@ describe("Correctness Benchmarks", () => {
       // Run with heavy preference weight
       const prefWeights: AlgorithmWeights = {
         preferenceMatch: 0.9,
-        experienceBalance: 0.03,
         workloadFairness: 0.03,
-        coreShiftCoverage: 0.04,
+        coreShiftCoverage: 0.07,
       };
 
       const result = await runAssignmentAlgorithm([m1, m2], [s1, s2], {
@@ -294,8 +293,7 @@ describe("Correctness Benchmarks", () => {
 
       const fairWeights: AlgorithmWeights = {
         preferenceMatch: 0.05,
-        experienceBalance: 0.05,
-        workloadFairness: 0.85,
+        workloadFairness: 0.9,
         coreShiftCoverage: 0.05,
       };
 

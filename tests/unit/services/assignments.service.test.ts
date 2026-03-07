@@ -106,7 +106,8 @@ describe("AssignmentsService", () => {
         minShiftsPerPerson: 2,
         algorithmWeights: {
           preferenceMatch: 0.35,
-          experienceBalance: 0.25,
+          workloadFairness: 0.27,
+          coreShiftCoverage: 0.09,
         },
       },
     };
@@ -169,7 +170,6 @@ describe("AssignmentsService", () => {
           "member-1-shift-1",
           {
             preferenceMatch: 0.9,
-            experienceBalance: 0.8,
             workloadFairness: 0.85,
             coreShiftCoverage: 1,
             overall: 0.85,
@@ -277,7 +277,6 @@ describe("AssignmentsService", () => {
           "member-1-shift-1",
           {
             preferenceMatch: 0.9,
-            experienceBalance: 0.8,
             workloadFairness: 0.85,
             coreShiftCoverage: 1,
             overall: 0.85,

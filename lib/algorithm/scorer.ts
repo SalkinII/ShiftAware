@@ -2,10 +2,9 @@ import { TeamMember, Shift } from "@prisma/client";
 import { AssignmentState, AssignmentScore, AlgorithmWeights } from "./types";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
-  preferenceMatch: 0.35,
-  experienceBalance: 0.25,
-  workloadFairness: 0.15,
-  coreShiftCoverage: 0.05,
+  preferenceMatch: 0.64,
+  workloadFairness: 0.27,
+  coreShiftCoverage: 0.09,
 };
 
 /**
@@ -27,42 +26,6 @@ export function calculatePreferenceScore(
 
   // WANT = full score, DONT_WANT = penalty
   return preference.wantLevel === "WANT" ? 100 : -50;
-}
-
-/**
- * Calculates experience balance score for a member-shift assignment.
- * Rewards assignments that create a balanced mix of experience levels (Junior, Intermediate, Senior).
- *
- * @param member - Team member being scored
- * @param shift - Shift being scored
- * @param currentState - Current assignment state
- * @param membersMap - Map of member IDs to TeamMember objects
- * @returns Score from 0-100, higher if assignment improves experience balance
- */
-export function calculateExperienceBalance(
-  member: TeamMember,
-  shift: Shift,
-  currentState: AssignmentState,
-  membersMap: Map<string, TeamMember>,
-): number {
-  const shiftAssignments = currentState.assignments.get(shift.id) || [];
-  const experienceLevels = shiftAssignments
-    .map((a) => membersMap.get(a.teamMemberId))
-    .filter((m): m is TeamMember => m !== undefined)
-    .map((m) => m.experienceLevel);
-
-  // Ideal mix: at least one of each level
-  const hasJunior = experienceLevels.some((l) => l === "JUNIOR");
-  const hasIntermediate = experienceLevels.some((l) => l === "INTERMEDIATE");
-  const hasSenior = experienceLevels.some((l) => l === "SENIOR");
-
-  let score = 0;
-  if (member.experienceLevel === "JUNIOR" && !hasJunior) score += 50;
-  if (member.experienceLevel === "INTERMEDIATE" && !hasIntermediate)
-    score += 50;
-  if (member.experienceLevel === "SENIOR" && !hasSenior) score += 50;
-
-  return Math.min(100, score);
 }
 
 /**
@@ -132,24 +95,16 @@ export function scoreAssignment(
   weights: AlgorithmWeights = DEFAULT_WEIGHTS,
 ): AssignmentScore {
   const preferenceMatch = calculatePreferenceScore(member, shift, preferences);
-  const experienceBalance = calculateExperienceBalance(
-    member,
-    shift,
-    currentState,
-    membersMap,
-  );
   const workloadFairness = calculateWorkloadFairness(member, currentState);
   const coreShiftCoverage = calculateCoreShiftCoverage(shift);
 
   const overall =
     preferenceMatch * weights.preferenceMatch +
-    experienceBalance * weights.experienceBalance +
     workloadFairness * weights.workloadFairness +
     coreShiftCoverage * weights.coreShiftCoverage;
 
   return {
     preferenceMatch,
-    experienceBalance,
     workloadFairness,
     coreShiftCoverage,
     overall,

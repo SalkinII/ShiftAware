@@ -79,7 +79,7 @@ export function getRuleFilterExclusionReason(
 
   const withScores = candidates.map((c) => ({
     member: c.member,
-    score: { preferenceMatch: 0, experienceBalance: 0, workloadFairness: 0, coreShiftCoverage: 0, overall: 0 },
+    score: { preferenceMatch: 0, workloadFairness: 0, coreShiftCoverage: 0, overall: 0 },
   }));
   const filtered = filterByRules(withScores, shiftType, rules, memberAttributes);
   if (filtered.length > 0) return null;

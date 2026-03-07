@@ -182,10 +182,9 @@ export class AssignmentsService {
     const config = event.config || {
       minShiftsPerPerson: 2,
       algorithmWeights: {
-        preferenceMatch: 0.35,
-        experienceBalance: 0.25,
-        workloadFairness: 0.15,
-        coreShiftCoverage: 0.05,
+        preferenceMatch: 0.64,
+        workloadFairness: 0.27,
+        coreShiftCoverage: 0.09,
       },
       balanceThresholds: {} as any,
       allocationRules: [] as any,
@@ -196,10 +195,9 @@ export class AssignmentsService {
       config.algorithmWeights !== null
         ? (config.algorithmWeights as any)
         : {
-            preferenceMatch: 0.35,
-            experienceBalance: 0.25,
-            workloadFairness: 0.15,
-            coreShiftCoverage: 0.05,
+            preferenceMatch: 0.64,
+            workloadFairness: 0.27,
+            coreShiftCoverage: 0.09,
           };
 
     const assignableShifts = shifts.filter((s) => s.capacity > 0);

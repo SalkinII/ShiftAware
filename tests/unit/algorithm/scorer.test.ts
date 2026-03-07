@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   calculatePreferenceScore,
-  calculateExperienceBalance,
   calculateWorkloadFairness,
   calculateCoreShiftCoverage,
   scoreAssignment,
@@ -77,7 +76,6 @@ describe("scoreAssignment", () => {
     const prefs = [{ shiftId: shift.id, wantLevel: "WANT" }];
     const weights = {
       preferenceMatch: 0,
-      experienceBalance: 0,
       workloadFairness: 0,
       coreShiftCoverage: 0,
     };
@@ -94,7 +92,6 @@ describe("scoreAssignment", () => {
     const prefs = [{ shiftId: shift.id, wantLevel: "WANT" }];
     const weights = {
       preferenceMatch: 1,
-      experienceBalance: 0,
       workloadFairness: 0,
       coreShiftCoverage: 0,
     };
@@ -111,7 +108,6 @@ describe("scoreAssignment", () => {
     const membersMap = new Map([[member.id, member]]);
     const weights = {
       preferenceMatch: 1,
-      experienceBalance: 0,
       workloadFairness: 0,
       coreShiftCoverage: 0,
     };
@@ -119,5 +115,16 @@ describe("scoreAssignment", () => {
     const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
     expect(result.preferenceMatch).toBe(-50);
     expect(result.overall).toBe(-50);
+  });
+
+  it("scoreAssignment result does not include experienceBalance", () => {
+    const member = makeMember();
+    const shift = makeShift();
+    const state = emptyState();
+    state.memberShifts.set(member.id, []);
+    const membersMap = new Map([[member.id, member]]);
+
+    const result = scoreAssignment(member, shift, state, [], membersMap);
+    expect("experienceBalance" in result).toBe(false);
   });
 });

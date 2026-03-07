@@ -8,7 +8,6 @@ export interface AssignmentState {
 
 export interface AssignmentScore {
   preferenceMatch: number;
-  experienceBalance: number;
   workloadFairness: number;
   coreShiftCoverage: number;
   overall: number;
@@ -16,7 +15,6 @@ export interface AssignmentScore {
 
 export interface AlgorithmWeights {
   preferenceMatch: number;
-  experienceBalance: number;
   workloadFairness: number;
   coreShiftCoverage: number;
 }

@@ -13,7 +13,6 @@ interface PreviewAssignment {
 
 interface PreviewScore {
   preferenceMatch: number;
-  experienceBalance: number;
   workloadFairness: number;
   coreShiftCoverage: number;
   overall: number;
@@ -215,9 +214,8 @@ export function AlgorithmResultsModal({
                       <div className="font-medium text-gray-900 mb-1">
                         {getMemberLabel(a.teamMemberId)} → Shift {a.shiftId.slice(0, 8)}…
                       </div>
-                      <div className="grid grid-cols-5 gap-1 text-xs text-gray-600">
+                      <div className="grid grid-cols-4 gap-1 text-xs text-gray-600">
                         <span>Pref: {score.preferenceMatch}</span>
-                        <span>Exp: {score.experienceBalance}</span>
                         <span>Work: {score.workloadFairness}</span>
                         <span>Core: {score.coreShiftCoverage}</span>
                         <span className="font-bold text-gray-900">Overall: {score.overall.toFixed(1)}</span>
