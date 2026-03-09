@@ -15,18 +15,26 @@ All endpoints use JSON. Auth is session-based (cookie).
 
 ## Authentication
 
+Session-based authentication using HMAC-signed cookies. Two shared passwords: admin and user.
+
+### Rate Limiting
+
+Login attempts are rate-limited per IP address. After 5 failed attempts within 15 minutes, the endpoint returns `429 Too Many Requests` with a `Retry-After` header. The counter resets on successful login.
+
 ### `POST /api/auth/login`
 **Auth required:** No
 **Body:** `{ "password": string }`
-**Response:** `{ "data": { "success": true } }` + sets session cookie
+**Success (200):** `{ "success": true, "isAdmin": boolean }` + sets signed session cookies
+**Invalid (401):** `{ "error": "Invalid password" }`
+**Rate limited (429):** `{ "error": "Too many login attempts...", "code": "RATE_LIMITED", "retryAfter": number }`
 
 ### `POST /api/auth/logout`
 **Auth required:** Yes
-**Response:** `{ "data": { "success": true } }` + clears session cookie
+**Response:** `{ "success": true }` + clears session cookies
 
 ### `GET /api/auth/check`
 **Auth required:** No
-**Response:** `{ "data": { "authenticated": boolean } }`
+**Response:** `{ "authenticated": boolean }`
 
 ---
 

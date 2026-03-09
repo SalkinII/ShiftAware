@@ -14,7 +14,7 @@ Festival shift planning tool for small teams. Admins build schedules and run all
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design reference | [Three-Layer Pattern](#), [Event Lifecycle](#), [File Structure](#), [Error Handling](#) |
 | [DESIGN.md](./DESIGN.md) | Visual language & components | [Token System](#), [Coordinate System](#), [Component Patterns](#) |
 | [FRONTEND.md](./FRONTEND.md) | Frontend patterns reference | [Coordinate System](#), [Component Registry](#), [Reusability Rules](#), [Prop Conventions](#) |
-| [API.md](./API.md) | Endpoint reference | [Auth](#), [Members](#), [Events](#), [Shifts](#), [Algorithm](#) |
+| [API.md](./API.md) | Endpoint reference | [Auth](./API.md#authentication), [Members](#), [Events](#), [Shifts](#), [Algorithm](#) |
 | [ALGORITHM.md](./ALGORITHM.md) | Allocation engine | [Phases](#), [Scoring](#), [Rules](#), [Config Mapping](#) |
 
 ---

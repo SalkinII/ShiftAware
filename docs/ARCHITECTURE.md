@@ -71,6 +71,22 @@ ShiftAware uses a clean three-layer architecture to separate concerns:
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼ delegates to
+
+### Authentication & Session Security
+
+ShiftAware uses a shared-password model with two roles (admin, user). The auth system has three layers of protection:
+
+**Signed session cookies.** All session cookies (`authenticated`, `user_role`) are HMAC-SHA256 signed using `SESSION_SECRET`. The middleware verifies signatures on every request — forged cookies are rejected. The client reads the role payload (before the `.` separator) for UI purposes only; the server is the sole authority.
+
+**Login rate limiting.** An in-memory rate limiter tracks failed login attempts per IP address. After 5 failures within 15 minutes, the IP is locked out with a 429 response. The sliding window resets on successful login. This is sufficient for single-instance deployments — no external store (Redis) needed.
+
+**Hashed passwords.** Passwords are stored as `salt:scryptHash` in `ADMIN_PASSWORD_HASH` / `USER_PASSWORD_HASH` env vars. Scrypt is memory-hard, making brute-force expensive even if hashes leak. Verification uses `timingSafeEqual` to prevent timing side-channels. Plain-text `ADMIN_PASSWORD` is supported as a dev fallback with a logged warning.
+
+Key files: `lib/crypto.ts` (signing), `lib/rate-limit.ts` (throttling), `lib/auth.ts` (verification), `middleware.ts` (enforcement).
+
+```
+                          │
+                          ▼ delegates to
 ┌─────────────────────────────────────────────────────────────┐
 │  SERVICE LAYER (lib/services/)                              │
 │  ──────────────────────────────                             │
