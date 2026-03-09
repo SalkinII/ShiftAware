@@ -74,13 +74,13 @@ describe("auth - signed sessions", () => {
 
   it("validateSessionCookie rejects unsigned values", async () => {
     const { validateSessionCookie } = await import("@/lib/auth");
-    expect(validateSessionCookie("true")).toBe(false);
+    expect(await validateSessionCookie("true")).toBe(false);
   });
 
   it("validateSessionCookie accepts signed values", async () => {
     const { signValue } = await import("@/lib/crypto");
     const { validateSessionCookie } = await import("@/lib/auth");
-    const signed = signValue("true");
-    expect(validateSessionCookie(signed)).toBe(true);
+    const signed = await signValue("true");
+    expect(await validateSessionCookie(signed)).toBe(true);
   });
 });

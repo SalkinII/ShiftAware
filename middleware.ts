@@ -26,9 +26,9 @@ function isAdminRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const authPayload = verifyValue(request.cookies.get(AUTH_COOKIE)?.value ?? "");
+  const authPayload = await verifyValue(request.cookies.get(AUTH_COOKIE)?.value ?? "");
   const authenticated = authPayload === "true";
-  const userRole = verifyValue(request.cookies.get(ROLE_COOKIE)?.value ?? "");
+  const userRole = await verifyValue(request.cookies.get(ROLE_COOKIE)?.value ?? "");
 
   if (isPublicRoute(pathname)) {
     if (authenticated && pathname === "/login") {

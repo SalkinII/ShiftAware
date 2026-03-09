@@ -11,26 +11,26 @@ describe("signValue / verifyValue", () => {
 
   it("signs a value and verifies it", async () => {
     const { signValue, verifyValue } = await import("@/lib/crypto");
-    const signed = signValue("true");
+    const signed = await signValue("true");
     expect(signed).toContain(".");
-    expect(verifyValue(signed)).toBe("true");
+    expect(await verifyValue(signed)).toBe("true");
   });
 
   it("rejects tampered values", async () => {
     const { signValue, verifyValue } = await import("@/lib/crypto");
-    const signed = signValue("user");
+    const signed = await signValue("user");
     const tampered = "admin" + signed.substring(signed.indexOf("."));
-    expect(verifyValue(tampered)).toBeNull();
+    expect(await verifyValue(tampered)).toBeNull();
   });
 
   it("rejects values without a separator", async () => {
     const { verifyValue } = await import("@/lib/crypto");
-    expect(verifyValue("noseparator")).toBeNull();
+    expect(await verifyValue("noseparator")).toBeNull();
   });
 
   it("rejects values with invalid signature", async () => {
     const { verifyValue } = await import("@/lib/crypto");
-    expect(verifyValue("true.invalidsignature")).toBeNull();
+    expect(await verifyValue("true.invalidsignature")).toBeNull();
   });
 });
 
@@ -41,8 +41,8 @@ describe("SESSION_SECRET auto-generation", () => {
     // Force fresh module import
     vi.resetModules();
     const { signValue, verifyValue } = await import("@/lib/crypto");
-    const signed = signValue("test");
-    expect(verifyValue(signed)).toBe("test");
+    const signed = await signValue("test");
+    expect(await verifyValue(signed)).toBe("test");
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("SESSION_SECRET"),
     );

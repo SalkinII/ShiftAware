@@ -68,14 +68,14 @@ export async function createSession(isAdmin: boolean = false): Promise<void> {
     path: "/",
   };
 
-  cookieStore.set(AUTH_COOKIE_NAME, signValue("true"), {
+  cookieStore.set(AUTH_COOKIE_NAME, await signValue("true"), {
     ...baseCookieOptions,
     httpOnly: true,
   });
 
   cookieStore.set(
     ROLE_COOKIE_NAME,
-    signValue(isAdmin ? "admin" : "user"),
+    await signValue(isAdmin ? "admin" : "user"),
     {
       ...baseCookieOptions,
       httpOnly: false,
@@ -88,7 +88,7 @@ export async function isAuthenticated(): Promise<boolean> {
     const cookieStore = await cookies();
     const authCookie = cookieStore.get(AUTH_COOKIE_NAME);
     if (!authCookie?.value) return false;
-    return verifyValue(authCookie.value) === "true";
+    return (await verifyValue(authCookie.value)) === "true";
   } catch {
     return false;
   }
@@ -99,7 +99,7 @@ export async function isAdmin(): Promise<boolean> {
     const cookieStore = await cookies();
     const roleCookie = cookieStore.get(ROLE_COOKIE_NAME);
     if (!roleCookie?.value) return false;
-    return verifyValue(roleCookie.value) === "admin";
+    return (await verifyValue(roleCookie.value)) === "admin";
   } catch {
     return false;
   }
@@ -111,7 +111,7 @@ export async function destroySession(): Promise<void> {
   cookieStore.delete(ROLE_COOKIE_NAME);
 }
 
-export function validateSessionCookie(value?: string): boolean {
+export async function validateSessionCookie(value?: string): Promise<boolean> {
   if (!value) return false;
-  return verifyValue(value) === "true";
+  return (await verifyValue(value)) === "true";
 }
