@@ -6,8 +6,11 @@ export async function GET() {
   const checks: Record<string, boolean> = {};
 
   // Check required environment variables
-  if (!process.env.ADMIN_PASSWORD?.trim()) {
-    missing.push("ADMIN_PASSWORD");
+  const hasAdminAuth =
+    !!process.env.ADMIN_PASSWORD_HASH?.trim() ||
+    !!process.env.ADMIN_PASSWORD?.trim();
+  if (!hasAdminAuth) {
+    missing.push("ADMIN_PASSWORD_HASH or ADMIN_PASSWORD");
   }
   checks.env = missing.length === 0;
 

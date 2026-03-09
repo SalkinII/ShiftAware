@@ -40,15 +40,28 @@ console.log('\nEnvironment Variables Check:');
 console.log('Using:', fs.existsSync(envLocalPath) ? '.env.local' : fs.existsSync(envPath) ? '.env' : 'none found');
 
 const adminPassword = env.ADMIN_PASSWORD?.trim();
+const adminHash = env.ADMIN_PASSWORD_HASH?.trim();
+const sessionSecret = env.SESSION_SECRET?.trim();
 const sessionTimeout = env.SESSION_TIMEOUT_MINUTES?.trim();
 const dbUrl = env.DATABASE_URL?.trim();
 
-console.log('\nADMIN_PASSWORD:');
-console.log('  exists:', !!adminPassword);
-console.log('  length:', adminPassword?.length || 0);
-console.log('  value:', adminPassword ? '***' + adminPassword.substring(adminPassword.length - 2) : 'NOT SET');
-if (!adminPassword) {
-  console.log('  ⚠ WARNING: ADMIN_PASSWORD is required for authentication');
+console.log('\nADMIN_PASSWORD_HASH:');
+console.log('  exists:', !!adminHash);
+if (adminHash) {
+  console.log('  format:', adminHash.includes(':') ? 'valid (salt:hash)' : '⚠ INVALID (missing colon separator)');
+}
+
+console.log('\nSESSION_SECRET:');
+console.log('  exists:', !!sessionSecret);
+console.log('  length:', sessionSecret?.length || 0);
+if (sessionSecret && sessionSecret.length < 32) {
+  console.log('  ⚠ WARNING: SESSION_SECRET should be at least 32 characters');
+}
+
+if (!adminHash && adminPassword) {
+  console.log('\n⚠ WARNING: Using plain-text ADMIN_PASSWORD.');
+  console.log('  For production, run: npx tsx scripts/hash-password.ts');
+  console.log('  Then set ADMIN_PASSWORD_HASH and remove ADMIN_PASSWORD.');
 }
 
 console.log('\nSESSION_TIMEOUT_MINUTES:');
