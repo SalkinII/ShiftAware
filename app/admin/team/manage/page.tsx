@@ -6,7 +6,6 @@ import {
   commonShortcuts,
 } from "@/lib/hooks/useKeyboardShortcuts";
 import {
-  Plus,
   Download,
   Search,
   UserCircle2,
@@ -25,10 +24,6 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { cn } from "@/lib/utils";
 import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
-import {
-  CreateProfileForm,
-  type ProfileData,
-} from "@/app/app/identity/components/CreateProfileForm";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
 interface TeamMember {
@@ -42,7 +37,6 @@ interface TeamMember {
 
 export default function MembersPage() {
   const toast = useToast();
-  const [showForm, setShowForm] = useState(false);
   const [profileCardMember, setProfileCardMember] = useState<TeamMember | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -186,9 +180,6 @@ export default function MembersPage() {
     {
       key: "Escape",
       handler: () => {
-        if (showForm) {
-          setShowForm(false);
-        }
         if (deleteDialog.isOpen && !deleteDialog.isLoading) {
           setDeleteDialog({
             isOpen: false,
@@ -237,33 +228,6 @@ export default function MembersPage() {
       toast.error("Failed to generate mapping template");
     } finally {
       setIsExporting(false);
-    }
-  }
-
-  async function handleProfileSubmit(data: ProfileData) {
-    try {
-      const res = await fetch("/api/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        toast.success("Member created successfully");
-        window.dispatchEvent(
-          new CustomEvent("shiftaware:cache-invalidate", {
-            detail: { keys: ["members", "members*"] },
-          }),
-        );
-        await loadMembers();
-        setShowForm(false);
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to create member");
-      }
-    } catch (error) {
-      console.error("Failed to create member:", error);
-      toast.error("Failed to create member. Please try again.");
     }
   }
 
@@ -346,18 +310,6 @@ export default function MembersPage() {
               <Download className="w-4 h-4" />
               {isExporting ? "Generating..." : "Export Mapping"}
             </Button>
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-2 shadow-lg shadow-primary-500/20"
-            >
-              {showForm ? (
-                "Cancel"
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" /> Add Member
-                </>
-              )}
-            </Button>
           </div>
         </div>
 
@@ -438,16 +390,7 @@ export default function MembersPage() {
             </div>
 
             <div className="space-y-6">
-              {showForm ? (
-                <Card className="bg-white border-none shadow-xl p-8 animate-in slide-in-from-right-4 duration-300">
-                  <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-primary-500" /> New Member
-                  </h2>
-                  <CreateProfileForm onSubmit={handleProfileSubmit} />
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-8 border-none shadow-xl">
+              <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-8 border-none shadow-xl">
                     <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
                       <UserCircle2 className="w-6 h-6" />
                     </div>
@@ -485,7 +428,6 @@ export default function MembersPage() {
                     </div>
                   </Card>
                 </div>
-              )}
             </div>
           </div>
         )}
