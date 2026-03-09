@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 import { EMOJI_APP_LOGO } from "@/lib/constants/emojis";
@@ -9,7 +9,22 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (retryAfter <= 0) return;
+    const timer = setInterval(() => {
+      setRetryAfter((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryAfter]);
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/app/identity";
 
@@ -33,6 +48,10 @@ function LoginForm() {
         } else {
           router.push("/app/identity");
         }
+      } else if (res.status === 429) {
+        const data = await res.json();
+        setRetryAfter(data.retryAfter || 60);
+        setError("Too many attempts. Please wait before trying again.");
       } else {
         const data = await res.json();
         setError(data.error || "Invalid password");
@@ -111,11 +130,13 @@ function LoginForm() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || retryAfter > 0}
                 className="w-full py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white rounded-2xl font-bold transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 group active:scale-95"
               >
                 {loading ? (
                   <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : retryAfter > 0 ? (
+                  <>Try again in {retryAfter}s</>
                 ) : (
                   <>
                     Sign In
