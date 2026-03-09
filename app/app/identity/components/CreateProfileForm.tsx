@@ -4,16 +4,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmojiPicker } from "@/components/ui/EmojiPicker";
-import { Select } from "@/components/ui/Select";
-
 interface CreateProfileFormProps {
   onSubmit: (profileData: ProfileData) => void;
+  defaultEventId?: string;
 }
 
 export interface ProfileData {
   alias: string;
   avatarId: string;
-  experienceLevel: string;
   capabilities: string[];
   eventId?: string;
   attributes?: Record<string, any>;
@@ -33,19 +31,13 @@ interface AttributeDefinition {
   options?: string[];
 }
 
-const EXPERIENCE_LEVELS = [
-  { value: "JUNIOR", label: "Junior" },
-  { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "SENIOR", label: "Senior" },
-];
-
-export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
+export function CreateProfileForm({ onSubmit, defaultEventId }: CreateProfileFormProps) {
   const [formData, setFormData] = useState<ProfileData>({
     alias: "",
     avatarId: "😊",
-    experienceLevel: "JUNIOR",
     capabilities: ["TEAM_MEMBER"],
     attributes: {},
+    eventId: defaultEventId,
   });
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -154,29 +146,6 @@ export function CreateProfileForm({ onSubmit }: CreateProfileFormProps) {
           {events.map((event) => (
             <option key={event.id} value={event.id}>
               {event.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label
-          htmlFor="experienceLevel"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          Experience Level
-        </label>
-        <select
-          id="experienceLevel"
-          value={formData.experienceLevel}
-          onChange={(e) =>
-            setFormData({ ...formData, experienceLevel: e.target.value })
-          }
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          {EXPERIENCE_LEVELS.map((level) => (
-            <option key={level.value} value={level.value}>
-              {level.label}
             </option>
           ))}
         </select>
