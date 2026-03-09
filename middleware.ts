@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifyValue } from "@/lib/crypto";
 
 const AUTH_COOKIE = "authenticated";
 const ROLE_COOKIE = "user_role";
@@ -25,8 +26,9 @@ function isAdminRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const authenticated = request.cookies.get(AUTH_COOKIE)?.value === "true";
-  const userRole = request.cookies.get(ROLE_COOKIE)?.value;
+  const authPayload = verifyValue(request.cookies.get(AUTH_COOKIE)?.value ?? "");
+  const authenticated = authPayload === "true";
+  const userRole = verifyValue(request.cookies.get(ROLE_COOKIE)?.value ?? "");
 
   if (isPublicRoute(pathname)) {
     if (authenticated && pathname === "/login") {
