@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { scryptSync, timingSafeEqual } from "crypto";
 import { signValue, verifyValue } from "@/lib/crypto";
 
 const AUTH_COOKIE_NAME = "authenticated";
@@ -6,15 +7,43 @@ const ROLE_COOKIE_NAME = "user_role";
 const DEFAULT_TTL_SECONDS =
   Number(process.env.SESSION_TIMEOUT_MINUTES ?? "60") * 60;
 
+function verifyHash(input: string, storedHash: string): boolean {
+  if (!storedHash.includes(":")) return false;
+  const [salt, key] = storedHash.split(":");
+  const hashedInput = scryptSync(input, salt, 64).toString("hex");
+  if (hashedInput.length !== key.length) return false;
+  return timingSafeEqual(Buffer.from(key), Buffer.from(hashedInput));
+}
+
 export async function verifyLogin(
   password: string,
 ): Promise<{ valid: boolean; isAdmin: boolean }> {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  const userPassword = process.env.USER_PASSWORD;
+  const adminHash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  const userHash = process.env.USER_PASSWORD_HASH?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  const userPassword = process.env.USER_PASSWORD?.trim();
+
+  const useHashed = !!adminHash;
+
+  if (useHashed) {
+    if (verifyHash(password, adminHash)) {
+      return { valid: true, isAdmin: true };
+    }
+    if (userHash && verifyHash(password, userHash)) {
+      return { valid: true, isAdmin: false };
+    }
+    return { valid: false, isAdmin: false };
+  }
 
   if (!adminPassword) {
-    throw new Error("ADMIN_PASSWORD environment variable is not set");
+    throw new Error(
+      "Neither ADMIN_PASSWORD_HASH nor ADMIN_PASSWORD is set",
+    );
   }
+
+  console.warn(
+    "Using plain-text ADMIN_PASSWORD. Set ADMIN_PASSWORD_HASH for production.",
+  );
 
   if (password === adminPassword) {
     return { valid: true, isAdmin: true };
