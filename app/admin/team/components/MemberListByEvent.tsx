@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
+import { CreateProfileForm, type ProfileData } from "@/app/app/identity/components/CreateProfileForm";
 
 interface Member {
   id: string;
@@ -37,6 +38,7 @@ export function MemberListByEvent({
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPicker, setShowAddPicker] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [attributeDefinitions, setAttributeDefinitions] = useState<
     Array<{
@@ -216,8 +218,59 @@ export function MemberListByEvent({
         const error = await res.json();
         toast.error(error.message || "Failed to remove member");
       }
+} catch (error) {
+    toast.error("Failed to remove member");
+  }
+  }
+
+  async function handleCreateMember(profileData: ProfileData) {
+    try {
+      // Create the member
+      const res = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        toast.error(error.error || "Failed to create member");
+        return;
+      }
+
+      const data = await res.json();
+      const newMemberId = data.data.id;
+
+      // Register for this event
+      const regRes = await fetch(`/api/events/${eventId}/registrations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: newMemberId }),
+      });
+
+      if (!regRes.ok) {
+        toast.error("Member created but could not register for event");
+      }
+
+      // Save attributes if any
+      if (profileData.attributes && Object.keys(profileData.attributes).length > 0) {
+        await Promise.all(
+          Object.entries(profileData.attributes).map(([key, value]) =>
+            fetch(`/api/members/${newMemberId}/attributes`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ eventId, key, value }),
+            }),
+          ),
+        );
+      }
+
+      toast.success("Member created and registered for event");
+      setShowCreateForm(false);
+      loadMembers();
     } catch (error) {
-      toast.error("Failed to remove member");
+      console.error("Failed to create member:", error);
+      toast.error("Failed to create member. Please try again.");
     }
   }
 
@@ -244,10 +297,16 @@ export function MemberListByEvent({
             {members.length} members registered
           </p>
         </div>
-        <Button onClick={() => setShowAddPicker(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Existing Member
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setShowAddPicker(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Existing Member
+          </Button>
+          <Button variant="secondary" onClick={() => setShowCreateForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Member
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -356,6 +415,24 @@ export function MemberListByEvent({
                 Cancel
               </Button>
             </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Create New Member Modal */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <Card className="max-w-lg w-full bg-white p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Create New Member</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowCreateForm(false)}>
+                Cancel
+              </Button>
+            </div>
+            <CreateProfileForm
+              defaultEventId={eventId}
+              onSubmit={handleCreateMember}
+            />
           </Card>
         </div>
       )}
