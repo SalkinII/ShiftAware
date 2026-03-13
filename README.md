@@ -1,6 +1,6 @@
 # ShiftAware
 
-![Version](https://img.shields.io/badge/version-3.12-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 
 Festival shift planning tool for small teams (25–35 people). Admins build a shift schedule, team members vote on preferences, an allocation algorithm assigns shifts fairly, and the result is published as a printable PNG or PDF.
 
@@ -62,7 +62,7 @@ Admin login: see `.env.local` for `ADMIN_PASSWORD`.
 
 ```
 app/
-├── api/          # 35 REST API routes (Route Layer)
+├── api/          # REST API routes (Route Layer)
 ├── admin/        # Admin pages (setup, schedule, team, audit)
 ├── app/          # User pages (identity, calendar)
 └── globals.css   # Tailwind v4 design tokens
