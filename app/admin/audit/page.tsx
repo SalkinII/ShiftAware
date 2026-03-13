@@ -19,8 +19,8 @@ interface AuditLog {
   action: AuditAction;
   entityType: EntityType;
   entityId: string;
-  before: any;
-  after: any;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
   reason: string | null;
   ipAddress: string | null;
   createdAt: string;

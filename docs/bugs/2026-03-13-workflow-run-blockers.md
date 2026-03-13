@@ -63,3 +63,15 @@ All 4 gates pass locally:
 | Type check | `npx tsc --noEmit` | Exit 0 |
 | Tests | `npm test` | 420/420 pass |
 | Build | `npm run build` | Compiled successfully |
+
+## Stage 1 Sign-off (2026-03-13)
+- Lint: exit 0 (206 warnings, 0 errors)
+- TSC: exit 0
+- Lockfile: in sync
+
+## Stage 2 Sign-off (2026-03-13)
+- no-explicit-any: 6 fixed (shifts route, members service, shifts service, members/availability route, audit page before/after), 123 accepted-with-TODO (documented: deploy-risk low | owner: maintainer | expiry: 2026-Q3)
+- no-unused-vars: see Task 3
+- Dead exports: see Task 3
+- Stale imports: 0 (TSC clean)
+- Unused packages: see Task 3

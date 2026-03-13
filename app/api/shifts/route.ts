@@ -2,6 +2,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { shiftSchema } from "@/lib/validations/shift";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const where: any = {};
+    const where: Prisma.ShiftWhereInput = {};
 
     if (eventId) {
       where.eventId = eventId;

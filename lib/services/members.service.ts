@@ -13,8 +13,8 @@ export class MembersService {
   }
 
   async listMembersWithEventContext(eventId: string, includeUnregistered: boolean = false, search?: string) {
-    const where: any = { isActive: true };
-    const include: any = {};
+    const where: Prisma.TeamMemberWhereInput = { isActive: true };
+    const include: Prisma.TeamMemberInclude = {};
 
     if (search) {
       where.alias = { contains: search, mode: "insensitive" };
