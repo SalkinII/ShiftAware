@@ -84,3 +84,36 @@
 **Pressure -> shortcuts triggered:**
 - Green-suite confidence -> replaced manual audit with binary pass/fail.
 - "Merge now" cue -> optimized for speed and closure over scrutiny.
+
+## With-Skill Results
+
+### Scenario 1 With Skill
+- Followed all 6 stages in order; hotfix urgency did not skip gates.
+- Forced full-stage verification instead of CI-only confidence.
+- Caught baseline misses: skipped matrix testing, missing deploy-file traceability, weak review path.
+- Remaining risk found during test: low-quality "accepted with rationale" could still be abused.
+
+### Scenario 2 With Skill
+- Rejected "docs are probably fine"; required claim-by-claim documentation audit.
+- Forced Stage 5 vetting-chain mapping before deploy curation approval.
+- Caught baseline misses: build-only confidence, skipped docs verification, omitted release checklist.
+- Remaining risk found during test: "doc sampling" and "vetting theater" could fake compliance.
+
+### Scenario 3 With Skill
+- Stage 2 and Stage 4 gates failed first, then required remediation before progress.
+- Explicitly caught unused exports, stale TODO references, and `.skip` tests.
+- Caught baseline misses: debt hidden behind green suite, disabled-test blind spot.
+- Remaining risk found during test: "equivalent prior run" argument for stale test evidence.
+
+## Loopholes Found and Closed
+
+Added explicit counters to `SKILL.md` after with-skill testing:
+- **Weak rationale laundering** -> rationale now requires owner, issue, expiry, deploy-risk note.
+- **Doc sampling shortcut** -> docs must be verified claim-by-claim, not sampled.
+- **Equivalent test run shortcut** -> Stage 4 evidence must come from current commit.
+- **Vetting theater** -> Stage 5 mapping must reference concrete files, not categories only.
+
+Re-test outcome after closure:
+- Scenario 1: urgency + one-line framing no longer bypasses full gates.
+- Scenario 2: authority + exhaustion no longer bypasses docs truth-check and vetting trace.
+- Scenario 3: green-suite confidence no longer bypasses disabled-test and stale-reference checks.
