@@ -75,3 +75,21 @@ All 4 gates pass locally:
 - Dead exports: not scanned
 - Stale imports: 0 (TSC clean)
 - Unused packages: depcheck not run
+
+## Stage 3 Sign-off (2026-03-13)
+- README.md: version badge, API count, commands verified
+- docs/README.md: structure, quick start, docker-compose verified
+- docs/ARCHITECTURE.md: verified (no changes)
+- docs/ARCHITECTURE-LAYERS.md: verified (no changes)
+- docs/DESIGN.md, FRONTEND.md, ALGORITHM.md, API.md, PROJECT-OVERVIEW.md: spot-checked
+
+## Stage 4 Sign-off (2026-03-13, commit: eb9d3c4)
+- .skip/.only instances: 0
+- Tests: 420/420 passing
+- Commit SHA: eb9d3c4
+
+## Stage 5 Sign-off (2026-03-13)
+- Vetting chain: all file categories mapped to stages
+- .env.example: complete (DATABASE_URL, SESSION_SECRET, ADMIN_PASSWORD, etc.)
+- Dockerfile: reviewed, no secrets, uses npm ci
+- .dockerignore: dev artifacts excluded (.cursor, tests, docs/plans, backups, .worktrees)
