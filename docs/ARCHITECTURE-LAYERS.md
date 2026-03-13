@@ -693,4 +693,4 @@ See [docs/ARCHITECTURE.md](./ARCHITECTURE.md) for:
 - Data flow examples
 - Debugging guide
 
-See [docs/plans/2026-02-06-pragmatic-architecture.md](./plans/2026-02-06-pragmatic-architecture.md) for Phase 1 implementation details.
+Phase-1 history was moved out of canonical docs; use `docs/ARCHITECTURE.md` for current architecture guidance.

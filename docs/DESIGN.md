@@ -343,7 +343,6 @@ Use `GlassPanel` wrapper with standard sections:
 - **Token Source:** `app/globals.css`
 - **Architecture:** `docs/ARCHITECTURE.md`
 - **Frontend Patterns:** `docs/FRONTEND.md`
-- **KIMI Mockup:** `docs/plans/arch/260223_UImockup_ShiftAware_KIMI.html`
 
 ---
 
