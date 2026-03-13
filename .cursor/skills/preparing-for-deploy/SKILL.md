@@ -76,3 +76,4 @@ digraph deploy_flow {
 - Leaving `.skip`/`.only` in tests
 - Keeping files on deploy with no vetting-stage trace
 - Accepting unresolved findings without written rationale
+- Proceeding to merge while any gate is failing (create remediation backlog instead)
