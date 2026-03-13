@@ -1,8 +1,6 @@
 .git
 .gitignore
 .env*
-*.md
-docs/
 .vscode/
 .idea/
 __pycache__/
@@ -11,5 +9,14 @@ node_modules/
 coverage/
 .pytest_cache/
 .context/
-#CLAUDE.md
-#agents/
+.cursor/
+.claude/
+.worktrees/
+backups/
+e2e_demo/
+playwright-report/
+test-results/
+tests/
+*.png
+*.jpg
+docker-compose*.yml
