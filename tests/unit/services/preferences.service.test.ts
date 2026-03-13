@@ -1,9 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferenceLevel } from "@prisma/client";
 
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    shift: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
+const { prisma } = await import("@/lib/db");
+const { PreferencesService } = await import(
+  "@/lib/services/preferences.service"
+);
+
 describe("PreferencesService", () => {
-  let service: PreferencesService;
+  let service: InstanceType<typeof PreferencesService>;
   let mockRepo: any;
 
   beforeEach(() => {

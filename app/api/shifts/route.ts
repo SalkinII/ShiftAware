@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    let where: any = {};
+    const where: any = {};
 
     if (eventId) {
       where.eventId = eventId;

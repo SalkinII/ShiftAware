@@ -429,7 +429,6 @@ export default function MembersPage() {
                   </Card>
                 </div>
             </div>
-          </div>
         )}
       </div>
 
