@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  useKeyboardShortcuts,
-  commonShortcuts,
-} from "@/lib/hooks/useKeyboardShortcuts";
+import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import {
   Download,
   Search,

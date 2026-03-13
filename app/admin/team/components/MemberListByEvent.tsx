@@ -162,7 +162,7 @@ export function MemberListByEvent({
         const error = await res.json();
         toast.error(error.message || "Failed to add member");
       }
-    } catch (error) {
+    } catch (_err) {
       toast.error("Failed to add member");
     }
   }
@@ -218,7 +218,7 @@ export function MemberListByEvent({
         const error = await res.json();
         toast.error(error.message || "Failed to remove member");
       }
-} catch (error) {
+} catch {
     toast.error("Failed to remove member");
   }
   }

@@ -71,7 +71,7 @@ All 4 gates pass locally:
 
 ## Stage 2 Sign-off (2026-03-13)
 - no-explicit-any: 6 fixed (shifts route, members service, shifts service, members/availability route, audit page before/after), 123 accepted-with-TODO (documented: deploy-risk low | owner: maintainer | expiry: 2026-Q3)
-- no-unused-vars: see Task 3
-- Dead exports: see Task 3
+- no-unused-vars: 48+ fixed (removed unused imports, prefixed params, removed dead code)
+- Dead exports: not scanned
 - Stale imports: 0 (TSC clean)
-- Unused packages: see Task 3
+- Unused packages: depcheck not run

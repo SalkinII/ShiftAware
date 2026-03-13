@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { isAuthenticated, isAdmin } from "@/lib/auth";
 import { EventsService } from "@/lib/services/events.service";
 import { RepositoryError } from "@/lib/repositories/base.repository";

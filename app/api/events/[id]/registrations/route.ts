@@ -6,7 +6,6 @@ import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
-  createForbiddenResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { createRegistrationSchema } from "@/lib/validations/event-registration";

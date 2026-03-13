@@ -29,7 +29,6 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
   const isAdminRoute = pathname?.startsWith("/admin");
   const {
     selectedEventId,
-    selectedEvent,
     events,
     setSelectedEventId,
     loading: eventsLoading,
@@ -164,9 +163,9 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
 function MobileSidebar({
   isOpen,
   onClose,
-  events,
-  selectedEventId,
-  onSelectEvent,
+  events: _events,
+  selectedEventId: _selectedEventId,
+  onSelectEvent: _onSelectEvent,
 }: {
   isOpen: boolean;
   onClose: () => void;

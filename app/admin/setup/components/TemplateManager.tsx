@@ -129,7 +129,7 @@ export function TemplateManager() {
           toast.error(error.message || "Failed to assign template");
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update template assignment");
     }
   }
@@ -200,7 +200,7 @@ export function TemplateManager() {
         const error = await res.json();
         toast.error(error.message || "Failed to save template");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to save template");
     }
   }
@@ -219,7 +219,7 @@ export function TemplateManager() {
         const error = await res.json();
         toast.error(error.message || "Failed to delete template");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete template");
     }
   }
