@@ -100,6 +100,49 @@ npm run db:seed       # Seed test data
 npm run db:generate   # Regenerate Prisma client
 ```
 
+## Running the Published Container
+
+The latest image is published to GHCR: `ghcr.io/salkinii/shiftaware:latest`
+
+On startup the container runs `npx prisma migrate deploy && node server.js` — migrations apply automatically. It needs a PostgreSQL database and three environment variables.
+
+**Minimal `docker-compose.yml`:**
+
+```yaml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: shiftaware
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: shiftaware
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    image: ghcr.io/salkinii/shiftaware:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://shiftaware:changeme@db:5432/shiftaware
+      SESSION_SECRET: "<32-byte hex — node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\">"
+      ADMIN_PASSWORD: your-admin-password
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+```
+
+```bash
+docker-compose up -d
+# → http://localhost:3000
+```
+
+Admin login: navigate to `/admin` and use `ADMIN_PASSWORD`.
+
+---
+
 ## Documentation
 
 | Doc | What's in it |
