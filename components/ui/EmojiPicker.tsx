@@ -2,10 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search, Lock } from "lucide-react";
-import {
-  ANIMAL_EMOJI_CATEGORIES,
-  isReservedEmoji,
-} from "@/lib/constants/emojis";
+import { ANIMAL_EMOJI_CATEGORIES } from "@/lib/constants/emojis";
 import { cn } from "@/lib/utils";
 
 interface EmojiPickerProps {

@@ -41,7 +41,7 @@ function LoginForm() {
       });
 
       if (res.ok) {
-        const data = await res.json();
+        await res.json(); // consume body
         // If there's a specific redirect, use it; otherwise go to identity selection
         if (from && from !== "/app/identity") {
           router.push(from);

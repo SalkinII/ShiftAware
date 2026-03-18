@@ -1,6 +1,5 @@
 import { isAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { createAuditLog } from "@/lib/services/audit";
 import {
   AuditAction,
   EntityType,
@@ -218,7 +217,6 @@ async function rollbackTeamMember(
   auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
   const before = auditLog.before as unknown as TeamMemberBeforeAfter | null;
-  const after = auditLog.after as unknown as TeamMemberBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:
@@ -313,7 +311,6 @@ async function rollbackShift(
   auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
   const before = auditLog.before as unknown as ShiftBeforeAfter | null;
-  const after = auditLog.after as unknown as ShiftBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:
@@ -684,7 +681,6 @@ async function rollbackPreference(
   auditLog: AuditLog,
 ): Promise<{ success: boolean; message: string; action: AuditAction }> {
   const before = auditLog.before as unknown as PreferenceBeforeAfter | null;
-  const after = auditLog.after as unknown as PreferenceBeforeAfter | null;
 
   switch (auditLog.action) {
     case AuditAction.CREATE:

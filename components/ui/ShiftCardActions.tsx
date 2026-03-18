@@ -22,7 +22,7 @@ interface ShiftCardActionsProps {
 }
 
 export function ShiftCardActions({
-  shiftId,
+  shiftId: _shiftId,
   onViewDetails,
   onEdit,
   onAssignMember,

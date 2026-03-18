@@ -323,7 +323,7 @@ export function AlgorithmResultsModal({
           {result.shiftCoverage && Object.keys(result.shiftCoverage).length > 0 && (
             (() => {
               const understaffed = Object.entries(result.shiftCoverage).filter(
-                ([_, { assigned, capacity }]) => assigned < capacity,
+                ([, { assigned, capacity }]) => assigned < capacity,
               );
               return understaffed.length > 0 ? (
                 <div>

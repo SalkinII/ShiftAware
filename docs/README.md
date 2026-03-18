@@ -13,7 +13,7 @@
 /app
   /admin/*     # Admin routes (4 pages)
   /app/*       # User routes (3 pages)
-  /api/*       # REST API (25 endpoints)
+  /api/*       # REST API (40+ endpoints)
 /components
   /features/*  # LaneCalendar, TemplatePalette, etc.
   /layout/*    # Sidebars, Header
@@ -34,7 +34,7 @@
 npm install
 
 # Database
-docker compose up db -d
+docker-compose up -d
 npx prisma migrate dev
 
 # Run

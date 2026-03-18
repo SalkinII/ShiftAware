@@ -13,7 +13,7 @@ import {
   DragStartEvent,
   useDraggable,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+import "@dnd-kit/utilities";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import {
   ArrowLeftRight,
@@ -175,7 +175,7 @@ export function SwapInterface({
   const [activeSwapShift, setActiveSwapShift] = useState<any | null>(null);
   const [conflictCount, setConflictCount] = useState<number | null>(null);
   const [showConflictWizard, setShowConflictWizard] = useState(false);
-  const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [, setCheckingConflicts] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -260,7 +260,7 @@ export function SwapInterface({
     });
 
     // Sort within each date by start time
-    grouped.forEach((assignments, dateKey) => {
+    grouped.forEach((assignments) => {
       assignments.sort((a, b) => {
         return (
           new Date(a.shift.startTime).getTime() -
