@@ -363,6 +363,7 @@ describe("EventRepository", () => {
         id: "et-1",
         eventId: "event-1",
         templateId: "template-1",
+        order: 0,
         createdAt: new Date(),
         template: {
           id: "template-1",
@@ -487,6 +488,7 @@ describe("EventRepository", () => {
       id: "et-2",
       eventId: "event-1",
       templateId: "template-1",
+      order: 0,
       createdAt: new Date(),
       template: {
         id: "template-1",
@@ -548,6 +550,7 @@ describe("EventRepository", () => {
       id: "et-1",
       eventId: "event-1",
       templateId: "template-1",
+      order: 0,
       createdAt: new Date(),
     };
 

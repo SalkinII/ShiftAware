@@ -7,9 +7,8 @@ import {
   validateShiftOverlap,
   validateShiftCapacity,
   validateGenderBalance,
-  validateNoOverlaps,
 } from "@/lib/algorithm/validator";
-import { AssignmentState, ConstraintViolation } from "@/lib/algorithm/types";
+import { AssignmentState } from "@/lib/algorithm/types";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -63,7 +62,7 @@ export interface ResolutionSuggestion {
   confidence: number;
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
@@ -372,7 +371,7 @@ function generateSuggestions(
         conflict.affectedEntities.assignments &&
         conflict.affectedEntities.assignments.length >= 2
       ) {
-        conflict.affectedEntities.assignments.forEach((assignmentId, index) => {
+        conflict.affectedEntities.assignments.forEach((assignmentId) => {
           const assignment = assignments.find((a) => a.id === assignmentId);
           if (assignment) {
             suggestions.push({
@@ -464,7 +463,6 @@ function generateSuggestions(
         conflict.affectedEntities.members
       ) {
         const shiftId = conflict.affectedEntities.shifts[0];
-        const shift = shiftsMap.get(shiftId);
         const currentMembers = conflict.affectedEntities.members.map((id) =>
           membersMap.get(id),
         );

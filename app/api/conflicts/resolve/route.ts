@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     // Apply resolution in transaction
-    let auditData: {
+    const auditData: {
       action: AuditAction;
       entityType: EntityType;
       entityId: string;

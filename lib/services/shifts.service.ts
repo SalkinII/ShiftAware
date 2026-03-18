@@ -59,7 +59,7 @@ export class ShiftsService {
     return this.repo.findByEvent(eventId);
   }
 
-  async listShiftsWithDetails(where?: any) {
+  async listShiftsWithDetails(where?: Prisma.ShiftWhereInput) {
     return this.repo.findAllWithDetails(where);
   }
 

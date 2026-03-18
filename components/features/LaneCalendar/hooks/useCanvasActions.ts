@@ -81,7 +81,6 @@ export function useCanvasActions({
 
         if (laneIndex < 0 || laneIndex >= lanes.length) return;
 
-        const lane = lanes[laneIndex];
         const endTime = new Date(
           startTime.getTime() + template.durationMinutes * 60000,
         );

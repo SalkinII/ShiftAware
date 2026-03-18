@@ -137,7 +137,7 @@ export function EventContextProvider({
  * The `isAdmin` parameter is accepted for backward compatibility but ignored;
  * admin vs user behavior is determined by the provider wrapping the layout.
  */
-export function useEventContext(_isAdmin?: boolean): EventContextState {
+export function useEventContext(_?: boolean): EventContextState {
   const context = useContext(EventContext);
   if (!context) {
     throw new Error(

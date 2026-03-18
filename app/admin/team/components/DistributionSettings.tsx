@@ -43,7 +43,7 @@ export function DistributionSettings() {
     attributeRules: [],
   });
 
-  const [showAddRule, setShowAddRule] = useState(false);
+  const [, setShowAddRule] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [previewResult, setPreviewResult] = useState<any>(null);
@@ -126,30 +126,6 @@ export function DistributionSettings() {
       ac.abort();
     };
   }, [selectedEventId]);
-
-  async function fetchAttributeDefinitions(eventId: string) {
-    try {
-      const [attrRes, tplRes] = await Promise.all([
-        fetch(`/api/events/${eventId}/attributes`),
-        fetch(`/api/events/${eventId}/templates`),
-      ]);
-      if (attrRes.ok) {
-        const data = await attrRes.json();
-        setAttributeDefinitions(data.data || []);
-      }
-      if (tplRes.ok) {
-        const data = await tplRes.json();
-        const tplData = data.data || {};
-        const all = [
-          ...(tplData.assigned || []),
-          ...(tplData.eventSpecific || []),
-        ];
-        setTemplates(all);
-      }
-    } catch (error) {
-      console.error("Failed to fetch attribute definitions:", error);
-    }
-  }
 
   async function loadConfig() {
     if (!selectedEventId) return;
@@ -265,7 +241,7 @@ export function DistributionSettings() {
         const error = await res.json();
         toast.error(error.message || "Failed to preview");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to preview algorithm results");
     } finally {
       setPreviewLoading(false);
@@ -344,7 +320,7 @@ export function DistributionSettings() {
         const error = await res.json();
         toast.error(error.message || "Failed to save settings");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to save settings");
     }
   };

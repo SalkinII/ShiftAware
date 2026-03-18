@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/Skeleton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { format } from "date-fns";
@@ -19,8 +19,8 @@ interface AuditLog {
   action: AuditAction;
   entityType: EntityType;
   entityId: string;
-  before: any;
-  after: any;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
   reason: string | null;
   ipAddress: string | null;
   createdAt: string;
@@ -213,7 +213,7 @@ export default function AuditLogPage() {
       let data;
       try {
         data = await res.json();
-      } catch (jsonError) {
+      } catch {
         // Response is not valid JSON
         throw new Error(
           `Failed to rollback action: ${res.status} ${res.statusText}`,

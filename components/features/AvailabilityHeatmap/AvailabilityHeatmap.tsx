@@ -242,7 +242,7 @@ export function AvailabilityHeatmap({
     }
 
     // Capacity info
-    const assignedCount = shift.capacity; // This would ideally show current vs max
+    // assignedCount would show current vs max - not yet implemented
     lines.push("─".repeat(20));
     lines.push(`Shift capacity: ${shift.capacity}`);
 

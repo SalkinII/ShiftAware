@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useCacheContext } from "./CacheProvider";
-import { CacheEntry } from "./types";
 
 interface UseCacheOptions {
   key: string;

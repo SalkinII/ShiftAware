@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { Card } from "./Card";
 import { Button } from "./Button";
-import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
   isOpen: boolean;

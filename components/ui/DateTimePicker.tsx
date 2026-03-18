@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Input } from "./Input";
 import { TimePicker } from "./TimePicker";
 import { cn } from "@/lib/utils";

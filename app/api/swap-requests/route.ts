@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const eventId = searchParams.get("eventId");
     const status = searchParams.get("status");
 
-    let where: any = {};
+    const where: any = {};
 
     if (memberId) {
       where.requesterId = memberId;

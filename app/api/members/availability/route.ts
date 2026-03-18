@@ -127,8 +127,8 @@ function calculateAvailabilityStatus(
 
   // Check assignment
   const assignments = memberAssignments.get(memberId) || [];
-  const isAssigned = assignments.some((a: any) => a.shiftId === shiftId);
-  const assignment = assignments.find((a: any) => a.shiftId === shiftId);
+  const isAssigned = assignments.some((a: { shiftId: string }) => a.shiftId === shiftId);
+  const assignment = assignments.find((a: { shiftId: string }) => a.shiftId === shiftId);
 
   // Check conflicts (overlapping shifts)
   const shiftStart = new Date(shift.startTime);
