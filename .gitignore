@@ -13,13 +13,12 @@
 # testing
 /coverage
 /test-results/
-/playwright-report/data/
+/playwright-report/
 
 #IDE
 .cursor/
-.agent/
-!.cursor/skills/
-!.cursor/rules/
+.cursor/skills/preparing-for-deploy/SKILL.md
+.cursor/skills/preparing-for-deploy/test-scenarios.md
 
 # next.js
 /.next/

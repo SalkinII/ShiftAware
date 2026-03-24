@@ -10,6 +10,8 @@ coverage/
 .pytest_cache/
 .context/
 .cursor/
+# Markdown docs are not needed for Next/Prisma build; keeps docker build context small
+docs/
 .claude/
 .worktrees/
 backups/
