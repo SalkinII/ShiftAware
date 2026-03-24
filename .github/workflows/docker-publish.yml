@@ -72,11 +72,50 @@ jobs:
 
       # ── Summary ───────────────────────────────────────────
       - name: Print image URL
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          SHORT_SHA: ${{ github.sha }}
         run: |
-          echo "## 🐳 Image published" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**SHA tag:** \`$(echo ${{ github.sha }} | cut -c1-7)\`" >> $GITHUB_STEP_SUMMARY
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          {
+            echo "## 🐳 Image published"
+            echo ""
+            echo '```'
+            echo "docker pull ${IMAGE}"
+            echo '```'
+            echo ""
+            echo "**SHA tag:** \`${SHORT_SHA}\`"
+            echo ""
+            echo "### Running the container"
+            echo ""
+            echo "This image requires PostgreSQL. **Do not \`docker run\` it standalone.**"
+            echo "Save the compose snippet below or copy the one from the repo README:"
+            echo ""
+            echo '```yaml'
+            echo "services:"
+            echo "  db:"
+            echo "    image: postgres:16"
+            echo "    environment:"
+            echo "      POSTGRES_USER: shiftaware"
+            echo "      POSTGRES_PASSWORD: changeme"
+            echo "      POSTGRES_DB: shiftaware"
+            echo "    volumes:"
+            echo "      - pgdata:/var/lib/postgresql/data"
+            echo "  app:"
+            echo "    image: ${IMAGE}"
+            echo "    ports:"
+            echo '      - "3000:3000"'
+            echo "    environment:"
+            echo "      DATABASE_URL: postgresql://shiftaware:changeme@db:5432/shiftaware"
+            echo "      SESSION_SECRET: <run: node -e \"require('crypto').randomBytes(32).toString('hex')\">"
+            echo "      ADMIN_PASSWORD: your-admin-password"
+            echo "    depends_on:"
+            echo "      - db"
+            echo "volumes:"
+            echo "  pgdata:"
+            echo '```'
+            echo ""
+            echo '```bash'
+            echo "docker compose up -d   # → http://localhost:3000"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
