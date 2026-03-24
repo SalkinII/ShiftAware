@@ -1,6 +1,6 @@
 # ShiftAware
 
-![Version](https://img.shields.io/badge/version-3.12-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 
 Festival shift planning tool for small teams (25–35 people). Admins build a shift schedule, team members vote on preferences, an allocation algorithm assigns shifts fairly, and the result is published as a printable PNG or PDF.
 
@@ -41,8 +41,8 @@ Festival shift planning tool for small teams (25–35 people). Admins build a sh
 **Prerequisites:** Node.js 20+, Docker
 
 ```bash
-# 1. Start database
-docker-compose up -d
+# 1. Start database only (compose also defines an app service on :43000; use local Next below)
+docker-compose up -d db
 
 # 2. Install dependencies
 npm install
@@ -62,7 +62,7 @@ Admin login: see `.env.local` for `ADMIN_PASSWORD`.
 
 ```
 app/
-├── api/          # 35 REST API routes (Route Layer)
+├── api/          # REST API routes (Route Layer)
 ├── admin/        # Admin pages (setup, schedule, team, audit)
 ├── app/          # User pages (identity, calendar)
 └── globals.css   # Tailwind v4 design tokens
@@ -99,6 +99,49 @@ npm run db:migrate    # Apply pending migrations
 npm run db:seed       # Seed test data
 npm run db:generate   # Regenerate Prisma client
 ```
+
+## Running the Published Container
+
+The latest image is published to GHCR: `ghcr.io/salkinii/shiftaware:latest`
+
+On startup the container runs `npx prisma migrate deploy && node server.js` — migrations apply automatically. It needs a PostgreSQL database and three environment variables.
+
+**Minimal `docker-compose.yml`:**
+
+```yaml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: shiftaware
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: shiftaware
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    image: ghcr.io/salkinii/shiftaware:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://shiftaware:changeme@db:5432/shiftaware
+      SESSION_SECRET: "<32-byte hex — node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\">"
+      ADMIN_PASSWORD: your-admin-password
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+```
+
+```bash
+docker-compose up -d
+# → http://localhost:3000
+```
+
+Admin login: navigate to `/admin` and use `ADMIN_PASSWORD`.
+
+---
 
 ## Documentation
 

@@ -3,18 +3,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
-
-interface Event {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-}
 
 export function FestivalSettings() {
   const toast = useToast();
@@ -97,7 +88,7 @@ export function FestivalSettings() {
         const error = await res.json();
         toast.error(error.message || "Failed to save event");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to save event");
     } finally {
       setSaving(false);

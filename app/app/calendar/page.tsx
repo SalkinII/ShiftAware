@@ -3,11 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
-  ChevronRight,
   RefreshCw,
-  User,
-  ShieldCheck,
-  Clock,
   SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -63,15 +59,13 @@ export default function UserCalendarPage() {
   const {
     selectedEventId,
     selectedEvent,
-    events,
-    loading: eventsLoading,
   } = useEventContext(false);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarView, setCalendarView] = useState<
     "my-shifts" | "full-schedule"
   >("my-shifts");
-  const [currentEventDate, setCurrentEventDate] = useState<string>();
+  const [, setCurrentEventDate] = useState<string>();
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
 
   const [coverageFilter, setCoverageFilter] = useState<CoverageState | "all">(
@@ -94,12 +88,6 @@ export default function UserCalendarPage() {
     () => (selectedEvent ? new Date(selectedEvent.endDate) : null),
     [selectedEvent?.endDate],
   );
-
-  const eventRange = useMemo(() => {
-    if (shifts.length === 0) return null;
-    const dates = shifts.map((shift) => shift.startTime.split("T")[0]).sort();
-    return { start: dates[0], end: dates[dates.length - 1] };
-  }, [shifts]);
 
   // Fetch templates for lane derivation
   const { data: eventTemplates } = useCache<any[]>({

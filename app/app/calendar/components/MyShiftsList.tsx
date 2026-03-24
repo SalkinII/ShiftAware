@@ -60,8 +60,8 @@ export function MyShiftsList({
   shifts,
   userId,
   preferences,
-  onVoteWant,
-  onVoteDontWant,
+  onVoteWant: _onVoteWant, // reserved for future vote UI
+  onVoteDontWant: _onVoteDontWant, // reserved for future vote UI
   onRequestSwap,
 }: MyShiftsListProps) {
   // Filter shifts to only show user's assignments

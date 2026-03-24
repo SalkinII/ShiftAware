@@ -171,12 +171,14 @@ describe("ShiftTemplateRepository", () => {
         id: "et-1",
         eventId: "event-1",
         templateId: "global-1",
+        order: 0,
         createdAt: new Date(),
       },
       {
         id: "et-2",
         eventId: "event-1",
         templateId: "global-2",
+        order: 1,
         createdAt: new Date(),
       },
     ];

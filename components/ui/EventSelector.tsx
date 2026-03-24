@@ -29,7 +29,7 @@ export function EventSelector({
   className,
   disabled = false,
 }: EventSelectorProps) {
-  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const _selectedEvent = events.find((e) => e.id === selectedEventId);
 
   return (
     <div className={cn("relative", className)}>

@@ -127,7 +127,7 @@ export function AttributeDefinitions() {
         const error = await res.json();
         toast.error(error.message || "Failed to save attribute");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to save attribute");
     }
   }
@@ -156,7 +156,7 @@ export function AttributeDefinitions() {
         const error = await res.json();
         toast.error(error.message || "Failed to delete attribute");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete attribute");
     }
   }

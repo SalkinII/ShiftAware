@@ -9,15 +9,12 @@ import {
   Shield,
   Tag,
   ChevronRight,
-  Filter,
   List,
   Zap,
-  GripVertical,
   Download,
   Lock,
   CheckCircle,
   Archive,
-  Users,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +25,6 @@ import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { ShiftCardActions } from "@/components/ui/ShiftCardActions";
 import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
@@ -44,7 +40,7 @@ import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { getShiftDisplayInfo } from "@/lib/utils/shift-display";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
-import { format, addMinutes, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   LaneCalendarCanvas,
@@ -67,19 +63,6 @@ interface Shift {
   template?: { id: string; name: string; color?: string } | null;
   requiredRoles: { role: Role; count: number }[];
   assignments?: Array<{ id: string; teamMember?: { alias: string } }>;
-}
-
-interface Event {
-  id: string;
-  name: string;
-}
-
-interface DraggedTemplate {
-  id: string;
-  name: string;
-  type: ShiftType;
-  durationMinutes: number;
-  startTime: string;
 }
 
 export default function ShiftsPage() {
@@ -236,13 +219,6 @@ export default function ShiftsPage() {
 
   // Defensive: ensure shifts is always an array
   const shifts = Array.isArray(cachedShifts) ? cachedShifts : [];
-
-  // Calculate event range for calendar view
-  const eventRange = useMemo(() => {
-    if (shifts.length === 0) return undefined;
-    const dates = shifts.map((s) => s.startTime.split("T")[0]).sort();
-    return { start: dates[0], end: dates[dates.length - 1] };
-  }, [shifts]);
 
   const loading = shiftsLoading;
 
@@ -458,38 +434,6 @@ export default function ShiftsPage() {
       shiftName: `${shift.template?.name ?? shift.type.replace("_", " ")} - ${shift.event.name}`,
       isLoading: false,
     });
-  }
-
-  async function handleUpdateShift(
-    shiftId: string,
-    updates: { startTime?: Date; endTime?: Date; capacity?: number },
-  ) {
-    try {
-      const payload: any = {};
-      if (updates.startTime)
-        payload.startTime = updates.startTime.toISOString();
-      if (updates.endTime) payload.endTime = updates.endTime.toISOString();
-      if (updates.capacity !== undefined) payload.capacity = updates.capacity;
-
-      const res = await fetch(`/api/shifts/${shiftId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        toast.success("Shift updated successfully");
-        if (selectedEventId) {
-          invalidateEventCache(selectedEventId, "shifts");
-        }
-      } else {
-        const errorData = await res.json();
-        toast.error(errorData.error || "Failed to update shift");
-      }
-    } catch (error) {
-      console.error("Failed to update shift:", error);
-      toast.error("Failed to update shift");
-    }
   }
 
   async function confirmDelete() {

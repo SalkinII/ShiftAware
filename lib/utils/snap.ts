@@ -5,7 +5,7 @@
  * to create seamless succession in the calendar view.
  */
 
-import { differenceInMinutes, addMinutes } from "date-fns";
+import { differenceInMinutes } from "date-fns";
 
 export interface SnapResult {
   time: Date;
