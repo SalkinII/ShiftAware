@@ -10,6 +10,14 @@ RUN npm ci
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Match runner OpenSSL 3.x so prisma generate picks the correct query engine binary
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PRISMA_CLI_BINARY_TARGETS=debian-openssl-3.0.x
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 

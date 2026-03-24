@@ -41,8 +41,8 @@ Festival shift planning tool for small teams (25–35 people). Admins build a sh
 **Prerequisites:** Node.js 20+, Docker
 
 ```bash
-# 1. Start database
-docker-compose up -d
+# 1. Start database only (compose also defines an app service on :43000; use local Next below)
+docker-compose up -d db
 
 # 2. Install dependencies
 npm install
