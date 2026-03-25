@@ -19,10 +19,12 @@ const navItems = [
 export function UserSidebar() {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { selectedEvent: event, loading: eventLoading } = useEventContext(false);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
+    setMounted(true);
   }, []);
 
   return (
@@ -67,7 +69,7 @@ export function UserSidebar() {
           </div>
         </div>
 
-        {isAdmin && (
+        {mounted && isAdmin && (
           <div className="pt-4 border-t border-gray-100">
             <Link
               href="/admin/setup"
