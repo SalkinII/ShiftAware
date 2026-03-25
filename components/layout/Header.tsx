@@ -24,6 +24,7 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const { selectedMember } = useMemberContext();
   const isAdminRoute = pathname?.startsWith("/admin");
@@ -36,12 +37,14 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
+    setMounted(true);
   }, []);
 
   // Role-based defaults: Admin=🐻, User=🦥
-  const displayAlias = alias ?? (isAdmin ? "Admin" : "Team Member");
+  // Use neutral defaults until mounted to avoid hydration mismatch
+  const displayAlias = alias ?? (mounted && isAdmin ? "Admin" : "Team Member");
   const displayEmoji =
-    avatarEmoji ?? (isAdmin ? EMOJI_ADMIN : EMOJI_DEFAULT_USER);
+    avatarEmoji ?? (mounted && isAdmin ? EMOJI_ADMIN : EMOJI_DEFAULT_USER);
 
   // Build identity display string
   const identityDisplay = selectedMember
@@ -121,10 +124,10 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
               </p>
               <p
                 className={`text-[10px] uppercase tracking-wider font-medium ${
-                  isAdmin ? "text-red-500" : "text-gray-500"
+                  mounted && isAdmin ? "text-red-500" : "text-gray-500"
                 }`}
               >
-                {isAdmin ? "Administrator" : "Team Member"}
+                {mounted && isAdmin ? "Administrator" : "Team Member"}
               </p>
             </div>
           </div>
@@ -175,10 +178,12 @@ function MobileSidebar({
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { selectedEvent: event, loading: eventLoading } = useEventContext(false);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
+    setMounted(true);
   }, []);
 
   // Determine if we're in admin section
@@ -248,7 +253,7 @@ function MobileSidebar({
         </div>
 
         {/* Context switch: Admin Panel link (user section) or Back to User View (admin section) */}
-        {isAdmin && !isInAdminSection && (
+        {mounted && isAdmin && !isInAdminSection && (
           <div className="pt-4 border-t border-gray-100">
             <Link
               href="/admin/setup"
