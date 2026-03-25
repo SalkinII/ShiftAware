@@ -198,7 +198,9 @@ After this plan:
 - **Vitest:** 4.x (current stable, esbuild vuln resolved)
 - **Lint:** migrated from `next lint` to direct `eslint` call
 
-Next step: merge `chore/next-systematic-upgrade` into `main`, then sync `deploy` branch.
+**Before merging to `main`:** run full verification (unit tests, production build, smoke / e2e as you normally do for releases). Do not merge until that testing is done and any issues are resolved.
+
+Next step: after testing passes, merge `chore/next-systematic-upgrade` into `main`, then sync `deploy` branch.
 
 ## Rollback
 
