@@ -33,7 +33,7 @@
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.562.0",
-    "next": "15.1.12",
+    "next": "^15.5.14",
     "prisma": "^5.18.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
