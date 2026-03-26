@@ -35,7 +35,11 @@ interface ProfileDetailCardProps {
   variant?: "modal" | "inline";
 }
 
-function AttributeList({ attributes }: { attributes: { name: string; value: string }[] }) {
+function AttributeList({
+  attributes,
+}: {
+  attributes: { name: string; value: string }[];
+}) {
   return (
     <div className="space-y-1">
       {attributes.map((attr) => (
@@ -66,7 +70,9 @@ export function ProfileDetailCard({
   const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<ProfileMember | null>(null);
-  const [attributeValues, setAttributeValues] = useState<Record<string, unknown>>({});
+  const [attributeValues, setAttributeValues] = useState<
+    Record<string, unknown>
+  >({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -154,141 +160,141 @@ export function ProfileDetailCard({
       )}
       onClick={(e) => !isInline && e.stopPropagation()}
     >
-        {/* Avatar */}
-        <div className="flex flex-col items-center gap-3 mb-6">
-          {isEditing && draft ? (
-            <EmojiPicker
-              label="Avatar"
-              value={draft.avatarId || "👤"}
-              onChange={(emoji) => setDraft({ ...draft, avatarId: emoji })}
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center text-5xl shadow-inner border border-gray-100">
-              {displayMember.avatarId || "👤"}
-            </div>
-          )}
-          {isEditing && draft ? (
-            <Input
-              value={draft.alias}
-              onChange={(e) => setDraft({ ...draft, alias: e.target.value })}
-              placeholder="Alias"
-              className="text-center text-lg font-bold"
-            />
-          ) : (
-            <h2 className="text-2xl font-black text-gray-900">
-              {displayMember.alias}
-            </h2>
-          )}
-        </div>
+      {/* Avatar */}
+      <div className="flex flex-col items-center gap-3 mb-6">
+        {isEditing && draft ? (
+          <EmojiPicker
+            label="Avatar"
+            value={draft.avatarId || "👤"}
+            onChange={(emoji) => setDraft({ ...draft, avatarId: emoji })}
+          />
+        ) : (
+          <div className="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center text-5xl shadow-inner border border-gray-100">
+            {displayMember.avatarId || "👤"}
+          </div>
+        )}
+        {isEditing && draft ? (
+          <Input
+            value={draft.alias}
+            onChange={(e) => setDraft({ ...draft, alias: e.target.value })}
+            placeholder="Alias"
+            className="text-center text-lg font-bold"
+          />
+        ) : (
+          <h2 className="text-2xl font-black text-gray-900">
+            {displayMember.alias}
+          </h2>
+        )}
+      </div>
 
-        {/* Attributes */}
-        {isEditing && attributeDefinitions.length > 0 ? (
+      {/* Attributes */}
+      {isEditing && attributeDefinitions.length > 0 ? (
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400 text-center">
+            Attributes
+          </p>
+          <div className="space-y-3">
+            {attributeDefinitions.map((attr) => (
+              <div key={attr.id}>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  {attr.label}
+                  {attr.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
+                </label>
+                {attr.type === "BOOLEAN" && (
+                  <input
+                    type="checkbox"
+                    checked={(attributeValues[attr.name] as boolean) || false}
+                    onChange={(e) =>
+                      setAttributeValues((prev) => ({
+                        ...prev,
+                        [attr.name]: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                )}
+                {attr.type === "TEXT" && (
+                  <Input
+                    value={(attributeValues[attr.name] as string) || ""}
+                    onChange={(e) =>
+                      setAttributeValues((prev) => ({
+                        ...prev,
+                        [attr.name]: e.target.value,
+                      }))
+                    }
+                    className="text-sm"
+                  />
+                )}
+                {(attr.type === "SELECT" || attr.type === "MULTISELECT") && (
+                  <select
+                    value={
+                      Array.isArray(attributeValues[attr.name])
+                        ? (attributeValues[attr.name] as string[])[0]
+                        : (attributeValues[attr.name] as string) || ""
+                    }
+                    onChange={(e) =>
+                      setAttributeValues((prev) => ({
+                        ...prev,
+                        [attr.name]: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    {(attr.options || []).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        displayMember.attributes &&
+        displayMember.attributes.length > 0 && (
           <div className="mt-4 space-y-2">
             <p className="text-xs font-black uppercase tracking-widest text-gray-400 text-center">
               Attributes
             </p>
-            <div className="space-y-3">
-              {attributeDefinitions.map((attr) => (
-                <div key={attr.id}>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    {attr.label}
-                    {attr.required && (
-                      <span className="text-red-500 ml-1">*</span>
-                    )}
-                  </label>
-                  {attr.type === "BOOLEAN" && (
-                    <input
-                      type="checkbox"
-                      checked={(attributeValues[attr.name] as boolean) || false}
-                      onChange={(e) =>
-                        setAttributeValues((prev) => ({
-                          ...prev,
-                          [attr.name]: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4 rounded border-gray-300"
-                    />
-                  )}
-                  {attr.type === "TEXT" && (
-                    <Input
-                      value={(attributeValues[attr.name] as string) || ""}
-                      onChange={(e) =>
-                        setAttributeValues((prev) => ({
-                          ...prev,
-                          [attr.name]: e.target.value,
-                        }))
-                      }
-                      className="text-sm"
-                    />
-                  )}
-                  {(attr.type === "SELECT" || attr.type === "MULTISELECT") && (
-                    <select
-                      value={
-                        Array.isArray(attributeValues[attr.name])
-                          ? (attributeValues[attr.name] as string[])[0]
-                          : (attributeValues[attr.name] as string) || ""
-                      }
-                      onChange={(e) =>
-                        setAttributeValues((prev) => ({
-                          ...prev,
-                          [attr.name]: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                    >
-                      <option value="">Select...</option>
-                      {(attr.options || []).map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              ))}
-            </div>
+            <AttributeList attributes={displayMember.attributes} />
           </div>
-        ) : (
-          displayMember.attributes &&
-          displayMember.attributes.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 text-center">
-                Attributes
-              </p>
-              <AttributeList attributes={displayMember.attributes} />
-            </div>
-          )
-        )}
+        )
+      )}
 
-        {/* Actions */}
-        {editable && draft?.id && (
-          <div className="mt-6 flex gap-2 justify-center">
-            {isEditing ? (
-              <>
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsEditing(false)}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving..." : "Save"}
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => setIsEditing(true)}>Edit</Button>
-            )}
-          </div>
-        )}
+      {/* Actions */}
+      {editable && draft?.id && (
+        <div className="mt-6 flex gap-2 justify-center">
+          {isEditing ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditing(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => setIsEditing(true)}>Edit</Button>
+          )}
+        </div>
+      )}
 
-        {/* Close hint */}
-        {!isEditing && !isInline && (
-          <p className="text-xs text-gray-400 text-center mt-6">
-            Click outside or press Esc to close
-          </p>
-        )}
-      </div>
+      {/* Close hint */}
+      {!isEditing && !isInline && (
+        <p className="text-xs text-gray-400 text-center mt-6">
+          Click outside or press Esc to close
+        </p>
+      )}
+    </div>
   );
 
   if (isInline) {

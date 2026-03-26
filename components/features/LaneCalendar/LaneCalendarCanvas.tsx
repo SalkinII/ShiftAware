@@ -85,11 +85,7 @@ const nodeTypes = {
 };
 
 /** Renders vertical alignment guide lines during shift drag */
-function AlignmentGuides({
-  guides,
-}: {
-  guides: number[];
-}) {
+function AlignmentGuides({ guides }: { guides: number[] }) {
   const { flowToScreenX } = useScreenCoordinates();
 
   return (

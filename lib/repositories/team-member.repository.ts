@@ -33,7 +33,10 @@ export class TeamMemberRepository extends BaseRepository {
     }
   }
 
-  async findAllWithIncludes(where?: Prisma.TeamMemberWhereInput, include?: any) {
+  async findAllWithIncludes(
+    where?: Prisma.TeamMemberWhereInput,
+    include?: any,
+  ) {
     try {
       return await prisma.teamMember.findMany({
         where,

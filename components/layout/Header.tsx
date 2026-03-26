@@ -6,7 +6,10 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAdminClient } from "@/lib/auth-client";
 import { EventSelector } from "@/components/ui/EventSelector";
-import { useEventContext, formatEventDateRange } from "@/lib/hooks/useEventContext";
+import {
+  useEventContext,
+  formatEventDateRange,
+} from "@/lib/hooks/useEventContext";
 import { useMemberContext } from "@/lib/hooks/useMemberContext";
 import {
   EMOJI_ADMIN,
@@ -175,7 +178,8 @@ function MobileSidebar({
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
-  const { selectedEvent: event, loading: eventLoading } = useEventContext(false);
+  const { selectedEvent: event, loading: eventLoading } =
+    useEventContext(false);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());

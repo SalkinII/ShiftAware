@@ -53,11 +53,13 @@ export function AlgorithmResultsModal({
   // Group assignments by member
   const memberCounts = new Map<string, number>();
   for (const a of result.assignments) {
-    memberCounts.set(a.teamMemberId, (memberCounts.get(a.teamMemberId) || 0) + 1);
+    memberCounts.set(
+      a.teamMemberId,
+      (memberCounts.get(a.teamMemberId) || 0) + 1,
+    );
   }
 
-  const getMemberLabel = (id: string) =>
-    result.memberAliases?.[id] ?? id;
+  const getMemberLabel = (id: string) => result.memberAliases?.[id] ?? id;
 
   async function handleExportPdf() {
     if (!eventId) return;
@@ -92,7 +94,8 @@ export function AlgorithmResultsModal({
           const rows = dayShifts
             .sort(
               (a: any, b: any) =>
-                new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+                new Date(a.startTime).getTime() -
+                new Date(b.startTime).getTime(),
             )
             .map((s: any) => {
               const proposed = assignmentsByShift.get(s.id) ?? [];
@@ -192,9 +195,7 @@ export function AlgorithmResultsModal({
             </div>
             <div
               className={`text-center p-3 rounded-lg ${
-                totalViolations > 0
-                  ? "bg-red-50"
-                  : "bg-green-50"
+                totalViolations > 0 ? "bg-red-50" : "bg-green-50"
               }`}
             >
               <div
@@ -241,25 +242,26 @@ export function AlgorithmResultsModal({
           })()}
 
           {/* Rule Filter Exclusions */}
-          {result.ruleMatchSummaries && result.ruleMatchSummaries.length > 0 && (
-            <div>
-              <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                Rule Match Summary
-              </h4>
-              <div className="space-y-2">
-                {result.ruleMatchSummaries.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
-                  >
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    {s}
-                  </div>
-                ))}
+          {result.ruleMatchSummaries &&
+            result.ruleMatchSummaries.length > 0 && (
+              <div>
+                <h4 className="text-md font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Rule Match Summary
+                </h4>
+                <div className="space-y-2">
+                  {result.ruleMatchSummaries.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
+                    >
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      {s}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Other Constraint Violations */}
           {(() => {
@@ -305,12 +307,15 @@ export function AlgorithmResultsModal({
                       className="p-3 bg-gray-50 rounded-lg text-sm border border-gray-200"
                     >
                       <div className="font-medium text-gray-900 mb-1">
-                        {getMemberLabel(a.teamMemberId)} → Shift {a.shiftId.slice(0, 8)}…
+                        {getMemberLabel(a.teamMemberId)} → Shift{" "}
+                        {a.shiftId.slice(0, 8)}…
                       </div>
                       <div className="grid grid-cols-3 gap-1 text-xs text-gray-600">
                         <span>Pref: {score.preferenceMatch}</span>
                         <span>Work: {score.workloadFairness}</span>
-                        <span className="font-bold text-gray-900">Overall: {score.overall.toFixed(1)}</span>
+                        <span className="font-bold text-gray-900">
+                          Overall: {score.overall.toFixed(1)}
+                        </span>
                       </div>
                     </div>
                   );
@@ -320,7 +325,8 @@ export function AlgorithmResultsModal({
           )}
 
           {/* Understaffed shifts */}
-          {result.shiftCoverage && Object.keys(result.shiftCoverage).length > 0 && (
+          {result.shiftCoverage &&
+            Object.keys(result.shiftCoverage).length > 0 &&
             (() => {
               const understaffed = Object.entries(result.shiftCoverage).filter(
                 ([, { assigned, capacity }]) => assigned < capacity,
@@ -346,8 +352,7 @@ export function AlgorithmResultsModal({
                   </div>
                 </div>
               ) : null;
-            })()
-          )}
+            })()}
 
           {/* Member Coverage */}
           <div>
@@ -387,7 +392,11 @@ export function AlgorithmResultsModal({
               {exporting ? "Exporting…" : "Export as PDF"}
             </Button>
           )}
-          <Button onClick={onClose} variant="primary" className={eventId ? "flex-1" : "w-full"}>
+          <Button
+            onClick={onClose}
+            variant="primary"
+            className={eventId ? "flex-1" : "w-full"}
+          >
             Close Preview
           </Button>
         </div>

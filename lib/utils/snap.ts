@@ -22,7 +22,7 @@ export interface SnapResult {
  */
 export function findShiftEndTimes(
   shifts: Array<{ type: string; endTime: string }>,
-  targetType: string
+  targetType: string,
 ): Date[] {
   return shifts
     .filter((shift) => shift.type === targetType)
@@ -44,7 +44,7 @@ export function findShiftEndTimes(
 export function calculateSnapPosition(
   dropTime: Date,
   shiftEndTimes: Date[],
-  snapThresholdMinutes: number = 30
+  snapThresholdMinutes: number = 30,
 ): { snapped: boolean; time: Date; snapTarget?: Date } {
   if (shiftEndTimes.length === 0) {
     return { snapped: false, time: dropTime };
@@ -85,7 +85,7 @@ export function calculateSnapPosition(
 export function getSnapTargets(
   shifts: Array<{ type: string; endTime: string; id: string }>,
   shiftType: string,
-  date: string
+  date: string,
 ): Array<{ shiftId: string; endTime: Date }> {
   return shifts
     .filter((shift) => {
@@ -111,7 +111,7 @@ export function getSnapTargets(
 export function calculateTimeFromPosition(
   relativeX: number,
   dayStart: Date,
-  dayEnd: Date
+  dayEnd: Date,
 ): Date {
   const clampedX = Math.max(0, Math.min(1, relativeX));
   const totalMs = dayEnd.getTime() - dayStart.getTime();
@@ -140,7 +140,7 @@ export function roundToInterval(time: Date, intervalMinutes: number): Date {
 export function snapToShiftEnd(
   dropTime: Date,
   shiftEndTimes: Date[],
-  thresholdMinutes: number = 30
+  thresholdMinutes: number = 30,
 ): SnapResult {
   let closestEnd: Date | null = null;
   let closestDistance = Infinity;

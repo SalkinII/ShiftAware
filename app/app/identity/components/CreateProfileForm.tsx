@@ -31,7 +31,10 @@ interface AttributeDefinition {
   options?: string[];
 }
 
-export function CreateProfileForm({ onSubmit, defaultEventId }: CreateProfileFormProps) {
+export function CreateProfileForm({
+  onSubmit,
+  defaultEventId,
+}: CreateProfileFormProps) {
   const [formData, setFormData] = useState<ProfileData>({
     alias: "",
     avatarId: "😊",

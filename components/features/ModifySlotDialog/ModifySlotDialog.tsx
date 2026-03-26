@@ -54,7 +54,9 @@ export function ModifySlotDialog({
       setStartTime(template.startTime || "08:00");
 
       // Calculate end time from start time + duration
-      const [hours, mins] = (template.startTime || "08:00").split(":").map(Number);
+      const [hours, mins] = (template.startTime || "08:00")
+        .split(":")
+        .map(Number);
       const startDate = new Date();
       startDate.setHours(hours, mins, 0, 0);
       const endDate = addMinutes(startDate, template.durationMinutes || 360);
@@ -126,11 +128,11 @@ export function ModifySlotDialog({
                 backgroundColor:
                   template.type === "MOBILE_TEAM"
                     ? "#0ea5e9"
-                      : template.type === "STATIONARY"
-                        ? "#22c55e"
-                        : template.type === "SUPER"
-                          ? "#f59e0b"
-                          : "#78716c",
+                    : template.type === "STATIONARY"
+                      ? "#22c55e"
+                      : template.type === "SUPER"
+                        ? "#f59e0b"
+                        : "#78716c",
               }}
             >
               {template.name.charAt(0)}
@@ -138,7 +140,8 @@ export function ModifySlotDialog({
             <div>
               <p className="font-medium text-gray-900">{template.name}</p>
               <p className="text-sm text-gray-500">
-                {template.durationMinutes / 60}h &bull; {template.capacity} capacity
+                {template.durationMinutes / 60}h &bull; {template.capacity}{" "}
+                capacity
               </p>
             </div>
           </div>
@@ -201,7 +204,9 @@ export function ModifySlotDialog({
               min="0"
               max="10"
               value={capacity}
-              onChange={(e) => setCapacity(Math.max(0, parseInt(e.target.value) || 0))}
+              onChange={(e) =>
+                setCapacity(Math.max(0, parseInt(e.target.value) || 0))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>

@@ -19,7 +19,8 @@ const navItems = [
 export function UserSidebar() {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
-  const { selectedEvent: event, loading: eventLoading } = useEventContext(false);
+  const { selectedEvent: event, loading: eventLoading } =
+    useEventContext(false);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());

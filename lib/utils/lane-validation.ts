@@ -1,4 +1,4 @@
-import { ShiftType } from '@prisma/client';
+import { ShiftType } from "@prisma/client";
 
 interface TemplateWithLanes {
   type: ShiftType;
@@ -8,7 +8,10 @@ interface TemplateWithLanes {
 /**
  * Check if dropping a template into a lane is valid
  */
-export function isValidLaneDrop(template: TemplateWithLanes, targetLane: ShiftType): boolean {
+export function isValidLaneDrop(
+  template: TemplateWithLanes,
+  targetLane: ShiftType,
+): boolean {
   const allowedLanes = getTemplateAllowedLanes(template);
   return allowedLanes.includes(targetLane);
 }
@@ -17,7 +20,9 @@ export function isValidLaneDrop(template: TemplateWithLanes, targetLane: ShiftTy
  * Get the lanes a template can be dropped into
  * Falls back to template's own type if allowedLanes is empty
  */
-export function getTemplateAllowedLanes(template: TemplateWithLanes): ShiftType[] {
+export function getTemplateAllowedLanes(
+  template: TemplateWithLanes,
+): ShiftType[] {
   if (template.allowedLanes && template.allowedLanes.length > 0) {
     return template.allowedLanes;
   }
