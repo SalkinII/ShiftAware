@@ -42,10 +42,18 @@ import { getShiftDisplayInfo } from "@/lib/utils/shift-display";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import {
-  LaneCalendarCanvas,
-  type LaneCalendarCanvasHandle,
-} from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import dynamic from "next/dynamic";
+import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+
+// ssr:false prevents Next.js from server-rendering React Flow, which uses
+// browser-only APIs (ResizeObserver, window) unavailable in the Node.js runtime.
+const LaneCalendarCanvas = dynamic(
+  () =>
+    import("@/components/features/LaneCalendar/LaneCalendarCanvas").then(
+      (m) => ({ default: m.LaneCalendarCanvas }),
+    ),
+  { ssr: false },
+);
 import { ShiftPropertiesPanel } from "@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel";
 
 interface Shift {

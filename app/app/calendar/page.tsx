@@ -9,7 +9,17 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
-import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import dynamic from "next/dynamic";
+
+// ssr:false prevents Next.js from server-rendering React Flow, which uses
+// browser-only APIs (ResizeObserver, window) unavailable in the Node.js runtime.
+const LaneCalendarCanvas = dynamic(
+  () =>
+    import("@/components/features/LaneCalendar/LaneCalendarCanvas").then(
+      (m) => ({ default: m.LaneCalendarCanvas }),
+    ),
+  { ssr: false },
+);
 import { MyShiftsList } from "./components/MyShiftsList";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { format } from "date-fns";
@@ -374,11 +384,13 @@ export default function UserCalendarPage() {
       });
   }
 
-  // Get current user ID from localStorage (set during identity selection)
-  const userId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("selectedMemberId") || ""
-      : "";
+  // Get current user ID from localStorage (set during identity selection).
+  // Must use useState/useEffect — reading localStorage at render time causes a
+  // server/client HTML mismatch (server has no window) and triggers a hydration error.
+  const [userId, setUserId] = useState("");
+  useEffect(() => {
+    setUserId(localStorage.getItem("selectedMemberId") || "");
+  }, []);
 
   // Fetch preferences for vote panel and My Preferences section
   const shouldFetchPreferences = !!userId && !!selectedEventId;
