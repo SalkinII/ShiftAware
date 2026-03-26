@@ -6,11 +6,10 @@ export async function POST() {
     await destroySession();
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
-

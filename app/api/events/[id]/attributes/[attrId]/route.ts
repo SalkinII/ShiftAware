@@ -14,7 +14,7 @@ const service = new EventsService();
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string; attrId: string }> }
+  { params }: { params: Promise<{ id: string; attrId: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();
@@ -28,7 +28,11 @@ export async function PUT(
     const body = await request.json();
     const validated = attributeDefinitionSchema.partial().parse(body);
 
-    const updated = await service.updateEventAttribute(eventId, attrId, validated);
+    const updated = await service.updateEventAttribute(
+      eventId,
+      attrId,
+      validated,
+    );
 
     return createSuccessResponse(updated);
   } catch (error) {
@@ -44,7 +48,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string; attrId: string }> }
+  { params }: { params: Promise<{ id: string; attrId: string }> },
 ) {
   try {
     const authenticated = await isAuthenticated();

@@ -13,6 +13,7 @@
 ## Context for the Executing Engineer
 
 ### Repo layout
+
 ```
 app/              – Next.js App Router pages and layouts
 components/       – React components
@@ -24,22 +25,25 @@ postcss.config.cjs – PostCSS plugin config
 ```
 
 ### Commands
-| Purpose | Command |
-|---|---|
-| Format check | `npx prettier --check "**/*.{ts,tsx,css,json,md,cjs}"` |
-| Format write | `npx prettier --write "**/*.{ts,tsx,css,json,md,cjs}"` |
-| Lint | `npx next lint` |
-| Unit tests | `npm run test` (Vitest) |
-| Production build | `npm run build` (requires dev server stopped) |
+
+| Purpose          | Command                                                |
+| ---------------- | ------------------------------------------------------ |
+| Format check     | `npx prettier --check "**/*.{ts,tsx,css,json,md,cjs}"` |
+| Format write     | `npx prettier --write "**/*.{ts,tsx,css,json,md,cjs}"` |
+| Lint             | `npx next lint`                                        |
+| Unit tests       | `npm run test` (Vitest)                                |
+| Production build | `npm run build` (requires dev server stopped)          |
 
 ### Changed files (already in working tree)
-| File | Change |
-|---|---|
-| `postcss.config.cjs` | Removed `autoprefixer: {}` line |
-| `Dockerfile` | Added CSS verification `RUN` step after `npm run build` |
+
+| File                                   | Change                                                            |
+| -------------------------------------- | ----------------------------------------------------------------- |
+| `postcss.config.cjs`                   | Removed `autoprefixer: {}` line                                   |
+| `Dockerfile`                           | Added CSS verification `RUN` step after `npm run build`           |
 | `.github/workflows/docker-publish.yml` | Added `no_cache` workflow_dispatch input and `no-cache` build arg |
 
 ### Branch target
+
 `fix--Web-Deploy-React-Render` → merge to `main` → merge to `deploy` → push remote.
 
 ---
@@ -127,6 +131,7 @@ If no changes needed, skip this step.
 ### Task 2.1: Audit the three changed files
 
 **Files to audit:**
+
 - `postcss.config.cjs`
 - `Dockerfile`
 - `.github/workflows/docker-publish.yml`
@@ -134,6 +139,7 @@ If no changes needed, skip this step.
 **Step 1: Verify `postcss.config.cjs` correctness**
 
 Open `postcss.config.cjs`. Confirm it contains only:
+
 ```js
 module.exports = {
   plugins: {
@@ -147,15 +153,18 @@ Cross-check: Tailwind CSS v4 official docs at https://tailwindcss.com/docs/insta
 **Step 2: Verify `Dockerfile` CSS check syntax**
 
 Open `Dockerfile`. Confirm the verification step after `npm run build` reads:
+
 ```dockerfile
 RUN test -d .next/static/css && ls .next/static/css/*.css >/dev/null 2>&1 \
     || (echo "FATAL: No CSS files in .next/static/css/ — PostCSS/Tailwind likely failed" && exit 1)
 ```
+
 This is valid POSIX shell (the base image is `node:20-slim` / Debian). The `||` pattern correctly fails the build if CSS is absent.
 
 **Step 3: Verify workflow `no_cache` input**
 
 Open `.github/workflows/docker-publish.yml`. Confirm:
+
 - `no_cache` input is declared under `workflow_dispatch.inputs` as type `boolean`, default `false`
 - `no-cache` is passed to `docker/build-push-action@v6` as `${{ github.event.inputs.no_cache == 'true' }}`
 
@@ -182,6 +191,7 @@ Expected: zero high/critical vulnerabilities. If any appear and `npm audit fix` 
 Open `README.md`. For each version claim, config claim, or setup instruction, verify against current `package.json` and files. Mark each claim as TRUE or FLAG.
 
 Key claims to check:
+
 - Next.js version stated in README vs `package.json` `"next"` field
 - Vitest version stated vs `package.json` `"vitest"` field
 - Any PostCSS or Tailwind setup instructions — must now say no `autoprefixer`
@@ -198,6 +208,7 @@ Key claims to check:
 **Step 1: Read ARCHITECTURE.md**
 
 Open the file. Check:
+
 - Technology versions match `package.json`
 - Any statement about PostCSS config — must not mention `autoprefixer` as required
 - Test count claims vs actual Vitest output
@@ -242,6 +253,7 @@ Expected: all tests pass with zero failures. Record the exact pass count.
 The three changed files (`postcss.config.cjs`, `Dockerfile`, `docker-publish.yml`) are infrastructure/config — they are not directly testable with Vitest unit tests. The CSS verification in the Dockerfile IS the test for the PostCSS change (it will fail the Docker build if CSS isn't generated).
 
 **Acceptance:** Coverage gap accepted. Rationale: infrastructure config changes verified by:
+
 - Owner: this session
 - Evidence: Tailwind v4 official docs, Dockerfile fail-fast step acts as integration test
 - Expiry: N/A (structural verification, not time-bounded)
@@ -255,11 +267,11 @@ The three changed files (`postcss.config.cjs`, `Dockerfile`, `docker-publish.yml
 
 ### Task 5.1: Confirm vetting chain for all changed files
 
-| File | Category | Required stages | Status |
-|---|---|---|---|
-| `postcss.config.cjs` | Config | S1, S2 | ✓ formatted, ✓ code-audited |
-| `Dockerfile` | Docker | S4 (via Dockerfile check), S6 (CI) | ✓ logic verified, S6 pending |
-| `.github/workflows/docker-publish.yml` | CI | S4 (logic review), S6 (CI run) | ✓ logic verified, S6 pending |
+| File                                   | Category | Required stages                    | Status                       |
+| -------------------------------------- | -------- | ---------------------------------- | ---------------------------- |
+| `postcss.config.cjs`                   | Config   | S1, S2                             | ✓ formatted, ✓ code-audited  |
+| `Dockerfile`                           | Docker   | S4 (via Dockerfile check), S6 (CI) | ✓ logic verified, S6 pending |
+| `.github/workflows/docker-publish.yml` | CI       | S4 (logic review), S6 (CI run)     | ✓ logic verified, S6 pending |
 
 **Step 1: Confirm `.dockerignore` is correct**
 
@@ -358,6 +370,7 @@ Go to GitHub → Actions tab → "Build & Publish Docker Image". Verify a new ru
 **Step 3: Monitor build**
 
 Watch the workflow run. Key gates:
+
 - `npm run build` step passes
 - **New:** "Fail-fast CSS" step passes (if it fails, the `autoprefixer` hypothesis was wrong — look at `npm run build` output for PostCSS errors)
 - Image is pushed to GHCR
@@ -376,6 +389,7 @@ docker pull ghcr.io/<your-username>/shiftaware:latest
 ## Success Criteria
 
 After Stage 6 completes:
+
 - [ ] CSS `<link>` tag appears in production page source
 - [ ] Network tab shows CSS file with 200 status and non-zero byte size
 - [ ] Navigation appears styled (sidebar hidden on mobile, visible on desktop)
@@ -384,6 +398,7 @@ After Stage 6 completes:
 ## If the Dockerfile CSS check FAILS during CI
 
 This is useful diagnostic information — it means CSS is still not being generated. Next investigative steps:
+
 1. Read the full `npm run build` output in the GitHub Actions log for PostCSS errors
 2. Check if `@tailwindcss/postcss` is correctly installed (`npm ls @tailwindcss/postcss`)
 3. Consider whether the `next.config.ts` `experimental.cssChunking` flag is relevant (it was present in Next.js 15.x releases)

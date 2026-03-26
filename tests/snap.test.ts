@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { calculateTimeFromPosition, roundToInterval, snapToShiftEnd } from "../lib/utils/snap";
+import {
+  calculateTimeFromPosition,
+  roundToInterval,
+  snapToShiftEnd,
+} from "../lib/utils/snap";
 
 describe("calculateTimeFromPosition", () => {
   it("should calculate time from relative x position", () => {
@@ -22,19 +26,19 @@ describe("calculateTimeFromPosition", () => {
   });
 });
 
-describe('calculateTimeFromPosition - enhanced', () => {
-  it('calculates time based on pointer X position within day bounds', () => {
-    const dayStart = new Date('2026-01-31T00:00:00');
-    const dayEnd = new Date('2026-02-01T00:00:00'); // Full 24-hour period
+describe("calculateTimeFromPosition - enhanced", () => {
+  it("calculates time based on pointer X position within day bounds", () => {
+    const dayStart = new Date("2026-01-31T00:00:00");
+    const dayEnd = new Date("2026-02-01T00:00:00"); // Full 24-hour period
 
     // Pointer at 50% should give noon
     const result = calculateTimeFromPosition(0.5, dayStart, dayEnd);
     expect(result.getHours()).toBe(12);
   });
 
-  it('does NOT default to 00:00 when dropped', () => {
-    const dayStart = new Date('2026-01-31T00:00:00');
-    const dayEnd = new Date('2026-02-01T00:00:00'); // Full 24-hour period
+  it("does NOT default to 00:00 when dropped", () => {
+    const dayStart = new Date("2026-01-31T00:00:00");
+    const dayEnd = new Date("2026-02-01T00:00:00"); // Full 24-hour period
 
     // Pointer at 75% should give ~18:00, not 00:00
     const result = calculateTimeFromPosition(0.75, dayStart, dayEnd);
@@ -43,13 +47,13 @@ describe('calculateTimeFromPosition - enhanced', () => {
   });
 });
 
-describe('snapToShiftEnd', () => {
-  it('snaps to nearest shift end within threshold', () => {
-    const dropTime = new Date('2026-01-31T10:20:00');
+describe("snapToShiftEnd", () => {
+  it("snaps to nearest shift end within threshold", () => {
+    const dropTime = new Date("2026-01-31T10:20:00");
     const existingShiftEnds = [
-      new Date('2026-01-31T10:00:00'),
-      new Date('2026-01-31T10:30:00'), // Within 30min threshold
-      new Date('2026-01-31T14:00:00'),
+      new Date("2026-01-31T10:00:00"),
+      new Date("2026-01-31T10:30:00"), // Within 30min threshold
+      new Date("2026-01-31T14:00:00"),
     ];
 
     const result = snapToShiftEnd(dropTime, existingShiftEnds, 30);
@@ -58,11 +62,11 @@ describe('snapToShiftEnd', () => {
     expect(result.time.getMinutes()).toBe(30);
   });
 
-  it('returns original time when no shift end within threshold', () => {
-    const dropTime = new Date('2026-01-31T12:00:00');
+  it("returns original time when no shift end within threshold", () => {
+    const dropTime = new Date("2026-01-31T12:00:00");
     const existingShiftEnds = [
-      new Date('2026-01-31T10:00:00'),
-      new Date('2026-01-31T14:00:00'),
+      new Date("2026-01-31T10:00:00"),
+      new Date("2026-01-31T14:00:00"),
     ];
 
     const result = snapToShiftEnd(dropTime, existingShiftEnds, 30);

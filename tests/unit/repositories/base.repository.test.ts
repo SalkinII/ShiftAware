@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { BaseRepository, RepositoryError } from "@/lib/repositories/base.repository";
+import {
+  BaseRepository,
+  RepositoryError,
+} from "@/lib/repositories/base.repository";
 import { Prisma } from "@prisma/client";
 
 // Test helper class to expose protected methods
@@ -8,7 +11,10 @@ class TestRepository extends BaseRepository {
     return this.throwFormattedException(code, message);
   }
 
-  public testHandlePrismaError(error: unknown, defaultMessage: string): RepositoryError {
+  public testHandlePrismaError(
+    error: unknown,
+    defaultMessage: string,
+  ): RepositoryError {
     return this.handlePrismaError(error, defaultMessage);
   }
 }

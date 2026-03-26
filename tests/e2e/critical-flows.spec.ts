@@ -93,7 +93,9 @@ test.describe("Critical User Flows", () => {
     await expect(page).toHaveURL(/\/app\/calendar/);
 
     // 10. Verify calendar displays
-    await expect(page.locator("text=/schedule|shift|timeline|calendar/i").first())
+    await expect(
+      page.locator("text=/schedule|shift|timeline|calendar/i").first(),
+    )
       .toBeVisible({ timeout: 5000 })
       .catch(() => {
         // Calendar might be empty, just verify page loaded

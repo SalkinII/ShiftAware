@@ -109,7 +109,8 @@ export function buildShiftNodes(
           onResizeEnd:
             !readOnly &&
             onResizeEnd &&
-            ((_e: unknown, p: { width: number; x?: number }) => onResizeEnd(nodeId, p)),
+            ((_e: unknown, p: { width: number; x?: number }) =>
+              onResizeEnd(nodeId, p)),
           readOnly,
           onVoteWant: readOnly ? onVoteWant : undefined,
           onVoteDontWant: readOnly ? onVoteDontWant : undefined,

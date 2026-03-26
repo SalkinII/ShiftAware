@@ -13,11 +13,11 @@
 
 ### Three Coordinate Spaces
 
-| Space | Description | Positioning | Transform |
-|-------|-------------|-------------|-----------|
-| **Flow Space** | Logical coordinates within React Flow canvas | Node `position` prop | Automatic (React Flow handles) |
-| **Viewport Space** | Visible canvas area with pan/zoom applied | — | Zoom + pan (React Flow) |
-| **Screen Space** | Physical pixel positions in the browser window | Panel overlays | Manual via `useScreenCoordinates` hook |
+| Space              | Description                                    | Positioning          | Transform                              |
+| ------------------ | ---------------------------------------------- | -------------------- | -------------------------------------- |
+| **Flow Space**     | Logical coordinates within React Flow canvas   | Node `position` prop | Automatic (React Flow handles)         |
+| **Viewport Space** | Visible canvas area with pan/zoom applied      | —                    | Zoom + pan (React Flow)                |
+| **Screen Space**   | Physical pixel positions in the browser window | Panel overlays       | Manual via `useScreenCoordinates` hook |
 
 ### Rules (MUST FOLLOW)
 
@@ -51,24 +51,24 @@ The hook exposes: `flowToScreenX`, `flowToScreenY`, `zoom`, `viewportX`, `viewpo
 
 From `components/features/LaneCalendar/utils/constants.ts`:
 
-| Constant | Value | Used for |
-|----------|-------|----------|
-| `ZOOM_MINIMAL` | 0.3 | `TimeRulerPanel`: short date labels below this zoom |
-| `ZOOM_COMPACT` | 0.7 | `TimeRulerPanel`: hide 15-min ticks below this zoom |
+| Constant       | Value | Used for                                            |
+| -------------- | ----- | --------------------------------------------------- |
+| `ZOOM_MINIMAL` | 0.3   | `TimeRulerPanel`: short date labels below this zoom |
+| `ZOOM_COMPACT` | 0.7   | `TimeRulerPanel`: hide 15-min ticks below this zoom |
 
 These constants apply to **ruler density only**. Shift card content density uses `ResizeObserver` width thresholds — see DESIGN.md §3.
 
 ### Affected Files
 
-| File | Role |
-|------|------|
-| `components/features/LaneCalendar/utils/coordinates.ts` | Coordinate math utilities |
-| `components/features/LaneCalendar/hooks/useScreenCoordinates.ts` | Viewport hook |
-| `components/features/LaneCalendar/nodes/ShiftBlockNode.tsx` | Node (React Flow positions) |
-| `components/features/LaneCalendar/nodes/LaneZoneNode.tsx` | Node (React Flow positions) |
-| `components/features/LaneCalendar/panels/TimeRulerPanel.tsx` | Panel (uses `flowToScreenX`) |
-| `components/features/LaneCalendar/panels/LaneLabelPanel.tsx` | Panel (uses `flowToScreenY`) |
-| `components/features/LaneCalendar/LaneCalendarCanvas.tsx` | `AlignmentGuides` (uses `flowToScreenX`) |
+| File                                                             | Role                                     |
+| ---------------------------------------------------------------- | ---------------------------------------- |
+| `components/features/LaneCalendar/utils/coordinates.ts`          | Coordinate math utilities                |
+| `components/features/LaneCalendar/hooks/useScreenCoordinates.ts` | Viewport hook                            |
+| `components/features/LaneCalendar/nodes/ShiftBlockNode.tsx`      | Node (React Flow positions)              |
+| `components/features/LaneCalendar/nodes/LaneZoneNode.tsx`        | Node (React Flow positions)              |
+| `components/features/LaneCalendar/panels/TimeRulerPanel.tsx`     | Panel (uses `flowToScreenX`)             |
+| `components/features/LaneCalendar/panels/LaneLabelPanel.tsx`     | Panel (uses `flowToScreenY`)             |
+| `components/features/LaneCalendar/LaneCalendarCanvas.tsx`        | `AlignmentGuides` (uses `flowToScreenX`) |
 
 ---
 
@@ -78,31 +78,31 @@ These constants apply to **ruler density only**. Shift card content density uses
 
 Before building a new visual element, check this table. If something fits, use it. If you extend an existing atom, update this table.
 
-| Component | Purpose | Use when |
-|-----------|---------|----------|
-| `ColorStripe` | Vertical lane color bar | Any element showing lane or template color identity |
-| `AvatarStack` | Overlapping gradient avatars | Displaying multiple assigned members |
-| `DesirabilityBadge` | Score pill with star icon | Showing shift desirability score |
-| `StatusBadge` | Event lifecycle status indicator | Header or status display; pulses on active statuses |
-| `GlassPanel` | Frosted glass container | Sidebars, overlays, property panels |
-| `SectionLabel` | Uppercase section header | Grouping content within a panel |
-| `ProgressBar` | Horizontal fill bar | Staffing coverage, preference satisfaction |
+| Component           | Purpose                          | Use when                                            |
+| ------------------- | -------------------------------- | --------------------------------------------------- |
+| `ColorStripe`       | Vertical lane color bar          | Any element showing lane or template color identity |
+| `AvatarStack`       | Overlapping gradient avatars     | Displaying multiple assigned members                |
+| `DesirabilityBadge` | Score pill with star icon        | Showing shift desirability score                    |
+| `StatusBadge`       | Event lifecycle status indicator | Header or status display; pulses on active statuses |
+| `GlassPanel`        | Frosted glass container          | Sidebars, overlays, property panels                 |
+| `SectionLabel`      | Uppercase section header         | Grouping content within a panel                     |
+| `ProgressBar`       | Horizontal fill bar              | Staffing coverage, preference satisfaction          |
 
 For new panels, use the `GlassPanel` structure from DESIGN.md §8.
 
 ### Feature Components (`components/features/`)
 
-| Component | Purpose | Admin | User |
-|-----------|---------|-------|------|
-| `LaneCalendar/LaneCalendarCanvas` | React Flow schedule canvas | ✓ (editable) | ✓ (readOnly) |
-| `TemplatePalette` | Drag source for creating shifts | ✓ | — |
-| `LaneCalendar/sidebar/ShiftPropertiesPanel` | Edit shift, manage assignments | ✓ | — |
-| `AlgorithmResultsModal` | Display algorithm preview results | ✓ | — |
-| `SwapInterface` | Swap request workflow | — | ✓ |
-| `AvailabilityHeatmap` | Member availability matrix | ✓ | — |
-| `ConflictWizard` | Conflict detection and resolution | ✓ | — |
-| `Identity/ProfileDetailCard` | Read-only member profile card | ✓ | ✓ |
-| `ShiftPropertiesPanel/ShiftPreferencePanel` | Preference voting on a shift | — | ✓ |
+| Component                                   | Purpose                           | Admin        | User         |
+| ------------------------------------------- | --------------------------------- | ------------ | ------------ |
+| `LaneCalendar/LaneCalendarCanvas`           | React Flow schedule canvas        | ✓ (editable) | ✓ (readOnly) |
+| `TemplatePalette`                           | Drag source for creating shifts   | ✓            | —            |
+| `LaneCalendar/sidebar/ShiftPropertiesPanel` | Edit shift, manage assignments    | ✓            | —            |
+| `AlgorithmResultsModal`                     | Display algorithm preview results | ✓            | —            |
+| `SwapInterface`                             | Swap request workflow             | —            | ✓            |
+| `AvailabilityHeatmap`                       | Member availability matrix        | ✓            | —            |
+| `ConflictWizard`                            | Conflict detection and resolution | ✓            | —            |
+| `Identity/ProfileDetailCard`                | Read-only member profile card     | ✓            | ✓            |
+| `ShiftPropertiesPanel/ShiftPreferencePanel` | Preference voting on a shift      | —            | ✓            |
 
 ---
 
@@ -141,13 +141,13 @@ These rules address recurring patterns where ad-hoc solutions have caused duplic
 
 These prop patterns must be consistent across all shared and feature components.
 
-| Prop | Type | Rule |
-|------|------|------|
-| `color` | `string` | Always a resolved hex string. Never a CSS class, Tailwind token, or enum value. |
-| `readOnly` | `boolean?` | Standard gate for disabling interactions in shared components (e.g. `LaneCalendarCanvas`, `ShiftBlockNode`). |
-| `onClose` | `() => void` | Panels always receive this. Never manage close state internally inside a panel. |
-| `eventStatus` | `EventStatus` | Passed down from page level. Components never fetch event status themselves. |
-| `eventId` | `string` | Always explicit. Only use `useEventContext` when a component is deeply nested and prop-drilling is impractical. |
+| Prop          | Type          | Rule                                                                                                            |
+| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
+| `color`       | `string`      | Always a resolved hex string. Never a CSS class, Tailwind token, or enum value.                                 |
+| `readOnly`    | `boolean?`    | Standard gate for disabling interactions in shared components (e.g. `LaneCalendarCanvas`, `ShiftBlockNode`).    |
+| `onClose`     | `() => void`  | Panels always receive this. Never manage close state internally inside a panel.                                 |
+| `eventStatus` | `EventStatus` | Passed down from page level. Components never fetch event status themselves.                                    |
+| `eventId`     | `string`      | Always explicit. Only use `useEventContext` when a component is deeply nested and prop-drilling is impractical. |
 
 ---
 
