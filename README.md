@@ -7,6 +7,7 @@ Festival shift planning tool for small teams (25–35 people). Admins build a sh
 ## Features
 
 **Admin**
+
 - Build shift schedules on a lane-based drag-and-drop calendar (React Flow)
 - Create shift templates with lane types, colors, and capacity
 - Run a 3-phase allocation algorithm with configurable weights and attribute rules
@@ -16,6 +17,7 @@ Festival shift planning tool for small teams (25–35 people). Admins build a sh
 - Export schedule as PNG or PDF table
 
 **Users**
+
 - Claim a pseudonymous identity (alias + avatar)
 - Vote WANT / DONT_WANT on visible shifts
 - See assigned shifts and preference outcomes in a two-section list
@@ -25,16 +27,16 @@ Festival shift planning tool for small teams (25–35 people). Admins build a sh
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15.5.14 (App Router) |
-| UI | React 19, Tailwind CSS v4 |
-| Canvas | @xyflow/react 12.10 (React Flow) |
-| ORM | Prisma 5.18 |
-| Database | PostgreSQL (Docker) |
-| Validation | Zod 3.22 |
-| Testing | Vitest 4.1.1 |
-| Export | html-to-image 1.11.13 |
+| Layer      | Technology                       |
+| ---------- | -------------------------------- |
+| Framework  | Next.js 15.5.14 (App Router)     |
+| UI         | React 19, Tailwind CSS v4        |
+| Canvas     | @xyflow/react 12.10 (React Flow) |
+| ORM        | Prisma 5.18                      |
+| Database   | PostgreSQL (Docker)              |
+| Validation | Zod 3.22                         |
+| Testing    | Vitest 4.1.1                     |
+| Export     | html-to-image 1.11.13            |
 
 ## Quick Start
 
@@ -125,7 +127,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://shiftaware:changeme@db:5432/shiftaware
-      SESSION_SECRET: "<32-byte hex — node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\">"
+      SESSION_SECRET: '<32-byte hex — node -e "console.log(require(''crypto'').randomBytes(32).toString(''hex''))">'
       ADMIN_PASSWORD: your-admin-password
     depends_on:
       - db
@@ -145,10 +147,10 @@ Admin login: navigate to `/admin` and use `ADMIN_PASSWORD`.
 
 ## Documentation
 
-| Doc | What's in it |
-|-----|-------------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Three-layer architecture, event lifecycle, data flow, file structure |
-| [docs/DESIGN.md](docs/DESIGN.md) | Design tokens, coordinate system, component patterns |
-| [docs/API.md](docs/API.md) | All API endpoints with params and response shapes |
-| [docs/ALGORITHM.md](docs/ALGORITHM.md) | Allocation engine deep-dive |
-| [docs/PROJECT-OVERVIEW.md](docs/PROJECT-OVERVIEW.md) | Navigation index and concept glossary |
+| Doc                                                  | What's in it                                                         |
+| ---------------------------------------------------- | -------------------------------------------------------------------- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)         | Three-layer architecture, event lifecycle, data flow, file structure |
+| [docs/DESIGN.md](docs/DESIGN.md)                     | Design tokens, coordinate system, component patterns                 |
+| [docs/API.md](docs/API.md)                           | All API endpoints with params and response shapes                    |
+| [docs/ALGORITHM.md](docs/ALGORITHM.md)               | Allocation engine deep-dive                                          |
+| [docs/PROJECT-OVERVIEW.md](docs/PROJECT-OVERVIEW.md) | Navigation index and concept glossary                                |

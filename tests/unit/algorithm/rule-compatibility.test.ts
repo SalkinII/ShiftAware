@@ -6,27 +6,48 @@ import {
 
 describe("getValidOperators", () => {
   it("BOOLEAN FILTER: EQUALS, NOT_EQUALS only", () => {
-    expect(getValidOperators("BOOLEAN", "FILTER")).toEqual(["EQUALS", "NOT_EQUALS"]);
+    expect(getValidOperators("BOOLEAN", "FILTER")).toEqual([
+      "EQUALS",
+      "NOT_EQUALS",
+    ]);
   });
 
   it("SELECT FILTER: EQUALS, NOT_EQUALS, ONE_OF", () => {
-    expect(getValidOperators("SELECT", "FILTER")).toEqual(["EQUALS", "NOT_EQUALS", "ONE_OF"]);
+    expect(getValidOperators("SELECT", "FILTER")).toEqual([
+      "EQUALS",
+      "NOT_EQUALS",
+      "ONE_OF",
+    ]);
   });
 
   it("MULTISELECT FILTER: CONTAINS, ONE_OF", () => {
-    expect(getValidOperators("MULTISELECT", "FILTER")).toEqual(["CONTAINS", "ONE_OF"]);
+    expect(getValidOperators("MULTISELECT", "FILTER")).toEqual([
+      "CONTAINS",
+      "ONE_OF",
+    ]);
   });
 
   it("TEXT FILTER: EQUALS, NOT_EQUALS, CONTAINS", () => {
-    expect(getValidOperators("TEXT", "FILTER")).toEqual(["EQUALS", "NOT_EQUALS", "CONTAINS"]);
+    expect(getValidOperators("TEXT", "FILTER")).toEqual([
+      "EQUALS",
+      "NOT_EQUALS",
+      "CONTAINS",
+    ]);
   });
 
   it("SELECT BALANCE: same operators as FILTER", () => {
-    expect(getValidOperators("SELECT", "BALANCE")).toEqual(["EQUALS", "NOT_EQUALS", "ONE_OF"]);
+    expect(getValidOperators("SELECT", "BALANCE")).toEqual([
+      "EQUALS",
+      "NOT_EQUALS",
+      "ONE_OF",
+    ]);
   });
 
   it("MULTISELECT BALANCE: same operators as FILTER", () => {
-    expect(getValidOperators("MULTISELECT", "BALANCE")).toEqual(["CONTAINS", "ONE_OF"]);
+    expect(getValidOperators("MULTISELECT", "BALANCE")).toEqual([
+      "CONTAINS",
+      "ONE_OF",
+    ]);
   });
 
   it("BOOLEAN BALANCE: returns empty (not available for balance)", () => {

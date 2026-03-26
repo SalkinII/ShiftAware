@@ -225,7 +225,10 @@ export function useCanvasActions({
         const durationMinutes =
           Math.round(widthToDuration(params.width) / SNAP_INTERVAL_MINUTES) *
           SNAP_INTERVAL_MINUTES;
-        const snappedDuration = Math.max(SNAP_INTERVAL_MINUTES, durationMinutes);
+        const snappedDuration = Math.max(
+          SNAP_INTERVAL_MINUTES,
+          durationMinutes,
+        );
         const newEndTime = new Date(
           newStartTime.getTime() + snappedDuration * 60 * 1000,
         );

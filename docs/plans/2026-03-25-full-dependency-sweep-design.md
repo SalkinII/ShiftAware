@@ -7,6 +7,7 @@
 ## Problem
 
 7 npm vulnerabilities remain after the safe audit fix:
+
 - 1 critical: Next.js 15.1.12 has 8 CVEs (middleware auth bypass, SSRF, DoS, image optimization attacks)
 - 5 moderate: esbuild <=0.24.2 → vite → vitest chain
 - 1 low: brace-expansion ReDoS
@@ -28,6 +29,7 @@ Vitest 3 is already EOL. The intermediate step adds effort with no lasting value
 ### Next.js 15.1.12 → 15.5.14: Very Low
 
 Codebase scan found zero usage of APIs that changed between 15.1 and 15.5:
+
 - `cookies()` already awaited
 - No `legacyBehavior` on Link
 - No `next/image` imports

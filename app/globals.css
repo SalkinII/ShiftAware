@@ -1,348 +1,352 @@
 @import "tailwindcss";
 
 @theme {
-    /* ============================================
+  /* ============================================
        COLORS - "ShiftAware" Palette
        Using OKLCH for wider color gamut
        ============================================ */
-    
-    /* Primary - Soft Blue */
-    --color-primary-50: hsl(220, 60%, 97%);
-    --color-primary-100: hsl(220, 50%, 93%);
-    --color-primary-200: hsl(220, 45%, 86%);
-    --color-primary-300: hsl(220, 50%, 76%);
-    --color-primary-400: hsl(220, 55%, 65%);
-    --color-primary-500: hsl(220, 60%, 55%);   /* Base */
-    --color-primary-600: hsl(220, 58%, 45%);
-    --color-primary-700: hsl(220, 55%, 35%);
-    --color-primary-800: hsl(220, 50%, 25%);
-    --color-primary-900: hsl(220, 45%, 15%);
-    
-    /* Accent - Warm Amber */
-    --color-accent-50: hsl(40, 80%, 97%);
-    --color-accent-100: hsl(40, 70%, 93%);
-    --color-accent-200: hsl(40, 65%, 87%);
-    --color-accent-300: hsl(38, 70%, 80%);
-    --color-accent-400: hsl(38, 75%, 72%);
-    --color-accent-500: hsl(35, 75%, 63%);     /* Base */
-    --color-accent-600: hsl(35, 65%, 54%);
-    --color-accent-700: hsl(35, 55%, 44%);
-    --color-accent-800: hsl(33, 48%, 34%);
-    --color-accent-900: hsl(33, 35%, 25%);
-    
-    /* Success - Fresh Green */
-    --color-success-50: hsl(145, 60%, 96%);
-    --color-success-100: hsl(145, 55%, 92%);
-    --color-success-200: hsl(145, 50%, 85%);
-    --color-success-300: hsl(145, 50%, 74%);
-    --color-success-400: hsl(145, 52%, 63%);
-    --color-success-500: hsl(145, 55%, 52%);    /* Base */
-    --color-success-600: hsl(145, 52%, 42%);
-    --color-success-700: hsl(145, 45%, 32%);
-    --color-success-800: hsl(145, 38%, 22%);
-    --color-success-900: hsl(145, 28%, 14%);
 
+  /* Primary - Soft Blue */
+  --color-primary-50: hsl(220, 60%, 97%);
+  --color-primary-100: hsl(220, 50%, 93%);
+  --color-primary-200: hsl(220, 45%, 86%);
+  --color-primary-300: hsl(220, 50%, 76%);
+  --color-primary-400: hsl(220, 55%, 65%);
+  --color-primary-500: hsl(220, 60%, 55%); /* Base */
+  --color-primary-600: hsl(220, 58%, 45%);
+  --color-primary-700: hsl(220, 55%, 35%);
+  --color-primary-800: hsl(220, 50%, 25%);
+  --color-primary-900: hsl(220, 45%, 15%);
 
-    --color-violet-50: #edebff;
-    --color-violet-100: #dddaff;
-    --color-violet-200: #c4bcff;
-    --color-violet-300: #a594ff;
-    --color-violet-400: #906aff;
-    --color-violet-500: #8547ff;
-    --color-violet-600: #8027ff;
-    --color-violet-700: #741be7;
-    --color-violet-800: #5d19ba;
-    --color-violet-900: #4b1e91;
-    --color-violet-950: #270f48;
+  /* Accent - Warm Amber */
+  --color-accent-50: hsl(40, 80%, 97%);
+  --color-accent-100: hsl(40, 70%, 93%);
+  --color-accent-200: hsl(40, 65%, 87%);
+  --color-accent-300: hsl(38, 70%, 80%);
+  --color-accent-400: hsl(38, 75%, 72%);
+  --color-accent-500: hsl(35, 75%, 63%); /* Base */
+  --color-accent-600: hsl(35, 65%, 54%);
+  --color-accent-700: hsl(35, 55%, 44%);
+  --color-accent-800: hsl(33, 48%, 34%);
+  --color-accent-900: hsl(33, 35%, 25%);
 
-    --color-cyprus-50: #f1fcfb;
-    --color-cyprus-100: #d0f7f5;
-    --color-cyprus-200: #a0efec;
-    --color-cyprus-300: #68e0e0;
-    --color-cyprus-400: #39c4c8;
-    --color-cyprus-500: #20a6ac;
-    --color-cyprus-600: #17828a;
-    --color-cyprus-700: #17676e;
-    --color-cyprus-800: #175258;
-    --color-cyprus-900: #153e42;
-    --color-cyprus-950: #07272c;
-    
-    
-    /* Lane colors — 3-tier system (KIMI) */
-    --lane-mobile-north: #0ea5e9;
-    --lane-mobile-north-dark: #0284c7;
-    --lane-mobile-north-light: #7dd3fc;
+  /* Success - Fresh Green */
+  --color-success-50: hsl(145, 60%, 96%);
+  --color-success-100: hsl(145, 55%, 92%);
+  --color-success-200: hsl(145, 50%, 85%);
+  --color-success-300: hsl(145, 50%, 74%);
+  --color-success-400: hsl(145, 52%, 63%);
+  --color-success-500: hsl(145, 55%, 52%); /* Base */
+  --color-success-600: hsl(145, 52%, 42%);
+  --color-success-700: hsl(145, 45%, 32%);
+  --color-success-800: hsl(145, 38%, 22%);
+  --color-success-900: hsl(145, 28%, 14%);
 
-    --lane-mobile-south: #f59e0b;
-    --lane-mobile-south-dark: #d97706;
-    --lane-mobile-south-light: #fcd34d;
+  --color-violet-50: #edebff;
+  --color-violet-100: #dddaff;
+  --color-violet-200: #c4bcff;
+  --color-violet-300: #a594ff;
+  --color-violet-400: #906aff;
+  --color-violet-500: #8547ff;
+  --color-violet-600: #8027ff;
+  --color-violet-700: #741be7;
+  --color-violet-800: #5d19ba;
+  --color-violet-900: #4b1e91;
+  --color-violet-950: #270f48;
 
-    --lane-stationary: #10b981;
-    --lane-stationary-dark: #059669;
-    --lane-stationary-light: #6ee7b7;
+  --color-cyprus-50: #f1fcfb;
+  --color-cyprus-100: #d0f7f5;
+  --color-cyprus-200: #a0efec;
+  --color-cyprus-300: #68e0e0;
+  --color-cyprus-400: #39c4c8;
+  --color-cyprus-500: #20a6ac;
+  --color-cyprus-600: #17828a;
+  --color-cyprus-700: #17676e;
+  --color-cyprus-800: #175258;
+  --color-cyprus-900: #153e42;
+  --color-cyprus-950: #07272c;
 
-    --lane-shift-lead: #8b5cf6;
-    --lane-shift-lead-dark: #7c3aed;
-    --lane-shift-lead-light: #c4b5fd;
+  /* Lane colors — 3-tier system (KIMI) */
+  --lane-mobile-north: #0ea5e9;
+  --lane-mobile-north-dark: #0284c7;
+  --lane-mobile-north-light: #7dd3fc;
 
-    --lane-super: #ef4444;
-    --lane-super-dark: #dc2626;
-    --lane-super-light: #fca5a5;
+  --lane-mobile-south: #f59e0b;
+  --lane-mobile-south-dark: #d97706;
+  --lane-mobile-south-light: #fcd34d;
 
-    --lane-buffer: #6b7280;
-    --lane-buffer-dark: #4b5563;
-    --lane-buffer-light: #d1d5db;
+  --lane-stationary: #10b981;
+  --lane-stationary-dark: #059669;
+  --lane-stationary-light: #6ee7b7;
 
-    /* Shift Types */
-    --color-shift-mobile1: var(--color-primary-500);
-    --color-shift-mobile2: hsl(285, 60%, 50%);     /* Purple */
-    --color-shift-stationary: var(--color-success-500);
-    --color-shift-SUPER: var(--color-accent-500);
-    --color-shift-buffer: hsl(240, 5%, 45%);       /* Neutral gray */
-    
-    /* ============================================
+  --lane-shift-lead: #8b5cf6;
+  --lane-shift-lead-dark: #7c3aed;
+  --lane-shift-lead-light: #c4b5fd;
+
+  --lane-super: #ef4444;
+  --lane-super-dark: #dc2626;
+  --lane-super-light: #fca5a5;
+
+  --lane-buffer: #6b7280;
+  --lane-buffer-dark: #4b5563;
+  --lane-buffer-light: #d1d5db;
+
+  /* Shift Types */
+  --color-shift-mobile1: var(--color-primary-500);
+  --color-shift-mobile2: hsl(285, 60%, 50%); /* Purple */
+  --color-shift-stationary: var(--color-success-500);
+  --color-shift-SUPER: var(--color-accent-500);
+  --color-shift-buffer: hsl(240, 5%, 45%); /* Neutral gray */
+
+  /* ============================================
        SPACING
        Based on 4px base unit
        ============================================ */
-    --spacing-0: 0;
-    --spacing-px: 1px;
-    --spacing-0.5: 0.125rem;  /* 2px */
-    --spacing-1: 0.25rem;     /* 4px */
-    --spacing-1.5: 0.375rem;  /* 6px */
-    --spacing-2: 0.5rem;      /* 8px */
-    --spacing-2.5: 0.625rem;  /* 10px */
-    --spacing-3: 0.75rem;     /* 12px */
-    --spacing-4: 1rem;        /* 16px */
-    --spacing-5: 1.25rem;     /* 20px */
-    --spacing-6: 1.5rem;      /* 24px */
-    --spacing-8: 2rem;        /* 32px */
-    --spacing-10: 2.5rem;     /* 40px */
-    --spacing-12: 3rem;       /* 48px */
-    --spacing-16: 4rem;       /* 64px */
-    --spacing-20: 5rem;       /* 80px */
-    --spacing-24: 6rem;       /* 96px */
-    
-    /* ============================================
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0.5: 0.125rem; /* 2px */
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-1.5: 0.375rem; /* 6px */
+  --spacing-2: 0.5rem; /* 8px */
+  --spacing-2.5: 0.625rem; /* 10px */
+  --spacing-3: 0.75rem; /* 12px */
+  --spacing-4: 1rem; /* 16px */
+  --spacing-5: 1.25rem; /* 20px */
+  --spacing-6: 1.5rem; /* 24px */
+  --spacing-8: 2rem; /* 32px */
+  --spacing-10: 2.5rem; /* 40px */
+  --spacing-12: 3rem; /* 48px */
+  --spacing-16: 4rem; /* 64px */
+  --spacing-20: 5rem; /* 80px */
+  --spacing-24: 6rem; /* 96px */
+
+  /* ============================================
        TYPOGRAPHY
        ============================================ */
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
-    
-    --font-size-xs: 0.75rem;    /* 12px */
-    --font-size-sm: 0.875rem;   /* 14px */
-    --font-size-base: 1rem;     /* 16px */
-    --font-size-lg: 1.125rem;   /* 18px */
-    --font-size-xl: 1.25rem;    /* 20px */
-    --font-size-2xl: 1.5rem;    /* 24px */
-    --font-size-3xl: 1.875rem;  /* 30px */
-    --font-size-4xl: 2.25rem;   /* 36px */
-    
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-    
-    --line-height-tight: 1.25;
-    --line-height-normal: 1.5;
-    --line-height-relaxed: 1.75;
-    
-    /* ============================================
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ============================================
        BORDER RADIUS
        ============================================ */
-    --radius-none: 0;
-    --radius-sm: 0.25rem;   /* 4px */
-    --radius-base: 0.5rem;  /* 8px */
-    --radius-md: 0.75rem;   /* 12px */
-    --radius-lg: 1rem;      /* 16px */
-    --radius-xl: 1.5rem;    /* 24px */
-    --radius-2xl: 2rem;     /* 32px */
-    --radius-full: 9999px;
-    
-    /* ============================================
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-base: 0.5rem; /* 8px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-xl: 1.5rem; /* 24px */
+  --radius-2xl: 2rem; /* 32px */
+  --radius-full: 9999px;
+
+  /* ============================================
        SHADOWS
        Custom elevation system
        ============================================ */
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-    --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
-    
-    /* Colored shadows for shift blocks */
-    --shadow-shift-hover: 0 10px 20px -5px hsl(220 60% 55% / 0.3);
-    
-    /* ============================================
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Colored shadows for shift blocks */
+  --shadow-shift-hover: 0 10px 20px -5px hsl(220 60% 55% / 0.3);
+
+  /* ============================================
        ANIMATIONS
        Custom easing functions
        ============================================ */
-    --ease-linear: linear;
-    --ease-in: cubic-bezier(0.4, 0, 1, 1);
-    --ease-out: cubic-bezier(0, 0, 0.2, 1);
-    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --ease-fluid: cubic-bezier(0.3, 0, 0, 1);      /* Smooth, natural */
-    --ease-snappy: cubic-bezier(0.2, 0, 0, 1);     /* Quick, responsive */
-    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    
-    --duration-fast: 100ms;
-    --duration-normal: 200ms;
-    --duration-slow: 300ms;
-    --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    
-    /* ============================================
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-fluid: cubic-bezier(0.3, 0, 0, 1); /* Smooth, natural */
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1); /* Quick, responsive */
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  /* ============================================
        BREAKPOINTS
        ============================================ */
-    --breakpoint-sm: 640px;
-    --breakpoint-md: 768px;
-    --breakpoint-lg: 1024px;
-    --breakpoint-xl: 1280px;
-    --breakpoint-2xl: 1536px;
-    
-    /* ============================================
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* ============================================
        LAYOUT
        App-specific sizes
        ============================================ */
-    --size-header: 4rem;           /* 64px */
-    --size-sidebar: 15rem;         /* 240px */
-    --size-sidebar-collapsed: 4rem; /* 64px */
-    --size-timeline-row: 5rem;     /* 80px */
-    --size-timeline-cell: 3.75rem; /* 60px per hour */
-  }
-  
-  /* ============================================
+  --size-header: 4rem; /* 64px */
+  --size-sidebar: 15rem; /* 240px */
+  --size-sidebar-collapsed: 4rem; /* 64px */
+  --size-timeline-row: 5rem; /* 80px */
+  --size-timeline-cell: 3.75rem; /* 60px per hour */
+}
+
+/* ============================================
      SEMANTIC ALIASES
      Map tokens to contextual meanings
      ============================================ */
-  @layer base {
-    :root {
-      color-scheme: light;
-      /* Status colors */
-      --color-covered: var(--color-success-500);
-      --color-understaffed: var(--color-accent-500);
-      --color-unfilled: hsl(10, 75%, 55%);     /* Red */
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Status colors */
+    --color-covered: var(--color-success-500);
+    --color-understaffed: var(--color-accent-500);
+    --color-unfilled: hsl(10, 75%, 55%); /* Red */
 
-      /* Interactive states */
-      --color-hover: hsl(240, 15%, 97%);
-      --color-active: hsl(240, 20%, 94%);
+    /* Interactive states */
+    --color-hover: hsl(240, 15%, 97%);
+    --color-active: hsl(240, 20%, 94%);
 
-      /* KIMI shift card shadows */
-      --shift-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 0 2px 2px -1px rgba(0,0,0,0.06);
-      --shift-shadow-hover: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    /* KIMI shift card shadows */
+    --shift-shadow:
+      0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 2px 2px -1px rgba(0, 0, 0, 0.06);
+    --shift-shadow-hover:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 
-      /* Glass panel effect */
-      --glass-bg: rgba(255, 255, 255, 0.9);
-      --glass-blur: 10px;
+    /* Glass panel effect */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-blur: 10px;
 
-      /* Lane stripe pattern */
-      --lane-stripe: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(0,0,0,0.02) 10px,
-        rgba(0,0,0,0.02) 20px
-      );
+    /* Lane stripe pattern */
+    --lane-stripe: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.02) 10px,
+      rgba(0, 0, 0, 0.02) 20px
+    );
 
-      /* Status ambient defaults */
-      --status-bg: transparent;
-      --status-accent: #a8a29e;
-    }
-
-    /* Event status ambient theming — applied via data-event-status attribute */
-    [data-event-status="PLANNING"] {
-      --status-bg: #f8fafc;
-      --status-accent: #64748b;
-    }
-
-    [data-event-status="OPEN_FOR_PREFERENCES"] {
-      --status-bg: #f0f9ff;
-      --status-accent: #0ea5e9;
-    }
-
-    [data-event-status="ASSIGNING"] {
-      --status-bg: #fff7ed;
-      --status-accent: #f97316;
-    }
-
-    [data-event-status="FINALIZED"] {
-      --status-bg: #f0fdf4;
-      --status-accent: #22c55e;
-    }
-
-    [data-event-status="COMPLETED"] {
-      --status-bg: #fafaf9;
-      --status-accent: #a8a29e;
-    }
-
-    body {
-      @apply min-h-screen antialiased;
-      background-color: #fafaf9; /* fallback gray-50 */
-      color: #1c1917; /* fallback gray-900 */
-      font-family: var(--font-sans);
-    }
-
-    /* Reset links */
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    /* Standard Tailwind border reset */
-    * {
-      border-color: #e7e5e4; /* fallback gray-200 */
-    }
+    /* Status ambient defaults */
+    --status-bg: transparent;
+    --status-accent: #a8a29e;
   }
 
-  /* Print-optimized styles for schedule view */
-  @media print {
-    /* Hide navigation and UI controls */
-    header,
-    nav,
-    aside,
-    button {
-      display: none !important;
-    }
-    
-    [class*="print:hidden"],
-    [class*="print\\:hidden"] {
-      display: none !important;
-    }
-    
-    /* Hide filters and export options */
-    [class*="filter"],
-    [class*="export"],
-    [class*="Filter"],
-    [class*="Export"] {
-      display: none !important;
-    }
-    
-    /* Ensure schedule content is visible */
-    .calendar-container,
-    .timeline-container,
-    .calendar-grid-view {
-      display: block !important;
-      overflow: visible !important;
-      height: auto !important;
-      max-height: none !important;
-    }
-    
-    /* Remove shadows and rounded corners for print */
-    * {
-      box-shadow: none !important;
-      border-radius: 0 !important;
-    }
-    
-    /* Optimize page breaks */
-    .timeline-row,
-    .timeline-bar,
-    .calendar-grid-view tr {
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-    
-    /* Ensure proper spacing */
-    body {
-      margin: 0;
-      padding: 1cm;
-    }
+  /* Event status ambient theming — applied via data-event-status attribute */
+  [data-event-status="PLANNING"] {
+    --status-bg: #f8fafc;
+    --status-accent: #64748b;
   }
+
+  [data-event-status="OPEN_FOR_PREFERENCES"] {
+    --status-bg: #f0f9ff;
+    --status-accent: #0ea5e9;
+  }
+
+  [data-event-status="ASSIGNING"] {
+    --status-bg: #fff7ed;
+    --status-accent: #f97316;
+  }
+
+  [data-event-status="FINALIZED"] {
+    --status-bg: #f0fdf4;
+    --status-accent: #22c55e;
+  }
+
+  [data-event-status="COMPLETED"] {
+    --status-bg: #fafaf9;
+    --status-accent: #a8a29e;
+  }
+
+  body {
+    @apply min-h-screen antialiased;
+    background-color: #fafaf9; /* fallback gray-50 */
+    color: #1c1917; /* fallback gray-900 */
+    font-family: var(--font-sans);
+  }
+
+  /* Reset links */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Standard Tailwind border reset */
+  * {
+    border-color: #e7e5e4; /* fallback gray-200 */
+  }
+}
+
+/* Print-optimized styles for schedule view */
+@media print {
+  /* Hide navigation and UI controls */
+  header,
+  nav,
+  aside,
+  button {
+    display: none !important;
+  }
+
+  [class*="print:hidden"],
+  [class*="print\\:hidden"] {
+    display: none !important;
+  }
+
+  /* Hide filters and export options */
+  [class*="filter"],
+  [class*="export"],
+  [class*="Filter"],
+  [class*="Export"] {
+    display: none !important;
+  }
+
+  /* Ensure schedule content is visible */
+  .calendar-container,
+  .timeline-container,
+  .calendar-grid-view {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Remove shadows and rounded corners for print */
+  * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Optimize page breaks */
+  .timeline-row,
+  .timeline-bar,
+  .calendar-grid-view tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure proper spacing */
+  body {
+    margin: 0;
+    padding: 1cm;
+  }
+}

@@ -91,18 +91,25 @@ beforeEach(() => {
 
 describe("exportScheduleToPDF", () => {
   it("throws when no shifts are provided", () => {
-    expect(() => exportScheduleToPDF([], { orientation: "portrait" })).toThrow("No shifts available to export");
+    expect(() => exportScheduleToPDF([], { orientation: "portrait" })).toThrow(
+      "No shifts available to export",
+    );
   });
 
   it("respects orientation and filters to member scope", () => {
-    exportScheduleToPDF(sampleShifts, { orientation: "portrait", memberId: "m1" });
+    exportScheduleToPDF(sampleShifts, {
+      orientation: "portrait",
+      memberId: "m1",
+    });
     expect(lastInstanceOpts.orientation).toBe("portrait");
 
     const [, tableCfg] = autoTableMock.mock.calls[0];
     expect(tableCfg.body).toHaveLength(1);
     expect(tableCfg.body[0][2]).toContain("MOBILE TEAM");
 
-    const scopeLine = textMock.mock.calls.find(([text]) => (text as string).startsWith("Scope: Member"));
+    const scopeLine = textMock.mock.calls.find(([text]) =>
+      (text as string).startsWith("Scope: Member"),
+    );
     expect(scopeLine?.[0]).toContain("Alpha");
   });
 
@@ -116,8 +123,9 @@ describe("exportScheduleToPDF", () => {
 
   it("includes coverage summary text", () => {
     exportScheduleToPDF(sampleShifts);
-    const coverageLine = textMock.mock.calls.find(([text]) => (text as string).startsWith("Coverage:"));
+    const coverageLine = textMock.mock.calls.find(([text]) =>
+      (text as string).startsWith("Coverage:"),
+    );
     expect(coverageLine?.[0]).toContain("Coverage:");
   });
 });
-

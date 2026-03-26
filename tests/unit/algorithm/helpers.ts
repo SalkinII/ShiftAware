@@ -15,7 +15,10 @@ export function resetIds() {
 }
 
 export function makeMember(
-  overrides: Partial<TeamMember> & { preferences?: any[]; assignments?: any[] } = {},
+  overrides: Partial<TeamMember> & {
+    preferences?: any[];
+    assignments?: any[];
+  } = {},
 ): TeamMemberWithRelations {
   return {
     id: nextId(),
@@ -34,7 +37,11 @@ export function makeMember(
 }
 
 export function makeShift(
-  overrides: Partial<Shift> & { requiredRoles?: any[]; preferences?: any[]; assignments?: any[] } = {},
+  overrides: Partial<Shift> & {
+    requiredRoles?: any[];
+    preferences?: any[];
+    assignments?: any[];
+  } = {},
 ): ShiftWithRelations {
   const id = overrides.id || nextId();
   return {

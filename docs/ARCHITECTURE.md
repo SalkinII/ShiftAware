@@ -85,33 +85,36 @@ ShiftAware uses a shared-password model with two roles (admin, user). The auth s
 Key files: `lib/crypto.ts` (signing), `lib/rate-limit.ts` (throttling), `lib/auth.ts` (verification), `middleware.ts` (enforcement).
 
 ```
+
                           │
                           ▼ delegates to
+
 ┌─────────────────────────────────────────────────────────────┐
-│  SERVICE LAYER (lib/services/)                              │
-│  ──────────────────────────────                             │
-│  • Business logic                                           │
-│  • Workflow orchestration                                  │
-│  • Transaction management                                   │
-│  • Repository coordination                                  │
-│  ✗ No HTTP concerns                                        │
-│  ✗ No direct Prisma calls                                  │
+│ SERVICE LAYER (lib/services/) │
+│ ────────────────────────────── │
+│ • Business logic │
+│ • Workflow orchestration │
+│ • Transaction management │
+│ • Repository coordination │
+│ ✗ No HTTP concerns │
+│ ✗ No direct Prisma calls │
 └─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼ uses
+│
+▼ uses
 ┌─────────────────────────────────────────────────────────────┐
-│  REPOSITORY LAYER (lib/repositories/)                       │
-│  ────────────────────────────────────                       │
-│  • Data access abstraction                                  │
-│  • Prisma client calls                                      │
-│  • Consistent error handling (RepositoryError)             │
-│  • Query construction                                       │
-│  • Single responsibility (one entity per repo)             │
+│ REPOSITORY LAYER (lib/repositories/) │
+│ ──────────────────────────────────── │
+│ • Data access abstraction │
+│ • Prisma client calls │
+│ • Consistent error handling (RepositoryError) │
+│ • Query construction │
+│ • Single responsibility (one entity per repo) │
 └─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼ calls
-                      Prisma → Database
-```
+│
+▼ calls
+Prisma → Database
+
+````
 
 ### Example: Creating a Team Member
 
@@ -159,7 +162,7 @@ export class TeamMemberRepository extends BaseRepository {
     }
   }
 }
-```
+````
 
 **See [ARCHITECTURE-LAYERS.md](./ARCHITECTURE-LAYERS.md) for detailed layer responsibilities.**
 
@@ -171,14 +174,14 @@ export class TeamMemberRepository extends BaseRepository {
 
 Everything in ShiftAware is **scoped to an Event**:
 
-| Global (shared across events) | Event-Scoped |
-|------------------------------|--------------|
-| TeamMember                   | Shift |
-| ShiftTemplate (global)       | Assignment |
-| -                            | EventRegistration |
-| -                            | ShiftPreference |
-| -                            | EventConfig |
-| -                            | EventAttributeDefinition |
+| Global (shared across events) | Event-Scoped             |
+| ----------------------------- | ------------------------ |
+| TeamMember                    | Shift                    |
+| ShiftTemplate (global)        | Assignment               |
+| -                             | EventRegistration        |
+| -                             | ShiftPreference          |
+| -                             | EventConfig              |
+| -                             | EventAttributeDefinition |
 
 ### Key Relationships
 
@@ -224,23 +227,23 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 
 ### What Each Status Means
 
-| Status | Purpose | Who acts | What's unlocked |
-|--------|---------|----------|----------------|
-| **PLANNING** | Admin builds the schedule | Admin | Shift CRUD, template drag-drop, member registration |
-| **OPEN_FOR_PREFERENCES** | Team submits shift preferences | Users + Admin | Preference voting (WANT/DONT_WANT), registration |
-| **ASSIGNING** | Admin runs algorithm + manual tweaks | Admin | Algorithm execution, manual assignment, registration |
-| **FINALIZED** | Published schedule, operational | Admin | Manual reassignment (dropouts/late adds), registration |
-| **COMPLETED** | Archive / read-only | Nobody | Nothing — revertible to FINALIZED if needed |
+| Status                   | Purpose                              | Who acts      | What's unlocked                                        |
+| ------------------------ | ------------------------------------ | ------------- | ------------------------------------------------------ |
+| **PLANNING**             | Admin builds the schedule            | Admin         | Shift CRUD, template drag-drop, member registration    |
+| **OPEN_FOR_PREFERENCES** | Team submits shift preferences       | Users + Admin | Preference voting (WANT/DONT_WANT), registration       |
+| **ASSIGNING**            | Admin runs algorithm + manual tweaks | Admin         | Algorithm execution, manual assignment, registration   |
+| **FINALIZED**            | Published schedule, operational      | Admin         | Manual reassignment (dropouts/late adds), registration |
+| **COMPLETED**            | Archive / read-only                  | Nobody        | Nothing — revertible to FINALIZED if needed            |
 
 ### Permission Matrix
 
-| EventStatus | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
-|-------------|-------------|-------------------|---------------------|-------------------|-------------------|
-| PLANNING | **yes** | no | no | no | **yes** |
-| OPEN_FOR_PREFERENCES | no | **yes** | no | no | **yes** |
-| ASSIGNING | no | no | **yes** | **yes** | **yes** |
-| FINALIZED | no | no | no | **yes** | **yes** |
-| COMPLETED | no | no | no | no | no |
+| EventStatus          | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
+| -------------------- | ------------ | ----------------- | -------------------- | ----------------- | ------------------- |
+| PLANNING             | **yes**      | no                | no                   | no                | **yes**             |
+| OPEN_FOR_PREFERENCES | no           | **yes**           | no                   | no                | **yes**             |
+| ASSIGNING            | no           | no                | **yes**              | **yes**           | **yes**             |
+| FINALIZED            | no           | no                | no                   | **yes**           | **yes**             |
+| COMPLETED            | no           | no                | no                   | no                | no                  |
 
 **Key design decision:** FINALIZED allows manual assignment changes and new registrations. This handles real-world scenarios: dropouts, late additions, and last-minute reassignments. Only COMPLETED locks everything — and even COMPLETED can revert to FINALIZED.
 
@@ -249,6 +252,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 **Validation in:** lib/validations/event-transition.ts
 
 **Client-safe helpers** (no Prisma import, safe for `"use client"` components):
+
 - `canMutateShifts(status)` — checks SHIFT_MUTATE
 - `canRunAlgorithm(status)` — checks ASSIGNMENT_ALGORITHM
 - `canManuallyAssign(status)` — checks ASSIGNMENT_MANUAL
@@ -395,58 +399,58 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 
 ### Identity Page
 
-| Component | User Action | API Call | Service | Repository | DB Table |
-|-----------|-------------|----------|---------|------------|----------|
-| MemberList | Click member | - | - | - | localStorage |
-| EventSelectionStep | Select event | - | - | - | localStorage |
-| CreateProfileForm | Submit | POST /api/members | MembersService | TeamMemberRepository | TeamMember |
-| CreateProfileForm | Register | POST /api/events/{id}/registrations | - | - | EventRegistration |
+| Component          | User Action  | API Call                            | Service        | Repository           | DB Table          |
+| ------------------ | ------------ | ----------------------------------- | -------------- | -------------------- | ----------------- |
+| MemberList         | Click member | -                                   | -              | -                    | localStorage      |
+| EventSelectionStep | Select event | -                                   | -              | -                    | localStorage      |
+| CreateProfileForm  | Submit       | POST /api/members                   | MembersService | TeamMemberRepository | TeamMember        |
+| CreateProfileForm  | Register     | POST /api/events/{id}/registrations | -              | -                    | EventRegistration |
 
 ### Calendar (User)
 
-| Component | User Action | API Call | Service | Repository | DB Table |
-|-----------|-------------|----------|---------|------------|----------|
-| LaneCalendarCanvas | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
-| ShiftBlockNode (readOnly) | Vote Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
-| ShiftBlockNode (readOnly) | Vote Don't Want | POST /api/preferences | PreferencesService | PreferenceRepository | ShiftPreference |
-| SwapInterface | Request swap | POST /api/swap-requests | SwapRequestsService | SwapRequestRepository | SwapRequest |
+| Component                 | User Action     | API Call                | Service             | Repository            | DB Table        |
+| ------------------------- | --------------- | ----------------------- | ------------------- | --------------------- | --------------- |
+| LaneCalendarCanvas        | Load            | GET /api/shifts?eventId | ShiftsService       | ShiftRepository       | Shift           |
+| ShiftBlockNode (readOnly) | Vote Want       | POST /api/preferences   | PreferencesService  | PreferenceRepository  | ShiftPreference |
+| ShiftBlockNode (readOnly) | Vote Don't Want | POST /api/preferences   | PreferencesService  | PreferenceRepository  | ShiftPreference |
+| SwapInterface             | Request swap    | POST /api/swap-requests | SwapRequestsService | SwapRequestRepository | SwapRequest     |
 
 ### Schedule (Admin)
 
-| Component | User Action | API Call | Service | Repository | DB Table |
-|-----------|-------------|----------|---------|------------|----------|
-| LaneCalendarCanvas | Load | GET /api/shifts?eventId | ShiftsService | ShiftRepository | Shift |
-| TemplatePalette | Load | GET /api/shifts/templates | - | - | ShiftTemplate |
-| LaneCalendarCanvas | Drop template | POST /api/shifts | ShiftsService | ShiftRepository | Shift |
-| ShiftPropertiesPanel | Delete | DELETE /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
-| ShiftBlockNode | Resize | PUT /api/shifts/{id} | ShiftsService | ShiftRepository | Shift |
-| Header buttons | Transition status | POST /api/events/{id}/transition | EventsService | EventRepository | Event |
-| ShiftPropertiesPanel | Add assignment | POST /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
-| ShiftPropertiesPanel | Remove assignment | DELETE /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
-| Header | Export | (client-side) | - | - | - |
+| Component            | User Action       | API Call                         | Service            | Repository           | DB Table      |
+| -------------------- | ----------------- | -------------------------------- | ------------------ | -------------------- | ------------- |
+| LaneCalendarCanvas   | Load              | GET /api/shifts?eventId          | ShiftsService      | ShiftRepository      | Shift         |
+| TemplatePalette      | Load              | GET /api/shifts/templates        | -                  | -                    | ShiftTemplate |
+| LaneCalendarCanvas   | Drop template     | POST /api/shifts                 | ShiftsService      | ShiftRepository      | Shift         |
+| ShiftPropertiesPanel | Delete            | DELETE /api/shifts/{id}          | ShiftsService      | ShiftRepository      | Shift         |
+| ShiftBlockNode       | Resize            | PUT /api/shifts/{id}             | ShiftsService      | ShiftRepository      | Shift         |
+| Header buttons       | Transition status | POST /api/events/{id}/transition | EventsService      | EventRepository      | Event         |
+| ShiftPropertiesPanel | Add assignment    | POST /api/assignments            | AssignmentsService | AssignmentRepository | Assignment    |
+| ShiftPropertiesPanel | Remove assignment | DELETE /api/assignments          | AssignmentsService | AssignmentRepository | Assignment    |
+| Header               | Export            | (client-side)                    | -                  | -                    | -             |
 
 ### Setup (Admin)
 
-| Component | User Action | API Call | Service | Repository | DB Table |
-|-----------|-------------|----------|---------|------------|----------|
-| FestivalSettings | Save | POST /api/events | EventsService | EventRepository | Event |
-| FestivalSettings | Update | PUT /api/events/{id} | EventsService | EventRepository | Event |
-| TemplateManager | Create | POST /api/shifts/templates | - | - | ShiftTemplate |
-| TemplateManager | Assign | POST /api/events/{id}/templates | - | - | EventTemplate |
-| AttributeDefinitions | Create | POST /api/events/{id}/attributes | - | - | EventAttributeDefinition |
+| Component            | User Action | API Call                         | Service       | Repository      | DB Table                 |
+| -------------------- | ----------- | -------------------------------- | ------------- | --------------- | ------------------------ |
+| FestivalSettings     | Save        | POST /api/events                 | EventsService | EventRepository | Event                    |
+| FestivalSettings     | Update      | PUT /api/events/{id}             | EventsService | EventRepository | Event                    |
+| TemplateManager      | Create      | POST /api/shifts/templates       | -             | -               | ShiftTemplate            |
+| TemplateManager      | Assign      | POST /api/events/{id}/templates  | -             | -               | EventTemplate            |
+| AttributeDefinitions | Create      | POST /api/events/{id}/attributes | -             | -               | EventAttributeDefinition |
 
 ### Team (Admin)
 
-| Component | User Action | API Call | Service | Repository | DB Table |
-|-----------|-------------|----------|---------|------------|----------|
-| MemberListByEvent | Load | GET /api/members?eventId | MembersService | TeamMemberRepository | TeamMember + EventRegistration |
-| MemberListByEvent | Add member | POST /api/events/{id}/registrations | EventsService | EventRepository | EventRegistration |
-| DistributionSettings | Load config | GET /api/events/{id}/config | EventsService | EventRepository | EventConfig |
-| DistributionSettings | Save config | PUT /api/events/{id}/config | EventsService | EventRepository | EventConfig |
-| DistributionSettings | Load attributes | GET /api/events/{id}/attributes | EventsService | EventRepository | EventAttributeDefinition |
-| DistributionSettings | Preview | POST /api/assignments?preview=true | AssignmentsService | AssignmentRepository | - |
-| DistributionSettings | Run Algorithm | POST /api/assignments | AssignmentsService | AssignmentRepository | Assignment |
-| AlgorithmResultsModal | Display results | (receives AlgorithmResult from preview) | - | - | - |
+| Component             | User Action     | API Call                                | Service            | Repository           | DB Table                       |
+| --------------------- | --------------- | --------------------------------------- | ------------------ | -------------------- | ------------------------------ |
+| MemberListByEvent     | Load            | GET /api/members?eventId                | MembersService     | TeamMemberRepository | TeamMember + EventRegistration |
+| MemberListByEvent     | Add member      | POST /api/events/{id}/registrations     | EventsService      | EventRepository      | EventRegistration              |
+| DistributionSettings  | Load config     | GET /api/events/{id}/config             | EventsService      | EventRepository      | EventConfig                    |
+| DistributionSettings  | Save config     | PUT /api/events/{id}/config             | EventsService      | EventRepository      | EventConfig                    |
+| DistributionSettings  | Load attributes | GET /api/events/{id}/attributes         | EventsService      | EventRepository      | EventAttributeDefinition       |
+| DistributionSettings  | Preview         | POST /api/assignments?preview=true      | AssignmentsService | AssignmentRepository | -                              |
+| DistributionSettings  | Run Algorithm   | POST /api/assignments                   | AssignmentsService | AssignmentRepository | Assignment                     |
+| AlgorithmResultsModal | Display results | (receives AlgorithmResult from preview) | -                  | -                    | -                              |
 
 ---
 
@@ -585,20 +589,20 @@ try {
 
 ### Error Code Mapping
 
-| RepositoryError Code | HTTP Status | Response Helper |
-|---------------------|-------------|-----------------|
-| `NOT_FOUND` | 404 | `createNotFoundResponse()` |
-| `DUPLICATE` | 409 | `createConflictResponse()` |
-| `INVALID_DATA` | 400 | `createErrorResponse(..., 400)` |
-| `DATABASE_ERROR` | 500 | `createErrorResponse()` |
+| RepositoryError Code | HTTP Status | Response Helper                 |
+| -------------------- | ----------- | ------------------------------- |
+| `NOT_FOUND`          | 404         | `createNotFoundResponse()`      |
+| `DUPLICATE`          | 409         | `createConflictResponse()`      |
+| `INVALID_DATA`       | 400         | `createErrorResponse(..., 400)` |
+| `DATABASE_ERROR`     | 500         | `createErrorResponse()`         |
 
 ### Prisma Error Code Mapping
 
-| Prisma Code | RepositoryError | Meaning |
-|-------------|----------------|---------|
-| P2025 | NOT_FOUND | Record not found |
-| P2002 | DUPLICATE | Unique constraint violation |
-| P2003 | INVALID_DATA | Foreign key constraint |
+| Prisma Code | RepositoryError | Meaning                     |
+| ----------- | --------------- | --------------------------- |
+| P2025       | NOT_FOUND       | Record not found            |
+| P2002       | DUPLICATE       | Unique constraint violation |
+| P2003       | INVALID_DATA    | Foreign key constraint      |
 
 ### StatusGuardError
 
@@ -629,6 +633,7 @@ Current test count: ~420 tests, 62 test files
 Test runner: Vitest 4.1.1
 
 Layers:
+
 - Repository tests: mock Prisma client via vi.mock('@/lib/db')
 - Service tests: mock repositories directly
 - Algorithm tests: pure function tests in tests/unit/algorithm/ — no mocking needed

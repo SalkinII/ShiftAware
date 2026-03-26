@@ -23,11 +23,16 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
     const search = searchParams.get("search");
-    const includeUnregistered = searchParams.get("includeUnregistered") === "true";
+    const includeUnregistered =
+      searchParams.get("includeUnregistered") === "true";
 
     let members;
     if (eventId) {
-      members = await service.listMembersWithEventContext(eventId, includeUnregistered, search || undefined);
+      members = await service.listMembersWithEventContext(
+        eventId,
+        includeUnregistered,
+        search || undefined,
+      );
     } else {
       const where: any = { isActive: true };
       if (search) {

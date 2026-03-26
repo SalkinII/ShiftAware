@@ -25,6 +25,7 @@ Database
 **Purpose:** Handle HTTP concerns and orchestrate request/response flow
 
 **Responsibilities:**
+
 - ✅ Validate request (Zod schemas already in place)
 - ✅ Check authentication/authorization
 - ✅ Call service methods
@@ -35,6 +36,7 @@ Database
 - ❌ **No direct Prisma calls**
 
 **Example:**
+
 ```typescript
 // app/api/members/route.ts
 export async function POST(request: Request) {
@@ -81,6 +83,7 @@ export async function POST(request: Request) {
 ```
 
 **When to keep logic in routes:**
+
 - Complex queries with dynamic includes/filters based on query params
 - Audit logging (side effect of route execution)
 - Business rules that need to check DB before delegating (uniqueness, conflicts)
@@ -93,6 +96,7 @@ export async function POST(request: Request) {
 **Purpose:** Contain business logic and orchestrate repositories
 
 **Responsibilities:**
+
 - ✅ Contain business logic
 - ✅ Orchestrate multiple repositories if needed
 - ✅ Handle transactions (future enhancement)
@@ -102,6 +106,7 @@ export async function POST(request: Request) {
 - ❌ **No direct Prisma calls**
 
 **Example:**
+
 ```typescript
 // lib/services/members.service.ts
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
@@ -145,6 +150,7 @@ export class MembersService {
 ```
 
 **When to add logic to services:**
+
 - Business rules that don't require DB checks
 - Workflows spanning multiple repositories
 - Transaction management
@@ -158,6 +164,7 @@ export class MembersService {
 **Purpose:** Abstract Prisma calls and provide consistent data access
 
 **Responsibilities:**
+
 - ✅ Abstract Prisma calls
 - ✅ Consistent error handling (via BaseRepository)
 - ✅ Single responsibility (one entity type per repo)
@@ -167,6 +174,7 @@ export class MembersService {
 - ❌ **No HTTP concerns**
 
 **Base Repository Pattern:**
+
 ```typescript
 // lib/repositories/base.repository.ts
 import { Prisma } from "@prisma/client";
@@ -209,6 +217,7 @@ export class BaseRepository {
 ```
 
 **Entity Repository Example:**
+
 ```typescript
 // lib/repositories/team-member.repository.ts
 import { prisma } from "@/lib/db";
@@ -278,6 +287,7 @@ export class TeamMemberRepository extends BaseRepository {
 ```
 
 **When to add logic to repositories:**
+
 - Data access patterns (findById, findAll, create, update, delete)
 - Complex Prisma queries with joins/includes
 - Pagination logic
@@ -446,6 +456,7 @@ export async function POST(request: Request) {
 **4. Write Tests**
 
 **Repository Test** (`tests/unit/repositories/entity.repository.test.ts`):
+
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EntityRepository } from "@/lib/repositories/entity.repository";
@@ -484,6 +495,7 @@ describe("EntityRepository", () => {
 ```
 
 **Service Test** (`tests/unit/services/entities.service.test.ts`):
+
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EntitiesService } from "@/lib/services/entities.service";
@@ -542,6 +554,7 @@ Database (TeamMember table)
 ## Testing Strategy
 
 ### Repository Tests
+
 - **What to test:** Data access logic
 - **How to mock:** Mock Prisma client
 - **What to verify:** Correct Prisma calls, error handling
@@ -558,6 +571,7 @@ vi.mock("@/lib/db", () => ({
 ```
 
 ### Service Tests
+
 - **What to test:** Business logic
 - **How to mock:** Mock repositories
 - **What to verify:** Correct repository calls, orchestration logic
@@ -571,6 +585,7 @@ const service = new MembersService(mockRepo);
 ```
 
 ### Route Tests
+
 - **What to test:** End-to-end flow
 - **How to test:** Integration tests with real or test database
 - **What to verify:** HTTP responses, side effects (audit logs)
@@ -580,12 +595,14 @@ const service = new MembersService(mockRepo);
 ## When NOT to Use This Pattern
 
 ### Skip for:
+
 - Static endpoints (health checks, auth callbacks)
 - Middleware (always at edge)
 - Utility functions (helpers in `/lib/utils/`)
 - One-off scripts or migrations
 
 ### Keep Direct Prisma for:
+
 - Simple read-only queries in admin tools
 - Data export/import scripts
 - Database seed scripts

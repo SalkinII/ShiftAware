@@ -64,9 +64,7 @@ describe("verifyLogin - hashed passwords", () => {
     const { verifyLogin } = await import("@/lib/auth");
     const result = await verifyLogin("plaintext123");
     expect(result).toEqual({ valid: true, isAdmin: true });
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("plain-text"),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("plain-text"));
     warnSpy.mockRestore();
   });
 
