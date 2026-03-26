@@ -27,13 +27,13 @@ Festival shift planning tool for small teams (25–35 people). Admins build a sh
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 15.1.12 (App Router) |
+| Framework | Next.js 15.5.14 (App Router) |
 | UI | React 19, Tailwind CSS v4 |
 | Canvas | @xyflow/react 12.10 (React Flow) |
 | ORM | Prisma 5.18 |
 | Database | PostgreSQL (Docker) |
 | Validation | Zod 3.22 |
-| Testing | Vitest 2.1.4 |
+| Testing | Vitest 4.1.1 |
 | Export | html-to-image 1.11.13 |
 
 ## Quick Start
