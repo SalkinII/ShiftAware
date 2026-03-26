@@ -12,6 +12,11 @@ on:
         description: "Optional image tag (default: latest + SHA)"
         required: false
         type: string
+      no_cache:
+        description: "Skip Docker layer cache (forces full rebuild)"
+        required: false
+        type: boolean
+        default: false
 
 # ─── Permissions ─────────────────────────────────────────────
 permissions:
@@ -67,6 +72,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          no-cache: ${{ github.event.inputs.no_cache == 'true' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
