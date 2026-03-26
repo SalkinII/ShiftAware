@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
-import {
-  Download,
-  Search,
-  UserCircle2,
-  UserX,
-  UserCheck,
-} from "lucide-react";
+import { Download, Search, UserCircle2, UserX, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -34,7 +28,9 @@ interface TeamMember {
 
 export default function MembersPage() {
   const toast = useToast();
-  const [profileCardMember, setProfileCardMember] = useState<TeamMember | null>(null);
+  const [profileCardMember, setProfileCardMember] = useState<TeamMember | null>(
+    null,
+  );
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "heatmap">("list");
@@ -388,44 +384,44 @@ export default function MembersPage() {
 
             <div className="space-y-6">
               <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-8 border-none shadow-xl">
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-                      <UserCircle2 className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-2xl font-black mb-2 leading-tight">
-                      Privacy First Staffing
-                    </h3>
-                    <p className="text-sm text-primary-100 leading-relaxed opacity-90">
-                      Team members use aliases to protect their real identities
-                      in the system. Use the mapping template to keep local
-                      track of real names.
-                    </p>
-                  </Card>
-
-                  <Card className="bg-white border-none shadow-sm p-6">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-                      Quick Stats
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
-                          Total Records
-                        </span>
-                        <span className="text-sm font-black text-gray-900">
-                          {members?.length || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
-                          Active Duty
-                        </span>
-                        <span className="text-sm font-black text-success-600">
-                          {(members || []).filter((m) => m.isActive).length}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
+                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
+                  <UserCircle2 className="w-6 h-6" />
                 </div>
+                <h3 className="text-2xl font-black mb-2 leading-tight">
+                  Privacy First Staffing
+                </h3>
+                <p className="text-sm text-primary-100 leading-relaxed opacity-90">
+                  Team members use aliases to protect their real identities in
+                  the system. Use the mapping template to keep local track of
+                  real names.
+                </p>
+              </Card>
+
+              <Card className="bg-white border-none shadow-sm p-6">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                  Quick Stats
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">
+                      Total Records
+                    </span>
+                    <span className="text-sm font-black text-gray-900">
+                      {members?.length || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">
+                      Active Duty
+                    </span>
+                    <span className="text-sm font-black text-success-600">
+                      {(members || []).filter((m) => m.isActive).length}
+                    </span>
+                  </div>
+                </div>
+              </Card>
             </div>
+          </div>
         )}
       </div>
 

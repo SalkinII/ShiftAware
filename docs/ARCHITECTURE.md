@@ -47,7 +47,7 @@
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-Stack: Next.js 15.1.2 App Router | React 19 | @xyflow/react 12.10 | Prisma 5.18 | PostgreSQL | Tailwind v4
+Stack: Next.js 15.5.14 App Router | React 19 | @xyflow/react 12.10 | Prisma 5.18 | PostgreSQL | Tailwind v4
 
 ---
 
@@ -625,8 +625,8 @@ async createMember(data: Prisma.TeamMemberCreateInput) {
 
 ## 10. Testing Strategy
 
-Current test count: ~230 unit tests, 28 test files
-Test runner: Vitest 2.1.4
+Current test count: ~420 tests, 62 test files
+Test runner: Vitest 4.1.1
 
 Layers:
 - Repository tests: mock Prisma client via vi.mock('@/lib/db')

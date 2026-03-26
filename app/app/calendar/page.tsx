@@ -1,15 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Calendar,
-  RefreshCw,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Calendar, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
-import { LaneCalendarCanvas } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import dynamic from "next/dynamic";
+
+// ssr:false prevents Next.js from server-rendering React Flow, which uses
+// browser-only APIs (ResizeObserver, window) unavailable in the Node.js runtime.
+const LaneCalendarCanvas = dynamic(
+  () =>
+    import("@/components/features/LaneCalendar/LaneCalendarCanvas").then(
+      (m) => ({ default: m.LaneCalendarCanvas }),
+    ),
+  { ssr: false },
+);
 import { MyShiftsList } from "./components/MyShiftsList";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { format } from "date-fns";
@@ -56,10 +62,7 @@ const coverageLabels: Record<CoverageState, string> = {
 // User Calendar View - Read-only schedule display
 export default function UserCalendarPage() {
   const toast = useToast();
-  const {
-    selectedEventId,
-    selectedEvent,
-  } = useEventContext(false);
+  const { selectedEventId, selectedEvent } = useEventContext(false);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarView, setCalendarView] = useState<
@@ -99,7 +102,10 @@ export default function UserCalendarPage() {
       const res = await fetch(`/api/events/${selectedEventId}/templates`);
       if (!res.ok) return [];
       const json = await res.json();
-      const result = unwrapApiResponse<{ assigned?: any[]; eventSpecific?: any[] }>(json);
+      const result = unwrapApiResponse<{
+        assigned?: any[];
+        eventSpecific?: any[];
+      }>(json);
       return [...(result?.assigned ?? []), ...(result?.eventSpecific ?? [])];
     },
     enabled: !!selectedEventId,
@@ -169,7 +175,9 @@ export default function UserCalendarPage() {
   // Set calendar anchor date based on selected event or fallback to earliest shift
   useEffect(() => {
     if (selectedEvent?.startDate) {
-      setCurrentEventDate(format(new Date(selectedEvent.startDate), "yyyy-MM-dd"));
+      setCurrentEventDate(
+        format(new Date(selectedEvent.startDate), "yyyy-MM-dd"),
+      );
     } else if (shifts.length > 0) {
       const earliest = shifts.reduce(
         (earliestDate: string | undefined, shift: Shift) => {
@@ -374,18 +382,17 @@ export default function UserCalendarPage() {
       });
   }
 
-  // Get current user ID from localStorage (set during identity selection)
-  const userId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("selectedMemberId") || ""
-      : "";
+  // Get current user ID from localStorage (set during identity selection).
+  // Must use useState/useEffect — reading localStorage at render time causes a
+  // server/client HTML mismatch (server has no window) and triggers a hydration error.
+  const [userId, setUserId] = useState("");
+  useEffect(() => {
+    setUserId(localStorage.getItem("selectedMemberId") || "");
+  }, []);
 
   // Fetch preferences for vote panel and My Preferences section
   const shouldFetchPreferences = !!userId && !!selectedEventId;
-  const {
-    data: preferences,
-    refetch: refetchPreferences,
-  } = useCache<
+  const { data: preferences, refetch: refetchPreferences } = useCache<
     Array<{ shiftId: string; wantLevel?: "WANT" | "DONT_WANT" }>
   >({
     key: shouldFetchPreferences
@@ -396,7 +403,8 @@ export default function UserCalendarPage() {
       const res = await fetch(`/api/preferences?teamMemberId=${userId}`);
       if (!res.ok) return [];
       const json = await res.json();
-      const result = unwrapApiResponse<Array<{ shiftId: string; wantLevel?: string }>>(json);
+      const result =
+        unwrapApiResponse<Array<{ shiftId: string; wantLevel?: string }>>(json);
       return result ?? [];
     },
     enabled: shouldFetchPreferences,
@@ -497,7 +505,10 @@ export default function UserCalendarPage() {
           </p>
           {selectedEvent && (
             <p className="text-xs text-gray-400 mt-1">
-              Event: <span className="font-medium text-gray-600">{selectedEvent.name}</span>
+              Event:{" "}
+              <span className="font-medium text-gray-600">
+                {selectedEvent.name}
+              </span>
               {" · "}
               <a
                 href="/app/identity"
@@ -506,7 +517,10 @@ export default function UserCalendarPage() {
                   // Ensure EventSelectionStep shows list instead of auto-forwarding
                   const memberId = localStorage.getItem("selectedMemberId");
                   if (memberId) {
-                    sessionStorage.setItem(`shiftaware:eventAutoForward:${memberId}`, "done");
+                    sessionStorage.setItem(
+                      `shiftaware:eventAutoForward:${memberId}`,
+                      "done",
+                    );
                   }
                 }}
               >
@@ -585,9 +599,7 @@ export default function UserCalendarPage() {
                             : "border-gray-200 text-gray-600 hover:border-primary-200 hover:text-primary-700",
                         )}
                       >
-                        {option === "all"
-                          ? "All"
-                          : coverageLabels[option]}
+                        {option === "all" ? "All" : coverageLabels[option]}
                       </button>
                     ),
                   )}
@@ -650,7 +662,11 @@ export default function UserCalendarPage() {
             <div
               className="flex flex-row rounded-2xl shadow-xl overflow-hidden"
               data-event-status={selectedEvent?.status}
-              style={{ backgroundColor: "var(--status-bg)", transition: "background-color 500ms", minHeight: 600 }}
+              style={{
+                backgroundColor: "var(--status-bg)",
+                transition: "background-color 500ms",
+                minHeight: 600,
+              }}
             >
               <div className="flex-1 min-w-0">
                 <LaneCalendarCanvas
@@ -678,7 +694,8 @@ export default function UserCalendarPage() {
                 />
               </div>
 
-              {selectedShift && selectedEvent?.status === "OPEN_FOR_PREFERENCES" ? (
+              {selectedShift &&
+              selectedEvent?.status === "OPEN_FOR_PREFERENCES" ? (
                 <div className="w-80 flex-shrink-0 overflow-y-auto">
                   <ShiftPreferencePanel
                     shift={{
@@ -696,7 +713,8 @@ export default function UserCalendarPage() {
                 <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
                   <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="text-sm font-bold text-gray-900">
-                      {selectedShift.template?.name ?? selectedShift.type.replace(/_/g, " ")}
+                      {selectedShift.template?.name ??
+                        selectedShift.type.replace(/_/g, " ")}
                     </h3>
                     <button
                       onClick={() => setSelectedShift(null)}
@@ -709,12 +727,15 @@ export default function UserCalendarPage() {
                     <div className="text-xs text-gray-500">
                       {format(new Date(selectedShift.startTime), "EEEE, MMM d")}
                       {" · "}
-                      {format(new Date(selectedShift.startTime), "HH:mm")} –{" "}
-                      {format(new Date(selectedShift.endTime), "HH:mm")}
+                      {format(
+                        new Date(selectedShift.startTime),
+                        "HH:mm",
+                      )} – {format(new Date(selectedShift.endTime), "HH:mm")}
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                        Assignments ({selectedShift.assignments?.length ?? 0}/{selectedShift.capacity})
+                        Assignments ({selectedShift.assignments?.length ?? 0}/
+                        {selectedShift.capacity})
                       </p>
                       {selectedShift.assignments?.length > 0 ? (
                         <div className="space-y-2">
@@ -738,7 +759,9 @@ export default function UserCalendarPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-400">No assignments yet.</p>
+                        <p className="text-xs text-gray-400">
+                          No assignments yet.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -779,7 +802,8 @@ export default function UserCalendarPage() {
                         className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left"
                       >
                         <div className="font-bold text-gray-900">
-                          {shift.template?.name ?? shift.type.replace(/_/g, " ")}
+                          {shift.template?.name ??
+                            shift.type.replace(/_/g, " ")}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           {format(

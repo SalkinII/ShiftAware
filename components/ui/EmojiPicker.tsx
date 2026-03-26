@@ -53,7 +53,10 @@ export function EmojiPicker({
       }
       return acc;
     },
-    {} as Record<string, { id: string; emoji: string; name: string; reserved: boolean }[]>,
+    {} as Record<
+      string,
+      { id: string; emoji: string; name: string; reserved: boolean }[]
+    >,
   );
 
   const handleSelect = (emoji: string, reserved: boolean) => {

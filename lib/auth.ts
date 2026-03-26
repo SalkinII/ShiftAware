@@ -36,9 +36,7 @@ export async function verifyLogin(
   }
 
   if (!adminPassword) {
-    throw new Error(
-      "Neither ADMIN_PASSWORD_HASH nor ADMIN_PASSWORD is set",
-    );
+    throw new Error("Neither ADMIN_PASSWORD_HASH nor ADMIN_PASSWORD is set");
   }
 
   console.warn(

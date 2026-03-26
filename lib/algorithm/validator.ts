@@ -140,7 +140,10 @@ export function validateNoOverlaps(
 
   for (const existingShiftId of memberShiftIds) {
     const existingShift = allShifts.get(existingShiftId);
-    if (existingShift && validateShiftOverlap(newShift, existingShift, minRestMs)) {
+    if (
+      existingShift &&
+      validateShiftOverlap(newShift, existingShift, minRestMs)
+    ) {
       // Determine if direct overlap or rest period violation
       const s1 = new Date(newShift.startTime);
       const e1 = new Date(newShift.endTime);
@@ -173,7 +176,10 @@ export function validateRestPeriod(
   const shifts = memberShiftIds
     .map((id) => allShifts.get(id))
     .filter((s): s is Shift => s !== undefined)
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
 
   const violations: ConstraintViolation[] = [];
   for (let i = 0; i < shifts.length - 1; i++) {
@@ -183,7 +189,8 @@ export function validateRestPeriod(
     if (gap < minRestMs && gap >= 0) {
       const s1 = shifts[i];
       const s2 = shifts[i + 1];
-      const fmt = (d: Date) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const fmt = (d: Date) =>
+        d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
       violations.push({
         type: "REST_PERIOD",
         message: `${s1.type} (ends ${fmt(new Date(s1.endTime))}) → ${s2.type} (starts ${fmt(new Date(s2.startTime))}): ${Math.round(gap / 3600000)}h gap, ${Math.round(minRestMs / 3600000)}h required`,

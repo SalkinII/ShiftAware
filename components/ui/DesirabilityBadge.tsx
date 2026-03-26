@@ -5,7 +5,10 @@ interface DesirabilityBadgeProps {
   className?: string;
 }
 
-export function DesirabilityBadge({ score, className }: DesirabilityBadgeProps) {
+export function DesirabilityBadge({
+  score,
+  className,
+}: DesirabilityBadgeProps) {
   const colorClasses =
     score <= 2
       ? "bg-blue-50 text-blue-700"

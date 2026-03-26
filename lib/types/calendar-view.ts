@@ -1,4 +1,4 @@
-export type ViewMode = 'day' | 'week' | 'custom';
+export type ViewMode = "day" | "week" | "custom";
 
 export interface DateRange {
   start: Date;

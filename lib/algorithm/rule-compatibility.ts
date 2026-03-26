@@ -7,7 +7,7 @@ type Operator = AllocationRule["operator"];
 const OPERATOR_MATRIX: Record<AttributeType, Record<RuleKind, Operator[]>> = {
   BOOLEAN: {
     FILTER: ["EQUALS", "NOT_EQUALS"],
-    BALANCE: [],  // Balance not meaningful for boolean
+    BALANCE: [], // Balance not meaningful for boolean
   },
   SELECT: {
     FILTER: ["EQUALS", "NOT_EQUALS", "ONE_OF"],
@@ -19,7 +19,7 @@ const OPERATOR_MATRIX: Record<AttributeType, Record<RuleKind, Operator[]>> = {
   },
   TEXT: {
     FILTER: ["EQUALS", "NOT_EQUALS", "CONTAINS"],
-    BALANCE: [],  // Balance not meaningful for free text
+    BALANCE: [], // Balance not meaningful for free text
   },
 };
 

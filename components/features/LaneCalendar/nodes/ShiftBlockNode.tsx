@@ -21,18 +21,21 @@ export type ShiftBlockData = {
   assignedMembers?: Array<{ alias: string; avatarId?: string }>;
   currentMemberId?: string;
   isAssignedToCurrentUser?: boolean;
-  onResizeEnd?: (nodeId: string, p: { width: number; x?: number }) => void | Promise<void>;
+  onResizeEnd?: (
+    nodeId: string,
+    p: { width: number; x?: number },
+  ) => void | Promise<void>;
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
 };
 
 /** Minimum screen-pixel thresholds for progressive content reveal */
-const W_NAMES = 40;   // show member names
-const W_TIME = 100;   // add time range
-const W_token = 130;  // add desirability token
-const H_ROW2 = 20;    // show second row (token + votes)
-const H_ROW3 = 38;    // show third row (avatars + names)
+const W_NAMES = 40; // show member names
+const W_TIME = 100; // add time range
+const W_token = 130; // add desirability token
+const H_ROW2 = 20; // show second row (token + votes)
+const H_ROW3 = 38; // show third row (avatars + names)
 
 function ShiftContent({
   shiftId,
@@ -97,15 +100,18 @@ function ShiftContent({
       {/* Row 1: name (left) + time (right) */}
       {showNames && (
         <div className="flex justify-between items-center gap-2 min-w-0">
-          <span className={cn(
-            "truncate font-semibold min-w-0 text-[100px] leading-[1.15]",
-            isMarker ? "text-gray-400" : "text-gray-900"
-          )}>
+          <span
+            className={cn(
+              "truncate font-semibold min-w-0 text-[100px] leading-[1.15]",
+              isMarker ? "text-gray-400" : "text-gray-900",
+            )}
+          >
             {templateName}
           </span>
           {showTime && !isMarker && (
             <span className="text-[100px] leading-[1.15] text-gray-500 whitespace-nowrap flex-shrink-0">
-              {format(new Date(startTime), "HH:mm")}–{format(new Date(endTime), "HH:mm")}
+              {format(new Date(startTime), "HH:mm")}–
+              {format(new Date(endTime), "HH:mm")}
             </span>
           )}
         </div>
@@ -115,13 +121,19 @@ function ShiftContent({
       {showRow2 && showNames && !isMarker && (
         <div className="flex items-center gap-2 min-w-0">
           {showtoken && desirabilityScore != null && (
-            <DesirabilityBadge score={desirabilityScore} className="flex-shrink-0" />
+            <DesirabilityBadge
+              score={desirabilityScore}
+              className="flex-shrink-0"
+            />
           )}
           {readOnly && onVoteWant && onVoteDontWant && (
             <div className="flex items-center gap-[8px] flex-shrink-0">
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onVoteWant(shiftId); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVoteWant(shiftId);
+                }}
                 className="p-[8px] rounded bg-[var(--color-primary-100)] hover:bg-[var(--color-success-100)] hover:text-[var(--color-success-600)] transition-colors"
                 title="Want this shift"
               >
@@ -129,7 +141,10 @@ function ShiftContent({
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onVoteDontWant(shiftId); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVoteDontWant(shiftId);
+                }}
                 className="p-[8px] rounded bg-[var(--color-primary-100)] hover:bg-red-100 hover:text-[var(--color-unfilled)] transition-colors"
                 title="Don't want this shift"
               >
@@ -137,33 +152,44 @@ function ShiftContent({
               </button>
             </div>
           )}
-          <span className={cn(
-            "text-[100px] leading-[1.15] font-medium ml-auto flex-shrink-0",
-            assignmentCount < capacity ? "text-[var(--color-unfilled)]" : "text-[var(--color-covered)]"
-          )}>
+          <span
+            className={cn(
+              "text-[100px] leading-[1.15] font-medium ml-auto flex-shrink-0",
+              assignmentCount < capacity
+                ? "text-[var(--color-unfilled)]"
+                : "text-[var(--color-covered)]",
+            )}
+          >
             {assignmentCount}/{capacity}
           </span>
         </div>
       )}
 
       {/* Row 3: Avatar emoji + name pairs */}
-      {showRow3 && showNames && !isMarker && assignedMembers && assignedMembers.length > 0 && (
-        <div className="flex items-center gap-[20px] min-w-0 overflow-hidden">
-          {assignedMembers.slice(0, 4).map((m, i) => (
-            <div key={i} className="flex items-center gap-[8px] flex-shrink-0">
+      {showRow3 &&
+        showNames &&
+        !isMarker &&
+        assignedMembers &&
+        assignedMembers.length > 0 && (
+          <div className="flex items-center gap-[20px] min-w-0 overflow-hidden">
+            {assignedMembers.slice(0, 4).map((m, i) => (
               <div
-                className="w-[100px] h-[100px] rounded-full bg-gradient-to-br from-[var(--color-primary-400)] to-[var(--color-primary-600)] flex items-center justify-center text-white text-[60px] leading-none border-[3px] border-white flex-shrink-0"
-                title={m.alias}
+                key={i}
+                className="flex items-center gap-[8px] flex-shrink-0"
               >
-                {m.avatarId || m.alias.slice(0, 2).toUpperCase()}
+                <div
+                  className="w-[100px] h-[100px] rounded-full bg-gradient-to-br from-[var(--color-primary-400)] to-[var(--color-primary-600)] flex items-center justify-center text-white text-[60px] leading-none border-[3px] border-white flex-shrink-0"
+                  title={m.alias}
+                >
+                  {m.avatarId || m.alias.slice(0, 2).toUpperCase()}
+                </div>
+                <span className="text-[100px] leading-[1.15] text-gray-700 whitespace-nowrap">
+                  {m.alias}
+                </span>
               </div>
-              <span className="text-[100px] leading-[1.15] text-gray-700 whitespace-nowrap">
-                {m.alias}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
     </div>
   );
 }
@@ -199,20 +225,19 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
             try {
               const width = typeof p?.width === "number" ? p.width : 0;
               const x = typeof p?.x === "number" ? p.x : undefined;
-              const result = onResizeEnd?.(
-                `shift-${shiftId}`,
-                { width, x },
-              );
+              const result = onResizeEnd?.(`shift-${shiftId}`, { width, x });
               if (result instanceof Promise) {
                 result.catch((err: unknown) => {
-                  const msg = err instanceof Error ? err.message : String(err ?? "");
+                  const msg =
+                    err instanceof Error ? err.message : String(err ?? "");
                   if (process.env.NODE_ENV === "development") {
                     console.warn("Resize failed:", msg || "unknown error");
                   }
                 });
               }
             } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err ?? "");
+              const msg =
+                err instanceof Error ? err.message : String(err ?? "");
               if (process.env.NODE_ENV === "development") {
                 console.warn("Resize failed:", msg || "unknown error");
               }

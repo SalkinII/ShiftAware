@@ -11,7 +11,7 @@ export function SectionLabel({ children, className }: SectionLabelProps) {
     <label
       className={cn(
         "text-xs font-semibold text-gray-500 uppercase tracking-wider block",
-        className
+        className,
       )}
     >
       {children}

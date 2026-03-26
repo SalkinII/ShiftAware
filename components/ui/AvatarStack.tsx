@@ -35,7 +35,12 @@ function getInitials(alias: string): string {
     .slice(0, 2);
 }
 
-export function AvatarStack({ members, max = 3, size = "sm", className }: AvatarStackProps) {
+export function AvatarStack({
+  members,
+  max = 3,
+  size = "sm",
+  className,
+}: AvatarStackProps) {
   const displayed = members.slice(0, max);
   const remaining = members.length - max;
 
@@ -55,7 +60,7 @@ export function AvatarStack({ members, max = 3, size = "sm", className }: Avatar
               "rounded-full bg-gradient-to-br border-2 border-white flex items-center justify-center text-white font-medium",
               from,
               to,
-              sizeClasses[size]
+              sizeClasses[size],
             )}
             title={member.alias}
           >
@@ -67,7 +72,7 @@ export function AvatarStack({ members, max = 3, size = "sm", className }: Avatar
         <div
           className={cn(
             "rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-gray-600 font-medium",
-            sizeClasses[size]
+            sizeClasses[size],
           )}
         >
           +{remaining}

@@ -33,7 +33,10 @@ export function ProgressBar({
     <div className={cn("flex items-center gap-3", className)}>
       <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
         <div
-          className={cn("h-full rounded-full transition-all", colorClasses[color])}
+          className={cn(
+            "h-full rounded-full transition-all",
+            colorClasses[color],
+          )}
           style={{ width: `${percent}%` }}
         />
       </div>
