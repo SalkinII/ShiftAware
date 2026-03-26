@@ -66,7 +66,14 @@ describe("scoreAssignment", () => {
       workloadFairness: 0,
     };
 
-    const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
+    const result = scoreAssignment(
+      member,
+      shift,
+      state,
+      prefs,
+      membersMap,
+      weights,
+    );
     expect(result.overall).toBe(0);
   });
 
@@ -81,7 +88,14 @@ describe("scoreAssignment", () => {
       workloadFairness: 0,
     };
 
-    const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
+    const result = scoreAssignment(
+      member,
+      shift,
+      state,
+      prefs,
+      membersMap,
+      weights,
+    );
     expect(result.overall).toBe(100);
   });
 
@@ -96,7 +110,14 @@ describe("scoreAssignment", () => {
       workloadFairness: 0,
     };
 
-    const result = scoreAssignment(member, shift, state, prefs, membersMap, weights);
+    const result = scoreAssignment(
+      member,
+      shift,
+      state,
+      prefs,
+      membersMap,
+      weights,
+    );
     expect(result.preferenceMatch).toBe(-50);
     expect(result.overall).toBe(-50);
   });

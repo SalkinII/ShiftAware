@@ -29,16 +29,66 @@ const memberGenders: Record<string, string> = {
 };
 
 const teamMembers = [
-  { alias: "Bunny", avatarId: "🐰", experienceLevel: "JUNIOR" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Otter", avatarId: "🦦", experienceLevel: "JUNIOR" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Chipmunk", avatarId: "🐿️", experienceLevel: "JUNIOR" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Hedgehog", avatarId: "🦔", experienceLevel: "INTERMEDIATE" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Squirrel", avatarId: "🐿️", experienceLevel: "INTERMEDIATE" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Robin", avatarId: "🐦", experienceLevel: "INTERMEDIATE" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Finch", avatarId: "🐦", experienceLevel: "INTERMEDIATE" as const, capabilities: [Role.TEAM_MEMBER] },
-  { alias: "Duckling", avatarId: "🦆", experienceLevel: "SENIOR" as const, capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD] },
-  { alias: "Wolf", avatarId: "🐺", experienceLevel: "SENIOR" as const, capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER] },
-  { alias: "Bear", avatarId: "🐻", experienceLevel: "SENIOR" as const, capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD] },
+  {
+    alias: "Bunny",
+    avatarId: "🐰",
+    experienceLevel: "JUNIOR" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Otter",
+    avatarId: "🦦",
+    experienceLevel: "JUNIOR" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Chipmunk",
+    avatarId: "🐿️",
+    experienceLevel: "JUNIOR" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Hedgehog",
+    avatarId: "🦔",
+    experienceLevel: "INTERMEDIATE" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Squirrel",
+    avatarId: "🐿️",
+    experienceLevel: "INTERMEDIATE" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Robin",
+    avatarId: "🐦",
+    experienceLevel: "INTERMEDIATE" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Finch",
+    avatarId: "🐦",
+    experienceLevel: "INTERMEDIATE" as const,
+    capabilities: [Role.TEAM_MEMBER],
+  },
+  {
+    alias: "Duckling",
+    avatarId: "🦆",
+    experienceLevel: "SENIOR" as const,
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
+  },
+  {
+    alias: "Wolf",
+    avatarId: "🐺",
+    experienceLevel: "SENIOR" as const,
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD, Role.SUPER],
+  },
+  {
+    alias: "Bear",
+    avatarId: "🐻",
+    experienceLevel: "SENIOR" as const,
+    capabilities: [Role.TEAM_MEMBER, Role.SHIFT_LEAD],
+  },
 ];
 
 async function resetForSeed() {
@@ -202,7 +252,19 @@ function parseTime(timeStr: string): { hours: number; minutes: number } {
 }
 
 // 15 shifts — 3 templates x 5 days, each with templateId
-async function seedShifts(eventId: string, templates: { id: string; startTime: string; durationMinutes: number; type: ShiftType; priority: ShiftPriority; desirabilityScore: number; capacity: number; requiredRoles: { role: Role; count: number }[] }[]) {
+async function seedShifts(
+  eventId: string,
+  templates: {
+    id: string;
+    startTime: string;
+    durationMinutes: number;
+    type: ShiftType;
+    priority: ShiftPriority;
+    desirabilityScore: number;
+    capacity: number;
+    requiredRoles: { role: Role; count: number }[];
+  }[],
+) {
   const shifts = [];
   const currentDate = new Date(EVENT_START);
 
@@ -232,7 +294,10 @@ async function seedShifts(eventId: string, templates: { id: string; startTime: s
           capacity: template.capacity,
           isTemplate: false,
           requiredRoles: {
-            create: template.requiredRoles.map((r) => ({ role: r.role, count: r.count })),
+            create: template.requiredRoles.map((r) => ({
+              role: r.role,
+              count: r.count,
+            })),
           },
         },
       });
@@ -262,7 +327,10 @@ async function seedTeamMemberAttributes(
     const genderValue = memberGenders[member.alias] ?? "FINTA";
     await prisma.teamMemberAttribute.upsert({
       where: {
-        memberId_definitionId: { memberId: member.id, definitionId: genderDefId },
+        memberId_definitionId: {
+          memberId: member.id,
+          definitionId: genderDefId,
+        },
       },
       update: { value: JSON.stringify(genderValue) },
       create: {
@@ -275,7 +343,10 @@ async function seedTeamMemberAttributes(
     const canDrive = Math.random() > 0.3;
     await prisma.teamMemberAttribute.upsert({
       where: {
-        memberId_definitionId: { memberId: member.id, definitionId: canDriveDefId },
+        memberId_definitionId: {
+          memberId: member.id,
+          definitionId: canDriveDefId,
+        },
       },
       update: { value: JSON.stringify(canDrive) },
       create: {
@@ -344,13 +415,18 @@ async function main() {
   const event = await seedEvent();
   console.log(`✓ Seeded event: ${event.name}`);
 
-  const { genderDef, canDriveDef } = await seedEventAttributeDefinitions(event.id);
+  const { genderDef, canDriveDef } = await seedEventAttributeDefinitions(
+    event.id,
+  );
   console.log(`✓ Seeded 2 event attribute definitions`);
 
   const templates = await seedShiftTemplates();
   console.log(`✓ Seeded ${templates.length} shift templates`);
 
-  await seedEventTemplates(event.id, templates.map((t) => t.id));
+  await seedEventTemplates(
+    event.id,
+    templates.map((t) => t.id),
+  );
   console.log(`✓ Seeded ${templates.length} event-template assignments`);
 
   const templatesWithRoles = await prisma.shiftTemplate.findMany({
@@ -368,13 +444,18 @@ async function main() {
       priority: ShiftPriority.CORE,
       desirabilityScore: t.desirabilityScore,
       capacity: t.capacity,
-      requiredRoles: t.requiredRoles.map((r) => ({ role: r.role, count: r.count })),
+      requiredRoles: t.requiredRoles.map((r) => ({
+        role: r.role,
+        count: r.count,
+      })),
     })),
   );
   console.log(`✓ Seeded ${shifts.length} shifts`);
 
   await seedEventRegistrations(event.id);
-  const regCount = await prisma.eventRegistration.count({ where: { eventId: event.id } });
+  const regCount = await prisma.eventRegistration.count({
+    where: { eventId: event.id },
+  });
   console.log(`✓ Seeded ${regCount} event registrations`);
 
   await seedTeamMemberAttributes(event.id, genderDef.id, canDriveDef.id);

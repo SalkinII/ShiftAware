@@ -95,7 +95,9 @@ describe("runAssignmentAlgorithm", () => {
 
     expect(result.assignments.length).toBe(0);
     expect(result.ruleMatchSummaries?.length).toBeGreaterThan(0);
-    expect(result.ruleMatchSummaries?.[0]).toMatch(/firstAid|no candidate matched/i);
+    expect(result.ruleMatchSummaries?.[0]).toMatch(
+      /firstAid|no candidate matched/i,
+    );
   });
 
   it("skips capacity=0 marker shifts (no assignments)", async () => {
@@ -194,9 +196,7 @@ describe("runAssignmentAlgorithm", () => {
         balanceMode: "REQUIRE_ONE" as const,
       },
     ];
-    const memberAttributes = new Map([
-      [m1.id, new Map([["gender", "M"]])],
-    ]);
+    const memberAttributes = new Map([[m1.id, new Map([["gender", "M"]])]]);
 
     const result = await runAssignmentAlgorithm([m1], [s1], {
       minShiftsPerPerson: 0,
@@ -288,8 +288,8 @@ describe("runAssignmentAlgorithm", () => {
     });
 
     // No complementary violations — FILTER rules shouldn't be checked post-hoc
-    const compViolations = result.violations.filter((v) =>
-      v.includes("no member has") || v.includes("ratio"),
+    const compViolations = result.violations.filter(
+      (v) => v.includes("no member has") || v.includes("ratio"),
     );
     expect(compViolations).toHaveLength(0);
   });

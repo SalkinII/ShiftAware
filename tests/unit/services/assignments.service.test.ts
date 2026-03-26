@@ -105,8 +105,8 @@ describe("AssignmentsService", () => {
       config: {
         minShiftsPerPerson: 2,
         algorithmWeights: {
-          preferenceMatch: 0.70,
-          workloadFairness: 0.30,
+          preferenceMatch: 0.7,
+          workloadFairness: 0.3,
         },
       },
     };

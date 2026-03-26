@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { runAssignmentAlgorithm } from "../../../lib/algorithm/optimizer";
-import type { AllocationRule, AlgorithmWeights } from "../../../lib/algorithm/types";
+import type {
+  AllocationRule,
+  AlgorithmWeights,
+} from "../../../lib/algorithm/types";
 import { makeMember, makeShift, resetIds } from "./helpers";
 
 beforeEach(() => resetIds());
@@ -259,8 +262,8 @@ describe("Correctness Benchmarks", () => {
 
       // Run with heavy preference weight
       const prefWeights: AlgorithmWeights = {
-        preferenceMatch: 0.70,
-        workloadFairness: 0.30,
+        preferenceMatch: 0.7,
+        workloadFairness: 0.3,
       };
 
       const result = await runAssignmentAlgorithm([m1, m2], [s1, s2], {
@@ -273,9 +276,7 @@ describe("Correctness Benchmarks", () => {
       expect(result.assignments.length).toBe(2);
 
       // At least one should be on s1 via preference
-      const s1Assigned = result.assignments.filter(
-        (a) => a.shiftId === s1.id,
-      );
+      const s1Assigned = result.assignments.filter((a) => a.shiftId === s1.id);
       expect(s1Assigned.length).toBe(1);
     });
 
@@ -291,8 +292,8 @@ describe("Correctness Benchmarks", () => {
       const m2 = makeMember({ alias: "Bob" });
 
       const fairWeights: AlgorithmWeights = {
-        preferenceMatch: 0.70,
-        workloadFairness: 0.30,
+        preferenceMatch: 0.7,
+        workloadFairness: 0.3,
       };
 
       const result = await runAssignmentAlgorithm([m1, m2], [s1, s2], {

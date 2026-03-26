@@ -3,7 +3,10 @@ import { test, expect } from "@playwright/test";
 test.describe("LaneCalendarView", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
-    await page.fill('input[type="password"]', process.env.ADMIN_PASSWORD || "admin");
+    await page.fill(
+      'input[type="password"]',
+      process.env.ADMIN_PASSWORD || "admin",
+    );
     await page.click('button[type="submit"]');
     await page.waitForURL("/admin/**");
   });
@@ -19,7 +22,9 @@ test.describe("LaneCalendarView", () => {
     await expect(page.getByText("Extended Service")).toBeVisible();
   });
 
-  test("should highlight drop zone when dragging template over lane", async ({ page }) => {
+  test("should highlight drop zone when dragging template over lane", async ({
+    page,
+  }) => {
     await page.goto("/admin/shifts/schedule");
     await page.click('button[title="Calendar view"]');
 
@@ -30,7 +35,7 @@ test.describe("LaneCalendarView", () => {
       if (templateBox) {
         await page.mouse.move(
           templateBox.x + templateBox.width / 2,
-          templateBox.y + templateBox.height / 2
+          templateBox.y + templateBox.height / 2,
         );
         await page.mouse.down();
 
@@ -40,7 +45,7 @@ test.describe("LaneCalendarView", () => {
         if (dropBox) {
           await page.mouse.move(
             dropBox.x + dropBox.width / 2,
-            dropBox.y + dropBox.height / 2
+            dropBox.y + dropBox.height / 2,
           );
 
           await expect(dropZone).toHaveClass(/ring-2/);

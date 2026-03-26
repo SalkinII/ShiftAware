@@ -26,6 +26,10 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN npx prisma generate
 RUN npm run build
 
+# Fail-fast: ensure CSS was actually generated (catches silent PostCSS failures)
+RUN test -d .next/static/css && ls .next/static/css/*.css >/dev/null 2>&1 \
+    || (echo "FATAL: No CSS files in .next/static/css/ — PostCSS/Tailwind likely failed" && exit 1)
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app

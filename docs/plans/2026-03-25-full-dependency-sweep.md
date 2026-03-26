@@ -24,6 +24,7 @@
 ### Task 1: Upgrade Next.js
 
 **Files:**
+
 - Modify: `package.json` (next version)
 - Modify: `package-lock.json` (regenerated)
 
@@ -69,6 +70,7 @@ Expected: New commit at HEAD.
 ### Task 2: Upgrade Vitest + Vite + Lint Migration
 
 **Files:**
+
 - Modify: `package.json` (vitest version, lint script)
 - Modify: `package-lock.json` (regenerated)
 - Possibly modify: `vitest.config.ts` (if import path changes)
@@ -88,6 +90,7 @@ Expected: vitest version starts with `^4.` or `4.`
 
 Run: `npx vitest run --reporter=verbose 2>&1`
 Expected: Most tests pass. Watch for:
+
 - `rate-limit.test.ts` — may fail due to `performance.now()` now being mocked by default
 - Any test using `mockReset` — behavior changed (but grep showed only `clearAllMocks` used, so unlikely)
 - Any config/import errors from vitest itself
@@ -99,14 +102,22 @@ If ALL tests pass, skip Steps 4-5 and go to Step 6.
 If the fake timer test fails, open `tests/unit/rate-limit.test.ts` and update the `vi.useFakeTimers()` call to explicitly exclude `performance`:
 
 Change:
+
 ```typescript
 vi.useFakeTimers();
 ```
 
 To:
+
 ```typescript
 vi.useFakeTimers({
-  toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
+  toFake: [
+    "setTimeout",
+    "clearTimeout",
+    "setInterval",
+    "clearInterval",
+    "Date",
+  ],
 });
 ```
 
@@ -127,11 +138,13 @@ Expected: Updates `brace-expansion` to a patched version. Should not change any 
 Open `package.json` and change the lint script:
 
 Change:
+
 ```json
 "lint": "next lint",
 ```
 
 To:
+
 ```json
 "lint": "eslint .",
 ```
@@ -154,7 +167,7 @@ Run: `git diff --stat` to see what changed.
 Expected: `package.json`, `package-lock.json`, possibly `tests/unit/rate-limit.test.ts`.
 
 ```bash
-git add package.json package-lock.json vitest.config.ts tests/ 
+git add package.json package-lock.json vitest.config.ts tests/
 git commit -m "fix(security): upgrade vitest 2→4, vite 6, fix brace-expansion; migrate lint script — zero audit vulns"
 ```
 
@@ -192,6 +205,7 @@ Expected: Two new commits visible on `chore/next-systematic-upgrade`.
 ## Post-completion
 
 After this plan:
+
 - **Production audit:** 0 vulnerabilities (was 1 critical)
 - **Full audit:** 0 vulnerabilities (was 7)
 - **Next.js:** 15.5.14 (current stable, all CVEs resolved)
@@ -205,9 +219,11 @@ Next step: after testing passes, merge `chore/next-systematic-upgrade` into `mai
 ## Rollback
 
 If Next.js upgrade breaks:
+
 - `git reset --hard HEAD~1` (undoes commit 1)
 - `npm install` to restore lockfile
 
 If vitest upgrade breaks:
+
 - `git reset --hard HEAD~1` (undoes commit 2, keeps Next.js commit)
 - `npm install` to restore lockfile

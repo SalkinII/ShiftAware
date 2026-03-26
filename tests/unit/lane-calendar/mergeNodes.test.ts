@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import { mergeNodes } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 import type { Node } from "@xyflow/react";
 
-function makeShiftNode(id: string, x: number, y: number, data?: Record<string, unknown>): Node {
+function makeShiftNode(
+  id: string,
+  x: number,
+  y: number,
+  data?: Record<string, unknown>,
+): Node {
   return {
     id: `shift-${id}`,
     type: "shiftBlock",
@@ -31,10 +36,7 @@ describe("mergeNodes", () => {
   });
 
   it("preserves existing Y during normal refetch (no reorder)", () => {
-    const existing = [
-      makeLaneNode("a", 0),
-      makeShiftNode("s1", 1600, 0),
-    ];
+    const existing = [makeLaneNode("a", 0), makeShiftNode("s1", 1600, 0)];
     const laneNodes = [makeLaneNode("a", 0)];
     const newShifts = [makeShiftNode("s1", 1600, 0)];
     const result = mergeNodes(existing, laneNodes, newShifts);
@@ -43,10 +45,7 @@ describe("mergeNodes", () => {
 
   it("updates Y when forceYUpdate is true (lane reorder)", () => {
     // Existing shift at Y=0 (lane index 0)
-    const existing = [
-      makeLaneNode("a", 0),
-      makeShiftNode("s1", 1600, 0),
-    ];
+    const existing = [makeLaneNode("a", 0), makeShiftNode("s1", 1600, 0)];
     // After reorder, shift should be at Y=480 (lane index 1)
     const laneNodes = [makeLaneNode("b", 0), makeLaneNode("a", 480)];
     const newShifts = [makeShiftNode("s1", 1600, 480)];
@@ -70,7 +69,10 @@ describe("mergeNodes", () => {
   });
 
   it("removes shifts no longer in newShiftNodes", () => {
-    const existing = [makeShiftNode("s1", 1600, 0), makeShiftNode("s2", 2400, 0)];
+    const existing = [
+      makeShiftNode("s1", 1600, 0),
+      makeShiftNode("s2", 2400, 0),
+    ];
     const newShifts = [makeShiftNode("s1", 1600, 0)]; // s2 deleted
     const result = mergeNodes(existing, [], newShifts);
     expect(result).toHaveLength(1);
@@ -84,7 +86,7 @@ describe("reorder + shift position integration", () => {
     const existingNodes = [
       makeLaneNode("a", 0),
       makeLaneNode("b", 480),
-      makeShiftNode("s1", 1600, 0),   // in lane A, Y=0
+      makeShiftNode("s1", 1600, 0), // in lane A, Y=0
     ];
 
     // After reorder: [B(idx 0), A(idx 1)] — shift should move to Y=480

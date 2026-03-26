@@ -10,9 +10,8 @@ vi.mock("@/lib/db", () => ({
 }));
 
 const { prisma } = await import("@/lib/db");
-const { PreferencesService } = await import(
-  "@/lib/services/preferences.service"
-);
+const { PreferencesService } =
+  await import("@/lib/services/preferences.service");
 
 describe("PreferencesService", () => {
   let service: InstanceType<typeof PreferencesService>;

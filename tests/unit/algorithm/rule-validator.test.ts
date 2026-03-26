@@ -99,7 +99,12 @@ describe("filterByRules", () => {
       ["m2", new Map([["firstAid", "false"]])],
     ]);
 
-    const filtered = filterByRules(candidates, "STATIONARY", [rule], memberAttrs);
+    const filtered = filterByRules(
+      candidates,
+      "STATIONARY",
+      [rule],
+      memberAttrs,
+    );
     expect(filtered).toHaveLength(1);
     expect(filtered[0].member.id).toBe("m1");
   });
@@ -120,17 +125,40 @@ describe("filterByRules", () => {
   it("filters with multiple rules — all must pass", () => {
     const rules: AllocationRule[] = [
       { ...rule, id: "r1", attribute: "firstAid", value: "true" },
-      { ...rule, id: "r2", attribute: "gender", operator: "EQUALS" as const, value: "M" },
+      {
+        ...rule,
+        id: "r2",
+        attribute: "gender",
+        operator: "EQUALS" as const,
+        value: "M",
+      },
     ];
     const candidates = [
       { member: { id: "m1" }, score: { overall: 80 } },
       { member: { id: "m2" }, score: { overall: 90 } },
     ] as any;
     const memberAttrs = new Map<string, Map<string, string>>([
-      ["m1", new Map([["firstAid", "true"], ["gender", "M"]])],
-      ["m2", new Map([["firstAid", "true"], ["gender", "FINTA"]])],
+      [
+        "m1",
+        new Map([
+          ["firstAid", "true"],
+          ["gender", "M"],
+        ]),
+      ],
+      [
+        "m2",
+        new Map([
+          ["firstAid", "true"],
+          ["gender", "FINTA"],
+        ]),
+      ],
     ]);
-    const filtered = filterByRules(candidates, "STATIONARY", rules, memberAttrs);
+    const filtered = filterByRules(
+      candidates,
+      "STATIONARY",
+      rules,
+      memberAttrs,
+    );
     expect(filtered).toHaveLength(1);
     expect(filtered[0].member.id).toBe("m1");
   });
@@ -144,7 +172,12 @@ describe("filterByRules", () => {
       ["m1", new Map([["firstAid", "false"]])],
       ["m2", new Map([["firstAid", "false"]])],
     ]);
-    const filtered = filterByRules(candidates, "STATIONARY", [rule], memberAttrs);
+    const filtered = filterByRules(
+      candidates,
+      "STATIONARY",
+      [rule],
+      memberAttrs,
+    );
     expect(filtered).toHaveLength(0);
   });
 
@@ -173,12 +206,29 @@ describe("filterByRules", () => {
     ] as any;
 
     const memberAttrs = new Map<string, Map<string, string>>([
-      ["m1", new Map([["firstAid", "true"], ["gender", "M"]])],
-      ["m2", new Map([["firstAid", "true"], ["gender", "M"]])],
+      [
+        "m1",
+        new Map([
+          ["firstAid", "true"],
+          ["gender", "M"],
+        ]),
+      ],
+      [
+        "m2",
+        new Map([
+          ["firstAid", "true"],
+          ["gender", "M"],
+        ]),
+      ],
     ]);
 
     // Both pass firstAid filter. Both are male, but BALANCE rule should NOT filter them out.
-    const filtered = filterByRules(candidates, "STATIONARY", [filterRule, balanceRule], memberAttrs);
+    const filtered = filterByRules(
+      candidates,
+      "STATIONARY",
+      [filterRule, balanceRule],
+      memberAttrs,
+    );
     expect(filtered).toHaveLength(2);
   });
 
@@ -200,7 +250,12 @@ describe("filterByRules", () => {
       ["m1", new Map([["firstAid", "false"]])],
     ]);
 
-    const filtered = filterByRules(candidates, "STATIONARY", [legacyRule], memberAttrs);
+    const filtered = filterByRules(
+      candidates,
+      "STATIONARY",
+      [legacyRule],
+      memberAttrs,
+    );
     expect(filtered).toHaveLength(0); // Still filtered — backward compat
   });
 });
@@ -239,25 +294,25 @@ describe("validateComplementaryRules", () => {
   it("returns violation when no member on shift satisfies rule", () => {
     const state: AssignmentState = {
       assignments: new Map([
-        ["s1", [
-          { teamMemberId: "m1" } as any,
-          { teamMemberId: "m2" } as any,
-        ]],
+        ["s1", [{ teamMemberId: "m1" } as any, { teamMemberId: "m2" } as any]],
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
     };
 
-    const shifts = [
-      { id: "s1", type: "STATIONARY" } as any,
-    ];
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
 
     const memberAttrs = new Map<string, Map<string, string>>([
       ["m1", new Map([["firstAid", "false"]])],
       ["m2", new Map([["firstAid", "false"]])],
     ]);
 
-    const violations = validateComplementaryRules(state, shifts, [rule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [rule],
+      memberAttrs,
+    );
     expect(violations.length).toBeGreaterThan(0);
     expect(violations[0].type).toBe("COMPLEMENTARY_RULE");
   });
@@ -265,25 +320,25 @@ describe("validateComplementaryRules", () => {
   it("passes when at least one member satisfies rule", () => {
     const state: AssignmentState = {
       assignments: new Map([
-        ["s1", [
-          { teamMemberId: "m1" } as any,
-          { teamMemberId: "m2" } as any,
-        ]],
+        ["s1", [{ teamMemberId: "m1" } as any, { teamMemberId: "m2" } as any]],
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
     };
 
-    const shifts = [
-      { id: "s1", type: "STATIONARY" } as any,
-    ];
+    const shifts = [{ id: "s1", type: "STATIONARY" } as any];
 
     const memberAttrs = new Map<string, Map<string, string>>([
       ["m1", new Map([["firstAid", "true"]])],
       ["m2", new Map([["firstAid", "false"]])],
     ]);
 
-    const violations = validateComplementaryRules(state, shifts, [rule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [rule],
+      memberAttrs,
+    );
     expect(violations).toHaveLength(0);
   });
 });
@@ -303,10 +358,7 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
 
     const state: AssignmentState = {
       assignments: new Map([
-        ["s1", [
-          { teamMemberId: "m1" } as any,
-          { teamMemberId: "m2" } as any,
-        ]],
+        ["s1", [{ teamMemberId: "m1" } as any, { teamMemberId: "m2" } as any]],
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
@@ -318,7 +370,12 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ["m2", new Map([["gender", "M"]])],
     ]);
 
-    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [ratioRule],
+      memberAttrs,
+    );
     expect(violations).toHaveLength(0); // 50% is within 40-60%
   });
 
@@ -336,11 +393,14 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
 
     const state: AssignmentState = {
       assignments: new Map([
-        ["s1", [
-          { teamMemberId: "m1" } as any,
-          { teamMemberId: "m2" } as any,
-          { teamMemberId: "m3" } as any,
-        ]],
+        [
+          "s1",
+          [
+            { teamMemberId: "m1" } as any,
+            { teamMemberId: "m2" } as any,
+            { teamMemberId: "m3" } as any,
+          ],
+        ],
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
@@ -353,7 +413,12 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ["m3", new Map([["gender", "M"]])],
     ]);
 
-    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [ratioRule],
+      memberAttrs,
+    );
     expect(violations.length).toBeGreaterThan(0); // 33% FINTA < 40% min
   });
 
@@ -375,7 +440,12 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
     };
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
     const memberAttrs = new Map<string, Map<string, string>>();
-    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [ratioRule],
+      memberAttrs,
+    );
     expect(violations).toHaveLength(0); // empty assignments skipped
   });
 
@@ -392,13 +462,16 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
     };
     const state: AssignmentState = {
       assignments: new Map([
-        ["s1", [
-          { teamMemberId: "m1" } as any,
-          { teamMemberId: "m2" } as any,
-          { teamMemberId: "m3" } as any,
-          { teamMemberId: "m4" } as any,
-          { teamMemberId: "m5" } as any,
-        ]],
+        [
+          "s1",
+          [
+            { teamMemberId: "m1" } as any,
+            { teamMemberId: "m2" } as any,
+            { teamMemberId: "m3" } as any,
+            { teamMemberId: "m4" } as any,
+            { teamMemberId: "m5" } as any,
+          ],
+        ],
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
@@ -411,7 +484,12 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ["m4", new Map([["gender", "M"]])],
       ["m5", new Map([["gender", "M"]])],
     ]);
-    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [ratioRule],
+      memberAttrs,
+    );
     expect(violations).toHaveLength(0); // 2/5 = 0.4 exactly at boundary
   });
 
@@ -428,13 +506,16 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
     };
     const state: AssignmentState = {
       assignments: new Map([
-        ["s1", [
-          { teamMemberId: "m1" } as any,
-          { teamMemberId: "m2" } as any,
-          { teamMemberId: "m3" } as any,
-          { teamMemberId: "m4" } as any,
-          { teamMemberId: "m5" } as any,
-        ]],
+        [
+          "s1",
+          [
+            { teamMemberId: "m1" } as any,
+            { teamMemberId: "m2" } as any,
+            { teamMemberId: "m3" } as any,
+            { teamMemberId: "m4" } as any,
+            { teamMemberId: "m5" } as any,
+          ],
+        ],
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
@@ -447,7 +528,12 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ["m4", new Map([["gender", "M"]])],
       ["m5", new Map([["gender", "M"]])],
     ]);
-    const violations = validateComplementaryRules(state, shifts, [ratioRule], memberAttrs);
+    const violations = validateComplementaryRules(
+      state,
+      shifts,
+      [ratioRule],
+      memberAttrs,
+    );
     expect(violations).toHaveLength(0); // 3/5 = 0.6 exactly at boundary
   });
 });
@@ -462,10 +548,10 @@ describe("enforceBalanceReservation", () => {
     const result = enforceBalanceReservation(
       candidates,
       "tpl-1",
-      [],                                          // no balance rules
-      [],                                          // no current assignments
-      new Map(),                                   // no member attributes
-      3,                                           // remaining capacity
+      [], // no balance rules
+      [], // no current assignments
+      new Map(), // no member attributes
+      3, // remaining capacity
     );
     expect(result).toHaveLength(2);
   });
@@ -496,7 +582,7 @@ describe("enforceBalanceReservation", () => {
       candidates,
       "tpl-1",
       [balanceRule],
-      [],                                          // no one assigned yet
+      [], // no one assigned yet
       memberAttrs,
       3,
     );
@@ -529,7 +615,7 @@ describe("enforceBalanceReservation", () => {
       candidates,
       "tpl-1",
       [balanceRule],
-      [],                                          // no one satisfies rule yet
+      [], // no one satisfies rule yet
       memberAttrs,
       1,
     );
@@ -554,7 +640,7 @@ describe("enforceBalanceReservation", () => {
 
     const currentAssignments = [{ teamMemberId: "m1" } as any];
     const memberAttrs = new Map<string, Map<string, string>>([
-      ["m1", new Map([["gender", "FINTA"]])],      // already satisfies
+      ["m1", new Map([["gender", "FINTA"]])], // already satisfies
       ["m3", new Map([["gender", "M"]])],
     ]);
 
@@ -594,10 +680,10 @@ describe("enforceBalanceReservation", () => {
     ];
 
     const memberAttrs = new Map<string, Map<string, string>>([
-      ["m1", new Map([["gender", "FINTA"]])],       // 1 FINTA
-      ["m2", new Map([["gender", "M"]])],            // 1 M
-      ["m3", new Map([["gender", "M"]])],            // candidate: M
-      ["m4", new Map([["gender", "FINTA"]])],        // candidate: FINTA
+      ["m1", new Map([["gender", "FINTA"]])], // 1 FINTA
+      ["m2", new Map([["gender", "M"]])], // 1 M
+      ["m3", new Map([["gender", "M"]])], // candidate: M
+      ["m4", new Map([["gender", "FINTA"]])], // candidate: FINTA
     ]);
 
     // Currently: 1/2 FINTA. 1 remaining slot. Total will be 3.
