@@ -78,8 +78,8 @@ export function ShiftPreferencePanel({
                 : "bg-red-50 text-red-700"
             }`}
           >
-            You voted: {currentVote === "WANT" ? "Want" : "Don&apos;t want"} this
-            shift
+            You voted: {currentVote === "WANT" ? "Want" : "Don&apos;t want"}{" "}
+            this shift
           </div>
         )}
       </div>

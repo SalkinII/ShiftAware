@@ -12,7 +12,11 @@ export class MembersService {
     return this.repo.findAll(where);
   }
 
-  async listMembersWithEventContext(eventId: string, includeUnregistered: boolean = false, search?: string) {
+  async listMembersWithEventContext(
+    eventId: string,
+    includeUnregistered: boolean = false,
+    search?: string,
+  ) {
     const where: Prisma.TeamMemberWhereInput = { isActive: true };
     const include: Prisma.TeamMemberInclude = {};
 

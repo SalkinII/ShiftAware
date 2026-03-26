@@ -7,9 +7,11 @@ vi.mock("@/lib/db", () => {
     },
     assignment: {
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
-      create: vi.fn().mockImplementation((args: any) =>
-        Promise.resolve({ id: "a1", ...args.data }),
-      ),
+      create: vi
+        .fn()
+        .mockImplementation((args: any) =>
+          Promise.resolve({ id: "a1", ...args.data }),
+        ),
     },
   };
   return {

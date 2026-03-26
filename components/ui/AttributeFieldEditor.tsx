@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
-import { Input } from './Input';
-import { Button } from './Button';
+import { useState } from "react";
+import { X, Plus } from "lucide-react";
+import { Input } from "./Input";
+import { Button } from "./Button";
 
-type AttributeType = 'BOOLEAN' | 'SELECT' | 'MULTISELECT' | 'TEXT';
+type AttributeType = "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT";
 
 interface AttributeFieldEditorProps {
   value: {
@@ -15,7 +15,7 @@ interface AttributeFieldEditorProps {
     options: string[];
     required: boolean;
   };
-  onChange: (value: AttributeFieldEditorProps['value']) => void;
+  onChange: (value: AttributeFieldEditorProps["value"]) => void;
   onCancel: () => void;
   onSave: () => void;
 }
@@ -26,7 +26,7 @@ export function AttributeFieldEditor({
   onCancel,
   onSave,
 }: AttributeFieldEditorProps) {
-  const [newOption, setNewOption] = useState('');
+  const [newOption, setNewOption] = useState("");
 
   const handleAddOption = () => {
     if (newOption.trim() && !value.options.includes(newOption.trim())) {
@@ -34,7 +34,7 @@ export function AttributeFieldEditor({
         ...value,
         options: [...value.options, newOption.trim()],
       });
-      setNewOption('');
+      setNewOption("");
     }
   };
 
@@ -45,7 +45,7 @@ export function AttributeFieldEditor({
     });
   };
 
-  const showOptions = value.type === 'SELECT' || value.type === 'MULTISELECT';
+  const showOptions = value.type === "SELECT" || value.type === "MULTISELECT";
 
   return (
     <div className="space-y-4">
@@ -79,11 +79,17 @@ export function AttributeFieldEditor({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Type
+          </label>
           <select
             value={value.type}
             onChange={(e) =>
-              onChange({ ...value, type: e.target.value as AttributeType, options: [] })
+              onChange({
+                ...value,
+                type: e.target.value as AttributeType,
+                options: [],
+              })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
@@ -99,17 +105,23 @@ export function AttributeFieldEditor({
             <input
               type="checkbox"
               checked={value.required}
-              onChange={(e) => onChange({ ...value, required: e.target.checked })}
+              onChange={(e) =>
+                onChange({ ...value, required: e.target.checked })
+              }
               className="w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-400"
             />
-            <span className="text-sm font-medium text-gray-700">Required field</span>
+            <span className="text-sm font-medium text-gray-700">
+              Required field
+            </span>
           </label>
         </div>
       </div>
 
       {showOptions && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Options
+          </label>
           <div className="space-y-2">
             {value.options.map((option) => (
               <div
@@ -133,7 +145,7 @@ export function AttributeFieldEditor({
                 onChange={(e) => setNewOption(e.target.value)}
                 placeholder="Add new option..."
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     handleAddOption();
                   }

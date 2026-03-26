@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ReactNode, useState, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { ReactNode, useState, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface PopoverProps {
   children: ReactNode;
@@ -10,7 +10,12 @@ interface PopoverProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function Popover({ children, content, open: controlledOpen, onOpenChange }: PopoverProps) {
+export function Popover({
+  children,
+  content,
+  open: controlledOpen,
+  onOpenChange,
+}: PopoverProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -31,8 +36,9 @@ export function Popover({ children, content, open: controlledOpen, onOpenChange 
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen, setIsOpen]);
 
@@ -52,7 +58,7 @@ export function Popover({ children, content, open: controlledOpen, onOpenChange 
           ref={popoverRef}
           className={cn(
             "absolute z-50 mt-2 rounded-lg border border-gray-200 bg-white shadow-lg",
-            "animate-in fade-in-0 zoom-in-95"
+            "animate-in fade-in-0 zoom-in-95",
           )}
           onClick={(e) => e.stopPropagation()}
         >

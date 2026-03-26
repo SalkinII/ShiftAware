@@ -11,7 +11,10 @@ import { ColorStripe } from "@/components/ui/ColorStripe";
 import { AvatarStack } from "@/components/ui/AvatarStack";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
-import { canManuallyAssign, canMutateShifts } from "@/lib/services/event-status-permissions";
+import {
+  canManuallyAssign,
+  canMutateShifts,
+} from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
@@ -266,18 +269,18 @@ export function ShiftPropertiesPanel({
         <div className="bg-sky-50 rounded-lg p-3 border border-sky-100">
           <div className="flex items-center gap-2 mb-2">
             <ColorStripe color={laneColor} className="h-4" />
-           {(() => {
-            const info = getShiftDisplayInfo(shift);
-            return (
-              <>
-                <div className="text-sm text-gray-600">{info.date}</div>
-                <div className="text-sm text-gray-600">{info.timeRange}</div>
-                <div className="text-sm text-gray-600 mt-1">
-                  {info.assignedCount}/{info.capacity} assigned
-                </div>
-              </>
-            );
-          })()}
+            {(() => {
+              const info = getShiftDisplayInfo(shift);
+              return (
+                <>
+                  <div className="text-sm text-gray-600">{info.date}</div>
+                  <div className="text-sm text-gray-600">{info.timeRange}</div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    {info.assignedCount}/{info.capacity} assigned
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -309,7 +312,9 @@ export function ShiftPropertiesPanel({
                 type="number"
                 min={0}
                 value={capacity}
-                onChange={(e) => setCapacity(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) =>
+                  setCapacity(Math.max(0, parseInt(e.target.value) || 0))
+                }
                 className="mt-1 block w-full border rounded px-2 py-1 text-sm"
               />
             </label>
@@ -393,7 +398,9 @@ export function ShiftPropertiesPanel({
                     <div className="text-sm font-medium text-gray-900">
                       {assignment.teamMember?.alias || "Unknown"}
                     </div>
-                    <div className="text-xs text-gray-500">{assignment.role}</div>
+                    <div className="text-xs text-gray-500">
+                      {assignment.role}
+                    </div>
                   </div>
                 </button>
                 {canManualAssign && (
@@ -412,30 +419,35 @@ export function ShiftPropertiesPanel({
           {canManualAssign &&
             availableMembers.length > 0 &&
             (shift?.assignments?.length || 0) < (shift?.capacity || 0) && (
-            <div className="mt-2">
-              <select
-                value={selectedMemberToAdd}
-                onChange={(e) => setSelectedMemberToAdd(e.target.value)}
-                className="w-full p-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 transition-colors"
-              >
-                <option value="">+ Add Member</option>
-                {availableMembers.map((m: any) => (
-                  <option key={m.id} value={m.id}>
-                    {m.alias}
-                  </option>
-                ))}
-              </select>
-              {selectedMemberToAdd && (
-                <Button
-                  size="sm"
-                  className="w-full mt-2"
-                  onClick={handleAddAssignment}
+              <div className="mt-2">
+                <select
+                  value={selectedMemberToAdd}
+                  onChange={(e) => setSelectedMemberToAdd(e.target.value)}
+                  className="w-full p-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 transition-colors"
                 >
-                  Add {availableMembers.find((m: any) => m.id === selectedMemberToAdd)?.alias}
-                </Button>
-              )}
-            </div>
-          )}
+                  <option value="">+ Add Member</option>
+                  {availableMembers.map((m: any) => (
+                    <option key={m.id} value={m.id}>
+                      {m.alias}
+                    </option>
+                  ))}
+                </select>
+                {selectedMemberToAdd && (
+                  <Button
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={handleAddAssignment}
+                  >
+                    Add{" "}
+                    {
+                      availableMembers.find(
+                        (m: any) => m.id === selectedMemberToAdd,
+                      )?.alias
+                    }
+                  </Button>
+                )}
+              </div>
+            )}
         </div>
       </div>
 

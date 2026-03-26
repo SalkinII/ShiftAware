@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
-import { CreateProfileForm, type ProfileData } from "@/app/app/identity/components/CreateProfileForm";
+import {
+  CreateProfileForm,
+  type ProfileData,
+} from "@/app/app/identity/components/CreateProfileForm";
 
 interface Member {
   id: string;
@@ -108,7 +111,8 @@ export function MemberListByEvent({
           setAttributeDefinitions(data.data || []);
         }
       } catch (error) {
-        if (!cancelled) console.error("Failed to load attribute definitions:", error);
+        if (!cancelled)
+          console.error("Failed to load attribute definitions:", error);
       }
     })();
     return () => {
@@ -173,14 +177,11 @@ export function MemberListByEvent({
     try {
       await Promise.all(
         Object.entries(attributeValues).map(([key, value]) =>
-          fetch(
-            `/api/members/${pendingAttributeMember.memberId}/attributes`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ eventId, key, value }),
-            },
-          ),
+          fetch(`/api/members/${pendingAttributeMember.memberId}/attributes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventId, key, value }),
+          }),
         ),
       );
       toast.success("Attributes saved");
@@ -218,9 +219,9 @@ export function MemberListByEvent({
         const error = await res.json();
         toast.error(error.message || "Failed to remove member");
       }
-} catch {
-    toast.error("Failed to remove member");
-  }
+    } catch {
+      toast.error("Failed to remove member");
+    }
   }
 
   async function handleCreateMember(profileData: ProfileData) {
@@ -253,7 +254,10 @@ export function MemberListByEvent({
       }
 
       // Save attributes if any
-      if (profileData.attributes && Object.keys(profileData.attributes).length > 0) {
+      if (
+        profileData.attributes &&
+        Object.keys(profileData.attributes).length > 0
+      ) {
         await Promise.all(
           Object.entries(profileData.attributes).map(([key, value]) =>
             fetch(`/api/members/${newMemberId}/attributes`, {
@@ -340,16 +344,22 @@ export function MemberListByEvent({
                       experienceLevel: member.experienceLevel,
                       capabilities: member.capabilities,
                       attributes: member.attributes?.map((a) => {
-                        const name = a.definition?.name || (a as { name?: string }).name || "Unknown";
+                        const name =
+                          a.definition?.name ||
+                          (a as { name?: string }).name ||
+                          "Unknown";
                         let val: string;
                         try {
-                          const v = typeof a.value === "string" ? JSON.parse(a.value) : a.value;
+                          const v =
+                            typeof a.value === "string"
+                              ? JSON.parse(a.value)
+                              : a.value;
                           val = typeof v === "boolean" ? String(v) : String(v);
                         } catch {
                           val = String(a.value);
                         }
                         return { name, value: val };
-                      })
+                      }),
                     })
                   }
                   className="text-2xl cursor-pointer"
@@ -424,8 +434,14 @@ export function MemberListByEvent({
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <Card className="max-w-lg w-full bg-white p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Create New Member</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowCreateForm(false)}>
+              <h3 className="text-lg font-bold text-gray-900">
+                Create New Member
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCreateForm(false)}
+              >
                 Cancel
               </Button>
             </div>
@@ -511,15 +527,12 @@ export function MemberListByEvent({
                               attributeValues[attr.name] || []
                             ).includes(opt)}
                             onChange={(e) => {
-                              const current =
-                                attributeValues[attr.name] || [];
+                              const current = attributeValues[attr.name] || [];
                               setAttributeValues((prev) => ({
                                 ...prev,
                                 [attr.name]: e.target.checked
                                   ? [...current, opt]
-                                  : current.filter(
-                                      (v: string) => v !== opt,
-                                    ),
+                                  : current.filter((v: string) => v !== opt),
                               }));
                             }}
                             className="w-4 h-4 text-primary-600 border-gray-300 rounded"

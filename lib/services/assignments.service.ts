@@ -62,15 +62,11 @@ export class AssignmentsService {
     );
 
     if (wouldConflict1) {
-      throw new Error(
-        `Member is already assigned to this shift. Cannot swap.`,
-      );
+      throw new Error(`Member is already assigned to this shift. Cannot swap.`);
     }
 
     if (wouldConflict2) {
-      throw new Error(
-        `Member is already assigned to this shift. Cannot swap.`,
-      );
+      throw new Error(`Member is already assigned to this shift. Cannot swap.`);
     }
 
     // Perform swap
@@ -119,7 +115,9 @@ export class AssignmentsService {
       throw new Error("Member is not registered for this event");
     }
     if (shiftRecord.capacity === 0) {
-      throw new Error("Cannot assign members to a marker shift (capacity is 0)");
+      throw new Error(
+        "Cannot assign members to a marker shift (capacity is 0)",
+      );
     }
 
     await assertEventStatusAllows(shiftRecord.eventId, "ASSIGNMENT_MANUAL");
@@ -182,8 +180,8 @@ export class AssignmentsService {
     const config = event.config || {
       minShiftsPerPerson: 2,
       algorithmWeights: {
-        preferenceMatch: 0.70,
-        workloadFairness: 0.30,
+        preferenceMatch: 0.7,
+        workloadFairness: 0.3,
       },
       balanceThresholds: {} as any,
       allocationRules: [] as any,
@@ -194,8 +192,8 @@ export class AssignmentsService {
       config.algorithmWeights !== null
         ? (config.algorithmWeights as any)
         : {
-            preferenceMatch: 0.70,
-            workloadFairness: 0.30,
+            preferenceMatch: 0.7,
+            workloadFairness: 0.3,
           };
 
     const assignableShifts = shifts.filter((s) => s.capacity > 0);
@@ -203,7 +201,8 @@ export class AssignmentsService {
 
     // Extract minRestMs and maxShiftsPerPerson from config
     const balanceThresholds =
-      typeof config.balanceThresholds === "object" && config.balanceThresholds !== null
+      typeof config.balanceThresholds === "object" &&
+      config.balanceThresholds !== null
         ? (config.balanceThresholds as any)
         : {};
     const minRestHours = balanceThresholds.minRestHours ?? 8;
@@ -245,9 +244,14 @@ export class AssignmentsService {
       const memberAliases = Object.fromEntries(
         members.map((m) => [m.id, m.alias]),
       );
-      const shiftCoverage: Record<string, { assigned: number; capacity: number }> = {};
+      const shiftCoverage: Record<
+        string,
+        { assigned: number; capacity: number }
+      > = {};
       for (const s of assignableShifts) {
-        const assigned = result.assignments.filter((a) => a.shiftId === s.id).length;
+        const assigned = result.assignments.filter(
+          (a) => a.shiftId === s.id,
+        ).length;
         shiftCoverage[s.id] = { assigned, capacity: s.capacity };
       }
       return {

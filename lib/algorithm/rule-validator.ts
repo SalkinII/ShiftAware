@@ -45,19 +45,24 @@ export function evaluateRule(
  * Filters candidates by removing those who violate hard rules for the given shift type.
  * Only rules matching the shift's template type are applied.
  */
-export function filterByRules<T extends { member: { id: string }; score: AssignmentScore }>(
+export function filterByRules<
+  T extends { member: { id: string }; score: AssignmentScore },
+>(
   candidates: T[],
   shiftTemplateType: string,
   rules: AllocationRule[],
   memberAttributes: Map<string, Map<string, string>>,
 ): T[] {
   const applicableRules = rules.filter(
-    (r) => r.shiftType === shiftTemplateType && (r.ruleKind ?? "FILTER") === "FILTER",
+    (r) =>
+      r.shiftType === shiftTemplateType &&
+      (r.ruleKind ?? "FILTER") === "FILTER",
   );
   if (applicableRules.length === 0) return candidates;
 
   return candidates.filter((c) => {
-    const attrs = memberAttributes.get(c.member.id) || new Map<string, string>();
+    const attrs =
+      memberAttributes.get(c.member.id) || new Map<string, string>();
     return applicableRules.every((rule) => evaluateRule(rule, attrs));
   });
 }
@@ -81,7 +86,12 @@ export function getRuleFilterExclusionReason(
     member: c.member,
     score: { preferenceMatch: 0, workloadFairness: 0, overall: 0 },
   }));
-  const filtered = filterByRules(withScores, shiftType, rules, memberAttributes);
+  const filtered = filterByRules(
+    withScores,
+    shiftType,
+    rules,
+    memberAttributes,
+  );
   if (filtered.length > 0) return null;
 
   const ruleDescs = applicableRules.map(
@@ -103,7 +113,9 @@ export function validateComplementaryRules(
   const violations: ConstraintViolation[] = [];
 
   for (const shift of shifts) {
-    const applicableRules = rules.filter((r) => r.shiftType === (shift.templateId ?? shift.type));
+    const applicableRules = rules.filter(
+      (r) => r.shiftType === (shift.templateId ?? shift.type),
+    );
     const assignments = state.assignments.get(shift.id) || [];
 
     for (const rule of applicableRules) {
@@ -111,7 +123,8 @@ export function validateComplementaryRules(
 
       if (balanceMode === "REQUIRE_ONE") {
         const hasCoverage = assignments.some((a) => {
-          const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
+          const attrs =
+            memberAttributes.get(a.teamMemberId) || new Map<string, string>();
           return evaluateRule(rule, attrs);
         });
 
@@ -126,7 +139,8 @@ export function validateComplementaryRules(
         if (assignments.length === 0) continue;
 
         const matchCount = assignments.filter((a) => {
-          const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
+          const attrs =
+            memberAttributes.get(a.teamMemberId) || new Map<string, string>();
           return evaluateRule(rule, attrs);
         }).length;
 
@@ -163,9 +177,7 @@ export function validateComplementaryRules(
  * @param remainingCapacity - How many more slots the shift has
  * @returns Filtered candidates (same or subset)
  */
-export function enforceBalanceReservation<
-  T extends { member: { id: string } },
->(
+export function enforceBalanceReservation<T extends { member: { id: string } }>(
   candidates: T[],
   shiftType: string,
   balanceRules: AllocationRule[],
@@ -180,7 +192,8 @@ export function enforceBalanceReservation<
   const unsatisfiedRequireOne = applicable.filter((rule) => {
     if ((rule.balanceMode ?? "REQUIRE_ONE") !== "REQUIRE_ONE") return false;
     return !currentAssignments.some((a) => {
-      const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
+      const attrs =
+        memberAttributes.get(a.teamMemberId) || new Map<string, string>();
       return evaluateRule(rule, attrs);
     });
   });
@@ -190,7 +203,8 @@ export function enforceBalanceReservation<
     if (rule.balanceMode !== "REQUIRE_RATIO") return false;
     const totalAfter = currentAssignments.length + remainingCapacity;
     const currentMatch = currentAssignments.filter((a) => {
-      const attrs = memberAttributes.get(a.teamMemberId) || new Map<string, string>();
+      const attrs =
+        memberAttributes.get(a.teamMemberId) || new Map<string, string>();
       return evaluateRule(rule, attrs);
     }).length;
     const minNeeded = Math.ceil((rule.minRatio ?? 0) * totalAfter);
@@ -206,7 +220,8 @@ export function enforceBalanceReservation<
   // Restrict to candidates satisfying at least one unsatisfied rule
   const allUnsatisfied = [...unsatisfiedRequireOne, ...ratioNeedMore];
   const restricted = candidates.filter((c) => {
-    const attrs = memberAttributes.get(c.member.id) || new Map<string, string>();
+    const attrs =
+      memberAttributes.get(c.member.id) || new Map<string, string>();
     return allUnsatisfied.some((rule) => evaluateRule(rule, attrs));
   });
 

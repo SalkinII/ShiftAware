@@ -10,7 +10,10 @@ import { canRunAlgorithm } from "@/lib/services/event-status-permissions";
 import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { AlgorithmResultsModal } from "@/components/features/AlgorithmResultsModal";
-import { getValidOperators, isBalanceModeAvailable } from "@/lib/algorithm/rule-compatibility";
+import {
+  getValidOperators,
+  isBalanceModeAvailable,
+} from "@/lib/algorithm/rule-compatibility";
 
 interface AttributeRule {
   id: string;
@@ -87,7 +90,9 @@ export function DistributionSettings() {
           setTemplates(all);
         }
 
-        const cfgRes = await fetch(`/api/events/${selectedEventId}/config`, { signal });
+        const cfgRes = await fetch(`/api/events/${selectedEventId}/config`, {
+          signal,
+        });
         if (signal.aborted) return;
         if (cfgRes.ok) {
           const data = await cfgRes.json();
@@ -97,7 +102,10 @@ export function DistributionSettings() {
             const weights = cfg.algorithmWeights || {};
             let fairness = weights._uiFairness ?? 50;
             let preferences = weights._uiPreferences ?? 30;
-            if (weights._uiFairness === undefined && weights.preferenceMatch !== undefined) {
+            if (
+              weights._uiFairness === undefined &&
+              weights.preferenceMatch !== undefined
+            ) {
               const wb = weights.workloadFairness || 0;
               const pm = weights.preferenceMatch || 0;
               const total = wb + pm;
@@ -107,12 +115,15 @@ export function DistributionSettings() {
             setConfig({
               fairnessWeight: fairness,
               preferenceWeight: preferences,
-              maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
+              maxShiftsPerPerson:
+                cfg.balanceThresholds?.maxShiftsPerPerson || 12,
               minRestHours: cfg.balanceThresholds?.minRestHours || 8,
-              attributeRules: (cfg.allocationRules || []).map((r: AttributeRule) => ({
-                ...r,
-                ruleKind: r.ruleKind || "FILTER",
-              })),
+              attributeRules: (cfg.allocationRules || []).map(
+                (r: AttributeRule) => ({
+                  ...r,
+                  ruleKind: r.ruleKind || "FILTER",
+                }),
+              ),
             });
           }
         }
@@ -142,7 +153,10 @@ export function DistributionSettings() {
           let preferences = weights._uiPreferences ?? 30;
 
           // If no UI values stored, derive from 4-factor weights
-          if (weights._uiFairness === undefined && weights.preferenceMatch !== undefined) {
+          if (
+            weights._uiFairness === undefined &&
+            weights.preferenceMatch !== undefined
+          ) {
             const wb = weights.workloadFairness || 0;
             const pm = weights.preferenceMatch || 0;
             const total = wb + pm;
@@ -155,10 +169,12 @@ export function DistributionSettings() {
             preferenceWeight: preferences,
             maxShiftsPerPerson: cfg.balanceThresholds?.maxShiftsPerPerson || 12,
             minRestHours: cfg.balanceThresholds?.minRestHours || 8,
-            attributeRules: (cfg.allocationRules || []).map((r: AttributeRule) => ({
-              ...r,
-              ruleKind: r.ruleKind || "FILTER",
-            })),
+            attributeRules: (cfg.allocationRules || []).map(
+              (r: AttributeRule) => ({
+                ...r,
+                ruleKind: r.ruleKind || "FILTER",
+              }),
+            ),
           });
         }
       }
@@ -208,7 +224,10 @@ export function DistributionSettings() {
       attributeRules: config.attributeRules.map((rule) => {
         if (rule.id !== id) return rule;
         if (field === "minRatio" || field === "maxRatio") {
-          return { ...rule, [field]: typeof value === "number" ? value : parseFloat(value) };
+          return {
+            ...rule,
+            [field]: typeof value === "number" ? value : parseFloat(value),
+          };
         }
         return { ...rule, [field]: value };
       }),
@@ -483,14 +502,22 @@ export function DistributionSettings() {
                       <select
                         value={rule.ruleKind || "FILTER"}
                         onChange={(e) => {
-                          const newKind = e.target.value as "FILTER" | "BALANCE";
-                          const updates: Partial<AttributeRule> = { ruleKind: newKind };
+                          const newKind = e.target.value as
+                            | "FILTER"
+                            | "BALANCE";
+                          const updates: Partial<AttributeRule> = {
+                            ruleKind: newKind,
+                          };
                           if (newKind === "FILTER") {
                             updates.balanceMode = undefined;
                           }
-                          const newValidOps = getValidOperators(attrType, newKind);
+                          const newValidOps = getValidOperators(
+                            attrType,
+                            newKind,
+                          );
                           if (!newValidOps.includes(rule.operator)) {
-                            updates.operator = (newValidOps[0] || "EQUALS") as AttributeRule["operator"];
+                            updates.operator = (newValidOps[0] ||
+                              "EQUALS") as AttributeRule["operator"];
                           }
                           setConfig({
                             ...config,
@@ -532,14 +559,23 @@ export function DistributionSettings() {
                           );
                           const newType = newAttr?.type || "TEXT";
                           const newKind = rule.ruleKind || "FILTER";
-                          const updates: Partial<AttributeRule> = { attribute: newAttrName };
-                          if (newKind === "BALANCE" && !isBalanceModeAvailable(newType)) {
+                          const updates: Partial<AttributeRule> = {
+                            attribute: newAttrName,
+                          };
+                          if (
+                            newKind === "BALANCE" &&
+                            !isBalanceModeAvailable(newType)
+                          ) {
                             updates.ruleKind = "FILTER";
                             updates.balanceMode = undefined;
                           }
-                          const ops = getValidOperators(newType, updates.ruleKind || newKind);
+                          const ops = getValidOperators(
+                            newType,
+                            updates.ruleKind || newKind,
+                          );
                           if (!ops.includes(rule.operator)) {
-                            updates.operator = (ops[0] || "EQUALS") as AttributeRule["operator"];
+                            updates.operator = (ops[0] ||
+                              "EQUALS") as AttributeRule["operator"];
                           }
                           setConfig({
                             ...config,
@@ -559,7 +595,11 @@ export function DistributionSettings() {
                       </select>
 
                       <select
-                        value={validOperators.includes(rule.operator) ? rule.operator : validOperators[0] || ""}
+                        value={
+                          validOperators.includes(rule.operator)
+                            ? rule.operator
+                            : validOperators[0] || ""
+                        }
                         onChange={(e) =>
                           handleUpdateRule(
                             rule.id,
@@ -588,7 +628,11 @@ export function DistributionSettings() {
                             <select
                               value={rule.value}
                               onChange={(e) =>
-                                handleUpdateRule(rule.id, "value", e.target.value)
+                                handleUpdateRule(
+                                  rule.id,
+                                  "value",
+                                  e.target.value,
+                                )
                               }
                               className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                             >
@@ -604,7 +648,11 @@ export function DistributionSettings() {
                               type="text"
                               value={rule.value}
                               onChange={(e) =>
-                                handleUpdateRule(rule.id, "value", e.target.value)
+                                handleUpdateRule(
+                                  rule.id,
+                                  "value",
+                                  e.target.value,
+                                )
                               }
                               placeholder="e.g. FINTA, M (comma-separated)"
                               className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 flex-1 min-w-0"
@@ -620,7 +668,11 @@ export function DistributionSettings() {
                             <select
                               value={rule.value}
                               onChange={(e) =>
-                                handleUpdateRule(rule.id, "value", e.target.value)
+                                handleUpdateRule(
+                                  rule.id,
+                                  "value",
+                                  e.target.value,
+                                )
                               }
                               className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                             >
@@ -652,7 +704,11 @@ export function DistributionSettings() {
                         <select
                           value={rule.balanceMode || "REQUIRE_ONE"}
                           onChange={(e) =>
-                            handleUpdateRule(rule.id, "balanceMode", e.target.value)
+                            handleUpdateRule(
+                              rule.id,
+                              "balanceMode",
+                              e.target.value,
+                            )
                           }
                           className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
@@ -692,7 +748,9 @@ export function DistributionSettings() {
                               placeholder="Max %"
                               className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded"
                             />
-                            <span className="text-sm text-gray-500">% ratio</span>
+                            <span className="text-sm text-gray-500">
+                              % ratio
+                            </span>
                           </div>
                         )}
                       </div>
@@ -713,8 +771,10 @@ export function DistributionSettings() {
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          <strong>Filter</strong> rules gate individual candidates (e.g., &quot;Driver requires can_drive = YES&quot;).{" "}
-          <strong>Balance</strong> rules enforce shift composition (e.g., &quot;At least one FINTA member per shift&quot;).
+          <strong>Filter</strong> rules gate individual candidates (e.g.,
+          &quot;Driver requires can_drive = YES&quot;). <strong>Balance</strong>{" "}
+          rules enforce shift composition (e.g., &quot;At least one FINTA member
+          per shift&quot;).
         </p>
       </Card>
 

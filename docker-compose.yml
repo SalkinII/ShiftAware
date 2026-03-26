@@ -9,6 +9,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL:-postgresql://shiftaware:shiftaware@db:5432/shiftaware_dev}
+      SESSION_SECRET: ${SESSION_SECRET?Set SESSION_SECRET to a 32+ byte hex string (node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD?Set ADMIN_PASSWORD to the shared password for authentication}
       SESSION_TIMEOUT_MINUTES: ${SESSION_TIMEOUT_MINUTES:-60}
     ports:

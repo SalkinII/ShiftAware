@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Settings, Calendar, Users } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import { cn } from '@/lib/utils';
-import { FestivalSettings } from './components/FestivalSettings';
-import { TemplateManager } from './components/TemplateManager';
-import { AttributeDefinitions } from './components/AttributeDefinitions';
+import { useState } from "react";
+import { Settings, Calendar, Users } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { cn } from "@/lib/utils";
+import { FestivalSettings } from "./components/FestivalSettings";
+import { TemplateManager } from "./components/TemplateManager";
+import { AttributeDefinitions } from "./components/AttributeDefinitions";
 
-type TabType = 'event' | 'templates' | 'attributes';
+type TabType = "event" | "templates" | "attributes";
 
 export default function SetupPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('event');
+  const [activeTab, setActiveTab] = useState<TabType>("event");
 
   const tabs = [
-    { id: 'event' as TabType, label: 'Event Settings', icon: Calendar },
-    { id: 'templates' as TabType, label: 'Shift Templates', icon: Settings },
-    { id: 'attributes' as TabType, label: 'Team Attributes', icon: Users },
+    { id: "event" as TabType, label: "Event Settings", icon: Calendar },
+    { id: "templates" as TabType, label: "Shift Templates", icon: Settings },
+    { id: "attributes" as TabType, label: "Team Attributes", icon: Users },
   ];
 
   return (
@@ -40,10 +40,10 @@ export default function SetupPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 pb-4 px-1 border-b-2 font-medium text-sm transition-colors',
+                  "flex items-center gap-2 pb-4 px-1 border-b-2 font-medium text-sm transition-colors",
                   activeTab === tab.id
-                    ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? "border-primary-600 text-primary-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300",
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -56,19 +56,19 @@ export default function SetupPage() {
 
       {/* Tab Content */}
       <div className="py-6">
-        {activeTab === 'event' && (
+        {activeTab === "event" && (
           <Card className="p-6">
             <FestivalSettings />
           </Card>
         )}
 
-        {activeTab === 'templates' && (
+        {activeTab === "templates" && (
           <Card className="p-6">
             <TemplateManager />
           </Card>
         )}
 
-        {activeTab === 'attributes' && (
+        {activeTab === "attributes" && (
           <Card className="p-6">
             <AttributeDefinitions />
           </Card>

@@ -3,12 +3,15 @@
 import { cn } from "@/lib/utils";
 import type { EventStatus } from "@prisma/client";
 
-const STATUS_CONFIG: Record<EventStatus, {
-  label: string;
-  classes: string;
-  dotClass: string;
-  pulse: boolean;
-}> = {
+const STATUS_CONFIG: Record<
+  EventStatus,
+  {
+    label: string;
+    classes: string;
+    dotClass: string;
+    pulse: boolean;
+  }
+> = {
   PLANNING: {
     label: "Planning",
     classes: "bg-gray-50 text-gray-700 border-gray-200",
@@ -47,7 +50,11 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-export function StatusBadge({ status, pulse = true, className }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  pulse = true,
+  className,
+}: StatusBadgeProps) {
   const config = STATUS_CONFIG[status];
 
   return (
@@ -56,7 +63,7 @@ export function StatusBadge({ status, pulse = true, className }: StatusBadgeProp
         "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border",
         config.classes,
         pulse && config.pulse && "animate-pulse",
-        className
+        className,
       )}
     >
       <div className={cn("w-2 h-2 rounded-full", config.dotClass)} />

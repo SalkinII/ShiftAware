@@ -129,12 +129,16 @@ export function MyShiftsList({
             {myShifts.map((shift) => {
               const assignment = getUserAssignment(shift);
               return (
-                <Card key={shift.id} className="p-5 hover:shadow-md transition-all">
+                <Card
+                  key={shift.id}
+                  className="p-5 hover:shadow-md transition-all"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="text-lg font-bold text-gray-900">
-                          {shift.template?.name ?? shift.type.replace(/_/g, " ")}
+                          {shift.template?.name ??
+                            shift.type.replace(/_/g, " ")}
                         </h4>
                         {assignment && (
                           <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-primary-100 text-primary-700">
@@ -215,10 +219,14 @@ export function MyShiftsList({
                   )}
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-gray-900">
-                      {pref.shift.template?.name ?? pref.shift.type.replace(/_/g, " ")}
+                      {pref.shift.template?.name ??
+                        pref.shift.type.replace(/_/g, " ")}
                     </span>
                     <span className="text-xs text-gray-500 ml-2">
-                      {format(new Date(pref.shift.startTime), "EEE dd.MM HH:mm")}
+                      {format(
+                        new Date(pref.shift.startTime),
+                        "EEE dd.MM HH:mm",
+                      )}
                     </span>
                   </div>
                   {isFulfilled && (

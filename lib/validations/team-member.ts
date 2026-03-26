@@ -13,7 +13,10 @@ export const teamMemberSchema = z.object({
     .refine((val) => !isReservedEmoji(val), {
       message: `Avatar emoji cannot be one of: ${RESERVED_EMOJIS.join(", ")} (reserved for system use)`,
     }),
-  experienceLevel: z.nativeEnum(ExperienceLevel).optional().default(ExperienceLevel.INTERMEDIATE),
+  experienceLevel: z
+    .nativeEnum(ExperienceLevel)
+    .optional()
+    .default(ExperienceLevel.INTERMEDIATE),
   capabilities: z.array(z.nativeEnum(Role)).min(1),
   isActive: z.boolean().optional().default(true),
 });

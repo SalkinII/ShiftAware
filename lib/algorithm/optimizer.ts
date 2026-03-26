@@ -15,11 +15,19 @@ import {
   validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
-import { evaluateRule, filterByRules, getRuleFilterExclusionReason, validateComplementaryRules, getFilterRules, getBalanceRules, enforceBalanceReservation } from "./rule-validator";
+import {
+  evaluateRule,
+  filterByRules,
+  getRuleFilterExclusionReason,
+  validateComplementaryRules,
+  getFilterRules,
+  getBalanceRules,
+  enforceBalanceReservation,
+} from "./rule-validator";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
-  preferenceMatch: 0.70,
-  workloadFairness: 0.30,
+  preferenceMatch: 0.7,
+  workloadFairness: 0.3,
 };
 
 /**
@@ -120,9 +128,15 @@ export async function runAssignmentAlgorithm(
       // Check hard FILTER allocation rules (BALANCE rules are handled separately)
       const filterRules = getFilterRules(allocationRules);
       if (filterRules.length > 0) {
-        const memberAttrs = eventConfig.memberAttributes?.get(member.id) || new Map<string, string>();
-        const applicableRules = filterRules.filter((r) => r.shiftType === shift.templateId);
-        const passesRules = applicableRules.every((rule) => evaluateRule(rule, memberAttrs));
+        const memberAttrs =
+          eventConfig.memberAttributes?.get(member.id) ||
+          new Map<string, string>();
+        const applicableRules = filterRules.filter(
+          (r) => r.shiftType === shift.templateId,
+        );
+        const passesRules = applicableRules.every((rule) =>
+          evaluateRule(rule, memberAttrs),
+        );
         if (!passesRules) continue;
       }
 
@@ -188,7 +202,8 @@ export async function runAssignmentAlgorithm(
       const candidates = members
         .map((member) => {
           // Skip member if already at max shifts
-          const memberShiftCount = (state.memberShifts.get(member.id) || []).length;
+          const memberShiftCount = (state.memberShifts.get(member.id) || [])
+            .length;
           if (memberShiftCount >= maxShiftsPerPerson) return null;
 
           const overlapViolation = validateNoOverlaps(
@@ -223,9 +238,15 @@ export async function runAssignmentAlgorithm(
         .sort((a, b) => b.score.overall - a.score.overall);
 
       // Filter by hard FILTER rules
-      const filteredByFilter = allocationRules.length > 0
-        ? filterByRules(candidates, shift.templateId ?? shift.type, allocationRules, eventConfig.memberAttributes || new Map())
-        : candidates;
+      const filteredByFilter =
+        allocationRules.length > 0
+          ? filterByRules(
+              candidates,
+              shift.templateId ?? shift.type,
+              allocationRules,
+              eventConfig.memberAttributes || new Map(),
+            )
+          : candidates;
 
       if (filteredByFilter.length === 0) {
         if (candidates.length > 0 && allocationRules.length > 0) {
@@ -242,7 +263,8 @@ export async function runAssignmentAlgorithm(
       }
 
       // Apply balance reservation constraints
-      const remainingCapacity = shift.capacity - (state.shiftCoverage.get(shift.id) || 0);
+      const remainingCapacity =
+        shift.capacity - (state.shiftCoverage.get(shift.id) || 0);
       const currentShiftAssignments = state.assignments.get(shift.id) || [];
       const filteredCandidates = enforceBalanceReservation(
         filteredByFilter,

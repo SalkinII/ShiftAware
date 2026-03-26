@@ -1,4 +1,12 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
 import { invalidateEventCache, CacheScope } from "../invalidateEventCache";
 
 describe("invalidateEventCache", () => {

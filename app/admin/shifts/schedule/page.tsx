@@ -42,10 +42,18 @@ import { getShiftDisplayInfo } from "@/lib/utils/shift-display";
 import { ShiftType, ShiftPriority, Role } from "@prisma/client";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import {
-  LaneCalendarCanvas,
-  type LaneCalendarCanvasHandle,
-} from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import dynamic from "next/dynamic";
+import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+
+// ssr:false prevents Next.js from server-rendering React Flow, which uses
+// browser-only APIs (ResizeObserver, window) unavailable in the Node.js runtime.
+const LaneCalendarCanvas = dynamic(
+  () =>
+    import("@/components/features/LaneCalendar/LaneCalendarCanvas").then(
+      (m) => ({ default: m.LaneCalendarCanvas }),
+    ),
+  { ssr: false },
+);
 import { ShiftPropertiesPanel } from "@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel";
 
 interface Shift {
@@ -255,7 +263,9 @@ export default function ShiftsPage() {
   // Removed DnD context - React Flow handles drag/drop natively
 
   function handleTemplateSelect(templateId: string) {
-    const template = (eventTemplates || []).find((t: any) => t.id === templateId);
+    const template = (eventTemplates || []).find(
+      (t: any) => t.id === templateId,
+    );
     if (!template) {
       setFormData((prev) => ({ ...prev, templateId: "" }));
       return;
@@ -269,10 +279,12 @@ export default function ShiftsPage() {
       durationMinutes: template.durationMinutes ?? prev.durationMinutes,
       requiredRoles:
         template.requiredRoles?.length > 0
-          ? template.requiredRoles.map((r: { role: string; count: number }) => ({
-              role: r.role,
-              count: r.count,
-            }))
+          ? template.requiredRoles.map(
+              (r: { role: string; count: number }) => ({
+                role: r.role,
+                count: r.count,
+              }),
+            )
           : prev.requiredRoles,
       endTime:
         prev.startTime && template.durationMinutes
@@ -659,7 +671,11 @@ export default function ShiftsPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <div className={viewMode === "list" ? "invisible pointer-events-none" : ""}>
+              <div
+                className={
+                  viewMode === "list" ? "invisible pointer-events-none" : ""
+                }
+              >
                 <div className="relative group">
                   <Button
                     variant="secondary"
@@ -725,9 +741,13 @@ export default function ShiftsPage() {
                 className="flex items-center gap-2 min-w-[11rem] justify-center shadow-lg shadow-primary-500/20"
               >
                 {showForm ? (
-                  <><X className="w-4 h-4" /> Cancel</>
+                  <>
+                    <X className="w-4 h-4" /> Cancel
+                  </>
                 ) : (
-                  <><Plus className="w-4 h-4" /> Define New Shift</>
+                  <>
+                    <Plus className="w-4 h-4" /> Define New Shift
+                  </>
                 )}
               </Button>
             </div>
@@ -737,19 +757,22 @@ export default function ShiftsPage() {
         {viewMode === "calendar" ? (
           <div className="space-y-2">
             {/* Template palette — above canvas, horizontal */}
-            <TemplatePalette eventId={selectedEventId ?? undefined} layout="horizontal" />
+            <TemplatePalette
+              eventId={selectedEventId ?? undefined}
+              layout="horizontal"
+            />
 
             {/* Canvas row: canvas + optional shift details panel */}
             <div
               className="flex flex-row gap-0 rounded-xl shadow-sm overflow-hidden"
               data-event-status={selectedEvent?.status}
-              style={{ backgroundColor: "var(--status-bg)", transition: "background-color 500ms" }}
+              style={{
+                backgroundColor: "var(--status-bg)",
+                transition: "background-color 500ms",
+              }}
             >
               {/* Canvas container */}
-              <div
-                ref={calendarRef}
-                className="flex-1 min-w-0 relative"
-              >
+              <div ref={calendarRef} className="flex-1 min-w-0 relative">
                 {!selectedEvent ? (
                   <div className="p-12 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -785,8 +808,334 @@ export default function ShiftsPage() {
                 </div>
               )}
               {/* Create shift form panel — when showForm in calendar view */}
-              {showForm && selectedEvent && canMutateShifts(selectedEvent.status as import("@prisma/client").EventStatus) && (
-                <div className="w-96 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-white p-6">
+              {showForm &&
+                selectedEvent &&
+                canMutateShifts(
+                  selectedEvent.status as import("@prisma/client").EventStatus,
+                ) && (
+                  <div className="w-96 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-white p-6">
+                    <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                      <Plus className="w-5 h-5 text-primary-500" /> New Shift
+                    </h2>
+                    <form
+                      onSubmit={handleSubmit}
+                      className="space-y-5"
+                      aria-label="Create new shift form"
+                    >
+                      <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
+                        Event:{" "}
+                        <span className="font-bold">{selectedEvent.name}</span>
+                      </div>
+                      {eventTemplates && eventTemplates.length > 0 ? (
+                        <Select
+                          label="Template"
+                          value={formData.templateId}
+                          onChange={(e) => handleTemplateSelect(e.target.value)}
+                          className="bg-gray-50 border-gray-100 font-medium"
+                          required
+                          error={formErrors.templateId}
+                        >
+                          <option value="">Select a template…</option>
+                          {(eventTemplates || []).map((t: any) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <Select
+                          label="Shift Type"
+                          value={formData.type}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              type: e.target.value as ShiftType,
+                            })
+                          }
+                          className="bg-gray-50 border-gray-100 font-medium"
+                        >
+                          <option value="MOBILE_TEAM">Mobile Team</option>
+                          <option value="STATIONARY">Stationary</option>
+                          <option value="SUPER">SUPER</option>
+                        </Select>
+                      )}
+                      <DateTimePicker
+                        label="Start Date & Time"
+                        value={formData.startTime}
+                        onChange={(value) => {
+                          if (formErrors.startTime)
+                            setFormErrors({ ...formErrors, startTime: "" });
+                          if (!value) {
+                            setFormData({
+                              ...formData,
+                              startTime: "",
+                              endTime: "",
+                            });
+                            return;
+                          }
+                          const start = new Date(value);
+                          if (isNaN(start.getTime())) return;
+                          const duration = formData.durationMinutes || 360;
+                          const end = new Date(
+                            start.getTime() + duration * 60000,
+                          );
+                          setFormData({
+                            ...formData,
+                            startTime: value,
+                            endTime: end.toISOString().slice(0, 16),
+                          });
+                        }}
+                        error={formErrors.startTime}
+                        required
+                        use24Hour={true}
+                      />
+                      <DateTimePicker
+                        label="End Date & Time"
+                        value={formData.endTime}
+                        onChange={(value) => {
+                          if (formErrors.endTime)
+                            setFormErrors({ ...formErrors, endTime: "" });
+                          setFormData({ ...formData, endTime: value || "" });
+                        }}
+                        error={formErrors.endTime}
+                        required
+                        use24Hour={true}
+                      />
+                      <label className="block text-xs text-gray-600">
+                        Capacity
+                        <input
+                          type="number"
+                          min={0}
+                          value={formData.capacity}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              capacity: Math.max(
+                                0,
+                                parseInt(e.target.value) || 0,
+                              ),
+                            })
+                          }
+                          className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+                        />
+                      </label>
+                      <div className="flex gap-2">
+                        <Button type="submit" className="flex-1">
+                          Create Shift
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => {
+                            setShowForm(false);
+                            setFormErrors({});
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+            </div>
+
+            {/* Shift stats bar — below canvas */}
+            {selectedEvent && shifts.length > 0 && (
+              <div className="flex items-center gap-4 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
+                <span className="text-gray-400 font-medium uppercase tracking-widest text-[10px]">
+                  Coverage
+                </span>
+                <span className="flex items-center gap-1.5 text-success-700">
+                  <span className="w-2 h-2 rounded-full bg-success-500 inline-block" />
+                  {
+                    shifts.filter(
+                      (s) => (s.assignments?.length ?? 0) >= s.capacity,
+                    ).length
+                  }{" "}
+                  fully staffed
+                </span>
+                <span className="flex items-center gap-1.5 text-accent-700">
+                  <span className="w-2 h-2 rounded-full bg-accent-500 inline-block" />
+                  {
+                    shifts.filter((s) => {
+                      const c = s.assignments?.length ?? 0;
+                      return c > 0 && c < s.capacity;
+                    }).length
+                  }{" "}
+                  partial
+                </span>
+                <span className="flex items-center gap-1.5 text-red-700">
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  {
+                    shifts.filter((s) => (s.assignments?.length ?? 0) === 0)
+                      .length
+                  }{" "}
+                  unstaffed
+                </span>
+                <span className="ml-auto text-gray-400">
+                  {shifts.length} total shifts
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-4">
+                {shifts.map((shift) => {
+                  const info = getShiftDisplayInfo(shift);
+                  return (
+                    <Card
+                      key={shift.id}
+                      className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
+                    >
+                      <div className="flex flex-col md:flex-row">
+                        <div
+                          className={cn(
+                            "w-2 md:w-3 shrink-0",
+                            getShiftTypeColor(shift.type),
+                          )}
+                        />
+                        <div className="flex-1 p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="text-lg font-bold text-gray-900">
+                                  {info.templateName}
+                                </h3>
+                              </div>
+                              <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
+                                <Tag className="w-3.5 h-3.5" />{" "}
+                                {shift.event.name}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {/*                             <div className="text-right">
+                              <p className="text-xl font-black text-gray-900 leading-none">
+                                {shift.capacity}
+                              </p>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                Capacity
+                              </p>
+                            </div> */}
+                              {/* <ShiftCardActions
+                              shiftId={shift.id}
+                              onDelete={() => handleDeleteShift(shift.id)}
+                            />
+                             */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteShift(shift.id);
+                                }}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                aria-label="Delete shift"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-50">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                                <Clock className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                  Timing
+                                </p>
+                                <p className="text-sm font-bold text-gray-700 leading-none">
+                                  {info.timeRange}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                                <Calendar className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                  Date
+                                </p>
+                                <p className="text-sm font-bold text-gray-700 leading-none">
+                                  {info.date}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                                <Shield className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                  Score
+                                </p>
+                                <div className="flex gap-0.5 text-accent-500">
+                                  {[...Array(5)].map((_, i) => (
+                                    <span
+                                      key={i}
+                                      className={cn(
+                                        "text-xs",
+                                        i >= info.desirabilityScore &&
+                                          "text-gray-200",
+                                      )}
+                                    >
+                                      +
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            {/*                           <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                              <Users className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                Capacity
+                              </p>
+                              <p className="text-sm font-bold text-gray-700 leading-none">
+                                {info.assignedCount}/{info.capacity}
+                              </p>
+                            </div>
+                          </div> */}
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
+                                <CheckCircle className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                  Assigned
+                                </p>
+                                <p className="text-sm font-bold text-gray-700 leading-none">
+                                  {info.assignedCount}/{info.capacity}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedShiftId(shift.id);
+                            setViewMode("calendar");
+                          }}
+                          className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100"
+                          aria-label="Edit shift"
+                        >
+                          <ChevronRight className="w-6 h-6" />
+                        </button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {showForm ? (
+                <Card className="bg-white border-none shadow-xl p-8 animate-in slide-in-from-right-4 duration-300">
                   <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
                     <Plus className="w-5 h-5 text-primary-500" /> New Shift
                   </h2>
@@ -795,10 +1144,18 @@ export default function ShiftsPage() {
                     className="space-y-5"
                     aria-label="Create new shift form"
                   >
-                    <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
-                      Event: <span className="font-bold">{selectedEvent.name}</span>
-                    </div>
-                    {(eventTemplates && eventTemplates.length > 0) ? (
+                    {selectedEvent ? (
+                      <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
+                        Event:{" "}
+                        <span className="font-bold">{selectedEvent.name}</span>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-lg">
+                        Select an event from the header first
+                      </div>
+                    )}
+
+                    {eventTemplates && eventTemplates.length > 0 ? (
                       <Select
                         label="Template"
                         value={formData.templateId}
@@ -819,7 +1176,10 @@ export default function ShiftsPage() {
                         label="Shift Type"
                         value={formData.type}
                         onChange={(e) =>
-                          setFormData({ ...formData, type: e.target.value as ShiftType })
+                          setFormData({
+                            ...formData,
+                            type: e.target.value as ShiftType,
+                          })
                         }
                         className="bg-gray-50 border-gray-100 font-medium"
                       >
@@ -828,401 +1188,97 @@ export default function ShiftsPage() {
                         <option value="SUPER">SUPER</option>
                       </Select>
                     )}
-                    <DateTimePicker
-                      label="Start Date & Time"
-                      value={formData.startTime}
-                      onChange={(value) => {
-                        if (formErrors.startTime) setFormErrors({ ...formErrors, startTime: "" });
-                        if (!value) {
-                          setFormData({ ...formData, startTime: "", endTime: "" });
-                          return;
-                        }
-                        const start = new Date(value);
-                        if (isNaN(start.getTime())) return;
-                        const duration = formData.durationMinutes || 360;
-                        const end = new Date(start.getTime() + duration * 60000);
-                        setFormData({
-                          ...formData,
-                          startTime: value,
-                          endTime: end.toISOString().slice(0, 16),
-                        });
-                      }}
-                      error={formErrors.startTime}
-                      required
-                      use24Hour={true}
-                    />
-                    <DateTimePicker
-                      label="End Date & Time"
-                      value={formData.endTime}
-                      onChange={(value) => {
-                        if (formErrors.endTime) setFormErrors({ ...formErrors, endTime: "" });
-                        setFormData({ ...formData, endTime: value || "" });
-                      }}
-                      error={formErrors.endTime}
-                      required
-                      use24Hour={true}
-                    />
-                    <label className="block text-xs text-gray-600">
-                      Capacity
-                      <input
-                        type="number"
-                        min={0}
-                        value={formData.capacity}
-                        onChange={(e) =>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <DateTimePicker
+                        label="Start Date & Time"
+                        value={formData.startTime}
+                        onChange={(value) => {
+                          if (formErrors.startTime) {
+                            setFormErrors({ ...formErrors, startTime: "" });
+                          }
+                          if (!value) {
+                            setFormData({
+                              ...formData,
+                              startTime: "",
+                              endTime: "",
+                            });
+                            return;
+                          }
+                          const start = new Date(value);
+                          if (isNaN(start.getTime())) {
+                            return;
+                          }
+                          const duration = formData.durationMinutes || 360;
+                          const end = new Date(
+                            start.getTime() + duration * 60000,
+                          );
+                          if (isNaN(end.getTime())) {
+                            return;
+                          }
                           setFormData({
                             ...formData,
-                            capacity: Math.max(0, parseInt(e.target.value) || 0),
-                          })
-                        }
-                        className="mt-1 block w-full border rounded px-2 py-1 text-sm"
-                      />
-                    </label>
-                    <div className="flex gap-2">
-                      <Button type="submit" className="flex-1">
-                        Create Shift
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          setShowForm(false);
-                          setFormErrors({});
+                            startTime: value,
+                            endTime: end.toISOString().slice(0, 16),
+                          });
                         }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-
-            {/* Shift stats bar — below canvas */}
-            {selectedEvent && shifts.length > 0 && (
-              <div className="flex items-center gap-4 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
-                <span className="text-gray-400 font-medium uppercase tracking-widest text-[10px]">
-                  Coverage
-                </span>
-                <span className="flex items-center gap-1.5 text-success-700">
-                  <span className="w-2 h-2 rounded-full bg-success-500 inline-block" />
-                  {shifts.filter((s) => (s.assignments?.length ?? 0) >= s.capacity).length} fully staffed
-                </span>
-                <span className="flex items-center gap-1.5 text-accent-700">
-                  <span className="w-2 h-2 rounded-full bg-accent-500 inline-block" />
-                  {shifts.filter((s) => {
-                    const c = s.assignments?.length ?? 0;
-                    return c > 0 && c < s.capacity;
-                  }).length} partial
-                </span>
-                <span className="flex items-center gap-1.5 text-red-700">
-                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-                  {shifts.filter((s) => (s.assignments?.length ?? 0) === 0).length} unstaffed
-                </span>
-                <span className="ml-auto text-gray-400">
-                  {shifts.length} total shifts
-                </span>
-              </div>
-            )}
-          </div>
-        ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-              <div className="space-y-4">
-                {shifts.map((shift) => {
-                  const info = getShiftDisplayInfo(shift);
-                  return (
-                  <Card
-                    key={shift.id}
-                    className="shadow-sm hover:shadow-md transition-all overflow-hidden p-0"
-                  >
-                    <div className="flex flex-col md:flex-row">
-                      <div
-                        className={cn(
-                          "w-2 md:w-3 shrink-0",
-                          getShiftTypeColor(shift.type),
-                        )}
+                        error={formErrors.startTime}
+                        required
+                        use24Hour={true}
                       />
-                      <div className="flex-1 p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-1">
-                              <h3 className="text-lg font-bold text-gray-900">
-                                {info.templateName}
-                              </h3>
-                            </div>
-                            <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
-                              <Tag className="w-3.5 h-3.5" /> {shift.event.name}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-{/*                             <div className="text-right">
-                              <p className="text-xl font-black text-gray-900 leading-none">
-                                {shift.capacity}
-                              </p>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                                Capacity
-                              </p>
-                            </div> */}
-                            {/* <ShiftCardActions
-                              shiftId={shift.id}
-                              onDelete={() => handleDeleteShift(shift.id)}
-                            />
-                             */}
-                            <button
-                            type="button"
-                              onClick={e => {
-                              e.stopPropagation();
-                              handleDeleteShift(shift.id);
-                              }}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                              aria-label="Delete shift">
-                            <Trash2 className="w-4 h-4" />
-                              </button>            
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-50">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                              <Clock className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                                Timing
-                              </p>
-                              <p className="text-sm font-bold text-gray-700 leading-none">
-                                {info.timeRange}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                              <Calendar className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                                Date
-                              </p>
-                              <p className="text-sm font-bold text-gray-700 leading-none">
-                                {info.date}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                              <Shield className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                                Score
-                              </p>
-                              <div className="flex gap-0.5 text-accent-500">
-                                {[...Array(5)].map((_, i) => (
-                                  <span
-                                    key={i}
-                                    className={cn(
-                                      "text-xs",
-                                      i >= info.desirabilityScore &&
-                                        "text-gray-200",
-                                    )}
-                                  >
-                                    +
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-{/*                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                              <Users className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                                Capacity
-                              </p>
-                              <p className="text-sm font-bold text-gray-700 leading-none">
-                                {info.assignedCount}/{info.capacity}
-                              </p>
-                            </div>
-                          </div> */}
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400">
-                              <CheckCircle className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
-                                Assigned
-                              </p>
-                              <p className="text-sm font-bold text-gray-700 leading-none">
-                                {info.assignedCount}/{info.capacity}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSelectedShiftId(shift.id);
-                          setViewMode("calendar");
+                      <DateTimePicker
+                        label="End Date & Time"
+                        value={formData.endTime}
+                        onChange={(value) => {
+                          if (formErrors.endTime) {
+                            setFormErrors({ ...formErrors, endTime: "" });
+                          }
+                          if (!value) {
+                            setFormData({
+                              ...formData,
+                              endTime: "",
+                            });
+                            return;
+                          }
+                          if (!formData.startTime) {
+                            setFormData({
+                              ...formData,
+                              endTime: value,
+                            });
+                            return;
+                          }
+                          const start = new Date(formData.startTime);
+                          const end = new Date(value);
+                          if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                            setFormData({
+                              ...formData,
+                              endTime: value,
+                            });
+                            return;
+                          }
+                          const minutes = Math.round(
+                            (end.getTime() - start.getTime()) / 60000,
+                          );
+                          if (isNaN(minutes) || minutes < 0) {
+                            setFormData({
+                              ...formData,
+                              endTime: value,
+                            });
+                            return;
+                          }
+                          setFormData({
+                            ...formData,
+                            endTime: value,
+                            durationMinutes: minutes,
+                          });
                         }}
-                        className="bg-gray-50 p-4 flex items-center justify-center text-gray-300 hover:text-primary-500 hover:bg-primary-50 transition-all border-l border-gray-100"
-                        aria-label="Edit shift"
-                      >
-                        <ChevronRight className="w-6 h-6" />
-                      </button>
+                        error={formErrors.endTime}
+                        required
+                        use24Hour={true}
+                      />
                     </div>
-                  </Card>
-                  );
-                })}
-              </div>
-          </div>
 
-          <div className="space-y-6">
-            {showForm ? (
-              <Card className="bg-white border-none shadow-xl p-8 animate-in slide-in-from-right-4 duration-300">
-                <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-primary-500" /> New Shift
-                </h2>
-                <form
-                  onSubmit={handleSubmit}
-                  className="space-y-5"
-                  aria-label="Create new shift form"
-                >
-                  {selectedEvent ? (
-                    <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
-                      Event:{" "}
-                      <span className="font-bold">{selectedEvent.name}</span>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-lg">
-                      Select an event from the header first
-                    </div>
-                  )}
-
-                  {(eventTemplates && eventTemplates.length > 0) ? (
-                    <Select
-                      label="Template"
-                      value={formData.templateId}
-                      onChange={(e) => handleTemplateSelect(e.target.value)}
-                      className="bg-gray-50 border-gray-100 font-medium"
-                      required
-                      error={formErrors.templateId}
-                    >
-                      <option value="">Select a template…</option>
-                      {(eventTemplates || []).map((t: any) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </Select>
-                  ) : (
-                    <Select
-                      label="Shift Type"
-                      value={formData.type}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          type: e.target.value as ShiftType,
-                        })
-                      }
-                      className="bg-gray-50 border-gray-100 font-medium"
-                    >
-                      <option value="MOBILE_TEAM">Mobile Team</option>
-                      <option value="STATIONARY">Stationary</option>
-                      <option value="SUPER">SUPER</option>
-                    </Select>
-                  )}
-
-                  <div className="grid grid-cols-1 gap-4">
-                    <DateTimePicker
-                      label="Start Date & Time"
-                      value={formData.startTime}
-                      onChange={(value) => {
-                        if (formErrors.startTime) {
-                          setFormErrors({ ...formErrors, startTime: "" });
-                        }
-                        if (!value) {
-                          setFormData({
-                            ...formData,
-                            startTime: "",
-                            endTime: "",
-                          });
-                          return;
-                        }
-                        const start = new Date(value);
-                        if (isNaN(start.getTime())) {
-                          return;
-                        }
-                        const duration = formData.durationMinutes || 360;
-                        const end = new Date(
-                          start.getTime() + duration * 60000,
-                        );
-                        if (isNaN(end.getTime())) {
-                          return;
-                        }
-                        setFormData({
-                          ...formData,
-                          startTime: value,
-                          endTime: end.toISOString().slice(0, 16),
-                        });
-                      }}
-                      error={formErrors.startTime}
-                      required
-                      use24Hour={true}
-                    />
-                    <DateTimePicker
-                      label="End Date & Time"
-                      value={formData.endTime}
-                      onChange={(value) => {
-                        if (formErrors.endTime) {
-                          setFormErrors({ ...formErrors, endTime: "" });
-                        }
-                        if (!value) {
-                          setFormData({
-                            ...formData,
-                            endTime: "",
-                          });
-                          return;
-                        }
-                        if (!formData.startTime) {
-                          setFormData({
-                            ...formData,
-                            endTime: value,
-                          });
-                          return;
-                        }
-                        const start = new Date(formData.startTime);
-                        const end = new Date(value);
-                        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                          setFormData({
-                            ...formData,
-                            endTime: value,
-                          });
-                          return;
-                        }
-                        const minutes = Math.round(
-                          (end.getTime() - start.getTime()) / 60000,
-                        );
-                        if (isNaN(minutes) || minutes < 0) {
-                          setFormData({
-                            ...formData,
-                            endTime: value,
-                          });
-                          return;
-                        }
-                        setFormData({
-                          ...formData,
-                          endTime: value,
-                          durationMinutes: minutes,
-                        });
-                      }}
-                      error={formErrors.endTime}
-                      required
-                      use24Hour={true}
-                    />
-                  </div>
-
-                  <Input
+                    <Input
                       label="Score (1-5)"
                       type="number"
                       min="1"
@@ -1245,89 +1301,96 @@ export default function ShiftsPage() {
                       className="bg-gray-50 border-gray-100 font-medium"
                     />
 
-                  <Input
-                    label="Staff Capacity"
-                    type="number"
-                    min="1"
-                    value={isNaN(formData.capacity) ? "" : formData.capacity}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      if (!isNaN(value) && value >= 1) {
-                        setFormData({
-                          ...formData,
-                          capacity: value,
-                        });
-                      }
-                    }}
-                    required
-                    className="bg-gray-50 border-gray-100 font-medium"
-                  />
-
-                  <Button
-                    type="submit"
-                    className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs mt-4"
-                  >
-                    Register Shift
-                  </Button>
-                </form>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-2xl font-black mb-2 leading-tight">
-                    Configurable Slots
-                  </h3>
-                  <p className="text-sm text-primary-100 leading-relaxed opacity-90">
-                    Each shift defines its type, required capacity, and
-                    desirability. The algorithm uses the score to prioritize
-                    popular or difficult slots.
-                  </p>
-                </Card>
-
-                <Card className="bg-white border-none shadow-sm p-6">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-                    Slot Breakdown
-                  </h4>
-                  <div className="space-y-4">
-                    {(() => {
-                      const counts = new Map<string, { name: string; color: string; count: number }>();
-                      for (const s of shifts) {
-                        const name = s.template?.name ?? s.type.replace(/_/g, " ");
-                        const color = s.template?.color ?? "#6b7280";
-                        const key = s.templateId ?? s.type;
-                        const entry = counts.get(key);
-                        if (entry) {
-                          entry.count++;
-                        } else {
-                          counts.set(key, { name, color, count: 1 });
+                    <Input
+                      label="Staff Capacity"
+                      type="number"
+                      min="1"
+                      value={isNaN(formData.capacity) ? "" : formData.capacity}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 1) {
+                          setFormData({
+                            ...formData,
+                            capacity: value,
+                          });
                         }
-                      }
-                      return Array.from(counts.values())
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map(({ name, color, count }) => (
-                          <div key={name} className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: color }}
-                              />{" "}
-                              {name}
-                            </span>
-                            <span className="text-sm font-black text-gray-900">
-                              {count}
-                            </span>
-                          </div>
-                        ));
-                    })()}
-                  </div>
+                      }}
+                      required
+                      className="bg-gray-50 border-gray-100 font-medium"
+                    />
+
+                    <Button
+                      type="submit"
+                      className="w-full py-4 shadow-lg shadow-primary-500/20 font-bold uppercase tracking-widest text-xs mt-4"
+                    >
+                      Register Shift
+                    </Button>
+                  </form>
                 </Card>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-6">
+                  <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-2xl font-black mb-2 leading-tight">
+                      Configurable Slots
+                    </h3>
+                    <p className="text-sm text-primary-100 leading-relaxed opacity-90">
+                      Each shift defines its type, required capacity, and
+                      desirability. The algorithm uses the score to prioritize
+                      popular or difficult slots.
+                    </p>
+                  </Card>
+
+                  <Card className="bg-white border-none shadow-sm p-6">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                      Slot Breakdown
+                    </h4>
+                    <div className="space-y-4">
+                      {(() => {
+                        const counts = new Map<
+                          string,
+                          { name: string; color: string; count: number }
+                        >();
+                        for (const s of shifts) {
+                          const name =
+                            s.template?.name ?? s.type.replace(/_/g, " ");
+                          const color = s.template?.color ?? "#6b7280";
+                          const key = s.templateId ?? s.type;
+                          const entry = counts.get(key);
+                          if (entry) {
+                            entry.count++;
+                          } else {
+                            counts.set(key, { name, color, count: 1 });
+                          }
+                        }
+                        return Array.from(counts.values())
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(({ name, color, count }) => (
+                            <div
+                              key={name}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: color }}
+                                />{" "}
+                                {name}
+                              </span>
+                              <span className="text-sm font-black text-gray-900">
+                                {count}
+                              </span>
+                            </div>
+                          ));
+                      })()}
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
         )}
       </div>
     </>

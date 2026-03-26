@@ -11,7 +11,7 @@ export function GlassPanel({ children, className }: GlassPanelProps) {
     <div
       className={cn(
         "bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]",
-        className
+        className,
       )}
     >
       {children}

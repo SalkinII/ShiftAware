@@ -2,8 +2,8 @@ import { TeamMember, Shift } from "@prisma/client";
 import { AssignmentState, AssignmentScore, AlgorithmWeights } from "./types";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
-  preferenceMatch: 0.70,
-  workloadFairness: 0.30,
+  preferenceMatch: 0.7,
+  workloadFairness: 0.3,
 };
 
 /**
