@@ -210,7 +210,7 @@ Section 2 — My Preferences:
 - Fulfilled indicator: green check (assigned to a WANT shift) / red X (assigned to a DONT_WANT shift)
 - Sort: chronological
 
-**File:** app/app/calendar/components/MyShiftsList.tsx
+**File:** app/(routes)/app/calendar/components/MyShiftsList.tsx
 
 ---
 

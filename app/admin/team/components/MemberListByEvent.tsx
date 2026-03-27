@@ -11,7 +11,7 @@ import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailC
 import {
   CreateProfileForm,
   type ProfileData,
-} from "@/app/app/identity/components/CreateProfileForm";
+} from "@/app/(routes)/app/identity/components/CreateProfileForm";
 
 interface Member {
   id: string;

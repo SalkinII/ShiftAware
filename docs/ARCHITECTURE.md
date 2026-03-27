@@ -475,7 +475,7 @@ app/
 │   ├── shifts/schedule/
 │   ├── team/
 │   └── audit/
-└── app/
+└── (routes)/app/
     ├── identity/
     └── calendar/
         └── MyShiftsList.tsx   # Two-section list: assignments + preferences
