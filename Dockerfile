@@ -53,9 +53,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json ./package-lock.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-# ensure prisma client artifacts are present after standalone copy
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Copy only Prisma artifacts needed at runtime — do NOT copy all node_modules
+# (the standalone output already contains a trimmed node_modules; overwriting
+#  the full tree breaks standalone's module resolution and corrupts RSC output)
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 USER nextjs
