@@ -4,7 +4,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import { CreateProfileForm } from "@/app/app/identity/components/CreateProfileForm";
+import { CreateProfileForm } from "@/app/(routes)/app/identity/components/CreateProfileForm";
 
 // Silence fetch calls in tests
 beforeEach(() => {
