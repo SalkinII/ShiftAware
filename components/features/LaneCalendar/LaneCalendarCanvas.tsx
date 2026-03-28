@@ -393,7 +393,7 @@ function LaneCalendarCanvasInner(
       }}
     >
       {shiftMutationLocked && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800 flex items-center gap-2">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800 flex items-center gap-2">
           <Shield className="w-4 h-4 flex-shrink-0" />
           {shiftMutationLockedMessage}
         </div>
