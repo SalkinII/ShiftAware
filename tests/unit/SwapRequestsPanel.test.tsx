@@ -20,6 +20,7 @@ const mockRequests = [
   {
     id: "req-1",
     status: "PENDING",
+    matchedWithId: null,
     requester: { alias: "Bear" },
     fromAssignment: {
       role: "TEAM_MEMBER",
@@ -42,6 +43,7 @@ const mockRequests = [
   {
     id: "req-2",
     status: "MATCHED",
+    matchedWithId: "req-3", // canonical side — has matchedWithId set
     requester: { alias: "Fox" },
     fromAssignment: {
       role: "TEAM_LEAD",
@@ -59,6 +61,29 @@ const mockRequests = [
       endTime: "2026-06-23T00:00:00.000Z",
       capacity: 3,
       assignments: [],
+    },
+  },
+  {
+    id: "req-3",
+    status: "MATCHED",
+    matchedWithId: null, // matchedBy side — should NOT be shown
+    requester: { alias: "Owl" },
+    fromAssignment: {
+      role: "TEAM_MEMBER",
+      shift: {
+        template: { name: "Mobile" },
+        type: "MOBILE_TEAM",
+        startTime: "2026-06-22T16:00:00.000Z",
+        endTime: "2026-06-23T00:00:00.000Z",
+      },
+    },
+    toShift: {
+      template: null,
+      type: "SUPER",
+      startTime: "2026-06-22T08:00:00.000Z",
+      endTime: "2026-06-22T16:00:00.000Z",
+      capacity: 2,
+      assignments: [{ id: "b1" }],
     },
   },
 ];
@@ -100,7 +125,29 @@ describe("SwapRequestsPanel", () => {
     await waitFor(() => expect(screen.getByText(/matched/i)).toBeTruthy());
   });
 
-  it("Approve button calls PUT with APPROVED status", async () => {
+  it("does NOT render the matchedBy side (req-3, Owl) — only canonical MATCHED cards", async () => {
+    render(<SwapRequestsPanel eventId="event-1" />);
+    await waitFor(() => expect(screen.getByText("Fox")).toBeTruthy());
+    expect(screen.queryByText("Owl")).toBeNull();
+  });
+
+  it("PENDING request shows no Approve button", async () => {
+    render(<SwapRequestsPanel eventId="event-1" />);
+    await waitFor(() => expect(screen.getByText("Bear")).toBeTruthy());
+    // Bear is PENDING — should have no Approve
+    const approveButtons = screen.queryAllByRole("button", { name: /approve/i });
+    // Only Fox (MATCHED) should have Approve; Bear should not
+    expect(approveButtons.length).toBe(1);
+  });
+
+  it("PENDING request shows 'Waiting for partner' label", async () => {
+    render(<SwapRequestsPanel eventId="event-1" />);
+    await waitFor(() =>
+      expect(screen.getByText(/waiting for partner/i)).toBeTruthy(),
+    );
+  });
+
+  it("Approve button calls PUT with APPROVED status on MATCHED request", async () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
@@ -113,13 +160,13 @@ describe("SwapRequestsPanel", () => {
       });
 
     render(<SwapRequestsPanel eventId="event-1" />);
-    await waitFor(() => screen.getAllByText(/approve/i));
+    await waitFor(() => screen.getAllByRole("button", { name: /approve/i }));
 
-    fireEvent.click(screen.getAllByText(/approve/i)[0]);
+    fireEvent.click(screen.getByRole("button", { name: /approve/i }));
 
     await waitFor(() =>
       expect(mockFetch).toHaveBeenCalledWith(
-        "/api/swap-requests/req-1",
+        "/api/swap-requests/req-2",
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({ status: "APPROVED" }),

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 interface SwapRequest {
   id: string;
   status: "PENDING" | "MATCHED";
+  matchedWithId?: string | null;
   requester: { alias: string };
   fromAssignment: {
     role: string;
@@ -61,7 +62,13 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
         const all = unwrapApiResponse<SwapRequest[]>(data) || [];
-        setRequests(all.filter((r) => r.status === "PENDING" || r.status === "MATCHED"));
+        setRequests(
+          all.filter(
+            (r) =>
+              r.status === "PENDING" ||
+              (r.status === "MATCHED" && r.matchedWithId != null),
+          ),
+        );
       })
       .catch(() => setError("Failed to load swap requests"))
       .finally(() => setLoading(false));
@@ -182,7 +189,12 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-1 items-center">
+              {req.status === "PENDING" && (
+                <span className="text-[10px] text-amber-600 italic flex-1">
+                  Waiting for partner
+                </span>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -193,15 +205,17 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
                 <XCircle className="w-3.5 h-3.5 mr-1" />
                 Decline
               </Button>
-              <Button
-                size="sm"
-                onClick={() => handleAction(req.id, "APPROVED")}
-                disabled={isActing}
-                className="text-xs ml-auto"
-              >
-                <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                Approve
-              </Button>
+              {req.status === "MATCHED" && (
+                <Button
+                  size="sm"
+                  onClick={() => handleAction(req.id, "APPROVED")}
+                  disabled={isActing}
+                  className="text-xs ml-auto"
+                >
+                  <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                  Approve
+                </Button>
+              )}
             </div>
           </Card>
         );
