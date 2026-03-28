@@ -83,9 +83,6 @@ export function MemberList({ onSelectMember }: MemberListProps) {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500">
-                  {member.experienceLevel}
-                </p>
               </div>
               {member.isActive && (
                 <CheckCircle className="w-5 h-5 text-primary-600" />
