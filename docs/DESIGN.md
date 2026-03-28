@@ -237,6 +237,7 @@ Domain-level components in `components/features/`. Before building a new feature
 | `LaneCalendar/LaneCalendarCanvas`           | React Flow schedule canvas (editable + read-only)         | Admin schedule, User calendar     |
 | `TemplatePalette`                           | Drag source for creating shifts from templates            | Admin schedule (above canvas)     |
 | `LaneCalendar/sidebar/ShiftPropertiesPanel` | Edit and view shift details, manage assignments           | Admin schedule sidebar            |
+| `SwapRequestsPanel`                         | Admin review of pending swap requests (approve/decline)   | Admin schedule                    |
 | `AlgorithmResultsModal`                     | Display algorithm preview results                         | Admin team (DistributionSettings) |
 | `SwapInterface`                             | Swap request workflow with conflict detection             | User calendar                     |
 | `AvailabilityHeatmap`                       | Member availability matrix                                | Admin team                        |
