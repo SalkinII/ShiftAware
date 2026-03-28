@@ -84,7 +84,11 @@ export default function UserCalendarPage() {
   const [swapFromShift, setSwapFromShift] = useState<Shift | null>(null);
   const [availableShifts, setAvailableShifts] = useState<Shift[]>([]);
   const [swapRequests, setSwapRequests] = useState<
-    Array<{ id: string; fromAssignmentId: string; status: string }>
+    Array<{
+      id: string;
+      fromAssignmentId: string;
+      status: "PENDING" | "MATCHED" | "DECLINED";
+    }>
   >([]);
 
   const eventStartDate = useMemo(
@@ -407,8 +411,11 @@ export default function UserCalendarPage() {
           const requests = unwrapApiResponse<any[]>(data) || [];
           setSwapRequests(
             requests
-              .filter((r) =>
-                ["PENDING", "MATCHED", "DECLINED"].includes(r.status),
+              .filter(
+                (r): r is typeof r & { status: "PENDING" | "MATCHED" | "DECLINED" } =>
+                  r.status === "PENDING" ||
+                  r.status === "MATCHED" ||
+                  r.status === "DECLINED",
               )
               .map((r) => ({
                 id: r.id,
