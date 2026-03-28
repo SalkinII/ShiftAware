@@ -69,8 +69,11 @@ export default function TeamPage() {
               />
             ) : (
               <div className="text-center py-8 text-gray-500">
-                Please select an event from the header dropdown to manage team
-                members.
+                <p className="font-medium">No event selected</p>
+                <p className="text-sm mt-1">
+                  Choose an event using the selector in the header (desktop) or
+                  the menu sidebar (mobile).
+                </p>
               </div>
             )}
           </Card>

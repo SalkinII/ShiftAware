@@ -341,7 +341,7 @@ export default function ShiftsPage() {
     e.preventDefault();
 
     if (!selectedEventId) {
-      toast.error("Please select an event from the header first");
+      toast.error("Please select an event first (use the menu on mobile)");
       return;
     }
 
