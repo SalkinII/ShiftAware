@@ -56,6 +56,7 @@ const LaneCalendarCanvas = dynamic(
   { ssr: false },
 );
 import { ShiftPropertiesPanel } from "@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel";
+import { SwapRequestsPanel } from "@/components/features/SwapRequestsPanel/SwapRequestsPanel";
 
 interface Shift {
   id: string;
@@ -813,6 +814,15 @@ export default function ShiftsPage() {
                   />
                 </div>
               )}
+              {/* Swap Requests panel — shown in calendar view when no shift is selected */}
+              {!selectedShiftId && !showForm && selectedEventId && (
+                <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] p-4">
+                  <SwapRequestsPanel
+                    eventId={selectedEventId}
+                    onRefresh={refetchShifts}
+                  />
+                </div>
+              )}
               {/* Create shift form panel — when showForm in calendar view */}
               {showForm &&
                 selectedEvent &&
@@ -1335,6 +1345,13 @@ export default function ShiftsPage() {
                 </Card>
               ) : (
                 <div className="space-y-6">
+                  {/* Swap Requests — shown when no form is open */}
+                  {!showForm && selectedEventId && (
+                    <SwapRequestsPanel
+                      eventId={selectedEventId}
+                      onRefresh={refetchShifts}
+                    />
+                  )}
                   <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
                     <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
                       <Clock className="w-6 h-6" />
