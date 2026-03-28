@@ -2,7 +2,7 @@
 
 Festival shift planning tool for small teams. Admins build schedules and run allocation; team members vote on preferences and see their assignments.
 
-**Branch:** main | **Status:** v3.11
+**Branch:** main | **Status:** v3.12
 
 ---
 

@@ -36,6 +36,8 @@ nul
 agents/
 .claude/
 .worktrees/
+docs/mobile-audit
+.playwright-cli/
 
 # debug
 npm-debug.log*
