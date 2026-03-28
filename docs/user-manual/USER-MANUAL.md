@@ -136,13 +136,7 @@ A **Back to …** link lets you revert one stage when corrections are needed.
 
 **Running allocation (Assigning stage)**
 
-When the event is in the Assigning stage:
-
-1. Open the Shift Properties panel for any shift and click **Run Allocation**, or use the allocation controls in the Team Management page.
-2. The algorithm reads member preferences and team attributes to propose assignments.
-3. An **Algorithm Results** preview appears. Review the proposed assignments.
-4. Accept the results or make manual adjustments by dragging members between shifts in the Shift Properties panel.
-5. When satisfied, click **Finalize Schedule** to lock in the assignments.
+Allocation is triggered from the **Team Management** page → **Allocation & Distribution** tab, not from this page. Once allocation has run, come back here to review assignments per shift and make manual adjustments via the Shift Properties panel.
 
 **Exporting the schedule (calendar view)**
 
@@ -162,11 +156,18 @@ Shows all members registered for the selected event. Click a member avatar to op
 
 **Allocation & Distribution tab**
 
-Configure constraints for the allocation algorithm:
+Configure constraints for the allocation algorithm and trigger allocation here.
 
-- Set minimum and maximum shifts per member.
-- Set per-role quotas if required.
-- These settings take effect when you run allocation from the Shift Schedule page.
+1. Set fairness weight and preference weight (sliders 0–100) to balance fair distribution against member preferences.
+2. Set **Max shifts per person** and **Min rest hours** between shifts.
+3. Add **Attribute rules** to enforce staffing constraints (e.g. "all Bar shifts require first-aid attribute").
+4. Click **Save Configuration** to save your settings.
+5. When the event is in the **Assigning** stage:
+   - Click **Preview Assignment** to see proposed assignments in a preview modal without saving them.
+   - Click **Run Assignment** to execute the algorithm and save the results.
+6. Review results on the Shift Schedule page; make manual adjustments as needed via the Shift Properties panel.
+
+> The algorithm buttons only appear when the event status is "Assigning".
 
 ---
 
