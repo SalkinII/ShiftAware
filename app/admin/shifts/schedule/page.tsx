@@ -25,6 +25,7 @@ import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Popover } from "@/components/ui/Popover";
 import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
@@ -341,7 +342,7 @@ export default function ShiftsPage() {
     e.preventDefault();
 
     if (!selectedEventId) {
-      toast.error("Please select an event from the header first");
+      toast.error("Please select an event first (use the menu on mobile)");
       return;
     }
 
@@ -632,7 +633,7 @@ export default function ShiftsPage() {
             <div className="flex items-center gap-3 min-w-0">
               {!selectedEventId && (
                 <span className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg shrink-0">
-                  Select an event from the header
+                  Select an event (header or menu)
                 </span>
               )}
               {selectedEvent && (
@@ -676,28 +677,31 @@ export default function ShiftsPage() {
                   viewMode === "list" ? "invisible pointer-events-none" : ""
                 }
               >
-                <div className="relative group">
+                <Popover
+                  content={
+                    <div className="w-48 py-1">
+                      <button
+                        onClick={handleExportPng}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+                      >
+                        Export as PNG
+                      </button>
+                      <button
+                        onClick={handleExportCalendar}
+                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
+                      >
+                        Export as PDF Table
+                      </button>
+                    </div>
+                  }
+                >
                   <Button
                     variant="secondary"
                     className="flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" /> Export
                   </Button>
-                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                    <button
-                      onClick={handleExportPng}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
-                    >
-                      Export as PNG
-                    </button>
-                    <button
-                      onClick={handleExportCalendar}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
-                    >
-                      Export as PDF Table
-                    </button>
-                  </div>
-                </div>
+                </Popover>
               </div>
               {selectedEvent &&
                 (() => {
@@ -736,20 +740,22 @@ export default function ShiftsPage() {
                     </div>
                   );
                 })()}
-              <Button
-                onClick={() => setShowForm(!showForm)}
-                className="flex items-center gap-2 min-w-[11rem] justify-center shadow-lg shadow-primary-500/20"
-              >
-                {showForm ? (
-                  <>
-                    <X className="w-4 h-4" /> Cancel
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" /> Define New Shift
-                  </>
-                )}
-              </Button>
+              {!shiftMutationLocked && (
+                <Button
+                  onClick={() => setShowForm(!showForm)}
+                  className="flex items-center gap-2 min-w-[11rem] justify-center shadow-lg shadow-primary-500/20"
+                >
+                  {showForm ? (
+                    <>
+                      <X className="w-4 h-4" /> Cancel
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" /> Define New Shift
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>

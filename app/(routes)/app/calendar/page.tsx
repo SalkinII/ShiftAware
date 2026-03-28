@@ -81,6 +81,7 @@ export default function UserCalendarPage() {
   const [swapFromAssignmentId, setSwapFromAssignmentId] = useState<
     string | null
   >(null);
+  const [swapFromShift, setSwapFromShift] = useState<Shift | null>(null);
   const [availableShifts, setAvailableShifts] = useState<Shift[]>([]);
 
   const eventStartDate = useMemo(
@@ -327,6 +328,8 @@ export default function UserCalendarPage() {
       return;
     }
 
+    setSwapFromShift(assignment.shift);
+
     // Fetch available shifts for swap (same event, different from current)
     fetch(`/api/shifts?eventId=${assignment.eventId}`)
       .then(async (res) => {
@@ -371,6 +374,7 @@ export default function UserCalendarPage() {
           toast.success("Swap request submitted");
           setSwapModalOpen(false);
           setSwapFromAssignmentId(null);
+          setSwapFromShift(null);
         } else {
           const error = await res.json();
           toast.error(error.message || "Failed to submit swap request");
@@ -778,59 +782,72 @@ export default function UserCalendarPage() {
               ) : null}
             </div>
           )}
-
-          {/* Swap Request Modal */}
-          {swapModalOpen && (
-            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-              <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden">
-                <div className="bg-primary-600 p-6 text-white">
-                  <h2 className="text-xl font-bold">Request Shift Swap</h2>
-                  <p className="text-primary-100 text-sm mt-1">
-                    Select the shift you'd like to swap to
-                  </p>
-                </div>
-                <div className="p-6 max-h-96 overflow-y-auto space-y-3">
-                  {availableShifts.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">
-                      No available shifts to swap to
-                    </p>
-                  ) : (
-                    availableShifts.map((shift) => (
-                      <button
-                        key={shift.id}
-                        onClick={() => handleSubmitSwapRequest(shift.id)}
-                        className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left"
-                      >
-                        <div className="font-bold text-gray-900">
-                          {shift.template?.name ??
-                            shift.type.replace(/_/g, " ")}
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {format(
-                            new Date(shift.startTime),
-                            "EEE, dd.MM.yyyy HH:mm",
-                          )}{" "}
-                          -{format(new Date(shift.endTime), "HH:mm")}
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-                <div className="p-6 border-t border-gray-100 flex justify-end">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setSwapModalOpen(false);
-                      setSwapFromAssignmentId(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          )}
         </>
+      )}
+
+      {/* Swap Request Modal — rendered regardless of active view */}
+      {swapModalOpen && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden">
+            <div className="bg-primary-600 p-6 text-white">
+              <h2 className="text-xl font-bold">Request Shift Swap</h2>
+              {swapFromShift && (
+                <p className="text-primary-200 text-xs font-semibold uppercase tracking-wider mt-1">
+                  From:{" "}
+                  <span className="text-white font-bold">
+                    {swapFromShift.template?.name ??
+                      swapFromShift.type.replace(/_/g, " ")}
+                  </span>
+                  {" · "}
+                  {format(new Date(swapFromShift.startTime), "EEE dd.MM HH:mm")}
+                  {" – "}
+                  {format(new Date(swapFromShift.endTime), "HH:mm")}
+                </p>
+              )}
+              <p className="text-primary-100 text-sm mt-2">
+                Select the shift you'd like to swap to
+              </p>
+            </div>
+            <div className="p-6 max-h-96 overflow-y-auto space-y-3">
+              {availableShifts.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No available shifts to swap to
+                </p>
+              ) : (
+                availableShifts.map((shift) => (
+                  <button
+                    key={shift.id}
+                    onClick={() => handleSubmitSwapRequest(shift.id)}
+                    className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left"
+                  >
+                    <div className="font-bold text-gray-900">
+                      {shift.template?.name ?? shift.type.replace(/_/g, " ")}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {format(
+                        new Date(shift.startTime),
+                        "EEE, dd.MM.yyyy HH:mm",
+                      )}{" "}
+                      -{format(new Date(shift.endTime), "HH:mm")}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-100 flex justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSwapModalOpen(false);
+                  setSwapFromAssignmentId(null);
+                  setSwapFromShift(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );
