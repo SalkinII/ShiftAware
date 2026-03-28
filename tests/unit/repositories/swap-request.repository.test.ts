@@ -40,19 +40,47 @@ describe("SwapRequestRepository", () => {
         matchedWithId: null,
         status: SwapStatus.PENDING,
         requester: { id: "member-1", alias: "john" },
-        fromAssignment: { id: "assign-1", shift: { id: "shift-1" } },
-        toShift: { id: "shift-2" },
+        fromAssignment: {
+          id: "assign-1",
+          role: "TEAM_MEMBER",
+          shift: { id: "shift-1", template: { id: "tmpl-1", name: "Mobile" } },
+        },
+        toShift: {
+          id: "shift-2",
+          capacity: 4,
+          assignments: [],
+          template: { id: "tmpl-2", name: "Supervision" },
+        },
         matchedWith: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ];
 
-    vi.mocked(prisma.swapRequest.findMany).mockResolvedValue(mockRequests);
+    vi.mocked(prisma.swapRequest.findMany).mockResolvedValue(mockRequests as any);
 
     const result = await repo.findAll();
 
     expect(result).toEqual(mockRequests);
+    expect(prisma.swapRequest.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          fromAssignment: expect.objectContaining({
+            include: expect.objectContaining({
+              shift: expect.objectContaining({
+                include: expect.objectContaining({ template: true }),
+              }),
+            }),
+          }),
+          toShift: expect.objectContaining({
+            include: expect.objectContaining({
+              assignments: true,
+              template: true,
+            }),
+          }),
+        }),
+      }),
+    );
   });
 
   it("should find swap request by ID", async () => {

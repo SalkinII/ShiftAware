@@ -10,9 +10,16 @@ export class SwapRequestRepository extends BaseRepository {
         include: {
           requester: true,
           fromAssignment: {
-            include: { shift: true },
+            include: {
+              shift: { include: { template: true } },
+            },
           },
-          toShift: true,
+          toShift: {
+            include: {
+              assignments: true,
+              template: true,
+            },
+          },
           matchedWith: {
             include: { requester: true },
           },
