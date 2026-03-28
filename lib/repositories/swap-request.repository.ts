@@ -40,6 +40,7 @@ export class SwapRequestRepository extends BaseRepository {
           fromAssignment: { include: { shift: true, teamMember: true } },
           toShift: true,
           matchedWith: { include: { requester: true } },
+          matchedBy: { include: { fromAssignment: true } },
         },
       });
 

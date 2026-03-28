@@ -110,6 +110,41 @@ describe("SwapRequestRepository", () => {
     expect(result).toEqual(mockRequest);
   });
 
+  it("findById includes matchedBy relation", async () => {
+    const mockRequest = {
+      id: "req-1",
+      status: "MATCHED",
+      requesterId: "member-1",
+      fromAssignmentId: "assign-1",
+      toShiftId: "shift-2",
+      matchedWithId: null,
+      matchedWith: null,
+      matchedBy: {
+        id: "req-canonical",
+        fromAssignmentId: "assign-2",
+      },
+      requester: { id: "member-1", alias: "Bear" },
+      fromAssignment: { id: "assign-1", shiftId: "shift-1", shift: {} },
+      toShift: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    vi.mocked(prisma.swapRequest.findUnique).mockResolvedValue(mockRequest as any);
+
+    const result = await repo.findById("req-1");
+
+    expect(prisma.swapRequest.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          matchedBy: expect.objectContaining({
+            include: expect.objectContaining({ fromAssignment: true }),
+          }),
+        }),
+      }),
+    );
+    expect(result.matchedBy?.id).toBe("req-canonical");
+  });
+
   it("should create swap request", async () => {
     const input = {
       requester: { connect: { id: "member-1" } },
