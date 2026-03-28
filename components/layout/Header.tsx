@@ -166,9 +166,9 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
 function MobileSidebar({
   isOpen,
   onClose,
-  events: _events,
-  selectedEventId: _selectedEventId,
-  onSelectEvent: _onSelectEvent,
+  events,
+  selectedEventId,
+  onSelectEvent,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -250,6 +250,26 @@ function MobileSidebar({
             })}
           </div>
         </div>
+
+        {/* Event selector — admin only */}
+        {isInAdminSection && events.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-3">
+              Active Event
+            </p>
+            <div className="px-4">
+              <EventSelector
+                events={events}
+                selectedEventId={selectedEventId}
+                onSelect={(id) => {
+                  if (id) onSelectEvent(id);
+                }}
+                placeholder="Select event..."
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Context switch: Admin Panel link (user section) or Back to User View (admin section) */}
         {isAdmin && !isInAdminSection && (
