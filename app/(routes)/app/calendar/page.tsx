@@ -83,6 +83,9 @@ export default function UserCalendarPage() {
   >(null);
   const [swapFromShift, setSwapFromShift] = useState<Shift | null>(null);
   const [availableShifts, setAvailableShifts] = useState<Shift[]>([]);
+  const [swapRequests, setSwapRequests] = useState<
+    Array<{ id: string; fromAssignmentId: string; status: string }>
+  >([]);
 
   const eventStartDate = useMemo(
     () => (selectedEvent ? new Date(selectedEvent.startDate) : null),
@@ -372,6 +375,7 @@ export default function UserCalendarPage() {
       .then(async (res) => {
         if (res.ok) {
           toast.success("Swap request submitted");
+          fetchSwapRequests();
           setSwapModalOpen(false);
           setSwapFromAssignmentId(null);
           setSwapFromShift(null);
@@ -393,6 +397,48 @@ export default function UserCalendarPage() {
   useEffect(() => {
     setUserId(localStorage.getItem("selectedMemberId") || "");
   }, []);
+
+  function fetchSwapRequests() {
+    if (!userId || !selectedEventId) return;
+    fetch(`/api/swap-requests?memberId=${userId}&eventId=${selectedEventId}`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          const requests = unwrapApiResponse<any[]>(data) || [];
+          setSwapRequests(
+            requests
+              .filter((r) =>
+                ["PENDING", "MATCHED", "DECLINED"].includes(r.status),
+              )
+              .map((r) => ({
+                id: r.id,
+                fromAssignmentId: r.fromAssignmentId,
+                status: r.status,
+              })),
+          );
+        }
+      })
+      .catch(console.error);
+  }
+
+  useEffect(() => {
+    fetchSwapRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, selectedEventId]);
+
+  function handleCancelSwap(swapRequestId: string) {
+    fetch(`/api/swap-requests/${swapRequestId}`, { method: "DELETE" })
+      .then(async (res) => {
+        if (res.ok) {
+          toast.success("Swap request cancelled");
+          fetchSwapRequests();
+        } else {
+          const error = await res.json();
+          toast.error(error.message || "Failed to cancel swap request");
+        }
+      })
+      .catch(() => toast.error("Failed to cancel swap request"));
+  }
 
   // Fetch preferences for vote panel and My Preferences section
   const shouldFetchPreferences = !!userId && !!selectedEventId;
@@ -577,6 +623,8 @@ export default function UserCalendarPage() {
           onVoteWant={handleVoteWant}
           onVoteDontWant={handleVoteDontWant}
           onRequestSwap={handleRequestSwap}
+          onCancelSwap={handleCancelSwap}
+          swapRequests={swapRequests}
         />
       ) : (
         <>
