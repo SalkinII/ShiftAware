@@ -740,20 +740,22 @@ export default function ShiftsPage() {
                     </div>
                   );
                 })()}
-              <Button
-                onClick={() => setShowForm(!showForm)}
-                className="flex items-center gap-2 min-w-[11rem] justify-center shadow-lg shadow-primary-500/20"
-              >
-                {showForm ? (
-                  <>
-                    <X className="w-4 h-4" /> Cancel
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" /> Define New Shift
-                  </>
-                )}
-              </Button>
+              {!shiftMutationLocked && (
+                <Button
+                  onClick={() => setShowForm(!showForm)}
+                  className="flex items-center gap-2 min-w-[11rem] justify-center shadow-lg shadow-primary-500/20"
+                >
+                  {showForm ? (
+                    <>
+                      <X className="w-4 h-4" /> Cancel
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" /> Define New Shift
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>
