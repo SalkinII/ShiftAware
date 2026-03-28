@@ -106,7 +106,7 @@ npm run db:generate   # Regenerate Prisma client
 
 The latest image is published to GHCR: `ghcr.io/salkinii/shiftaware:latest`
 
-On startup the container runs `npx prisma migrate deploy && node server.js` — migrations apply automatically. It needs a PostgreSQL database and three environment variables.
+On startup the container runs `prisma migrate deploy && node server.js` — migrations apply automatically. It needs a PostgreSQL database and three environment variables.
 
 **Minimal `docker-compose.yml`:**
 
