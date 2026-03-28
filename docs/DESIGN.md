@@ -201,7 +201,10 @@ Severity badges reuse ConflictWizard badge pattern
 Section 1 — My Assignments:
 
 - Cards: template name, date, time, lane color stripe, assignment type badge (ALGORITHM / MANUAL)
-- Action: "Request Swap" (when event is FINALIZED)
+- Action: "Request Swap" (when no active swap) / status badge (PENDING / MATCHED / APPROVED)
+- PENDING: "Swap requested — pending" + Cancel button
+- MATCHED: "Swap matched — awaiting admin"
+- APPROVED: "Swap approved" (appears on the new shift after assignment move)
 - Sort: chronological
 
 Section 2 — My Preferences:

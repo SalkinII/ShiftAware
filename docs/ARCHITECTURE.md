@@ -413,8 +413,9 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 | LaneCalendarCanvas        | Load            | GET /api/shifts?eventId | ShiftsService       | ShiftRepository       | Shift           |
 | ShiftBlockNode (readOnly) | Vote Want       | POST /api/preferences   | PreferencesService  | PreferenceRepository  | ShiftPreference |
 | ShiftBlockNode (readOnly) | Vote Don't Want | POST /api/preferences   | PreferencesService  | PreferenceRepository  | ShiftPreference |
-| MyShiftsList (swap badge) | Cancel swap     | DELETE /api/swap-requests/{id} | SwapRequestsService | SwapRequestRepository | SwapRequest |
-| SwapRequestModal          | Request swap    | POST /api/swap-requests         | SwapRequestsService | SwapRequestRepository | SwapRequest     |
+| MyShiftsList (swap badge) | Cancel swap          | DELETE /api/swap-requests/{id}      | SwapRequestsService | SwapRequestRepository | SwapRequest |
+| MyShiftsList (swap badge) | View approved swap   | GET /api/swap-requests?memberId=... | SwapRequestsService | SwapRequestRepository | SwapRequest |
+| SwapRequestModal          | Request swap         | POST /api/swap-requests             | SwapRequestsService | SwapRequestRepository | SwapRequest     |
 
 ### Schedule (Admin)
 
