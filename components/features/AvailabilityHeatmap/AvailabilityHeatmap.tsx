@@ -193,7 +193,7 @@ export function AvailabilityHeatmap({
     const lines: string[] = [];
 
     // Header with member and shift info
-    lines.push(`${member.alias} (${member.experienceLevel})`);
+    lines.push(member.alias);
     lines.push(
       `${shift.templateName} • ${format(new Date(shift.startTime), "MMM d, HH:mm")}`,
     );
