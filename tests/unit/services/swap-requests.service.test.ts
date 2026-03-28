@@ -155,6 +155,39 @@ describe("SwapRequestsService", () => {
     expect(mockRepo.executeApprovedSwap).toHaveBeenCalled();
   });
 
+  it("should approve matched swap request from the matchedBy side (no matchedWithId)", async () => {
+    // This request is the "matchedBy" side — matchedWithId is null,
+    // but matchedBy points to the canonical request that has matchedWithId=this.id
+    const mockExisting = {
+      id: "req-old",
+      status: "MATCHED",
+      matchedWithId: null, // <-- this is the matchedBy side
+      fromAssignmentId: "assign-old",
+      toShiftId: "shift-new",
+      fromAssignment: { shiftId: "shift-old" },
+      matchedBy: {
+        id: "req-new",
+        fromAssignmentId: "assign-new",
+      },
+    };
+
+    mockRepo.findById
+      .mockResolvedValueOnce(mockExisting) // first call in approveSwapRequest
+      .mockResolvedValueOnce(mockExisting); // second call (return updated)
+    mockRepo.executeApprovedSwap.mockResolvedValue([]);
+
+    await service.approveSwapRequest("req-old");
+
+    expect(mockRepo.executeApprovedSwap).toHaveBeenCalledWith(
+      "req-old",
+      "req-new",
+      "assign-old",
+      "assign-new",
+      "shift-new",
+      "shift-old",
+    );
+  });
+
   it("should cancel swap request", async () => {
     mockRepo.cancelRequest.mockResolvedValue({
       id: "req-1",
