@@ -34,7 +34,7 @@ This guide walks through every screen in plain language. You do not need to read
 | **Event** | One festival or event instance (e.g. "Summer Fest 2026"). All shifts, members, and assignments belong to a specific event. |
 | **Shift template** | A reusable recipe for a type of shift — its name, color, and default capacity. Templates are created once and reused across events. |
 | **Shift** | A concrete slot in the schedule: a specific start/end time on a specific day, tied to a template. |
-| **Lane** | A vertical column on the schedule calendar, derived from the template name. Each template type gets its own lane. |
+| **Lane** | A horizontal section on the schedule calendar, derived from the template name. Each template type gets its own lane. |
 | **Preference** | A vote a team member casts on a shift: **Want** or **Don't want**. Visible to the organizer; used by the allocation engine. |
 | **Assignment** | A team member confirmed for a specific shift, either by the algorithm or by manual organizer action. |
 | **Event status** | The lifecycle stage of an event. It controls what actions are available at any given time (see table below). |
