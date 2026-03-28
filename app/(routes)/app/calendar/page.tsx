@@ -81,6 +81,7 @@ export default function UserCalendarPage() {
   const [swapFromAssignmentId, setSwapFromAssignmentId] = useState<
     string | null
   >(null);
+  const [swapFromShift, setSwapFromShift] = useState<Shift | null>(null);
   const [availableShifts, setAvailableShifts] = useState<Shift[]>([]);
 
   const eventStartDate = useMemo(
@@ -327,6 +328,8 @@ export default function UserCalendarPage() {
       return;
     }
 
+    setSwapFromShift(assignment.shift);
+
     // Fetch available shifts for swap (same event, different from current)
     fetch(`/api/shifts?eventId=${assignment.eventId}`)
       .then(async (res) => {
@@ -371,6 +374,7 @@ export default function UserCalendarPage() {
           toast.success("Swap request submitted");
           setSwapModalOpen(false);
           setSwapFromAssignmentId(null);
+          setSwapFromShift(null);
         } else {
           const error = await res.json();
           toast.error(error.message || "Failed to submit swap request");
@@ -787,7 +791,20 @@ export default function UserCalendarPage() {
           <Card className="max-w-xl w-full bg-white border-none shadow-2xl rounded-3xl overflow-hidden">
             <div className="bg-primary-600 p-6 text-white">
               <h2 className="text-xl font-bold">Request Shift Swap</h2>
-              <p className="text-primary-100 text-sm mt-1">
+              {swapFromShift && (
+                <p className="text-primary-200 text-xs font-semibold uppercase tracking-wider mt-1">
+                  From:{" "}
+                  <span className="text-white font-bold">
+                    {swapFromShift.template?.name ??
+                      swapFromShift.type.replace(/_/g, " ")}
+                  </span>
+                  {" · "}
+                  {format(new Date(swapFromShift.startTime), "EEE dd.MM HH:mm")}
+                  {" – "}
+                  {format(new Date(swapFromShift.endTime), "HH:mm")}
+                </p>
+              )}
+              <p className="text-primary-100 text-sm mt-2">
                 Select the shift you'd like to swap to
               </p>
             </div>
@@ -823,6 +840,7 @@ export default function UserCalendarPage() {
                 onClick={() => {
                   setSwapModalOpen(false);
                   setSwapFromAssignmentId(null);
+                  setSwapFromShift(null);
                 }}
               >
                 Cancel
