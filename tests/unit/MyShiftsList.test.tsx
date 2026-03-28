@@ -85,6 +85,19 @@ describe("MyShiftsList swap request states", () => {
     expect(screen.getByText(/declined/i)).toBeTruthy();
   });
 
+  it("shows APPROVED badge ('Swap approved') on new shift, no Request Swap button", () => {
+    render(
+      <MyShiftsList
+        {...baseProps}
+        swapRequests={[
+          { id: "req-1", fromAssignmentId: "assign-1", status: "APPROVED" },
+        ]}
+      />,
+    );
+    expect(screen.queryByText("Request Swap")).toBeNull();
+    expect(screen.getByText(/swap approved/i)).toBeTruthy();
+  });
+
   it("Cancel button calls onCancelSwap with the request id", () => {
     render(
       <MyShiftsList

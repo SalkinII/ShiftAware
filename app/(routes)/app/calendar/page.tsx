@@ -87,7 +87,7 @@ export default function UserCalendarPage() {
     Array<{
       id: string;
       fromAssignmentId: string;
-      status: "PENDING" | "MATCHED" | "DECLINED";
+      status: "PENDING" | "MATCHED" | "DECLINED" | "APPROVED";
     }>
   >([]);
 
@@ -412,10 +412,11 @@ export default function UserCalendarPage() {
           setSwapRequests(
             requests
               .filter(
-                (r): r is typeof r & { status: "PENDING" | "MATCHED" | "DECLINED" } =>
+                (r): r is typeof r & { status: "PENDING" | "MATCHED" | "DECLINED" | "APPROVED" } =>
                   r.status === "PENDING" ||
                   r.status === "MATCHED" ||
-                  r.status === "DECLINED",
+                  r.status === "DECLINED" ||
+                  r.status === "APPROVED",
               )
               .map((r) => ({
                 id: r.id,

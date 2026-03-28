@@ -223,6 +223,16 @@ export function MyShiftsList({
                             );
                           }
 
+                          if (status === "APPROVED") {
+                            return (
+                              <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary-100 text-primary-700">
+                                  Swap approved
+                                </span>
+                              </div>
+                            );
+                          }
+
                           return (
                             <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
                               <Button
