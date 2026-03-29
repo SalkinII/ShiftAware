@@ -811,9 +811,6 @@ export default function UserCalendarPage() {
                                 <p className="text-xs font-bold text-gray-900">
                                   {a.teamMember.alias}
                                 </p>
-                                <p className="text-[10px] text-gray-400 uppercase">
-                                  {a.role}
-                                </p>
                               </div>
                             </div>
                           ))}
