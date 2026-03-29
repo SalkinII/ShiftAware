@@ -72,7 +72,6 @@ export class SwapRequestsService {
       let matchedFromAssignmentId: string;
 
       if (existing.matchedWithId) {
-        // This request is the canonical side — fetch the other's assignment
         const matchedWith = await prisma.swapRequest.findUnique({
           where: { id: existing.matchedWithId },
           include: { fromAssignment: true },
@@ -83,7 +82,6 @@ export class SwapRequestsService {
         matchId = existing.matchedWithId;
         matchedFromAssignmentId = matchedWith.fromAssignmentId;
       } else if (existing.matchedBy) {
-        // This request is the matchedBy side — the canonical request points to us
         matchId = existing.matchedBy.id;
         matchedFromAssignmentId = existing.matchedBy.fromAssignmentId;
       } else {
@@ -98,11 +96,17 @@ export class SwapRequestsService {
         existing.toShiftId,
         existing.fromAssignment.shiftId,
       );
+
+      // Records deleted — return summary for the audit route
+      return {
+        swapped: true,
+        fromAssignmentId: existing.fromAssignmentId,
+        toShiftId: existing.toShiftId,
+      };
     } else {
       await this.repo.update(id, { status: "APPROVED" });
+      return this.repo.findById(id);
     }
-
-    return this.repo.findById(id);
   }
 
   async updateSwapRequest(id: string, status: string) {
