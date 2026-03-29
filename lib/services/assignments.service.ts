@@ -135,6 +135,26 @@ export class AssignmentsService {
       assignment.shift.eventId,
       "ASSIGNMENT_MANUAL",
     );
+
+    // Revert any MATCHED partners to PENDING before deletion.
+    // The DB cascade (onDelete: Cascade on fromAssignment) handles
+    // dropping the direct swap requests automatically.
+    const directRequests = await prisma.swapRequest.findMany({
+      where: { fromAssignmentId: assignmentId },
+      select: { matchedWithId: true },
+    });
+
+    const partnerIds = directRequests
+      .map((sr) => sr.matchedWithId)
+      .filter((id): id is string => id !== null);
+
+    if (partnerIds.length > 0) {
+      await prisma.swapRequest.updateMany({
+        where: { id: { in: partnerIds } },
+        data: { status: "PENDING", matchedWithId: null },
+      });
+    }
+
     return this.repo.delete(assignmentId);
   }
 
@@ -267,13 +287,6 @@ export class AssignmentsService {
 
     // 8. Clear old, save new — atomic transaction
     const saved = await prisma.$transaction(async (tx) => {
-      // Delete swap requests referencing this event's assignments first
-      await tx.swapRequest.deleteMany({
-        where: {
-          fromAssignment: { shift: { eventId } },
-        },
-      });
-
       await tx.assignment.deleteMany({
         where: { shift: { eventId } },
       });

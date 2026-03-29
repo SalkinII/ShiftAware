@@ -76,3 +76,7 @@ export function canManuallyAssign(status: EventStatus): boolean {
 export function canMutateEvent(status: EventStatus): boolean {
   return PERMISSION_MAP[status]?.EVENT_MUTATE === true;
 }
+
+export function canShowSwapPanel(status: EventStatus): boolean {
+  return status === "ASSIGNING" || status === "FINALIZED";
+}

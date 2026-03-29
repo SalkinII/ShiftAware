@@ -5,6 +5,7 @@
 | Document                                                                                                   | Purpose                                    |
 | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | [PROJECT-OVERVIEW.md](PROJECT-OVERVIEW.md)                                                                 | Architecture, routes, components, patterns |
+| [user-manual/README.md](user-manual/README.md)                                                             | Operator-facing user manual                |
 | [plans/2026-01-31-shiftaware-consolidation-design.md](plans/2026-01-31-shiftaware-consolidation-design.md) | v2.0 design decisions                      |
 
 ## Project Structure

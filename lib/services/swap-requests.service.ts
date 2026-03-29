@@ -67,31 +67,46 @@ export class SwapRequestsService {
   async approveSwapRequest(id: string) {
     const existing = await this.repo.findById(id);
 
-    // If approving a matched swap, execute the swap
-    if (existing.status === "MATCHED" && existing.matchedWithId) {
-      const matchedWith = await prisma.swapRequest.findUnique({
-        where: { id: existing.matchedWithId },
-        include: { fromAssignment: true },
-      });
+    if (existing.status === "MATCHED") {
+      let matchId: string;
+      let matchedFromAssignmentId: string;
 
-      if (!matchedWith) {
-        throw new Error("Matched swap request not found");
+      if (existing.matchedWithId) {
+        const matchedWith = await prisma.swapRequest.findUnique({
+          where: { id: existing.matchedWithId },
+          include: { fromAssignment: true },
+        });
+        if (!matchedWith) {
+          throw new Error("Matched swap request not found");
+        }
+        matchId = existing.matchedWithId;
+        matchedFromAssignmentId = matchedWith.fromAssignmentId;
+      } else if (existing.matchedBy) {
+        matchId = existing.matchedBy.id;
+        matchedFromAssignmentId = existing.matchedBy.fromAssignmentId;
+      } else {
+        throw new Error("MATCHED swap request has no counterpart");
       }
 
       await this.repo.executeApprovedSwap(
         id,
-        existing.matchedWithId,
+        matchId,
         existing.fromAssignmentId,
-        matchedWith.fromAssignmentId,
+        matchedFromAssignmentId,
         existing.toShiftId,
         existing.fromAssignment.shiftId,
       );
-    } else {
-      // Simple status update
-      await this.repo.update(id, { status: "APPROVED" });
-    }
 
-    return this.repo.findById(id);
+      // Records deleted — return summary for the audit route
+      return {
+        swapped: true,
+        fromAssignmentId: existing.fromAssignmentId,
+        toShiftId: existing.toShiftId,
+      };
+    } else {
+      await this.repo.update(id, { status: "APPROVED" });
+      return this.repo.findById(id);
+    }
   }
 
   async updateSwapRequest(id: string, status: string) {

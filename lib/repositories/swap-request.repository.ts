@@ -10,9 +10,16 @@ export class SwapRequestRepository extends BaseRepository {
         include: {
           requester: true,
           fromAssignment: {
-            include: { shift: true },
+            include: {
+              shift: { include: { template: true } },
+            },
           },
-          toShift: true,
+          toShift: {
+            include: {
+              assignments: true,
+              template: true,
+            },
+          },
           matchedWith: {
             include: { requester: true },
           },
@@ -33,6 +40,7 @@ export class SwapRequestRepository extends BaseRepository {
           fromAssignment: { include: { shift: true, teamMember: true } },
           toShift: true,
           matchedWith: { include: { requester: true } },
+          matchedBy: { include: { fromAssignment: true } },
         },
       });
 
@@ -127,8 +135,8 @@ export class SwapRequestRepository extends BaseRepository {
     fromShiftId: string,
   ) {
     try {
-      return await prisma.$transaction([
-        // Swap assignments
+      await prisma.$transaction([
+        // Swap the assignments to their new shifts
         prisma.assignment.update({
           where: { id: fromAssignmentId },
           data: { shiftId: toShiftId },
@@ -137,14 +145,15 @@ export class SwapRequestRepository extends BaseRepository {
           where: { id: matchedFromAssignmentId },
           data: { shiftId: fromShiftId },
         }),
-        // Approve both swap requests
-        prisma.swapRequest.update({
-          where: { id: requestId },
-          data: { status: "APPROVED" },
+        // Null out matchedWithId first to avoid FK ordering conflict
+        // on the self-referential SwapMatch relation
+        prisma.swapRequest.updateMany({
+          where: { id: { in: [requestId, matchedWithId] } },
+          data: { matchedWithId: null },
         }),
-        prisma.swapRequest.update({
-          where: { id: matchedWithId },
-          data: { status: "APPROVED" },
+        // Delete both swap requests — coordination is done
+        prisma.swapRequest.deleteMany({
+          where: { id: { in: [requestId, matchedWithId] } },
         }),
       ]);
     } catch (error) {

@@ -11,6 +11,8 @@ vi.mock("@/lib/db", () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
     assignment: {
       update: vi.fn(),
@@ -40,19 +42,47 @@ describe("SwapRequestRepository", () => {
         matchedWithId: null,
         status: SwapStatus.PENDING,
         requester: { id: "member-1", alias: "john" },
-        fromAssignment: { id: "assign-1", shift: { id: "shift-1" } },
-        toShift: { id: "shift-2" },
+        fromAssignment: {
+          id: "assign-1",
+          role: "TEAM_MEMBER",
+          shift: { id: "shift-1", template: { id: "tmpl-1", name: "Mobile" } },
+        },
+        toShift: {
+          id: "shift-2",
+          capacity: 4,
+          assignments: [],
+          template: { id: "tmpl-2", name: "Supervision" },
+        },
         matchedWith: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ];
 
-    vi.mocked(prisma.swapRequest.findMany).mockResolvedValue(mockRequests);
+    vi.mocked(prisma.swapRequest.findMany).mockResolvedValue(mockRequests as any);
 
     const result = await repo.findAll();
 
     expect(result).toEqual(mockRequests);
+    expect(prisma.swapRequest.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          fromAssignment: expect.objectContaining({
+            include: expect.objectContaining({
+              shift: expect.objectContaining({
+                include: expect.objectContaining({ template: true }),
+              }),
+            }),
+          }),
+          toShift: expect.objectContaining({
+            include: expect.objectContaining({
+              assignments: true,
+              template: true,
+            }),
+          }),
+        }),
+      }),
+    );
   });
 
   it("should find swap request by ID", async () => {
@@ -80,6 +110,41 @@ describe("SwapRequestRepository", () => {
     const result = await repo.findById("req-1");
 
     expect(result).toEqual(mockRequest);
+  });
+
+  it("findById includes matchedBy relation", async () => {
+    const mockRequest = {
+      id: "req-1",
+      status: "MATCHED",
+      requesterId: "member-1",
+      fromAssignmentId: "assign-1",
+      toShiftId: "shift-2",
+      matchedWithId: null,
+      matchedWith: null,
+      matchedBy: {
+        id: "req-canonical",
+        fromAssignmentId: "assign-2",
+      },
+      requester: { id: "member-1", alias: "Bear" },
+      fromAssignment: { id: "assign-1", shiftId: "shift-1", shift: {} },
+      toShift: {},
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    vi.mocked(prisma.swapRequest.findUnique).mockResolvedValue(mockRequest as any);
+
+    const result = await repo.findById("req-1");
+
+    expect(prisma.swapRequest.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          matchedBy: expect.objectContaining({
+            include: expect.objectContaining({ fromAssignment: true }),
+          }),
+        }),
+      }),
+    );
+    expect(result.matchedBy?.id).toBe("req-canonical");
   });
 
   it("should create swap request", async () => {
@@ -155,17 +220,15 @@ describe("SwapRequestRepository", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
-  it("should execute approved swap transaction", async () => {
-    const mockResults = [
-      { id: "assign-1" },
-      { id: "assign-2" },
-      { id: "req-1" },
-      { id: "req-2" },
-    ];
+  it("executeApprovedSwap nulls matchedWithId and deletes both swap requests", async () => {
+    vi.mocked(prisma.$transaction).mockImplementation(async (ops: any[]) => {
+      return Promise.all(ops.map((op) => Promise.resolve(op)));
+    });
+    vi.mocked(prisma.assignment.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.swapRequest.updateMany).mockResolvedValue({ count: 1 });
+    vi.mocked(prisma.swapRequest.deleteMany).mockResolvedValue({ count: 2 });
 
-    vi.mocked(prisma.$transaction).mockResolvedValue(mockResults as any);
-
-    const result = await repo.executeApprovedSwap(
+    await repo.executeApprovedSwap(
       "req-1",
       "req-2",
       "assign-1",
@@ -174,7 +237,6 @@ describe("SwapRequestRepository", () => {
       "shift-1",
     );
 
-    expect(result).toEqual(mockResults);
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 

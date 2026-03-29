@@ -168,7 +168,7 @@ model SwapRequest {
   requesterId      String
   requester        TeamMember   @relation(fields: [requesterId], references: [id])
   fromAssignmentId String
-  fromAssignment   Assignment   @relation("SwapFrom", fields: [fromAssignmentId], references: [id])
+  fromAssignment   Assignment   @relation("SwapFrom", fields: [fromAssignmentId], references: [id], onDelete: Cascade)
   toShiftId        String
   toShift          Shift        @relation("SwapTo", fields: [toShiftId], references: [id])
   status           SwapStatus   @default(PENDING)

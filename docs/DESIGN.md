@@ -201,7 +201,10 @@ Severity badges reuse ConflictWizard badge pattern
 Section 1 — My Assignments:
 
 - Cards: template name, date, time, lane color stripe, assignment type badge (ALGORITHM / MANUAL)
-- Action: "Request Swap" (when event is FINALIZED)
+- Action: "Request Swap" (when no active swap) / status badge (PENDING / MATCHED / APPROVED)
+- PENDING: "Swap requested — pending" + Cancel button
+- MATCHED: "Swap matched — awaiting admin"
+- APPROVED: "Swap approved" (appears on the new shift after assignment move)
 - Sort: chronological
 
 Section 2 — My Preferences:
@@ -237,6 +240,7 @@ Domain-level components in `components/features/`. Before building a new feature
 | `LaneCalendar/LaneCalendarCanvas`           | React Flow schedule canvas (editable + read-only)         | Admin schedule, User calendar     |
 | `TemplatePalette`                           | Drag source for creating shifts from templates            | Admin schedule (above canvas)     |
 | `LaneCalendar/sidebar/ShiftPropertiesPanel` | Edit and view shift details, manage assignments           | Admin schedule sidebar            |
+| `SwapRequestsPanel`                         | Admin swap queue (approve/decline); shown only in ASSIGNING/FINALIZED; calendar sidebar animates width when empty | Admin schedule                    |
 | `AlgorithmResultsModal`                     | Display algorithm preview results                         | Admin team (DistributionSettings) |
 | `SwapInterface`                             | Swap request workflow with conflict detection             | User calendar                     |
 | `AvailabilityHeatmap`                       | Member availability matrix                                | Admin team                        |

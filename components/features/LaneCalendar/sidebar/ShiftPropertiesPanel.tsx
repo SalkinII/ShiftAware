@@ -398,9 +398,6 @@ export function ShiftPropertiesPanel({
                     <div className="text-sm font-medium text-gray-900">
                       {assignment.teamMember?.alias || "Unknown"}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {assignment.role}
-                    </div>
                   </div>
                 </button>
                 {canManualAssign && (

@@ -146,9 +146,6 @@ function CompactAssignmentCard({
               {assignment.shift.template?.name ??
                 assignment.shift.type.replace("_", " ")}
             </span>
-            <span className="text-xs text-gray-400">
-              {assignment.role.replace("_", " ")}
-            </span>
           </div>
         </div>
       </div>
@@ -750,9 +747,6 @@ export function SwapInterface({
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-sm text-gray-900 truncate">
                           {assignment.teamMember.alias}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {assignment.role.replace("_", " ")}
                         </div>
                       </div>
                     </div>

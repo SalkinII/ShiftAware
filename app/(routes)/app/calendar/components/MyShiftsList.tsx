@@ -47,6 +47,12 @@ interface Shift {
   event: { name: string; id: string };
 }
 
+interface SwapRequestSummary {
+  id: string;
+  fromAssignmentId: string;
+  status: "PENDING" | "MATCHED" | "DECLINED" | "APPROVED" | "CANCELLED";
+}
+
 interface MyShiftsListProps {
   shifts: Shift[];
   userId: string;
@@ -54,6 +60,8 @@ interface MyShiftsListProps {
   onVoteWant: (shiftId: string) => void;
   onVoteDontWant: (shiftId: string) => void;
   onRequestSwap: (assignmentId: string) => void;
+  onCancelSwap: (swapRequestId: string) => void;
+  swapRequests?: SwapRequestSummary[];
 }
 
 export function MyShiftsList({
@@ -63,6 +71,8 @@ export function MyShiftsList({
   onVoteWant: _onVoteWant, // reserved for future vote UI
   onVoteDontWant: _onVoteDontWant, // reserved for future vote UI
   onRequestSwap,
+  onCancelSwap,
+  swapRequests = [],
 }: MyShiftsListProps) {
   // Filter shifts to only show user's assignments
   const myShifts = useMemo(() => {
@@ -93,6 +103,10 @@ export function MyShiftsList({
   // Get user's assignment for a shift
   const getUserAssignment = (shift: Shift) => {
     return (shift.assignments || []).find((a) => a.teamMember?.id === userId);
+  };
+
+  const getSwapRequest = (assignmentId: string): SwapRequestSummary | undefined => {
+    return swapRequests.find((r) => r.fromAssignmentId === assignmentId);
   };
 
   if (!userId) {
@@ -157,19 +171,82 @@ export function MyShiftsList({
                           {format(new Date(shift.endTime), "HH:mm")}
                         </div>
                       </div>
-                      {assignment && (
-                        <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => onRequestSwap(assignment.id)}
-                            className="text-xs"
-                          >
-                            <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
-                            Request Swap
-                          </Button>
-                        </div>
-                      )}
+                      {assignment &&
+                        (() => {
+                          const swapReq = getSwapRequest(assignment.id);
+                          const status = swapReq?.status;
+
+                          if (status === "PENDING") {
+                            return (
+                              <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+                                  Swap requested — pending
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onCancelSwap(swapReq!.id)}
+                                  className="text-xs text-red-600 hover:text-red-700"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            );
+                          }
+
+                          if (status === "MATCHED") {
+                            return (
+                              <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                  Swap matched — awaiting admin
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          if (status === "DECLINED") {
+                            return (
+                              <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
+                                  Swap declined
+                                </span>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => onRequestSwap(assignment.id)}
+                                  className="text-xs"
+                                >
+                                  <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+                                  Request Swap
+                                </Button>
+                              </div>
+                            );
+                          }
+
+                          if (status === "APPROVED") {
+                            return (
+                              <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary-100 text-primary-700">
+                                  Swap approved
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => onRequestSwap(assignment.id)}
+                                className="text-xs"
+                              >
+                                <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+                                Request Swap
+                              </Button>
+                            </div>
+                          );
+                        })()}
                     </div>
                   </div>
                 </Card>

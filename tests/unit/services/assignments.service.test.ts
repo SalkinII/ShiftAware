@@ -4,9 +4,6 @@ import { AssignmentsService } from "@/lib/services/assignments.service";
 // Mock dependencies
 vi.mock("@/lib/db", () => {
   const txMock = {
-    swapRequest: {
-      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-    },
     assignment: {
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       create: vi.fn().mockImplementation((args: any) =>
@@ -25,17 +22,13 @@ vi.mock("@/lib/db", () => {
         if (typeof fn === "function") return fn(txMock);
         return Promise.all(fn);
       }),
-      event: {
-        findUnique: vi.fn(),
-      },
-      eventRegistration: {
-        findMany: vi.fn(),
-      },
-      teamMember: {
-        findMany: vi.fn(),
-      },
-      shift: {
-        findMany: vi.fn(),
+      event: { findUnique: vi.fn() },
+      eventRegistration: { findMany: vi.fn() },
+      teamMember: { findMany: vi.fn() },
+      shift: { findMany: vi.fn() },
+      swapRequest: {
+        findMany: vi.fn().mockResolvedValue([]),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
     },
   };
@@ -63,6 +56,8 @@ describe("AssignmentsService", () => {
   beforeEach(() => {
     mockAssignmentRepo = {
       findAll: vi.fn(),
+      findById: vi.fn(),
+      delete: vi.fn(),
       deleteByEvent: vi.fn(),
       bulkCreate: vi.fn(),
     };
@@ -322,5 +317,65 @@ describe("AssignmentsService", () => {
     expect(result.assignments.length).toBeGreaterThan(0);
     expect(mockAssignmentRepo.deleteByEvent).not.toHaveBeenCalled();
     expect(mockAssignmentRepo.bulkCreate).not.toHaveBeenCalled();
+  });
+
+  describe("deleteAssignment", () => {
+    const mockAssignment = {
+      id: "assign-1",
+      shiftId: "shift-1",
+      shift: { eventId: "event-1", event: { status: "FINALIZED" } },
+      teamMemberId: "member-1",
+      teamMember: {},
+      role: "TEAM_MEMBER",
+      isLead: false,
+      assignmentType: "MANUAL",
+      algorithmScore: null,
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    beforeEach(() => {
+      mockAssignmentRepo.findById.mockResolvedValue(mockAssignment);
+      mockAssignmentRepo.delete.mockResolvedValue(mockAssignment);
+      vi.mocked(prisma.event.findUnique).mockResolvedValue({
+        id: "event-1",
+        status: "FINALIZED",
+      } as any);
+    });
+
+    it("deletes assignment when no swap requests exist", async () => {
+      vi.mocked(prisma.swapRequest.findMany).mockResolvedValue([]);
+
+      await service.deleteAssignment("assign-1");
+
+      expect(prisma.swapRequest.updateMany).not.toHaveBeenCalled();
+      expect(mockAssignmentRepo.delete).toHaveBeenCalledWith("assign-1");
+    });
+
+    it("deletes assignment with PENDING swap request — no partner to revert", async () => {
+      vi.mocked(prisma.swapRequest.findMany).mockResolvedValue([
+        { matchedWithId: null },
+      ] as any);
+
+      await service.deleteAssignment("assign-1");
+
+      expect(prisma.swapRequest.updateMany).not.toHaveBeenCalled();
+      expect(mockAssignmentRepo.delete).toHaveBeenCalledWith("assign-1");
+    });
+
+    it("reverts MATCHED partner to PENDING before deleting assignment", async () => {
+      vi.mocked(prisma.swapRequest.findMany).mockResolvedValue([
+        { matchedWithId: "sr-partner" },
+      ] as any);
+
+      await service.deleteAssignment("assign-1");
+
+      expect(prisma.swapRequest.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ["sr-partner"] } },
+        data: { status: "PENDING", matchedWithId: null },
+      });
+      expect(mockAssignmentRepo.delete).toHaveBeenCalledWith("assign-1");
+    });
   });
 });

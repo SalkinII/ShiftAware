@@ -147,12 +147,52 @@ describe("SwapRequestsService", () => {
 
     mockRepo.findById.mockResolvedValueOnce(mockExisting);
     vi.mocked(prisma.swapRequest.findUnique).mockResolvedValue(mockMatchedWith);
-    mockRepo.executeApprovedSwap.mockResolvedValue([]);
-    mockRepo.findById.mockResolvedValueOnce(mockExisting);
+    mockRepo.executeApprovedSwap.mockResolvedValue(undefined);
 
-    await service.approveSwapRequest("req-1");
+    const result = await service.approveSwapRequest("req-1");
 
     expect(mockRepo.executeApprovedSwap).toHaveBeenCalled();
+    expect(result).toEqual({
+      swapped: true,
+      fromAssignmentId: "assign-1",
+      toShiftId: "shift-2",
+    });
+  });
+
+  it("should approve matched swap request from the matchedBy side (no matchedWithId)", async () => {
+    // This request is the "matchedBy" side — matchedWithId is null,
+    // but matchedBy points to the canonical request that has matchedWithId=this.id
+    const mockExisting = {
+      id: "req-old",
+      status: "MATCHED",
+      matchedWithId: null, // <-- this is the matchedBy side
+      fromAssignmentId: "assign-old",
+      toShiftId: "shift-new",
+      fromAssignment: { shiftId: "shift-old" },
+      matchedBy: {
+        id: "req-new",
+        fromAssignmentId: "assign-new",
+      },
+    };
+
+    mockRepo.findById.mockResolvedValueOnce(mockExisting);
+    mockRepo.executeApprovedSwap.mockResolvedValue(undefined);
+
+    const result = await service.approveSwapRequest("req-old");
+
+    expect(mockRepo.executeApprovedSwap).toHaveBeenCalledWith(
+      "req-old",
+      "req-new",
+      "assign-old",
+      "assign-new",
+      "shift-new",
+      "shift-old",
+    );
+    expect(result).toEqual({
+      swapped: true,
+      fromAssignmentId: "assign-old",
+      toShiftId: "shift-new",
+    });
   });
 
   it("should cancel swap request", async () => {
