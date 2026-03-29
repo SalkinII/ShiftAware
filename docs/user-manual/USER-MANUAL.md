@@ -150,7 +150,7 @@ This page has two tabs: **Team Members** and **Allocation & Distribution**.
 
 **Team Members tab**
 
-Shows all members registered for the selected event. Click a member avatar to open their **Profile Detail** card, which shows experience level, capabilities, and attributes. From the profile card you can edit details directly.
+Shows all members registered for the selected event. Click a member avatar to open their **Profile Detail** card, which shows attributes when present; from the card you can edit alias, avatar, and event attributes.
 
 > Team members register themselves via the identity page. You do not need to create profiles for them — they self-onboard using their chosen alias and avatar.
 
@@ -179,7 +179,7 @@ A deeper member management view, separate from the event-scoped Team Management 
 
 All team members across all events are shown here. Each card displays the member's alias and avatar. Use the search box to filter by alias.
 
-- Click the avatar to open the **Profile Detail** card (read the profile, edit capabilities and experience level).
+- Click the avatar to open the **Profile Detail** card (read the profile, edit alias, avatar, and attributes).
 - Click the deactivate icon (user-X) to mark a member inactive. Their preferences and assignments are preserved; they are hidden from active member lists. The action can be reversed.
 - Inactive members show a red "Inactive" badge and a reactivate button (user-check).
 
