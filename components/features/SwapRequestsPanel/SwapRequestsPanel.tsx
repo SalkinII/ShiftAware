@@ -180,9 +180,8 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
               </div>
             </div>
 
-            {/* Meta: role + capacity */}
+            {/* Meta: capacity */}
             <div className="text-[10px] text-gray-400 flex items-center gap-3">
-              <span>Role: {req.fromAssignment.role.replace(/_/g, " ")}</span>
               <span>
                 Target: {fillCount} / {req.toShift.capacity} assigned
               </span>

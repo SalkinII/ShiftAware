@@ -115,6 +115,12 @@ describe("SwapRequestsPanel", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("does not show assignment role labels on request cards", async () => {
+    render(<SwapRequestsPanel eventId="event-1" />);
+    await waitFor(() => expect(screen.getByText("Bear")).toBeTruthy());
+    expect(screen.queryByText(/^Role:/)).toBeNull();
+  });
+
   it("shows PENDING badge on first request", async () => {
     render(<SwapRequestsPanel eventId="event-1" />);
     await waitFor(() => expect(screen.getByText(/pending/i)).toBeTruthy());
