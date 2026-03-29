@@ -1,6 +1,6 @@
 # ShiftAware — User Manual
 
-> **Scope:** This manual is written for people who operate the ShiftAware UI — organizers (admins) and team members (volunteers). It is derived from the application as of 2026-03-28. If labels or steps differ from what you see, the UI is the authority; please open a documentation PR to sync this manual.
+> **Scope:** This manual is written for people who operate the ShiftAware UI — organizers (admins) and team members (volunteers). It is derived from the application as of 2026-03-29. If labels or steps differ from what you see, the UI is the authority; please open a documentation PR to sync this manual.
 >
 > For developer and deployment information see the root `README.md` and `docs/`.
 
@@ -119,7 +119,7 @@ In calendar view you can also drag a template card from the **Template Palette**
 
 **Editing a shift**
 
-Click the arrow icon on a list-view card, or click a shift block on the calendar canvas, to open the **Shift Properties** panel on the right. You can edit time, capacity, assignments, and required roles from there.
+Click the arrow icon on a list-view card, or click a shift block on the calendar canvas, to open the **Shift Properties** panel on the right. You can edit start/end time, capacity, desirability score, and the list of assigned members (aliases and avatars). Per-member role labels are not shown in the UI; the system still stores roles for allocation behind the scenes.
 
 **Advancing the event status**
 
@@ -133,6 +133,14 @@ The current status badge and action button appear at the top-right of the page. 
 | Finalized | **Mark Complete** → moves to Completed |
 
 A **Back to …** link lets you revert one stage when corrections are needed.
+
+**Swap requests (organizer)**
+
+Team members can request shift swaps from **My Schedule**; you review those requests on **Shift Schedule** while the event is in **Assigning** or **Finalized**.
+
+- **Calendar view:** With no shift selected, pending and matched swap requests appear in a panel on the **right**. The sidebar stays **collapsed** until there is at least one request; when the queue becomes empty or the event moves to another stage, the sidebar **collapses smoothly** (no empty card).
+- **List view:** The same queue appears only in **Assigning** and **Finalized**, and only when there is something to show.
+- Use **Approve** or **Decline** on each request as appropriate.
 
 **Running allocation (Assigning stage)**
 
@@ -284,7 +292,7 @@ Shows the complete event schedule as a lane calendar. All shifts are visible acr
 1. In the My Shifts view, click **Request Swap** on the shift you want to trade.
 2. A modal lists all other shifts in the event that you are not already assigned to.
 3. Select the shift you would like to swap to and confirm.
-4. The organizer reviews swap requests and approves or rejects them from the admin area.
+4. The organizer reviews swap requests and approves or declines them on **Shift Schedule** (`/admin/shifts/schedule`) while the event is in **Assigning** or **Finalized** (see **Swap requests (organizer)** above).
 
 ![Swap modal](images/fix-2-swap-modal-myshifts.png)
 *Swap request modal — select the shift you want to swap to.*
