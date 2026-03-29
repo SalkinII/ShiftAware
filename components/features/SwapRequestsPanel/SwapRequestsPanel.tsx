@@ -6,7 +6,9 @@ import { ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { canShowSwapPanel } from "@/lib/services/event-status-permissions";
 import { cn } from "@/lib/utils";
 
 interface SwapRequest {
@@ -35,6 +37,8 @@ interface SwapRequest {
 
 interface SwapRequestsPanelProps {
   eventId: string | null;
+  eventStatus?: EventStatus;
+  onHasRequests?: (has: boolean) => void;
   onRefresh?: () => void;
 }
 
@@ -46,7 +50,12 @@ function shiftTime(startTime: string, endTime: string) {
   return `${format(new Date(startTime), "EEE dd.MM HH:mm")}–${format(new Date(endTime), "HH:mm")}`;
 }
 
-export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps) {
+export function SwapRequestsPanel({
+  eventId,
+  eventStatus,
+  onHasRequests,
+  onRefresh,
+}: SwapRequestsPanelProps) {
   const toast = useToast();
   const [requests, setRequests] = useState<SwapRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +64,11 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
 
   const fetchRequests = useCallback(() => {
     if (!eventId) return;
+    if (eventStatus && !canShowSwapPanel(eventStatus)) {
+      onHasRequests?.(false);
+      return;
+    }
+    onHasRequests?.(false);
     setLoading(true);
     setError(null);
     fetch(`/api/swap-requests?eventId=${eventId}`)
@@ -62,23 +76,25 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
         const all = unwrapApiResponse<SwapRequest[]>(data) || [];
-        setRequests(
-          all.filter(
-            (r) =>
-              r.status === "PENDING" ||
-              (r.status === "MATCHED" && r.matchedWithId != null),
-          ),
+        const filtered = all.filter(
+          (r) =>
+            r.status === "PENDING" ||
+            (r.status === "MATCHED" && r.matchedWithId != null),
         );
+        setRequests(filtered);
+        onHasRequests?.(filtered.length > 0);
       })
       .catch(() => setError("Failed to load swap requests"))
       .finally(() => setLoading(false));
-  }, [eventId]);
+  }, [eventId, eventStatus, onHasRequests]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
   if (!eventId) return null;
+
+  if (eventStatus && !canShowSwapPanel(eventStatus)) return null;
 
   async function handleAction(id: string, status: "APPROVED" | "DECLINED") {
     setActing(id);
@@ -123,11 +139,7 @@ export function SwapRequestsPanel({ eventId, onRefresh }: SwapRequestsPanelProps
   }
 
   if (requests.length === 0) {
-    return (
-      <Card className="p-4 text-sm text-gray-400 text-center">
-        No pending swap requests
-      </Card>
-    );
+    return null;
   }
 
   return (

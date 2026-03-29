@@ -209,15 +209,41 @@ describe("SwapRequestsPanel", () => {
     );
   });
 
-  it("shows empty state when no requests", async () => {
+  it("renders nothing when there are no requests (null, not a card)", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ data: [] }),
     });
-    render(<SwapRequestsPanel eventId="event-1" />);
-    await waitFor(() =>
-      expect(screen.getByText(/no pending swap requests/i)).toBeTruthy(),
+    const { container } = render(<SwapRequestsPanel eventId="event-1" />);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("renders nothing when eventStatus is PLANNING regardless of requests", async () => {
+    const { container } = render(
+      <SwapRequestsPanel eventId="event-1" eventStatus="PLANNING" />,
     );
+    // No need to wait — early return fires before fetch
+    expect(container.firstChild).toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("calls onHasRequests(true) when requests are present", async () => {
+    const onHasRequests = vi.fn();
+    render(<SwapRequestsPanel eventId="event-1" onHasRequests={onHasRequests} />);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    await waitFor(() => expect(onHasRequests).toHaveBeenCalledWith(true));
+  });
+
+  it("calls onHasRequests(false) when request list is empty", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    });
+    const onHasRequests = vi.fn();
+    render(<SwapRequestsPanel eventId="event-1" onHasRequests={onHasRequests} />);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    await waitFor(() => expect(onHasRequests).toHaveBeenCalledWith(false));
   });
 
   it("returns null when eventId is null", () => {
