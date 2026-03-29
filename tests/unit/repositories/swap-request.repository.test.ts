@@ -11,6 +11,8 @@ vi.mock("@/lib/db", () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
     assignment: {
       update: vi.fn(),
@@ -218,17 +220,15 @@ describe("SwapRequestRepository", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
-  it("should execute approved swap transaction", async () => {
-    const mockResults = [
-      { id: "assign-1" },
-      { id: "assign-2" },
-      { id: "req-1" },
-      { id: "req-2" },
-    ];
+  it("executeApprovedSwap nulls matchedWithId and deletes both swap requests", async () => {
+    vi.mocked(prisma.$transaction).mockImplementation(async (ops: any[]) => {
+      return Promise.all(ops.map((op) => Promise.resolve(op)));
+    });
+    vi.mocked(prisma.assignment.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.swapRequest.updateMany).mockResolvedValue({ count: 1 });
+    vi.mocked(prisma.swapRequest.deleteMany).mockResolvedValue({ count: 2 });
 
-    vi.mocked(prisma.$transaction).mockResolvedValue(mockResults as any);
-
-    const result = await repo.executeApprovedSwap(
+    await repo.executeApprovedSwap(
       "req-1",
       "req-2",
       "assign-1",
@@ -237,7 +237,6 @@ describe("SwapRequestRepository", () => {
       "shift-1",
     );
 
-    expect(result).toEqual(mockResults);
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
