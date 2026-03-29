@@ -428,11 +428,11 @@ git commit -m "feat(schedule): gate SwapRequestsPanel to ASSIGNING/FINALIZED wit
 
 ## Verification checklist
 
-- [ ] `canShowSwapPanel` returns true only for ASSIGNING and FINALIZED
-- [ ] Panel renders nothing (not a card) when request list is empty
-- [ ] Panel renders nothing when `eventStatus` is PLANNING / OPEN_FOR_PREFERENCES / COMPLETED
-- [ ] Calendar sidebar collapses smoothly (no snap) when panel hides
-- [ ] Calendar sidebar border disappears cleanly when collapsed
-- [ ] List-view panel disappears when status is wrong or requests empty
-- [ ] No fetch fires when `eventStatus` is a non-swap state (defensive early return before `useEffect`)
-- [ ] All unit tests pass
+- [x] `canShowSwapPanel` returns true only for ASSIGNING and FINALIZED
+- [x] Panel renders nothing (not a card) when request list is empty
+- [x] Panel renders nothing when `eventStatus` is PLANNING / OPEN_FOR_PREFERENCES / COMPLETED
+- [x] Calendar sidebar collapses smoothly (no snap) when panel hides
+- [x] Calendar sidebar border disappears cleanly when collapsed
+- [x] List-view panel disappears when status is wrong or requests empty
+- [x] No fetch fires when `eventStatus` is a non-swap state (`fetchRequests` no-op when status disallows panel; render early return for defense in depth)
+- [x] All unit tests pass
