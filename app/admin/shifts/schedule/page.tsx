@@ -30,7 +30,10 @@ import { TemplatePalette } from "@/components/features/TemplatePalette/TemplateP
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
 import { useEventContext } from "@/lib/hooks/useEventContext";
-import { canMutateShifts } from "@/lib/services/event-status-permissions";
+import {
+  canMutateShifts,
+  canShowSwapPanel,
+} from "@/lib/services/event-status-permissions";
 import {
   getNextStatus,
   getPreviousStatus,
@@ -137,6 +140,7 @@ export default function ShiftsPage() {
   const [showForm, setShowForm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+  const [hasSwapRequests, setHasSwapRequests] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     shiftId: string | null;
@@ -816,9 +820,26 @@ export default function ShiftsPage() {
               )}
               {/* Swap Requests panel — shown in calendar view when no shift is selected */}
               {!selectedShiftId && !showForm && selectedEventId && (
-                <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] p-4">
+                <div
+                  className={cn(
+                    "flex-shrink-0 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] transition-[width,padding] duration-300 ease-in-out",
+                    selectedEvent &&
+                      canShowSwapPanel(
+                        selectedEvent.status as import("@prisma/client").EventStatus,
+                      ) &&
+                      hasSwapRequests
+                      ? "w-80 p-4 overflow-y-auto border-l border-gray-200"
+                      : "w-0 p-0 overflow-hidden",
+                  )}
+                >
                   <SwapRequestsPanel
                     eventId={selectedEventId}
+                    eventStatus={
+                      selectedEvent?.status as
+                        | import("@prisma/client").EventStatus
+                        | undefined
+                    }
+                    onHasRequests={setHasSwapRequests}
                     onRefresh={refetchShifts}
                   />
                 </div>
@@ -1345,13 +1366,21 @@ export default function ShiftsPage() {
                 </Card>
               ) : (
                 <div className="space-y-6">
-                  {/* Swap Requests — shown when no form is open */}
-                  {!showForm && selectedEventId && (
-                    <SwapRequestsPanel
-                      eventId={selectedEventId}
-                      onRefresh={refetchShifts}
-                    />
-                  )}
+                  {/* Swap Requests — shown when no form is open, only in ASSIGNING and FINALIZED */}
+                  {!showForm &&
+                    selectedEventId &&
+                    selectedEvent &&
+                    canShowSwapPanel(
+                      selectedEvent.status as import("@prisma/client").EventStatus,
+                    ) && (
+                      <SwapRequestsPanel
+                        eventId={selectedEventId}
+                        eventStatus={
+                          selectedEvent.status as import("@prisma/client").EventStatus
+                        }
+                        onRefresh={refetchShifts}
+                      />
+                    )}
                   <Card className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 border-none shadow-xl">
                     <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
                       <Clock className="w-6 h-6" />
