@@ -77,11 +77,6 @@ export function MemberList({ onSelectMember }: MemberListProps) {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-gray-900">{member.alias}</h3>
-                  {member.capabilities.includes("SHIFT_LEAD") && (
-                    <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded font-bold">
-                      LEAD
-                    </span>
-                  )}
                 </div>
               </div>
               {member.isActive && (
