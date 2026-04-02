@@ -311,9 +311,15 @@ function MobileSidebar({
             {isInAdminSection ? "Admin Mode" : "Current Event"}
           </p>
           {isInAdminSection ? (
-            <p className="text-sm font-semibold truncate">
-              {event.name}
-            </p>
+            eventLoading ? (
+              <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
+            ) : event ? (
+              <p className="text-sm font-semibold truncate">{event.name}</p>
+            ) : (
+              <p className="text-sm font-semibold truncate opacity-70">
+                No event
+              </p>
+            )
           ) : eventLoading ? (
             <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
           ) : event ? (

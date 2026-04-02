@@ -38,6 +38,8 @@ agents/
 .worktrees/
 docs/mobile-audit
 .playwright-cli/
+superpowers/
+.superpowers/
 
 # debug
 npm-debug.log*
