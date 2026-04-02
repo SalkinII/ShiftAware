@@ -312,7 +312,7 @@ function MobileSidebar({
           </p>
           {isInAdminSection ? (
             <p className="text-sm font-semibold truncate">
-              Full Access Enabled
+              {event.name}
             </p>
           ) : eventLoading ? (
             <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />

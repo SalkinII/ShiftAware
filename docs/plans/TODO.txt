@@ -1,3 +1,7 @@
 - Integrate Heatmap into current team manage page that is in the navigation.
 
-- 
+- Move the "Back to User view" to the top of the sidebar so it cannot be overlapped by the card that shows "Admin Mode"
+
+- Optimise Mobile Display for Shift swap side panel (right) in Canvas view. (currentyl very crammed)
+
+- Harmonize Button sizes in headers per page in Mobile view.

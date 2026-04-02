@@ -78,7 +78,6 @@ export function AdminSidebar() {
           <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
             Admin Mode
           </p>
-          <p className="text-sm font-semibold truncate">Full Access Enabled</p>
         </div>
       </div>
     </nav>
