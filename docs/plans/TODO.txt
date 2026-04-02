@@ -1,0 +1,3 @@
+- Integrate Heatmap into current team manage page that is in the navigation.
+
+- 

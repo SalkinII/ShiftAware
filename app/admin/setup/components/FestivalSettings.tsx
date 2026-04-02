@@ -151,10 +151,7 @@ export function FestivalSettings() {
                 {formData.status?.replace(/_/g, " ").toLowerCase() ||
                   "Planning"}
               </span>
-              <span className="text-xs text-gray-400">
-                (Change via Shift Configuration page)
-              </span>
-            </div>
+          </div>
           </div>
         </div>
 
