@@ -242,11 +242,17 @@ export function ShiftPropertiesPanel({
   }
 
   const laneColor = shift?.template?.color || "#6b7280";
-  const wantCount =
-    shift?.preferences?.filter((p: any) => p.wantLevel === "WANT").length || 0;
-  const dontWantCount =
-    shift?.preferences?.filter((p: any) => p.wantLevel === "DONT_WANT")
-      .length || 0;
+  const OVERFLOW_THRESHOLD = 6;
+  const wantMembers: string[] =
+    shift?.preferences
+      ?.filter((p: any) => p.wantLevel === "WANT")
+      .map((p: any) => p.teamMember?.alias)
+      .filter(Boolean) || [];
+  const dontWantMembers: string[] =
+    shift?.preferences
+      ?.filter((p: any) => p.wantLevel === "DONT_WANT")
+      .map((p: any) => p.teamMember?.alias)
+      .filter(Boolean) || [];
 
   return (
     <GlassPanel className="w-80 border-l border-gray-200 flex flex-col h-full">
@@ -349,12 +355,46 @@ export function ShiftPropertiesPanel({
           </div>
         )}
         {canEditShift && <div className="h-1 bg-gray-200 my-2"></div>}
-        <div className="flex justify-between mt-1 text-xs text-gray-500">
-          <span>{wantCount} people want this shift</span>
-        </div>
-        <div className="flex justify-between mt-1 text-xs text-gray-500">
-          <span>{dontWantCount} people don't want this shift</span>
-        </div>
+        {wantMembers.length > 0 && (
+          <div>
+            <SectionLabel className="mb-1">Want this shift</SectionLabel>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {wantMembers.slice(0, OVERFLOW_THRESHOLD).map((alias) => (
+                <span
+                  key={alias}
+                  className="bg-green-50 text-green-800 rounded-full px-2 py-0.5 text-xs font-semibold"
+                >
+                  {alias}
+                </span>
+              ))}
+              {wantMembers.length > OVERFLOW_THRESHOLD && (
+                <span className="bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 text-xs font-semibold">
+                  +{wantMembers.length - OVERFLOW_THRESHOLD} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        {dontWantMembers.length > 0 && (
+          <div>
+            <SectionLabel className="mb-1">Don&apos;t want</SectionLabel>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {dontWantMembers.slice(0, OVERFLOW_THRESHOLD).map((alias) => (
+                <span
+                  key={alias}
+                  className="bg-red-50 text-red-800 rounded-full px-2 py-0.5 text-xs font-semibold"
+                >
+                  {alias}
+                </span>
+              ))}
+              {dontWantMembers.length > OVERFLOW_THRESHOLD && (
+                <span className="bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 text-xs font-semibold">
+                  +{dontWantMembers.length - OVERFLOW_THRESHOLD} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         <div className="h-1 bg-gray-200 my-2"></div>
 
         {/* Assignments */}

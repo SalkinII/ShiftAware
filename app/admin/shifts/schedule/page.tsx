@@ -9,7 +9,6 @@ import {
   Shield,
   Tag,
   ChevronRight,
-  List,
   Zap,
   Download,
   Lock,
@@ -141,6 +140,8 @@ export default function ShiftsPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [hasSwapRequests, setHasSwapRequests] = useState(false);
+  const [swapDrawerOpen, setSwapDrawerOpen] = useState(false);
+  const [swapCount, setSwapCount] = useState(0);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     shiftId: string | null;
@@ -649,30 +650,28 @@ export default function ShiftsPage() {
                   {selectedEvent.name}
                 </span>
               )}
-              <div className="flex rounded-lg overflow-hidden border border-gray-200 shrink-0">
+              <div className="bg-gray-100 rounded-xl p-1 flex shrink-0">
                 <button
                   onClick={() => setViewMode("list")}
                   className={cn(
-                    "p-2 transition-colors",
+                    "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
                     viewMode === "list"
-                      ? "bg-primary-500 text-white"
-                      : "bg-white text-gray-400 hover:text-gray-600",
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700",
                   )}
-                  title="List view"
                 >
-                  <List className="w-4 h-4" />
+                  List
                 </button>
                 <button
                   onClick={() => setViewMode("calendar")}
                   className={cn(
-                    "p-2 transition-colors",
+                    "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
                     viewMode === "calendar"
-                      ? "bg-primary-500 text-white"
-                      : "bg-white text-gray-400 hover:text-gray-600",
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700",
                   )}
-                  title="Calendar view"
                 >
-                  <Calendar className="w-4 h-4" />
+                  Calendar
                 </button>
               </div>
             </div>
@@ -734,7 +733,6 @@ export default function ShiftsPage() {
                       {prevStatus && (
                         <Button
                           variant="ghost"
-                          size="sm"
                           onClick={() => handleTransition(prevStatus)}
                           className="text-xs text-gray-500"
                         >
@@ -805,6 +803,21 @@ export default function ShiftsPage() {
                     shiftMutationLocked={shiftMutationLocked}
                   />
                 )}
+                {/* Mobile swap badge — hidden on desktop via lg:hidden */}
+                {hasSwapRequests &&
+                  selectedEventId &&
+                  selectedEvent &&
+                  canShowSwapPanel(
+                    selectedEvent.status as import("@prisma/client").EventStatus,
+                  ) && (
+                    <button
+                      onClick={() => setSwapDrawerOpen(true)}
+                      className="lg:hidden absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                    >
+                      ⇄ {swapCount} swaps pending{" "}
+                      <span className="text-[10px]">↑</span>
+                    </button>
+                  )}
               </div>
 
               {/* Shift properties panel — beside canvas when shift is selected */}
@@ -822,7 +835,7 @@ export default function ShiftsPage() {
               {!selectedShiftId && !showForm && selectedEventId && (
                 <div
                   className={cn(
-                    "flex-shrink-0 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] transition-[width,padding] duration-300 ease-in-out",
+                    "hidden lg:flex flex-shrink-0 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] transition-[width,padding] duration-300 ease-in-out",
                     selectedEvent &&
                       canShowSwapPanel(
                         selectedEvent.status as import("@prisma/client").EventStatus,
@@ -839,7 +852,10 @@ export default function ShiftsPage() {
                         | import("@prisma/client").EventStatus
                         | undefined
                     }
-                    onHasRequests={setHasSwapRequests}
+                    onHasRequests={(has, count) => {
+                      setHasSwapRequests(has);
+                      setSwapCount(count ?? 0);
+                    }}
                     onRefresh={refetchShifts}
                   />
                 </div>
@@ -1012,6 +1028,46 @@ export default function ShiftsPage() {
                 <span className="ml-auto text-gray-400">
                   {shifts.length} total shifts
                 </span>
+              </div>
+            )}
+
+            {/* Mobile backdrop — shown when drawer is open */}
+            {swapDrawerOpen && (
+              <div
+                className="lg:hidden fixed inset-0 bg-black/40 z-40"
+                onClick={() => setSwapDrawerOpen(false)}
+              />
+            )}
+
+            {/* Mobile swap drawer */}
+            {swapDrawerOpen && (
+              <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] border-t border-white/20 rounded-t-2xl">
+                <div className="w-9 h-1 bg-gray-300 rounded-full mx-auto mt-2 mb-1" />
+                <div className="flex items-center justify-between px-4 py-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    Swap Requests ({swapCount})
+                  </span>
+                  <button
+                    onClick={() => setSwapDrawerOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 p-1 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="max-h-[60vh] overflow-y-auto px-4 pb-6">
+                  <SwapRequestsPanel
+                    eventId={selectedEventId}
+                    eventStatus={
+                      selectedEvent?.status as
+                        | import("@prisma/client").EventStatus
+                        | undefined
+                    }
+                    onRefresh={() => {
+                      refetchShifts();
+                      setSwapDrawerOpen(false);
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>
