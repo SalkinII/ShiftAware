@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/node_modules.bak-*
 /.pnp
 .pnp.*
 .yarn/*
@@ -38,6 +39,8 @@ agents/
 .worktrees/
 docs/mobile-audit
 .playwright-cli/
+superpowers/
+.superpowers/
 
 # debug
 npm-debug.log*

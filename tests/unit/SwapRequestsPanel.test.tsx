@@ -232,7 +232,7 @@ describe("SwapRequestsPanel", () => {
     const onHasRequests = vi.fn();
     render(<SwapRequestsPanel eventId="event-1" onHasRequests={onHasRequests} />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
-    await waitFor(() => expect(onHasRequests).toHaveBeenCalledWith(true));
+    await waitFor(() => expect(onHasRequests).toHaveBeenLastCalledWith(true, 2));
   });
 
   it("calls onHasRequests(false) when request list is empty", async () => {
@@ -243,7 +243,7 @@ describe("SwapRequestsPanel", () => {
     const onHasRequests = vi.fn();
     render(<SwapRequestsPanel eventId="event-1" onHasRequests={onHasRequests} />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
-    await waitFor(() => expect(onHasRequests).toHaveBeenCalledWith(false));
+    await waitFor(() => expect(onHasRequests).toHaveBeenLastCalledWith(false, 0));
   });
 
   it("returns null when eventId is null", () => {

@@ -221,7 +221,8 @@ describe("SwapRequestRepository", () => {
   });
 
   it("executeApprovedSwap nulls matchedWithId and deletes both swap requests", async () => {
-    vi.mocked(prisma.$transaction).mockImplementation(async (ops: any[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (prisma.$transaction as any).mockImplementation(async (ops: any[]) => {
       return Promise.all(ops.map((op) => Promise.resolve(op)));
     });
     vi.mocked(prisma.assignment.update).mockResolvedValue({} as any);

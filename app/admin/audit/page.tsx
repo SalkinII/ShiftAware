@@ -315,7 +315,7 @@ export default function AuditLogPage() {
             Export CSV
           </Button>
           <Button
-            variant="primary"
+            variant="secondary"
             onClick={handleReset}
             className="flex items-center gap-2"
           >

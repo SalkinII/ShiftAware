@@ -38,7 +38,7 @@ interface SwapRequest {
 interface SwapRequestsPanelProps {
   eventId: string | null;
   eventStatus?: EventStatus;
-  onHasRequests?: (has: boolean) => void;
+  onHasRequests?: (has: boolean, count?: number) => void;
   onRefresh?: () => void;
 }
 
@@ -82,7 +82,7 @@ export function SwapRequestsPanel({
             (r.status === "MATCHED" && r.matchedWithId != null),
         );
         setRequests(filtered);
-        onHasRequests?.(filtered.length > 0);
+        onHasRequests?.(filtered.length > 0, filtered.length);
       })
       .catch(() => setError("Failed to load swap requests"))
       .finally(() => setLoading(false));

@@ -1,0 +1,16 @@
+- After auditing all available features and whether they are accessible somehow via the side bar, we should integrate those that we want and that aren't available. We should then remove pages that are not reachable via the side bar (admin or user to the left)
+
+- Fix Vitest OOM Error
+  RESOLVED (2026-04-03): Root cause was an infinite render loop, NOT a heavy import.
+  The useCache mock returned a new [] reference on every call. React's useEffect
+  (deps: [cachedShifts]) re-ran every render → setShifts(newRef) → state changed →
+  re-render → repeat for 25s → 4-8 GB OOM.
+  Fix: stable references in mock factories (data: [], refetch, selectedEvent defined
+  once outside the returned hook fn). Also added vi.mock for date-fns and lucide-react
+  to speed up the import phase (both load the full package without tree-shaking in
+  Vitest's dev-mode transform pipeline).
+  All 74 tests now pass in ~5s.
+  NOTE (2026-04-03): `maxForks: 4` added to vitest.config.ts was invalid — the property
+  does not exist in vitest 4.1.1's InlineConfig type. Removed. poolOptions.forks.maxForks
+  is also not exposed in InlineConfig in this version. The OOM is fully fixed by the
+  stable mock references; no pool cap is needed.

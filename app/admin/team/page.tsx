@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Zap } from "lucide-react";
+import { Activity, Users, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { DistributionSettings } from "./components/DistributionSettings";
 import { MemberListByEvent } from "./components/MemberListByEvent";
+import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 
-type TabType = "members" | "allocation";
+type TabType = "members" | "allocation" | "heatmap";
 
 export default function TeamPage() {
   const [activeTab, setActiveTab] = useState<TabType>("members");
@@ -21,6 +22,7 @@ export default function TeamPage() {
       label: "Allocation & Distribution",
       icon: Zap,
     },
+    { id: "heatmap" as TabType, label: "Availability Heatmap", icon: Activity },
   ];
 
   return (
@@ -80,6 +82,7 @@ export default function TeamPage() {
         )}
 
         {activeTab === "allocation" && <DistributionSettings />}
+        {activeTab === "heatmap" && <AvailabilityHeatmap />}
       </div>
     </div>
   );

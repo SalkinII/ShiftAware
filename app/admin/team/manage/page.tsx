@@ -270,14 +270,14 @@ export default function MembersPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <div className="bg-gray-100 rounded-xl p-1 flex">
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
                   viewMode === "list"
                     ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900",
+                    : "text-gray-500 hover:text-gray-700",
                 )}
               >
                 List
@@ -285,10 +285,10 @@ export default function MembersPage() {
               <button
                 onClick={() => setViewMode("heatmap")}
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
                   viewMode === "heatmap"
                     ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900",
+                    : "text-gray-500 hover:text-gray-700",
                 )}
               >
                 Heatmap

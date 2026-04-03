@@ -588,14 +588,14 @@ export default function UserCalendarPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">
+          <div className="bg-gray-100 rounded-xl p-1 flex">
             <button
               onClick={() => setCalendarView("my-shifts")}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
+                "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
                 calendarView === "my-shifts"
-                  ? "bg-primary-500 text-white shadow-md"
-                  : "text-gray-400 hover:text-gray-600",
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700",
               )}
             >
               My Shifts
@@ -603,10 +603,10 @@ export default function UserCalendarPage() {
             <button
               onClick={() => setCalendarView("full-schedule")}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
+                "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
                 calendarView === "full-schedule"
-                  ? "bg-primary-500 text-white shadow-md"
-                  : "text-gray-400 hover:text-gray-600",
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700",
               )}
             >
               Full Schedule
