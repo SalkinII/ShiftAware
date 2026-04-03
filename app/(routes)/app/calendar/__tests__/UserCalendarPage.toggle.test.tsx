@@ -7,21 +7,28 @@ import { render, screen } from "@testing-library/react";
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) => () => <div data-testid="lane-canvas" />,
 }));
-vi.mock("@/lib/hooks/useEventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "evt-1",
-    selectedEvent: {
-      id: "evt-1",
-      name: "Test",
-      status: "OPEN_FOR_PREFERENCES",
-      startDate: "2026-06-01T00:00:00Z",
-      endDate: "2026-06-05T00:00:00Z",
-    },
-  }),
-}));
-vi.mock("@/lib/cache/useCache", () => ({
-  useCache: () => ({ data: [], loading: false, error: null, refetch: vi.fn() }),
-}));
+vi.mock("@/lib/hooks/useEventContext", () => {
+  const selectedEvent = {
+    id: "evt-1",
+    name: "Test",
+    status: "OPEN_FOR_PREFERENCES",
+    startDate: "2026-06-01T00:00:00Z",
+    endDate: "2026-06-05T00:00:00Z",
+  };
+  return {
+    useEventContext: () => ({ selectedEventId: "evt-1", selectedEvent }),
+  };
+});
+vi.mock("@/lib/cache/useCache", () => {
+  // Stable references prevent infinite render loops: React bails out when state
+  // reference is unchanged, but a new [] on every render would re-trigger
+  // the cachedShifts effect → setShifts → re-render → repeat → OOM.
+  const data: never[] = [];
+  const refetch = vi.fn();
+  return {
+    useCache: () => ({ data, loading: false, error: null, refetch }),
+  };
+});
 vi.mock("@/components/ui/Toast", () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }));
@@ -50,6 +57,14 @@ vi.mock("@/lib/api-errors", () => ({
 }));
 vi.mock("../components/MyShiftsList", () => ({
   MyShiftsList: () => <div data-testid="my-shifts-list" />,
+}));
+vi.mock("date-fns", () => ({
+  format: () => "",
+}));
+vi.mock("lucide-react", () => ({
+  Calendar: () => null,
+  RefreshCw: () => null,
+  SlidersHorizontal: () => null,
 }));
 
 import UserCalendarPage from "../page";
