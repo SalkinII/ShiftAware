@@ -10,3 +10,7 @@
   to speed up the import phase (both load the full package without tree-shaking in
   Vitest's dev-mode transform pipeline).
   All 74 tests now pass in ~5s.
+  NOTE (2026-04-03): `maxForks: 4` added to vitest.config.ts was invalid — the property
+  does not exist in vitest 4.1.1's InlineConfig type. Removed. poolOptions.forks.maxForks
+  is also not exposed in InlineConfig in this version. The OOM is fully fixed by the
+  stable mock references; no pool cap is needed.
