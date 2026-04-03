@@ -14,6 +14,7 @@ export default defineConfig({
       "tests/e2e/**",
       "tests/integration.test.ts",
     ],
+    maxForks: 4,
   },
   resolve: {
     alias: {

@@ -1,1 +1,13 @@
 - After auditing all available features and whether they are accessible somehow via the side bar, we should integrate those that we want and that aren't available. We should then remove pages that are not reachable via the side bar (admin or user to the left)
+
+- Fix Vitest OOM Error
+  INVESTIGATION DONE (2026-04-03): Root cause identified.
+  Single culprit: app/(routes)/app/calendar/__tests__/UserCalendarPage.toggle.test.tsx
+  This one file alone consumes 8 GB+ of heap during module loading (crash happens in
+  environment/import phase, tests never execute). All other 73 files pass fine.
+  Tried: maxForks:4, vmForks pool, execArgv heap flag, NODE_OPTIONS – none help
+  because the memory use is genuine, not a pooling issue.
+  Next step: audit what UserCalendarPage.toggle.test.tsx loads transitively that
+  isn't mocked (something in the import tree is pulling in a massive amount of code).
+  Candidates: Card component (not mocked), or a transitive dep of page.tsx that
+  escapes vi.mock. Add more vi.mock() calls or mock the whole page module.
