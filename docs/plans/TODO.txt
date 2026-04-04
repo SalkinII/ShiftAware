@@ -1,0 +1,101 @@
+here is what i found and a models explanation:
+me: in bulletpoints explain why on admin/setup template tab the content does not fit the template cards on narrow screen and pushes out over the boundaries. 
+###
+Here’s a concise, code-grounded explanation of why the Shift Templates tab overflows on narrow screens:
+
+Template rows are single horizontal flex rows — Global template cards use flex items-center gap-4 with checkbox, middle block, and action buttons all in one row (TemplateManager.tsx). Flexbox does not wrap that row by default, so the combined minimum width of those columns can exceed the viewport.
+                <Card
+                  key={template.id}
+                  className={cn(
+                    "p-4 flex items-center gap-4 cursor-pointer transition-all",
+                    ...
+                  )}
+                >
+                  ...
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900">
+                      {template.name}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                      ...
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button ...><Edit ... /></Button>
+                    <Button ...><Trash2 ... /></Button>
+                  </div>
+                </Card>
+flex-1 without shrinking the text column — The middle section uses flex-1, but flex items default to min-width: auto, so they won’t shrink below the intrinsic width of long names or the metadata row. That can stop the middle column from compressing and push the row wider than the card.
+
+Metadata is another non-wrapping flex row — The line with time, capacity, and (for event templates) the EVENT-SPECIFIC pill is flex items-center gap-4 with no flex-wrap, so those segments stay on one line and widen the minimum layout.
+
+              <Card
+                key={template.id}
+                className="p-4 flex items-center justify-between bg-blue-50 border-blue-200"
+              >
+                <div>
+                  <div className="font-bold text-gray-900">{template.name}</div>
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                    ...
+                    <span className="text-xs bg-blue-200 px-2 py-0.5 rounded font-semibold">
+                      EVENT-SPECIFIC
+                    </span>
+                  </div>
+                </div>
+Event-specific cards use justify-between — Left content (title + wide metadata) and right buttons are forced to opposite ends; without min-w-0 / truncation / wrapping on the left block, the row’s minimum width is still “everything on one line,” which overflows narrow widths.
+
+No overflow/word-break strategy on titles — Template names use font-bold without truncate, break-words, or overflow-hidden, so long strings extend the layout instead of clipping or wrapping inside the card.
+
+Edit form uses a fixed 3-column grid — While editing, grid grid-cols-3 gap-4 applies at all widths; three columns plus gaps often need more horizontal space than a phone-width column, so the form can spill past the outer Card (p-6 on the setup page reduces usable width further).
+
+            <div className="grid grid-cols-3 gap-4">
+              <Input label="Start Time" ... />
+              <Input label="Duration (hours)" ... />
+              <Input label="Capacity" ... />
+            </div>
+Header row can add pressure — The top flex items-center justify-between (title block vs. “New Template”) has no responsive stacking; on very narrow screens that row also competes for width alongside the nested cards.
+
+Card itself doesn’t constrain overflow — The shared Card component is a plain div with border/radius/padding; there is no max-w-full, min-w-0, or overflow-hidden, so overflowing children are not clipped and can visually extend past the rounded box.
+
+Together, these behaviors mean minimum horizontal width of several sections is larger than a narrow viewport, and flex/grid defaults don’t reflow or shrink text enough, so content extends past the card boundaries.
+
+
+#############################
+
+me: in bulletpoints explain how the display logic of the heatmap works. what shifts are displayed? how is it updated when i switch event? are the shifts for one event only? what is pulled when i hit refresh? what influences availability badges in the matrix?
+###
+Tracing the codebase to explain heatmap display logic, event switching, refresh, and availability badges.
+
+Here’s how it works in the current code.
+
+Data flow (UI → API)
+The matrix is built from GET /api/members/availability with optional query params: memberIds, shiftIds, startDate, endDate, shiftType (see 88:106:components/features/AvailabilityHeatmap/AvailabilityHeatmap.tsx).
+Team Management and Team Members → Heatmap render <AvailabilityHeatmap /> without those props (and without selectedEventId), so the request is usually with no query string (85:85:app/admin/team/page.tsx, 309:314:app/admin/team/manage/page.tsx).
+Which shifts are shown?
+The API loads shifts with prisma.shift.findMany and a where built only from the optional filters above—there is no eventId filter (241:275:app/api/members/availability/route.ts).
+With the default UI (no params), that means every shift in the DB that passes those filters (i.e. effectively all shifts), ordered by startTime ascending.
+If you passed shiftIds and/or a date range and/or shiftType, you would restrict that set.
+Which members are rows?
+All active team members (isActive: true), optionally narrowed by memberIds (216:239:app/api/members/availability/route.ts).
+One event only?
+Not in the wired UI. The heatmap is not scoped to the header-selected event; the Members tab uses selectedEventId, but the heatmap tab does not (65:85:app/admin/team/page.tsx).
+So the matrix is global (all active members × all shifts) unless something passes filtering props (nothing does today on those pages).
+What happens when you switch event?
+No automatic change to the heatmap: props and cache key stay availability- (empty query), so React/useCache does not refetch just because the event context changed.
+You only get new data if you Refresh, invalidate that cache key elsewhere, or remount in a way that changes the query string.
+What does Refresh do?
+It calls refetch(): invalidates the client cache entry for that key and runs the same fetchFn again—another GET /api/members/availability with the same query params (59:63:lib/cache/useCache.ts, 306:311:components/features/AvailabilityHeatmap/AvailabilityHeatmap.tsx).
+What drives each cell (availability “badge”)?
+Server-side calculateAvailabilityStatus sets status, hasPreference, isAssigned, hasConflict, meetsRequirements, and optional details (111:188:app/api/members/availability/route.ts):
+
+isAssigned: member has an assignment to this shift → stored status is "unavailable", but the UI paints it as Assigned (primary) when isAssigned is true (131:137:components/features/AvailabilityHeatmap/AvailabilityHeatmap.tsx).
+hasConflict: another assignment overlaps this shift in time and that other shift is found in the same shifts list returned for this request (if the overlapping assignment points at a shift not in that list, it is skipped) → tends toward "unavailable".
+hasPreference: member has a preference row for this shift id.
+meetsRequirements: member capabilities cover shift.requiredRoles (no required roles ⇒ meets).
+Status rules (simplified):
+assigned to this shift → "unavailable" (shown as assigned in UI).
+overlap conflict → "unavailable".
+preference and meets requirements → "available".
+preference xor meets requirements → "partial".
+neither preference nor meets requirements → "neutral".
+So the badges reflect preferences, assignments, time overlap with other assignments (within the loaded shift set), and role/capability match for each member–shift pair.
