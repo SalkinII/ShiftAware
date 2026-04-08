@@ -1,8 +1,12 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from "vitest";
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+
+// Capture eventId prop passed to heatmap
+let lastHeatmapEventId: string | undefined;
 
 vi.mock("@/lib/hooks/useEventContext", () => ({
   useEventContext: () => ({
@@ -12,7 +16,10 @@ vi.mock("@/lib/hooks/useEventContext", () => ({
 }));
 
 vi.mock("@/components/features/AvailabilityHeatmap/AvailabilityHeatmap", () => ({
-  AvailabilityHeatmap: () => <div data-testid="availability-heatmap">Heatmap</div>,
+  AvailabilityHeatmap: ({ eventId }: { eventId?: string }) => {
+    lastHeatmapEventId = eventId;
+    return <div data-testid="availability-heatmap">Heatmap</div>;
+  },
 }));
 
 vi.mock("@/components/ui/Card", () => ({
@@ -30,6 +37,10 @@ vi.mock("../components/MemberListByEvent", () => ({
 import TeamPage from "../page";
 
 describe("TeamPage – heatmap tab", () => {
+  beforeEach(() => {
+    lastHeatmapEventId = undefined;
+  });
+
   it("renders the Availability Heatmap tab button", () => {
     render(<TeamPage />);
     expect(screen.getByText("Availability Heatmap")).toBeInTheDocument();
@@ -39,5 +50,17 @@ describe("TeamPage – heatmap tab", () => {
     render(<TeamPage />);
     fireEvent.click(screen.getByText("Availability Heatmap"));
     expect(screen.getByTestId("availability-heatmap")).toBeInTheDocument();
+  });
+});
+
+describe("TeamPage – heatmap receives selectedEventId", () => {
+  beforeEach(() => {
+    lastHeatmapEventId = undefined;
+  });
+
+  it("passes selectedEventId as eventId prop to AvailabilityHeatmap", () => {
+    render(<TeamPage />);
+    fireEvent.click(screen.getByText("Availability Heatmap"));
+    expect(lastHeatmapEventId).toBe("event-1");
   });
 });
