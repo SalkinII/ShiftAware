@@ -675,7 +675,7 @@ export default function ShiftsPage() {
                 </button>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <div
                 className={
                   viewMode === "list" ? "invisible pointer-events-none" : ""
@@ -717,7 +717,7 @@ export default function ShiftsPage() {
                   const ActionIcon = action?.icon || Zap;
 
                   return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 capitalize">
                         {selectedEvent.status.replace(/_/g, " ").toLowerCase()}
                       </span>
