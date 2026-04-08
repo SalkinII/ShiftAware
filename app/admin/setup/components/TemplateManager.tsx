@@ -238,7 +238,7 @@ export function TemplateManager() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">
             Shift Templates
@@ -285,7 +285,7 @@ export function TemplateManager() {
               }
             />
             {/* Shift Type and Priority are set by defaults — hidden from UI */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Input
                 label="Start Time"
                 type="time"
@@ -373,11 +373,11 @@ export function TemplateManager() {
                       {isAssigned && <Check className="w-3 h-3 text-white" />}
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-gray-900 break-words">
                       {template.name}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {template.startTime} ({template.durationMinutes / 60}h)
@@ -438,9 +438,9 @@ export function TemplateManager() {
                 key={template.id}
                 className="p-4 flex items-center justify-between bg-blue-50 border-blue-200"
               >
-                <div>
-                  <div className="font-bold text-gray-900">{template.name}</div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-gray-900 break-words">{template.name}</div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {template.startTime} ({template.durationMinutes / 60}h)
