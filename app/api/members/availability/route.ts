@@ -203,6 +203,7 @@ export async function GET(request: NextRequest) {
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
     const shiftTypeParam = searchParams.get("shiftType");
+    const eventIdParam = searchParams.get("eventId") || undefined;
 
     const memberIds = memberIdsParam
       ? memberIdsParam.split(",").filter(Boolean)
@@ -251,6 +252,9 @@ export async function GET(request: NextRequest) {
     }
     if (shiftTypeParam) {
       shiftsWhere.type = shiftTypeParam as ShiftType;
+    }
+    if (eventIdParam) {
+      shiftsWhere.eventId = eventIdParam;
     }
 
     const shifts = await prisma.shift.findMany({

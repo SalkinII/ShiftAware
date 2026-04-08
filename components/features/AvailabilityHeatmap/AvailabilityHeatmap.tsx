@@ -59,6 +59,7 @@ interface HeatmapData {
 }
 
 interface AvailabilityHeatmapProps {
+  eventId?: string;
   memberIds?: string[];
   shiftIds?: string[];
   startDate?: Date;
@@ -72,6 +73,7 @@ interface AvailabilityHeatmapProps {
 }
 
 export function AvailabilityHeatmap({
+  eventId,
   memberIds,
   shiftIds,
   startDate,
@@ -102,8 +104,11 @@ export function AvailabilityHeatmap({
     if (shiftType) {
       params.set("shiftType", shiftType);
     }
+    if (eventId) {
+      params.set("eventId", eventId);
+    }
     return params.toString();
-  }, [memberIds, shiftIds, startDate, endDate, shiftType]);
+  }, [eventId, memberIds, shiftIds, startDate, endDate, shiftType]);
 
   const {
     data: heatmapData,
