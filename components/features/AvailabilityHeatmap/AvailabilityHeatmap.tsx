@@ -475,7 +475,7 @@ export function AvailabilityHeatmap({
       {/* Help text */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-[10px] text-gray-400 text-center">
-          Click a green cell to assign member to shift • Hover for details
+          Hover for details - Go to Canvas to assign - Pending feature development: "Click green Icon to assign"
         </p>
       </div>
     </Card>

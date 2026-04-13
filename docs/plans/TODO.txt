@@ -1,4 +1,3 @@
-(previous items resolved — see 2026-04-08-mobile-and-png-fixes.md and 2026-04-13-loop-and-cleanup-fixes.md)
 
 -- user calendar page: add PNG export button
    The admin schedule page (app/admin/shifts/schedule/page.tsx:492) has handleExportPng()
@@ -8,3 +7,14 @@
    but never wires up a ref or provides an export button.
    Fix: add useRef<LaneCalendarCanvasHandle>, pass as ref to LaneCalendarCanvas,
    show "Export as PNG" button only when calendarView === "full-schedule".
+
+
+-- The fix wasn't completed. I wanted this <div class="p-4 rounded-xl text-white shadow-lg bg-gradient-to-br from-red-500 to-red-600"><p class="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Admin Mode</p><p class="text-sm font-semibold truncate">Starlight Meadow Festival 2026</p></div>
+card element in a plane above the other options completely gone as it did overlay important parts in the side panel to the left if the screen becomes smaller. I mean we could integrate the content into the same level as the other elements (neatly) in the left side panel. But we could also just completely remove it. Same is true for the user side panel card that shows the event.
+
+-- In the team attributes in event setup. the way you fixe it the attribute name now get's drowned out by other components due to text shortening in 360 px screen. However we want to see what attribute we are looking at! Be systematic about your fixes!
+
+-- these elements get pushed out to the side still in 360 px on calendar tab in admin :
+"Coverage 18 fully staffed 0 partial 1 unstaffed 18 total shift"
+
+
