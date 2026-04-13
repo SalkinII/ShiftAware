@@ -181,7 +181,7 @@ export function AlgorithmResultsModal({
               <div className="text-2xl font-bold text-primary-700">
                 {totalAssignments}
               </div>
-              <div className="text-xs text-primary-600 uppercase tracking-widest">
+              <div className="text-xs text-primary-600 uppercase tracking-wide break-words">
                 Assignments
               </div>
             </div>
@@ -189,7 +189,7 @@ export function AlgorithmResultsModal({
               <div className="text-2xl font-bold text-gray-700">
                 {avgScore.toFixed(1)}
               </div>
-              <div className="text-xs text-gray-600 uppercase tracking-widest">
+              <div className="text-xs text-gray-600 uppercase tracking-wide break-words">
                 Avg Score
               </div>
             </div>
@@ -206,7 +206,7 @@ export function AlgorithmResultsModal({
                 {totalViolations}
               </div>
               <div
-                className={`text-xs uppercase tracking-widest ${
+                className={`text-xs uppercase tracking-wide break-words ${
                   totalViolations > 0 ? "text-red-600" : "text-green-600"
                 }`}
               >

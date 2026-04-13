@@ -82,7 +82,21 @@ export default function TeamPage() {
         )}
 
         {activeTab === "allocation" && <DistributionSettings />}
-        {activeTab === "heatmap" && <AvailabilityHeatmap />}
+        {activeTab === "heatmap" && (
+          selectedEventId ? (
+            <AvailabilityHeatmap eventId={selectedEventId} />
+          ) : (
+            <Card className="p-6">
+              <div className="text-center py-8 text-gray-500">
+                <p className="font-medium">No event selected</p>
+                <p className="text-sm mt-1">
+                  Choose an event using the selector in the header (desktop) or
+                  the menu sidebar (mobile).
+                </p>
+              </div>
+            </Card>
+          )
+        )}
       </div>
     </div>
   );

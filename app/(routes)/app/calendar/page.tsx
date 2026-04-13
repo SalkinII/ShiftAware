@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Calendar, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, Download, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
@@ -26,6 +26,7 @@ import { ShiftPreferencePanel } from "@/components/features/ShiftPropertiesPanel
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
+import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 
 type CoverageState = "full" | "partial" | "empty";
 
@@ -62,6 +63,7 @@ const coverageLabels: Record<CoverageState, string> = {
 // User Calendar View - Read-only schedule display
 export default function UserCalendarPage() {
   const toast = useToast();
+  const canvasRef = useRef<LaneCalendarCanvasHandle>(null);
   const { selectedEventId, selectedEvent } = useEventContext(false);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
@@ -448,6 +450,22 @@ export default function UserCalendarPage() {
       .catch(() => toast.error("Failed to cancel swap request"));
   }
 
+  async function handleExportPng() {
+    if (!canvasRef.current) {
+      toast.error("Canvas not available");
+      return;
+    }
+    const dataUrl = await canvasRef.current.exportToPng();
+    if (!dataUrl) {
+      toast.error("Failed to export PNG — see browser console for details");
+      return;
+    }
+    const link = document.createElement("a");
+    link.download = `schedule-${selectedEvent?.name ?? "export"}.png`;
+    link.href = dataUrl;
+    link.click();
+  }
+
   // Fetch preferences for vote panel and My Preferences section
   const shouldFetchPreferences = !!userId && !!selectedEventId;
   const { data: preferences, refetch: refetchPreferences } = useCache<
@@ -613,6 +631,16 @@ export default function UserCalendarPage() {
             </button>
           </div>
 
+          {calendarView === "full-schedule" && (
+            <Button
+              onClick={handleExportPng}
+              variant="secondary"
+              className="shadow-sm flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" /> Export
+            </Button>
+          )}
+
           <Button
             onClick={() => refetchShifts()}
             variant="secondary"
@@ -730,6 +758,7 @@ export default function UserCalendarPage() {
             >
               <div className="flex-1 min-w-0">
                 <LaneCalendarCanvas
+                  ref={canvasRef}
                   shifts={filteredShifts}
                   lanes={derivedLanes}
                   eventStart={eventStartDate}

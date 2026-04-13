@@ -22,7 +22,7 @@ export function AdminSidebar() {
 
   return (
     <nav className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto hidden lg:block scrollbar-hide">
-      <div className="p-4 pb-36 space-y-8">
+      <div className="p-4 pb-4 space-y-8">
         <div className="border-b border-gray-100 pb-4">
           <Link
             href="/app/calendar"
@@ -70,14 +70,6 @@ export function AdminSidebar() {
               );
             })}
           </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50/50">
-        <div className="p-4 rounded-xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
-          <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
-            Admin Mode
-          </p>
         </div>
       </div>
     </nav>

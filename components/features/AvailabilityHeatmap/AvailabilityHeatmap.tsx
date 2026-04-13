@@ -59,6 +59,7 @@ interface HeatmapData {
 }
 
 interface AvailabilityHeatmapProps {
+  eventId?: string;
   memberIds?: string[];
   shiftIds?: string[];
   startDate?: Date;
@@ -72,6 +73,7 @@ interface AvailabilityHeatmapProps {
 }
 
 export function AvailabilityHeatmap({
+  eventId,
   memberIds,
   shiftIds,
   startDate,
@@ -102,8 +104,11 @@ export function AvailabilityHeatmap({
     if (shiftType) {
       params.set("shiftType", shiftType);
     }
+    if (eventId) {
+      params.set("eventId", eventId);
+    }
     return params.toString();
-  }, [memberIds, shiftIds, startDate, endDate, shiftType]);
+  }, [eventId, memberIds, shiftIds, startDate, endDate, shiftType]);
 
   const {
     data: heatmapData,
@@ -346,7 +351,7 @@ export function AvailabilityHeatmap({
         </div>
 
         {/* Legend - Compact */}
-        <div className="flex items-center gap-3 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
           <span className="font-semibold">Click to assign:</span>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-green-100 border border-green-400 rounded flex items-center justify-center">
@@ -470,7 +475,7 @@ export function AvailabilityHeatmap({
       {/* Help text */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-[10px] text-gray-400 text-center">
-          Click a green cell to assign member to shift • Hover for details
+          Hover for details - Go to Calendar tab to assign - Pending feature development: "Click green Icon to assign"
         </p>
       </div>
     </Card>
