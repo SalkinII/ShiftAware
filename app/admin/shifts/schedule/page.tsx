@@ -496,7 +496,7 @@ export default function ShiftsPage() {
     }
     const dataUrl = await canvasRef.current.exportToPng();
     if (!dataUrl) {
-      toast.error("Failed to export PNG");
+      toast.error("Failed to export PNG — see browser console for details");
       return;
     }
     const link = document.createElement("a");
