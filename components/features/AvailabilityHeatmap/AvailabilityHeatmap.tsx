@@ -351,7 +351,7 @@ export function AvailabilityHeatmap({
         </div>
 
         {/* Legend - Compact */}
-        <div className="flex items-center gap-3 text-xs text-gray-600">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
           <span className="font-semibold">Click to assign:</span>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-green-100 border border-green-400 rounded flex items-center justify-center">
