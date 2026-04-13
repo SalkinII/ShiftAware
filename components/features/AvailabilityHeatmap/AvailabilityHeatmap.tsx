@@ -475,7 +475,7 @@ export function AvailabilityHeatmap({
       {/* Help text */}
       <div className="mt-3 pt-3 border-t border-gray-100">
         <p className="text-[10px] text-gray-400 text-center">
-          Hover for details - Go to Canvas to assign - Pending feature development: "Click green Icon to assign"
+          Hover for details - Go to Calendar tab to assign - Pending feature development: "Click green Icon to assign"
         </p>
       </div>
     </Card>
