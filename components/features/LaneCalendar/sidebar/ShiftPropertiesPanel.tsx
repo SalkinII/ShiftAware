@@ -255,7 +255,7 @@ export function ShiftPropertiesPanel({
       .filter(Boolean) || [];
 
   return (
-    <GlassPanel className="w-80 border-l border-gray-200 flex flex-col h-full">
+    <GlassPanel className="w-full border-l border-gray-200 flex flex-col min-h-0 lg:h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <h2 className="font-semibold text-gray-900 truncate">

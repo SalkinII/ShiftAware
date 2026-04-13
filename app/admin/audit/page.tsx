@@ -424,8 +424,8 @@ export default function AuditLogPage() {
               key={log.id}
               className="p-4 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <span
                       className={cn(
@@ -448,7 +448,7 @@ export default function AuditLogPage() {
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p className="text-sm text-gray-600 mb-1 break-all">
                     <span className="font-semibold">Entity ID:</span>{" "}
                     {log.entityId}
                   </p>
@@ -482,7 +482,7 @@ export default function AuditLogPage() {
                     </details>
                   )}
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
                   <div className="text-right text-xs text-gray-500">
                     <p className="font-semibold">
                       {format(new Date(log.createdAt), "MMM d, yyyy")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -62,13 +62,18 @@ export function SwapRequestsPanel({
   const [error, setError] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
 
+  const onHasRequestsRef = useRef(onHasRequests);
+  useEffect(() => {
+    onHasRequestsRef.current = onHasRequests;
+  });
+
   const fetchRequests = useCallback(() => {
     if (!eventId) return;
     if (eventStatus && !canShowSwapPanel(eventStatus)) {
-      onHasRequests?.(false);
+      onHasRequestsRef.current?.(false);
       return;
     }
-    onHasRequests?.(false);
+    onHasRequestsRef.current?.(false);
     setLoading(true);
     setError(null);
     fetch(`/api/swap-requests?eventId=${eventId}`)
@@ -82,11 +87,11 @@ export function SwapRequestsPanel({
             (r.status === "MATCHED" && r.matchedWithId != null),
         );
         setRequests(filtered);
-        onHasRequests?.(filtered.length > 0, filtered.length);
+        onHasRequestsRef.current?.(filtered.length > 0, filtered.length);
       })
       .catch(() => setError("Failed to load swap requests"))
       .finally(() => setLoading(false));
-  }, [eventId, eventStatus, onHasRequests]);
+  }, [eventId, eventStatus]);
 
   useEffect(() => {
     fetchRequests();

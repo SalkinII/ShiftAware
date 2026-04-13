@@ -132,3 +132,15 @@ describe("SchedulePage – header button row overflow", () => {
     expect(flexWrapContainer).not.toBeNull();
   });
 });
+
+describe("SchedulePage – canvas panel mobile layout", () => {
+  it("canvas row has flex-col and lg:flex-row for responsive stacking", () => {
+    render(<ShiftsPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
+    const canvas = screen.getByTestId("lane-canvas");
+    // canvas → flex-1 wrapper → canvas row div
+    const row = canvas.parentElement!.parentElement!;
+    expect(row.className).toContain("flex-col");
+    expect(row.className).toContain("lg:flex-row");
+  });
+});

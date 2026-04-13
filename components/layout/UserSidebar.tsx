@@ -6,11 +6,6 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, Settings, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdminClient } from "@/lib/auth-client";
-import {
-  useEventContext,
-  formatEventDateRange,
-} from "@/lib/hooks/useEventContext";
-
 const navItems = [
   { label: "Calendar", href: "/app/calendar", icon: CalendarDays },
   { label: "Switch Identity", href: "/app/identity", icon: UserCircle },
@@ -19,8 +14,6 @@ const navItems = [
 export function UserSidebar() {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
-  const { selectedEvent: event, loading: eventLoading } =
-    useEventContext(false);
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
@@ -28,7 +21,7 @@ export function UserSidebar() {
 
   return (
     <nav className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto hidden lg:block scrollbar-hide">
-      <div className="p-4 pb-36 space-y-8">
+      <div className="p-4 pb-4 space-y-8">
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-4">
             Main Navigation
@@ -79,33 +72,6 @@ export function UserSidebar() {
             </Link>
           </div>
         )}
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50/50">
-        <div className="p-4 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg">
-          <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
-            Current Event
-          </p>
-          {eventLoading ? (
-            <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
-          ) : event ? (
-            <>
-              <p className="text-sm font-semibold truncate">{event.name}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 capitalize">
-                  {event.status.toLowerCase().replace("_", " ")}
-                </span>
-                <span className="text-[10px] opacity-80 italic">
-                  {formatEventDateRange(event.startDate, event.endDate)}
-                </span>
-              </div>
-            </>
-          ) : (
-            <p className="text-sm font-semibold truncate opacity-70">
-              No event
-            </p>
-          )}
-        </div>
       </div>
     </nav>
   );

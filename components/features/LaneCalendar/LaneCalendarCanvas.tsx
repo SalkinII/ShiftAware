@@ -352,8 +352,10 @@ function LaneCalendarCanvasInner(
         backgroundColor: "#ffffff",
         width,
         height,
+        skipFonts: true,
       });
-    } catch {
+    } catch (e) {
+      console.error("[exportToPng] html-to-image failed:", e);
       return null;
     } finally {
       document.body.removeChild(wrapper);
