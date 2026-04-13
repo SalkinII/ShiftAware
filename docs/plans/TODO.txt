@@ -1,1 +1,10 @@
-(all items resolved — see 2026-04-08-mobile-and-png-fixes.md and 2026-04-13-loop-and-cleanup-fixes.md)
+(previous items resolved — see 2026-04-08-mobile-and-png-fixes.md and 2026-04-13-loop-and-cleanup-fixes.md)
+
+-- user calendar page: add PNG export button
+   The admin schedule page (app/admin/shifts/schedule/page.tsx:492) has handleExportPng()
+   which calls canvasRef.current.exportToPng() on LaneCalendarCanvas.
+   The user calendar page (app/(routes)/app/calendar/page.tsx) renders the same
+   LaneCalendarCanvas (which already exposes exportToPng via forwardRef/useImperativeHandle)
+   but never wires up a ref or provides an export button.
+   Fix: add useRef<LaneCalendarCanvasHandle>, pass as ref to LaneCalendarCanvas,
+   show "Export as PNG" button only when calendarView === "full-schedule".
