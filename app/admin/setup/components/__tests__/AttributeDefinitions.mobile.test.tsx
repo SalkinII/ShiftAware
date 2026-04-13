@@ -88,17 +88,26 @@ describe("AttributeDefinitions – mobile layout", () => {
     await waitFor(() => screen.getByText("Can Drive"));
 
     const label = screen.getByText("Can Drive");
-    const labelContainer = label.parentElement!;
-    const leftBlock = labelContainer.parentElement!;
+    // After fix: label is a direct child of the min-w-0 left block (one level up, not two)
+    const leftBlock = label.parentElement!;
     expect(leftBlock.className).toContain("min-w-0");
   });
 
-  it("attribute label span has min-w-0 and truncate so it shrinks before badges overflow", async () => {
+  it("attribute label is a block element so it takes full width before badges", async () => {
     render(<AttributeDefinitions />);
     await waitFor(() => screen.getByText("Can Drive"));
 
     const label = screen.getByText("Can Drive");
-    expect(label.className).toContain("min-w-0");
+    expect(label.tagName).toBe("P");
     expect(label.className).toContain("truncate");
+  });
+
+  it("badges row has flex-wrap so REQUIRED and type badges wrap on narrow screens", async () => {
+    render(<AttributeDefinitions />);
+    await waitFor(() => screen.getByText("Can Drive"));
+
+    const typeTag = screen.getByText("BOOLEAN");
+    const badgesRow = typeTag.parentElement!;
+    expect(badgesRow.className).toContain("flex-wrap");
   });
 });

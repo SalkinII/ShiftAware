@@ -287,8 +287,8 @@ export function AttributeDefinitions() {
               className="p-4 flex flex-wrap items-center justify-between gap-2"
             >
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-gray-900 min-w-0 truncate">{attr.label}</span>
+                <p className="font-bold text-gray-900 truncate mb-1">{attr.label}</p>
+                <div className="flex items-center gap-2 flex-wrap">
                   {attr.required && (
                     <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded font-bold">
                       REQUIRED
