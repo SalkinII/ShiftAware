@@ -92,4 +92,13 @@ describe("AttributeDefinitions – mobile layout", () => {
     const leftBlock = labelContainer.parentElement!;
     expect(leftBlock.className).toContain("min-w-0");
   });
+
+  it("attribute label span has min-w-0 and truncate so it shrinks before badges overflow", async () => {
+    render(<AttributeDefinitions />);
+    await waitFor(() => screen.getByText("Can Drive"));
+
+    const label = screen.getByText("Can Drive");
+    expect(label.className).toContain("min-w-0");
+    expect(label.className).toContain("truncate");
+  });
 });
