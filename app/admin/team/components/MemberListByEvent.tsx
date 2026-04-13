@@ -292,7 +292,7 @@ export function MemberListByEvent({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-gray-900">
             Team Members for {eventName}
@@ -301,7 +301,7 @@ export function MemberListByEvent({
             {members.length} members registered
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setShowAddPicker(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Existing Member
