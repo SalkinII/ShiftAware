@@ -994,7 +994,7 @@ export default function ShiftsPage() {
 
             {/* Shift stats bar — below canvas */}
             {selectedEvent && shifts.length > 0 && (
-              <div className="flex items-center gap-4 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
+              <div className="flex flex-wrap items-center gap-4 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
                 <span className="text-gray-400 font-medium uppercase tracking-widest text-[10px]">
                   Coverage
                 </span>
