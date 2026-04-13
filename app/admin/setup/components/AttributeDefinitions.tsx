@@ -173,7 +173,7 @@ export function AttributeDefinitions() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">
             Team Attributes
@@ -202,7 +202,7 @@ export function AttributeDefinitions() {
             {editingId === "new" ? "New Attribute" : "Edit Attribute"}
           </h4>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Internal Name"
                 placeholder="e.g., can_drive"
@@ -223,7 +223,7 @@ export function AttributeDefinitions() {
                 }
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Type"
                 value={formData.type}
@@ -284,9 +284,9 @@ export function AttributeDefinitions() {
           attributes.map((attr) => (
             <Card
               key={attr.id}
-              className="p-4 flex items-center justify-between"
+              className="p-4 flex flex-wrap items-center justify-between gap-2"
             >
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-gray-900">{attr.label}</span>
                   {attr.required && (
