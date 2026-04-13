@@ -10,7 +10,7 @@ const toastError = vi.fn();
 // Dynamic import replaced by a forwardRef stub that returns null from exportToPng
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) =>
-    React.forwardRef((_props: any, ref: any) => {
+    React.forwardRef(function MockLaneCanvas(_props: any, ref: any) {
       React.useImperativeHandle(ref, () => ({
         exportToPng: async () => null,
       }));

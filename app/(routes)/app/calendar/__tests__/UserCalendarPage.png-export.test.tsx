@@ -11,7 +11,7 @@ const toastError = vi.fn();
 // canvasRef passed by the page actually gets populated.
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) =>
-    React.forwardRef((_props: any, ref: any) => {
+    React.forwardRef(function MockLaneCanvas(_props: any, ref: any) {
       React.useImperativeHandle(ref, () => ({
         exportToPng: async () => null,
       }));
