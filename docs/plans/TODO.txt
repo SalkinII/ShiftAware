@@ -14,7 +14,7 @@ card element in a plane above the other options completely gone as it did overla
 
 -- In the team attributes in event setup. the way you fixe it the attribute name now get's drowned out by other components due to text shortening in 360 px screen. However we want to see what attribute we are looking at! Be systematic about your fixes!
 
--- these elements get pushed out to the side still in 360 px on calendar tab in admin :
+-- these elements get pushed out to the right side still in 360 px on calendar tab in admin :
 "Coverage 18 fully staffed 0 partial 1 unstaffed 18 total shift"
 
 
