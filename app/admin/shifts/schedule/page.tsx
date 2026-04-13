@@ -773,7 +773,7 @@ export default function ShiftsPage() {
 
             {/* Canvas row: canvas + optional shift details panel */}
             <div
-              className="flex flex-row gap-0 rounded-xl shadow-sm overflow-hidden"
+              className="flex flex-col lg:flex-row gap-0 rounded-xl shadow-sm overflow-hidden"
               data-event-status={selectedEvent?.status}
               style={{
                 backgroundColor: "var(--status-bg)",
@@ -822,7 +822,7 @@ export default function ShiftsPage() {
 
               {/* Shift properties panel — beside canvas when shift is selected */}
               {selectedShiftId && !showForm && (
-                <div className="w-80 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
+                <div className="w-full lg:w-80 lg:flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
                   <ShiftPropertiesPanel
                     shiftId={selectedShiftId}
                     eventStatus={selectedEvent?.status}
