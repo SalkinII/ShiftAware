@@ -42,6 +42,11 @@ export class EventsService {
     return this.repo.delete(id);
   }
 
+  async permanentDeleteEvent(id: string) {
+    await assertEventStatusAllows(id, "EVENT_DELETE");
+    return this.repo.permanentDelete(id);
+  }
+
   async transitionStatus(eventId: string, targetStatus: string) {
     const event = await this.repo.findByIdWithShifts(eventId);
 
