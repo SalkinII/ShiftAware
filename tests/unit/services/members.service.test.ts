@@ -13,6 +13,12 @@ describe("MembersService", () => {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      softDelete: vi.fn(),
+      permanentDelete: vi.fn(),
+      findByIdWithRelations: vi.fn(),
+      getAttributes: vi.fn(),
+      findAttributeDefinition: vi.fn(),
+      upsertAttribute: vi.fn(),
     };
 
     service = new MembersService(mockRepo);
@@ -99,5 +105,35 @@ describe("MembersService", () => {
 
     expect(mockRepo.findAllWithIncludes).toHaveBeenCalled();
     expect(result).toEqual(mockMembers);
+  });
+
+  describe("permanentDeleteMember", () => {
+    it("throws MEMBER_STILL_ACTIVE when member is active", async () => {
+      mockRepo.findById.mockResolvedValue({
+        id: "m1",
+        alias: "alice",
+        isActive: true,
+      });
+
+      await expect(service.permanentDeleteMember("m1")).rejects.toThrow(
+        "MEMBER_STILL_ACTIVE",
+      );
+      expect(mockRepo.permanentDelete).not.toHaveBeenCalled();
+    });
+
+    it("calls repo.permanentDelete when member is inactive", async () => {
+      const inactiveMember = {
+        id: "m1",
+        alias: "alice",
+        isActive: false,
+      };
+      mockRepo.findById.mockResolvedValue(inactiveMember);
+      mockRepo.permanentDelete.mockResolvedValue(inactiveMember);
+
+      const result = await service.permanentDeleteMember("m1");
+
+      expect(mockRepo.permanentDelete).toHaveBeenCalledWith("m1");
+      expect(result).toEqual(inactiveMember);
+    });
   });
 });
