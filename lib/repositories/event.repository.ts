@@ -82,6 +82,71 @@ export class EventRepository extends BaseRepository {
     }
   }
 
+  async permanentDelete(id: string) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const shifts = await tx.shift.findMany({
+          where: { eventId: id },
+          select: { id: true },
+        });
+        const shiftIds = shifts.map((s) => s.id);
+
+        if (shiftIds.length > 0) {
+          const toShiftSwaps = await tx.swapRequest.findMany({
+            where: { toShiftId: { in: shiftIds } },
+            select: { id: true },
+          });
+          const toShiftSwapIds = toShiftSwaps.map((s) => s.id);
+
+          if (toShiftSwapIds.length > 0) {
+            await tx.swapRequest.updateMany({
+              where: { matchedWithId: { in: toShiftSwapIds } },
+              data: { matchedWithId: null },
+            });
+          }
+
+          await tx.swapRequest.deleteMany({
+            where: { toShiftId: { in: shiftIds } },
+          });
+
+          await tx.assignment.deleteMany({
+            where: { shiftId: { in: shiftIds } },
+          });
+
+          await tx.shiftPreference.deleteMany({
+            where: { shiftId: { in: shiftIds } },
+          });
+
+          await tx.shiftRole.deleteMany({
+            where: { shiftId: { in: shiftIds } },
+          });
+
+          await tx.shift.deleteMany({
+            where: { eventId: id },
+          });
+        }
+
+        await tx.scheduledShift.deleteMany({
+          where: { eventId: id },
+        });
+
+        await tx.eventConfig.deleteMany({
+          where: { eventId: id },
+        });
+
+        await tx.shiftTemplate.deleteMany({
+          where: { eventId: id },
+        });
+
+        return tx.event.delete({
+          where: { id },
+        });
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to permanently delete event");
+    }
+  }
+
   async findAllWithStats() {
     try {
       return await prisma.event.findMany({
