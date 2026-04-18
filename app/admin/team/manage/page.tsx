@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
-import { Download, Search, UserCircle2, UserX, UserCheck } from "lucide-react";
+import { Download, Search, UserCircle2, UserX, UserCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
@@ -35,6 +35,17 @@ export default function MembersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "heatmap">("list");
   const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    memberId: string | null;
+    memberName: string;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    memberId: null,
+    memberName: "",
+    isLoading: false,
+  });
+  const [permanentDeleteDialog, setPermanentDeleteDialog] = useState<{
     isOpen: boolean;
     memberId: string | null;
     memberName: string;
@@ -168,6 +179,62 @@ export default function MembersPage() {
     }
   }
 
+  function handlePermanentDeleteMember(memberId: string) {
+    const member = members?.find((m) => m.id === memberId);
+    if (!member) return;
+
+    setPermanentDeleteDialog({
+      isOpen: true,
+      memberId,
+      memberName: member.alias,
+      isLoading: false,
+    });
+  }
+
+  async function confirmPermanentDelete() {
+    if (!permanentDeleteDialog.memberId) return;
+
+    setPermanentDeleteDialog((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const res = await fetch(
+        `/api/members/${permanentDeleteDialog.memberId}/permanent`,
+        { method: "DELETE" },
+      );
+
+      if (res.ok) {
+        toast.success("Member permanently deleted");
+        window.dispatchEvent(
+          new CustomEvent("shiftaware:cache-invalidate", {
+            detail: {
+              keys: [
+                "members",
+                "members*",
+                "assignments",
+                "assignments*",
+                "preferences",
+                "preferences*",
+              ],
+            },
+          }),
+        );
+        setPermanentDeleteDialog({
+          isOpen: false,
+          memberId: null,
+          memberName: "",
+          isLoading: false,
+        });
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Failed to permanently delete member");
+        setPermanentDeleteDialog((prev) => ({ ...prev, isLoading: false }));
+      }
+    } catch {
+      toast.error("Failed to permanently delete member. Please try again.");
+      setPermanentDeleteDialog((prev) => ({ ...prev, isLoading: false }));
+    }
+  }
+
   // Keyboard shortcuts
   useKeyboardShortcuts([
     {
@@ -175,6 +242,14 @@ export default function MembersPage() {
       handler: () => {
         if (deleteDialog.isOpen && !deleteDialog.isLoading) {
           setDeleteDialog({
+            isOpen: false,
+            memberId: null,
+            memberName: "",
+            isLoading: false,
+          });
+        }
+        if (permanentDeleteDialog.isOpen && !permanentDeleteDialog.isLoading) {
+          setPermanentDeleteDialog({
             isOpen: false,
             memberId: null,
             memberName: "",
@@ -258,6 +333,26 @@ export default function MembersPage() {
         cancelText="Cancel"
         variant="destructive"
         isLoading={deleteDialog.isLoading}
+      />
+      <ConfirmDialog
+        isOpen={permanentDeleteDialog.isOpen}
+        onClose={() => {
+          if (!permanentDeleteDialog.isLoading) {
+            setPermanentDeleteDialog({
+              isOpen: false,
+              memberId: null,
+              memberName: "",
+              isLoading: false,
+            });
+          }
+        }}
+        onConfirm={confirmPermanentDelete}
+        title="Permanently Delete Member"
+        message={`This will permanently delete "${permanentDeleteDialog.memberName}" and remove all their preferences, assignments, and event registrations. This cannot be undone.`}
+        confirmText="Delete Permanently"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={permanentDeleteDialog.isLoading}
       />
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -362,6 +457,14 @@ export default function MembersPage() {
                               title="Reactivate member"
                             >
                               <UserCheck className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handlePermanentDeleteMember(member.id)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              aria-label={`Permanently delete ${member.alias}`}
+                              title="Permanently delete member"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         )}
