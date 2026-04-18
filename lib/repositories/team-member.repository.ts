@@ -127,6 +127,48 @@ export class TeamMemberRepository extends BaseRepository {
     }
   }
 
+  async permanentDelete(id: string) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        await tx.auditLog.updateMany({
+          where: { userId: id },
+          data: { userId: null },
+        });
+
+        const memberSwaps = await tx.swapRequest.findMany({
+          where: { requesterId: id },
+          select: { id: true },
+        });
+        const memberSwapIds = memberSwaps.map((s) => s.id);
+
+        if (memberSwapIds.length > 0) {
+          await tx.swapRequest.updateMany({
+            where: { matchedWithId: { in: memberSwapIds } },
+            data: { matchedWithId: null },
+          });
+        }
+
+        await tx.swapRequest.deleteMany({
+          where: { requesterId: id },
+        });
+
+        await tx.assignment.deleteMany({
+          where: { teamMemberId: id },
+        });
+
+        await tx.shiftPreference.deleteMany({
+          where: { teamMemberId: id },
+        });
+
+        return tx.teamMember.delete({
+          where: { id },
+        });
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to permanently delete member");
+    }
+  }
+
   // --- TeamMemberAttribute methods ---
   async getAttributes(memberId: string, eventId?: string) {
     try {
