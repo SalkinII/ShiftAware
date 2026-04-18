@@ -83,7 +83,22 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 ### `DELETE /api/members/[id]`
 
 **Auth required:** Yes
+**Response:** `{ "data": TeamMember }` — sets `isActive: false` (soft delete / deactivate)
+**Notes:** Does not remove the record. Use `DELETE /api/members/[id]/permanent` to permanently remove.
+
+### `DELETE /api/members/[id]/permanent`
+
+**Auth required:** Yes (admin only)
 **Response:** `{ "data": { "success": true } }`
+**Notes:** Permanently deletes the member and all their shift preferences, assignments, swap requests, and event registrations. Member must be deactivated (`isActive: false`) first — returns 409 otherwise.
+
+| Status | Meaning |
+| --- | --- |
+| 200 | Deleted |
+| 401 | Not authenticated or not admin |
+| 404 | Member not found |
+| 409 | Member is still active — deactivate first |
+| 500 | Unexpected error |
 
 ### `GET /api/members/[id]/attributes`
 
@@ -136,8 +151,17 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 ### `DELETE /api/events/[id]`
 
-**Auth required:** Yes
+**Auth required:** Yes (admin only)
 **Response:** `{ "data": { "success": true } }`
+**Notes:** Permanently deletes the event and all dependent data: shifts, shift roles, assignments, shift preferences, swap requests targeting those shifts, scheduled shifts, event config, event-specific shift templates, event registrations, template assignments, and attribute definitions. Only allowed when event status is `PLANNING` or `COMPLETED`.
+
+| Status | Meaning |
+| --- | --- |
+| 200 | Deleted |
+| 401 | Not authenticated or not admin |
+| 403 | Event status is not PLANNING or COMPLETED |
+| 404 | Event not found |
+| 500 | Unexpected error |
 
 ### `GET /api/events/[id]/config`
 

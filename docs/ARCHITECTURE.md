@@ -235,6 +235,8 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 | **FINALIZED**            | Published schedule, operational      | Admin         | Manual reassignment (dropouts/late adds), registration |
 | **COMPLETED**            | Archive / read-only                  | Nobody        | Nothing — revertible to FINALIZED if needed            |
 
+**Deletion policy:** Only `PLANNING` and `COMPLETED` events can be permanently deleted. Events in `OPEN_FOR_PREFERENCES`, `ASSIGNING`, or `FINALIZED` states must be transitioned before deletion is permitted — this prevents accidental removal of events that have active team participation or live assignments.
+
 ### Permission Matrix
 
 | EventStatus          | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
