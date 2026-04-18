@@ -115,10 +115,7 @@ export async function DELETE(
     if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
       return createNotFoundResponse("Event");
     }
-    if (
-      error instanceof Error &&
-      error.name === "StatusGuardError"
-    ) {
+    if (error instanceof StatusGuardError) {
       return createErrorResponse(
         error,
         error.message,
