@@ -1,1 +1,1 @@
-(all items resolved — see 2026-04-08-mobile-and-png-fixes.md, 2026-04-13-loop-and-cleanup-fixes.md, and 2026-04-13-mobile-fixes-and-user-export.md)
+Inactivate member does not remove their assigned shifts. This must be coherently fixed. We need to plan this flow of inactivation according to the flow. Delete features Not deployment ready yet.
