@@ -84,7 +84,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 **Auth required:** Yes
 **Response:** `{ "data": TeamMember }` — sets `isActive: false` (soft delete / deactivate)
-**Notes:** Does not remove the record. Use `DELETE /api/members/[id]/permanent` to permanently remove.
+**Notes:** Does not remove the record. Also removes the member's assignments, preferences, swap requests, and event registrations for all non-COMPLETED events. Completed event history is preserved. Use `DELETE /api/members/[id]/permanent` to permanently remove.
 
 ### `DELETE /api/members/[id]/permanent`
 
@@ -200,6 +200,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 **Auth required:** Yes
 **Response:** `{ "data": { "success": true } }`
+**Notes:** Also removes the member's assignments, preferences, and swap requests scoped to this event.
 
 ### `GET /api/events/[id]/templates`
 

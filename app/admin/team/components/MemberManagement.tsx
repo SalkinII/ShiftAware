@@ -322,7 +322,7 @@ export function MemberManagement() {
         }}
         onConfirm={confirmDelete}
         title="Deactivate Member"
-        message={`Are you sure you want to deactivate "${deleteDialog.memberName}"? This will set them as inactive. Their preferences and assignments will be preserved, but they won't appear in active member lists. This action can be reversed.`}
+        message={`Are you sure you want to deactivate "${deleteDialog.memberName}"? This will remove all their shift assignments, preferences, and event registrations for active events. Completed event history is preserved. This action can be reversed by reactivating the member, but assignments will need to be replanned.`}
         confirmText="Deactivate"
         cancelText="Cancel"
         variant="destructive"
