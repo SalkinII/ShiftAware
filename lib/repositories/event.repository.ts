@@ -357,10 +357,39 @@ export class EventRepository extends BaseRepository {
     }
   }
 
-  async deleteRegistration(eventId: string, memberId: string) {
+  async deleteRegistrationWithCleanup(eventId: string, memberId: string) {
     try {
-      return await prisma.eventRegistration.delete({
-        where: { memberId_eventId: { memberId, eventId } },
+      return await prisma.$transaction(async (tx) => {
+        const memberSwaps = await tx.swapRequest.findMany({
+          where: {
+            requesterId: memberId,
+            fromAssignment: { shift: { eventId } },
+          },
+          select: { id: true },
+        });
+        const swapIds = memberSwaps.map((s) => s.id);
+
+        if (swapIds.length > 0) {
+          await tx.swapRequest.updateMany({
+            where: { matchedWithId: { in: swapIds } },
+            data: { matchedWithId: null },
+          });
+          await tx.swapRequest.deleteMany({
+            where: { id: { in: swapIds } },
+          });
+        }
+
+        await tx.assignment.deleteMany({
+          where: { teamMemberId: memberId, shift: { eventId } },
+        });
+
+        await tx.shiftPreference.deleteMany({
+          where: { teamMemberId: memberId, shift: { eventId } },
+        });
+
+        return tx.eventRegistration.delete({
+          where: { memberId_eventId: { memberId, eventId } },
+        });
       });
     } catch (error) {
       throw this.handlePrismaError(error, "Failed to delete registration");
