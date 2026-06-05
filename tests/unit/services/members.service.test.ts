@@ -13,7 +13,7 @@ describe("MembersService", () => {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      softDelete: vi.fn(),
+      deactivate: vi.fn(),
       permanentDelete: vi.fn(),
       findByIdWithRelations: vi.fn(),
       getAttributes: vi.fn(),
@@ -105,6 +105,20 @@ describe("MembersService", () => {
 
     expect(mockRepo.findAllWithIncludes).toHaveBeenCalled();
     expect(result).toEqual(mockMembers);
+  });
+
+  it("deactivateMember delegates to repo.deactivate", async () => {
+    const deactivated = {
+      id: "m1",
+      alias: "alice",
+      isActive: false,
+    };
+    mockRepo.deactivate.mockResolvedValue(deactivated);
+
+    const result = await service.deactivateMember("m1");
+
+    expect(mockRepo.deactivate).toHaveBeenCalledWith("m1");
+    expect(result).toEqual(deactivated);
   });
 
   describe("permanentDeleteMember", () => {
