@@ -1,9 +1,15 @@
 
 
- iminent: study the recent commits and mind the @docs\ . We just implemented the full delete features. I now noticed that the  
+ iminent: study the recent commits and mind the @docs\ . 
+ - We just implemented the full delete features. I now noticed that the  
   preferences are also non-deletable. also I wonder whether the swap requests can be deleted?
+
+- Also it would be great if the user would see the shifts they want / don't want. That is when I asked myself. In the list view, but also in the calendar we could indicate the want/don't want, but also the "shift that was wanted got assigned" (green) on the cards of the shifts. We would we have so many different cards for those entities?
+Can we not conceptualise to make this more user friendly in the display?
+
   Everything will comply with our service architecture. We use /brainstroming
 
-  BACKLOG: 
+  ########
+  BACKLOG for later: 
   - feat: tableware - tab - timetable tab? Overlay?
   - architecture: Engelsystem?
