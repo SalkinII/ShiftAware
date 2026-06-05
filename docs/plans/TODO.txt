@@ -1,1 +1,9 @@
-Inactivate member does not remove their assigned shifts. This must be coherently fixed. We need to plan this flow of inactivation according to the flow. Delete features Not deployment ready yet.
+
+
+ iminent: study the recent commits and mind the @docs\ . We just implemented the full delete features. I now noticed that the  
+  preferences are also non-deletable. also I wonder whether the swap requests can be deleted?
+  Everything will comply with our service architecture. We use /brainstroming
+
+  BACKLOG: 
+  - feat: tableware - tab - timetable tab? Overlay?
+  - architecture: Engelsystem?
