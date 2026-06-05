@@ -32,6 +32,10 @@ vi.mock("@/lib/db", () => ({
     shiftPreference: {
       deleteMany: vi.fn(),
     },
+    eventRegistration: {
+      findMany: vi.fn(),
+      delete: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -219,31 +223,6 @@ describe("TeamMemberRepository", () => {
           orderBy: { shift: { startTime: "asc" } },
         },
       },
-    });
-  });
-
-  it("should soft delete a member", async () => {
-    const mockMember = {
-      id: "member-1",
-      alias: "john",
-      avatarId: "avatar-1",
-      experienceLevel: "INTERMEDIATE" as const,
-      capabilities: ["TEAM_MEMBER" as const],
-      isActive: false,
-      isAdmin: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    vi.mocked(prisma.teamMember.update).mockResolvedValue(mockMember);
-
-    const result = await repo.softDelete("member-1");
-
-    expect(result).toEqual(mockMember);
-    expect(result.isActive).toBe(false);
-    expect(prisma.teamMember.update).toHaveBeenCalledWith({
-      where: { id: "member-1" },
-      data: { isActive: false },
     });
   });
 
@@ -544,6 +523,140 @@ describe("TeamMemberRepository", () => {
       await repo.permanentDelete(memberId);
 
       expect(mockTx.swapRequest.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deactivate", () => {
+    it("cleans up one active event and sets isActive false", async () => {
+      const memberId = "member-1";
+      const updatedMember = {
+        id: memberId,
+        alias: "alice",
+        avatarId: "🎭",
+        experienceLevel: "INTERMEDIATE" as const,
+        capabilities: ["TEAM_MEMBER" as const],
+        isActive: false,
+        isAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockTx = {
+        eventRegistration: {
+          findMany: vi.fn().mockResolvedValue([{ eventId: "event-1" }]),
+          delete: vi.fn().mockResolvedValue({}),
+        },
+        swapRequest: {
+          findMany: vi.fn().mockResolvedValue([{ id: "swap-1" }]),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        assignment: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
+        shiftPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 3 }) },
+        teamMember: { update: vi.fn().mockResolvedValue(updatedMember) },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      const result = await repo.deactivate(memberId);
+
+      expect(result.isActive).toBe(false);
+
+      expect(mockTx.eventRegistration.findMany).toHaveBeenCalledWith({
+        where: { memberId, event: { status: { not: "COMPLETED" } } },
+        select: { eventId: true },
+      });
+
+      expect(mockTx.swapRequest.findMany).toHaveBeenCalledWith({
+        where: {
+          requesterId: memberId,
+          fromAssignment: { shift: { eventId: "event-1" } },
+        },
+        select: { id: true },
+      });
+      expect(mockTx.swapRequest.updateMany).toHaveBeenCalledWith({
+        where: { matchedWithId: { in: ["swap-1"] } },
+        data: { matchedWithId: null },
+      });
+      expect(mockTx.swapRequest.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ["swap-1"] } },
+      });
+
+      expect(mockTx.assignment.deleteMany).toHaveBeenCalledWith({
+        where: { teamMemberId: memberId, shift: { eventId: "event-1" } },
+      });
+      expect(mockTx.shiftPreference.deleteMany).toHaveBeenCalledWith({
+        where: { teamMemberId: memberId, shift: { eventId: "event-1" } },
+      });
+      expect(mockTx.eventRegistration.delete).toHaveBeenCalledWith({
+        where: { memberId_eventId: { memberId, eventId: "event-1" } },
+      });
+
+      expect(mockTx.teamMember.update).toHaveBeenCalledWith({
+        where: { id: memberId },
+        data: { isActive: false },
+      });
+    });
+
+    it("skips swap cleanup when member has no swaps in the event", async () => {
+      const memberId = "member-no-swaps";
+      const mockTx = {
+        eventRegistration: {
+          findMany: vi.fn().mockResolvedValue([{ eventId: "event-1" }]),
+          delete: vi.fn().mockResolvedValue({}),
+        },
+        swapRequest: {
+          findMany: vi.fn().mockResolvedValue([]),
+          updateMany: vi.fn(),
+          deleteMany: vi.fn(),
+        },
+        assignment: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        shiftPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        teamMember: {
+          update: vi.fn().mockResolvedValue({ id: memberId, isActive: false }),
+        },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      await repo.deactivate(memberId);
+
+      expect(mockTx.swapRequest.updateMany).not.toHaveBeenCalled();
+      expect(mockTx.swapRequest.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it("skips all event cleanup when member has no non-COMPLETED registrations", async () => {
+      const memberId = "member-no-events";
+      const mockTx = {
+        eventRegistration: {
+          findMany: vi.fn().mockResolvedValue([]),
+          delete: vi.fn(),
+        },
+        swapRequest: { findMany: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
+        assignment: { deleteMany: vi.fn() },
+        shiftPreference: { deleteMany: vi.fn() },
+        teamMember: {
+          update: vi.fn().mockResolvedValue({ id: memberId, isActive: false }),
+        },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      await repo.deactivate(memberId);
+
+      expect(mockTx.swapRequest.findMany).not.toHaveBeenCalled();
+      expect(mockTx.assignment.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.eventRegistration.delete).not.toHaveBeenCalled();
+      expect(mockTx.teamMember.update).toHaveBeenCalledWith({
+        where: { id: memberId },
+        data: { isActive: false },
+      });
     });
   });
 });
