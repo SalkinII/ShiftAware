@@ -121,7 +121,7 @@ export class EventsService {
   }
 
   async deleteRegistration(eventId: string, memberId: string) {
-    return this.repo.deleteRegistration(eventId, memberId);
+    return this.repo.deleteRegistrationWithCleanup(eventId, memberId);
   }
 
   // --- Event Templates ---

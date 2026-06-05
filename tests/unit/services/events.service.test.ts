@@ -38,7 +38,7 @@ describe("EventsService", () => {
       findRegistration: vi.fn(),
       getRegistration: vi.fn(),
       updateRegistration: vi.fn(),
-      deleteRegistration: vi.fn(),
+      deleteRegistrationWithCleanup: vi.fn(),
       listEventTemplates: vi.fn(),
       assignTemplate: vi.fn(),
       findEventTemplate: vi.fn(),
@@ -146,6 +146,18 @@ describe("EventsService", () => {
       { templateId: "tpl-b", order: 1 },
     ]);
   });
+
+  it("deleteRegistration calls repo.deleteRegistrationWithCleanup", async () => {
+    mockRepo.deleteRegistrationWithCleanup.mockResolvedValue({ id: "reg-1" });
+
+    const result = await service.deleteRegistration("event-1", "member-1");
+
+    expect(mockRepo.deleteRegistrationWithCleanup).toHaveBeenCalledWith(
+      "event-1",
+      "member-1",
+    );
+    expect(result).toEqual({ id: "reg-1" });
+  });
 });
 
 describe("EventsService.transitionStatus", () => {
@@ -241,7 +253,7 @@ describe("permanentDeleteEvent", () => {
       findRegistration: vi.fn(),
       getRegistration: vi.fn(),
       updateRegistration: vi.fn(),
-      deleteRegistration: vi.fn(),
+      deleteRegistrationWithCleanup: vi.fn(),
       listEventTemplates: vi.fn(),
       assignTemplate: vi.fn(),
       findEventTemplate: vi.fn(),
