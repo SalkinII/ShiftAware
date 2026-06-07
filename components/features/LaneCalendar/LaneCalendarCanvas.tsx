@@ -135,6 +135,7 @@ interface LaneCalendarCanvasProps {
   onVoteDontWant?: (shiftId: string) => void;
   /** When set (user calendar), highlights shifts assigned to this member */
   selectedMemberId?: string | null;
+  preferences?: Map<string, "WANT" | "DONT_WANT">;
 }
 
 export interface LaneCalendarCanvasHandle {
@@ -157,6 +158,7 @@ function LaneCalendarCanvasInner(
     onVoteWant,
     onVoteDontWant,
     selectedMemberId,
+    preferences,
   }: LaneCalendarCanvasProps,
   ref: React.Ref<LaneCalendarCanvasHandle>,
 ) {
@@ -256,6 +258,7 @@ function LaneCalendarCanvasInner(
     onVoteWant: effectiveReadOnly ? onVoteWant : undefined,
     onVoteDontWant: effectiveReadOnly ? onVoteDontWant : undefined,
     selectedMemberId,
+    preferences,
   });
 
   const [nodes, setNodes] = useState<Node[]>([]);
