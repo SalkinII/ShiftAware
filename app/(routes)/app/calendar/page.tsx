@@ -317,6 +317,35 @@ export default function UserCalendarPage() {
       });
   }
 
+  function handleVoteNeutral(shiftId: string) {
+    const memberId =
+      typeof window !== "undefined"
+        ? localStorage.getItem("selectedMemberId")
+        : null;
+    if (!memberId) {
+      toast.error("Please select your identity first");
+      return;
+    }
+
+    fetch(
+      `/api/preferences?teamMemberId=${memberId}&shiftId=${shiftId}`,
+      { method: "DELETE" },
+    )
+      .then(async (res) => {
+        if (res.ok) {
+          toast.success("Preference removed");
+          if (selectedEventId) {
+            invalidateEventCache(selectedEventId, "preferences", "shifts");
+          }
+          refetchPreferences();
+        } else {
+          const error = await res.json();
+          toast.error(error.message || "Failed to remove preference");
+        }
+      })
+      .catch(() => toast.error("Failed to remove preference"));
+  }
+
   function handleRequestSwap(assignmentId: string) {
     setSwapFromAssignmentId(assignmentId);
 
@@ -516,6 +545,14 @@ export default function UserCalendarPage() {
     return (pref?.wantLevel as "WANT" | "DONT_WANT") || null;
   }, [selectedShift, preferences]);
 
+  const preferenceMap = useMemo(() => {
+    const map = new Map<string, "WANT" | "DONT_WANT">();
+    (preferences ?? []).forEach((p) => {
+      if (p.wantLevel) map.set(p.shiftId, p.wantLevel as "WANT" | "DONT_WANT");
+    });
+    return map;
+  }, [preferences]);
+
   // Debug: log userId and assignment data for My Shifts
   useEffect(() => {
     if (shifts.length > 0) {
@@ -655,9 +692,12 @@ export default function UserCalendarPage() {
         <MyShiftsList
           shifts={shifts}
           userId={userId}
+          teamMemberId={userId ?? ""}
           preferences={preferencesWithShifts}
+          eventStatus={selectedEvent?.status ?? "PLANNING"}
           onVoteWant={handleVoteWant}
           onVoteDontWant={handleVoteDontWant}
+          onVoteNeutral={handleVoteNeutral}
           onRequestSwap={handleRequestSwap}
           onCancelSwap={handleCancelSwap}
           swapRequests={swapRequests}
@@ -715,20 +755,40 @@ export default function UserCalendarPage() {
           </Card>
 
           {/* Desirability legend */}
-          <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
             <span className="font-medium">Shift Desirability:</span>
             <span className="inline-flex items-center gap-1">
               <span className="w-4 h-4 rounded bg-blue-400/30 inline-block" />
               1-2 = easier to get
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="w-4 h-4 rounded bg-gray-400/30 inline-block" />3
-              = moderate
+              <span className="w-4 h-4 rounded bg-gray-400/30 inline-block" />3 = moderate
             </span>
             <span className="inline-flex items-center gap-1">
               <span className="w-4 h-4 rounded bg-orange-400/30 inline-block" />
               4-5 = popular, harder to get
             </span>
+            {selectedEvent?.status !== "PLANNING" && (
+              <>
+                <span className="text-gray-300">|</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  you want this shift
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  you don&apos;t want this shift
+                </span>
+                {(selectedEvent?.status === "ASSIGNING" ||
+                  selectedEvent?.status === "FINALIZED" ||
+                  selectedEvent?.status === "COMPLETED") && (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-4 h-4 rounded-full border-2 border-green-500 inline-block" />
+                    assigned to you
+                  </span>
+                )}
+              </>
+            )}
           </div>
 
           {selectedEvent?.status === "PLANNING" && (
@@ -780,6 +840,7 @@ export default function UserCalendarPage() {
                       ? handleVoteDontWant
                       : undefined
                   }
+                  preferences={preferenceMap}
                 />
               </div>
 
@@ -792,9 +853,11 @@ export default function UserCalendarPage() {
                       templateName: selectedShift.template?.name,
                       assignmentCount: selectedShift.assignments?.length ?? 0,
                     }}
+                    teamMemberId={userId ?? ""}
                     currentVote={userVoteForShift}
                     onVoteWant={handleVoteWant}
                     onVoteDontWant={handleVoteDontWant}
+                    onVoteNeutral={handleVoteNeutral}
                     onClose={() => setSelectedShift(null)}
                   />
                 </div>

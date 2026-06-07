@@ -414,10 +414,17 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 **Response:** `{ "data": SwapRequest }`
 **Notes:** APPROVED on a MATCHED request executes the swap (swaps assignments + marks both approved).
 
+When `status: "DECLINED"` is sent by an admin, the request is **hard-deleted** with matched-pair
+cleanup: if the request was MATCHED, the partner request is reverted to PENDING (their swap request
+survives) and the declined request is removed.
+
 ### `DELETE /api/swap-requests/[id]`
 
 **Auth required:** Yes
 **Response:** `{ "data": { "success": true } }`
+
+**Hard-deletes** a PENDING swap request. The request must be in PENDING status; other statuses return 400.
+Previously soft-cancelled; now permanently removed consistent with the approved path.
 
 ---
 

@@ -102,7 +102,7 @@ For new panels, use the `GlassPanel` structure from DESIGN.md §8.
 | `AvailabilityHeatmap`                       | Member availability matrix        | ✓            | —            |
 | `ConflictWizard`                            | Conflict detection and resolution | ✓            | —            |
 | `Identity/ProfileDetailCard`                | Read-only member profile card     | ✓            | ✓            |
-| `ShiftPropertiesPanel/ShiftPreferencePanel` | Preference voting on a shift      | —            | ✓            |
+| `ShiftPropertiesPanel/ShiftPreferencePanel` | Three-state preference toggle (Want/Neutral/Don't want); Neutral deletes the preference | — | ✓ |
 
 ---
 

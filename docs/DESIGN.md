@@ -127,7 +127,7 @@ Grip icon: always visible (`GripVertical` from lucide-react).
 ```
 ┌──┬──────────────────────────────┐
 │  │ Template Name    08:00–16:00 │  ← Row 1: name + time (mW ≥ W_NAMES/W_TIME)
-│  │ +++              3/5         │  ← Row 2: token + count (mH ≥ H_ROW2)
+│  │ +++              3/5         ●  │  ← Row 2: token + count + optional preference dot
 │  │ 😀 Alice  😀 Bob             │  ← Row 3: avatars + names (mH ≥ H_ROW3)
 └──┴──────────────────────────────┘
 ```
@@ -141,6 +141,10 @@ Grip icon: always visible (`GripVertical` from lucide-react).
 | `W_token` | 130px | Desirability token in Row 2           |
 | `H_ROW2`  | 20px  | Row 2 visible (token + votes + count) |
 | `H_ROW3`  | 38px  | Row 3 visible (avatars + names)       |
+
+**Preference dot:** A `userPreference?: "WANT" | "DONT_WANT" | null` prop renders an 8×8px circle
+in the top-right corner of the card — green (`#22c55e`) for WANT, red (`#ef4444`) for DONT_WANT.
+The dot is always visible regardless of card size and is not interactive.
 
 **Note:** `ZOOM_COMPACT` / `ZOOM_MINIMAL` constants apply to `TimeRulerPanel` tick density and date label format — not to shift card content.
 
@@ -196,24 +200,14 @@ Severity badges reuse ConflictWizard badge pattern
 
 ### User List View (Calendar)
 
-**Structure:** Two-section list in user calendar sidebar.
+**Structure:** Single chronological list. Each card shows: shift name, date, time, optional preference dot (green = WANT, red = DONT_WANT), and conditionally:
+- Three-state toggle (Want / Neutral / Don't want) — visible only in OPEN_FOR_PREFERENCES status
+- Assignment type badge — if assigned (ALGORITHM / MANUAL)
+- Swap request actions — if assigned and event allows swaps
 
-Section 1 — My Assignments:
+Preference-only items (shifts with a preference but no assignment) are hidden when event status is FINALIZED or COMPLETED.
 
-- Cards: template name, date, time, lane color stripe, assignment type badge (ALGORITHM / MANUAL)
-- Action: "Request Swap" (when no active swap) / status badge (PENDING / MATCHED / APPROVED)
-- PENDING: "Swap requested — pending" + Cancel button
-- MATCHED: "Swap matched — awaiting admin"
-- APPROVED: "Swap approved" (appears on the new shift after assignment move)
-- Sort: chronological
-
-Section 2 — My Preferences:
-
-- Cards: WANT/DONT_WANT status, shift name, date
-- Fulfilled indicator: green check (assigned to a WANT shift) / red X (assigned to a DONT_WANT shift)
-- Sort: chronological
-
-**File:** app/(routes)/app/calendar/components/MyShiftsList.tsx
+**File:** `app/(routes)/app/calendar/components/MyShiftsList.tsx`
 
 ---
 
@@ -246,7 +240,7 @@ Domain-level components in `components/features/`. Before building a new feature
 | `AvailabilityHeatmap`                       | Member availability matrix                                | Admin team                        |
 | `ConflictWizard`                            | Conflict detection and resolution flow                    | Admin team                        |
 | `Identity/ProfileDetailCard`                | Read-only member profile card (avatar, alias, attributes) | Canvas sidebar, team views        |
-| `ShiftPropertiesPanel/ShiftPreferencePanel` | User preference voting (WANT/DONT_WANT) on a shift        | User calendar                     |
+| `ShiftPropertiesPanel/ShiftPreferencePanel` | User preference three-state toggle (Want / Neutral / Don't want) on a shift | — | ✓ |
 
 ---
 
