@@ -33,6 +33,7 @@ export interface UseShiftNodesOptions {
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
   selectedMemberId?: string | null;
+  preferences?: Map<string, "WANT" | "DONT_WANT">;
 }
 
 export function buildShiftNodes(
@@ -47,6 +48,7 @@ export function buildShiftNodes(
     onVoteWant,
     onVoteDontWant,
     selectedMemberId,
+    preferences,
   } = options ?? {};
   const laneIndexMap = new Map(
     lanes.map((lane, i) => [lane.templateId ?? "unassigned", i]),
@@ -114,6 +116,7 @@ export function buildShiftNodes(
           readOnly,
           onVoteWant: readOnly ? onVoteWant : undefined,
           onVoteDontWant: readOnly ? onVoteDontWant : undefined,
+          userPreference: preferences?.get(shift.id) ?? null,
         },
         style: { width, height: SHIFT_NODE_HEIGHT },
         draggable: !readOnly,
@@ -135,6 +138,7 @@ export function useShiftNodes(
     onVoteWant,
     onVoteDontWant,
     selectedMemberId,
+    preferences,
   } = options ?? {};
   return useMemo(() => {
     if (!shifts || !eventStart || lanes.length === 0) return [];
@@ -144,6 +148,7 @@ export function useShiftNodes(
       onVoteWant,
       onVoteDontWant,
       selectedMemberId,
+      preferences,
     });
   }, [
     shifts,
@@ -154,5 +159,6 @@ export function useShiftNodes(
     onVoteWant,
     onVoteDontWant,
     selectedMemberId,
+    preferences,
   ]);
 }

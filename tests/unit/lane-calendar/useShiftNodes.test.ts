@@ -72,6 +72,23 @@ describe("buildShiftNodes", () => {
     expect(nodes).toHaveLength(1);
     expect(nodes[0].position.y).toBe(480); // lane 1 (Unassigned)
   });
+
+  it("sets userPreference to WANT when preferences map has a WANT entry for the shift", () => {
+    const preferences = new Map([["shift-1", "WANT" as const]]);
+    const nodes = buildShiftNodes(shifts as any, lanes, eventStart, { preferences });
+    expect((nodes[0].data as any).userPreference).toBe("WANT");
+  });
+
+  it("sets userPreference to DONT_WANT when preferences map has a DONT_WANT entry", () => {
+    const preferences = new Map([["shift-1", "DONT_WANT" as const]]);
+    const nodes = buildShiftNodes(shifts as any, lanes, eventStart, { preferences });
+    expect((nodes[0].data as any).userPreference).toBe("DONT_WANT");
+  });
+
+  it("sets userPreference to null when shift not in preferences map", () => {
+    const nodes = buildShiftNodes(shifts as any, lanes, eventStart, { preferences: new Map() });
+    expect((nodes[0].data as any).userPreference).toBeNull();
+  });
 });
 
 describe("buildShiftNodes with reordered lanes", () => {
