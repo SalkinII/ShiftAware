@@ -28,6 +28,8 @@ describe("SwapRequestsService", () => {
       findById: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
+      declineMatchedPair: vi.fn(),
       findMatchingRequest: vi.fn(),
       executeAutoMatch: vi.fn(),
       executeApprovedSwap: vi.fn(),
@@ -196,14 +198,61 @@ describe("SwapRequestsService", () => {
   });
 
   it("should cancel swap request", async () => {
-    mockRepo.cancelRequest.mockResolvedValue({
-      id: "req-1",
-      status: "CANCELLED",
-    });
+    mockRepo.cancelRequest.mockResolvedValue({ id: "req-1" });
 
     const result = await service.cancelSwapRequest("req-1");
 
     expect(result).toEqual({ cancelled: true });
     expect(mockRepo.cancelRequest).toHaveBeenCalledWith("req-1");
+  });
+
+  describe("declineSwapRequest", () => {
+    it("hard-deletes a PENDING request", async () => {
+      mockRepo.findById.mockResolvedValue({ id: "req-1", status: "PENDING" });
+      mockRepo.delete.mockResolvedValue({ id: "req-1" });
+
+      const result = await service.declineSwapRequest("req-1");
+
+      expect(mockRepo.delete).toHaveBeenCalledWith("req-1");
+      expect(result).toEqual({ declined: true });
+    });
+
+    it("calls declineMatchedPair for a canonical MATCHED request", async () => {
+      mockRepo.findById.mockResolvedValue({
+        id: "req-1",
+        status: "MATCHED",
+        matchedWithId: "req-2",
+        matchedBy: null,
+      });
+      mockRepo.declineMatchedPair.mockResolvedValue(undefined);
+
+      const result = await service.declineSwapRequest("req-1");
+
+      expect(mockRepo.declineMatchedPair).toHaveBeenCalledWith("req-1", "req-2", true);
+      expect(result).toEqual({ declined: true });
+    });
+
+    it("calls declineMatchedPair for the partner side of a MATCHED request", async () => {
+      mockRepo.findById.mockResolvedValue({
+        id: "req-p",
+        status: "MATCHED",
+        matchedWithId: null,
+        matchedBy: { id: "req-canonical" },
+      });
+      mockRepo.declineMatchedPair.mockResolvedValue(undefined);
+
+      const result = await service.declineSwapRequest("req-p");
+
+      expect(mockRepo.declineMatchedPair).toHaveBeenCalledWith("req-p", "req-canonical", false);
+      expect(result).toEqual({ declined: true });
+    });
+
+    it("throws for an APPROVED request", async () => {
+      mockRepo.findById.mockResolvedValue({ id: "req-x", status: "APPROVED" });
+
+      await expect(service.declineSwapRequest("req-x")).rejects.toThrow(
+        "Can only decline PENDING or MATCHED requests",
+      );
+    });
   });
 });
