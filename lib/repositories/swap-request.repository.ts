@@ -161,6 +161,14 @@ export class SwapRequestRepository extends BaseRepository {
     }
   }
 
+  async delete(id: string) {
+    try {
+      return await prisma.swapRequest.delete({ where: { id } });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to delete swap request");
+    }
+  }
+
   async cancelRequest(id: string) {
     try {
       const existing = await prisma.swapRequest.findUnique({ where: { id } });
@@ -179,16 +187,49 @@ export class SwapRequestRepository extends BaseRepository {
         );
       }
 
-      return await prisma.swapRequest.update({
-        where: { id },
-        data: { status: "CANCELLED" },
-      });
+      return await prisma.swapRequest.delete({ where: { id } });
     } catch (error) {
       if (error instanceof Error && error.message.includes("not found"))
         throw error;
       if (error instanceof Error && error.message.includes("only cancel"))
         throw error;
       throw this.handlePrismaError(error, "Failed to cancel swap request");
+    }
+  }
+
+  async declineMatchedPair(
+    declinedId: string,
+    partnerId: string,
+    isCanonical: boolean,
+  ) {
+    try {
+      if (isCanonical) {
+        // Canonical holds the FK (matchedWithId). Null it first, revert partner
+        // to PENDING, then delete the canonical.
+        await prisma.$transaction([
+          prisma.swapRequest.update({
+            where: { id: declinedId },
+            data: { matchedWithId: null },
+          }),
+          prisma.swapRequest.update({
+            where: { id: partnerId },
+            data: { status: "PENDING" },
+          }),
+          prisma.swapRequest.delete({ where: { id: declinedId } }),
+        ]);
+      } else {
+        // Partner is being declined. Canonical holds the FK pointing to partner —
+        // null it and revert to PENDING in one update, then delete partner.
+        await prisma.$transaction([
+          prisma.swapRequest.update({
+            where: { id: partnerId },
+            data: { matchedWithId: null, status: "PENDING" },
+          }),
+          prisma.swapRequest.delete({ where: { id: declinedId } }),
+        ]);
+      }
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to decline swap request pair");
     }
   }
 }
