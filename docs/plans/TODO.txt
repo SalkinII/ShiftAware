@@ -1,3 +1,15 @@
+- Distribution logic gates don't enforce requirements.
+
+- Even with 100% fairness we get violations for max shifts.
+
+- Heatmap does not work at all (requirements). It shows that people can make shifts they don't have requirements for.
+
+- Heatmap display should be able to call allocation to shifts.
+
+- Distribution should be analyzable - like the preview (seeing violations etc.)
+
+- Poll on the attributes, the counts of shifts per person, the violations etc. - to get a good overview of the acutal distribution. Like a flat table.
+
 
 
   ########
