@@ -15,7 +15,7 @@ vi.mock("@/components/ui/Button", () => ({
     <button onClick={onClick}>{children}</button>
   ),
 }));
-vi.mock("@/lib/services/event-status-permissions", () => ({
+vi.mock("@/lib/domain/event-status", () => ({
   canShowSwapPanel: () => true,
 }));
 

@@ -2,19 +2,21 @@ import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { prisma } from "@/lib/db";
 import { updateShiftSchema } from "@/lib/validations/shift";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createSuccessResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { ShiftsService } from "@/lib/services/shifts.service";
-const service = new ShiftsService();
+import { ShiftRepository } from "@/lib/repositories/shift.repository";
+import { assertEventStatusAllows } from "@/lib/domain/event-status";
+
+const shiftRepo = new ShiftRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
   const { id } = await params;
-  const shift = await service.getShiftWithDetails(id);
+  const shift = await shiftRepo.findByIdWithDetails(id);
   return createSuccessResponse(shift);
 }));
 
@@ -45,7 +47,9 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
     endTime: updateData.endTime ? new Date(updateData.endTime) : undefined,
   };
 
-  const shift = await service.updateShiftWithRoles(
+  const existingShift = await shiftRepo.findById(id);
+  await assertEventStatusAllows(existingShift.eventId, "SHIFT_MUTATE");
+  const shift = await shiftRepo.updateWithRoles(
     id,
     shiftData,
     requiredRoles,
@@ -75,7 +79,9 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
     return createNotFoundResponse("Shift");
   }
 
-  await service.cascadeDeleteShift(shiftId);
+  const existing = await shiftRepo.findById(shiftId);
+  await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
+  await shiftRepo.cascadeDelete(shiftId);
 
   await createAuditLog({
     action: AuditAction.DELETE,

@@ -1,24 +1,29 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { preferenceSchema } from "@/lib/validations/preference";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/lib/api-errors";
-import { PreferencesService } from "@/lib/services/preferences.service";
-const service = new PreferencesService();
+import { prisma } from "@/lib/db";
+import { PreferenceRepository } from "@/lib/repositories/preference.repository";
+import { assertEventStatusAllows } from "@/lib/domain/event-status";
+
+const preferenceRepo = new PreferenceRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const teamMemberId = searchParams.get("teamMemberId") || undefined;
   const shiftId = searchParams.get("shiftId") || undefined;
 
-  const preferences = await service.listPreferencesWithDetails({
-    teamMemberId,
-    shiftId,
-  });
+  const where: any = {};
+  if (teamMemberId) where.teamMemberId = teamMemberId;
+  if (shiftId) where.shiftId = shiftId;
+  const preferences = await preferenceRepo.findAllWithDetails(
+    Object.keys(where).length > 0 ? where : undefined,
+  );
   return createSuccessResponse(preferences);
 }));
 
@@ -26,7 +31,15 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const body = await request.json();
   const validated = preferenceSchema.parse(body);
 
-  const preference = await service.upsertPreference({
+  const shift = await prisma.shift.findUnique({
+    where: { id: validated.shiftId },
+    select: { eventId: true },
+  });
+  if (shift) {
+    await assertEventStatusAllows(shift.eventId, "PREFERENCE_MUTATE");
+  }
+
+  const preference = await preferenceRepo.upsert({
     teamMemberId: validated.teamMemberId,
     shiftId: validated.shiftId,
     wantLevel: validated.wantLevel,
@@ -64,7 +77,15 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request) => {
     );
   }
 
-  await service.deleteByCompoundKey(teamMemberId, shiftId);
+  const shift = await prisma.shift.findUnique({
+    where: { id: shiftId },
+    select: { eventId: true },
+  });
+  if (shift) {
+    await assertEventStatusAllows(shift.eventId, "PREFERENCE_MUTATE");
+  }
+
+  await preferenceRepo.deleteByCompoundKey(teamMemberId, shiftId);
 
   try {
     await createAuditLog({

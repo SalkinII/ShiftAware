@@ -5,7 +5,7 @@ import {
   createSuccessResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import { setHours, setMinutes, addMinutes } from "date-fns";
 

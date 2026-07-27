@@ -1,17 +1,18 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { isAdmin } from "@/lib/auth";
-import { MembersService } from "@/lib/services/members.service";
+import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
+import { permanentDeleteMember } from "@/lib/domain/members";
 import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 
-const service = new MembersService();
+const memberRepo = new TeamMemberRepository();
 
 export const DELETE = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -22,13 +23,13 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
 
   const { id } = await params;
 
-  const member = await service.getMember(id);
+  const member = await memberRepo.findById(id);
   if (!member) {
     return createNotFoundResponse("Team member");
   }
 
   try {
-    await service.permanentDeleteMember(id);
+    await permanentDeleteMember(id);
   } catch (error) {
     if (error instanceof Error && error.message === "MEMBER_STILL_ACTIVE") {
       return createErrorResponse(

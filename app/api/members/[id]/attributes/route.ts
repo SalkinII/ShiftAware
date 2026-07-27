@@ -6,8 +6,9 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { createAttributeSchema } from "@/lib/validations/member-attribute";
-import { MembersService } from "@/lib/services/members.service";
-const service = new MembersService();
+import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
+
+const memberRepo = new TeamMemberRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
@@ -16,7 +17,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request,
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get("eventId") || undefined;
 
-  const attributes = await service.getAttributes(memberId, eventId);
+  const attributes = await memberRepo.getAttributes(memberId, eventId);
 
   return createSuccessResponse(attributes);
 }));
@@ -26,13 +27,13 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
 
   const { id: memberId } = await params;
 
-  await service.getMember(memberId);
+  await memberRepo.findById(memberId);
 
   const body = await request.json();
   const validated = createAttributeSchema.parse(body);
 
   // Find attribute definition
-  const definition = await service.findAttributeDefinition(
+  const definition = await memberRepo.findAttributeDefinition(
     validated.eventId,
     validated.key,
   );
@@ -44,7 +45,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   }
 
   // Upsert attribute value
-  const attribute = await service.upsertAttribute(
+  const attribute = await memberRepo.upsertAttribute(
     memberId,
     definition.id,
     JSON.stringify(validated.value),

@@ -72,7 +72,7 @@ vi.mock(
 vi.mock("@/components/features/SwapRequestsPanel/SwapRequestsPanel", () => ({
   SwapRequestsPanel: () => null,
 }));
-vi.mock("@/lib/services/event-status-permissions", () => ({
+vi.mock("@/lib/domain/event-status", () => ({
   canMutateShifts: () => false,
   canShowSwapPanel: () => false,
 }));

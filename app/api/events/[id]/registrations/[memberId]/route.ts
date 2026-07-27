@@ -2,7 +2,7 @@ import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 // app/api/events/[id]/registrations/[memberId]/route.ts
 import { isAdmin } from "@/lib/auth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createSuccessResponse,
@@ -10,15 +10,15 @@ import {
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { updateRegistrationSchema } from "@/lib/validations/event-registration";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string; memberId: string }> },) => {
 
   const { id: eventId, memberId } = await params;
 
-  const registration = await service.getRegistration(eventId, memberId);
+  const registration = await eventRepo.getRegistration(eventId, memberId);
 
   if (!registration) return createNotFoundResponse("Registration");
 
@@ -36,7 +36,7 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
   const body = await request.json();
   const validated = updateRegistrationSchema.parse(body);
 
-  const updated = await service.updateRegistration(
+  const updated = await eventRepo.updateRegistration(
     eventId,
     memberId,
     validated,
@@ -53,7 +53,7 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
 
   const { id: eventId, memberId } = await params;
 
-  await service.deleteRegistration(eventId, memberId);
+  await eventRepo.deleteRegistrationWithCleanup(eventId, memberId);
 
   try {
     await createAuditLog({

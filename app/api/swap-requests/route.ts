@@ -1,14 +1,16 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 // app/api/swap-requests/route.ts
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createSuccessResponse,
 } from "@/lib/api-errors";
 import { createSwapRequestSchema } from "@/lib/validations/swap-request";
-import { SwapRequestsService } from "@/lib/services/swap-requests.service";
-const service = new SwapRequestsService();
+import { SwapRequestRepository } from "@/lib/repositories/swap-request.repository";
+import { createSwapRequest } from "@/lib/domain/swap";
+
+const swapRepo = new SwapRequestRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
@@ -31,7 +33,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
     where.status = status;
   }
 
-  const requests = await service.listSwapRequests(where);
+  const requests = await swapRepo.findAll(where);
 
   return createSuccessResponse(requests);
 }));
@@ -41,7 +43,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const body = await request.json();
   const validated = createSwapRequestSchema.parse(body);
 
-  const swapRequest = await service.createSwapRequest(
+  const swapRequest = await createSwapRequest(
     validated.fromAssignmentId,
     validated.toShiftId,
   );

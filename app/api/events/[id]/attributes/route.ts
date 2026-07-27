@@ -7,16 +7,16 @@ import {
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { attributeDefinitionSchema } from "@/lib/validations/attribute";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
   const { id: eventId } = await params;
 
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
-  const attributes = await service.listEventAttributes(eventId);
+  const attributes = await eventRepo.listEventAttributes(eventId);
 
   return createSuccessResponse(attributes);
 }));
@@ -29,13 +29,13 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
 
   const { id: eventId } = await params;
 
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
   const body = await request.json();
   const validated = attributeDefinitionSchema.parse(body);
 
   // Check for duplicate attribute name
-  const existing = await service.listEventAttributes(eventId);
+  const existing = await eventRepo.listEventAttributes(eventId);
   if (existing.some((attr) => attr.name === validated.name)) {
     return createErrorResponse(
       new Error(
@@ -46,7 +46,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
     );
   }
 
-  const attribute = await service.createEventAttribute(eventId, validated);
+  const attribute = await eventRepo.createEventAttribute(eventId, validated);
 
   return createSuccessResponse(attribute, 201);
 }));

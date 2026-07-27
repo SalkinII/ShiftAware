@@ -4,12 +4,12 @@ import {
   createSuccessResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { EventsService } from "@/lib/services/events.service";
+import { EventRepository } from "@/lib/repositories/event.repository";
 
-const service = new EventsService();
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async () => {
-  const event = await service.getCurrentEvent();
+  const event = await eventRepo.findCurrent();
 
   if (!event) {
     return createNotFoundResponse("Event");

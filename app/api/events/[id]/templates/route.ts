@@ -8,17 +8,17 @@ import {
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { assignTemplateSchema } from "@/lib/validations/event-template";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
 
   const { id: eventId } = await params;
 
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
-  const templates = await service.listEventTemplates(eventId);
+  const templates = await eventRepo.listEventTemplates(eventId);
 
   return createSuccessResponse(templates);
 }));
@@ -31,13 +31,13 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
 
   const { id: eventId } = await params;
 
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
   const body = await request.json();
   const validated = assignTemplateSchema.parse(body);
 
   // Check not already assigned
-  const existing = await service.findEventTemplate(
+  const existing = await eventRepo.findEventTemplate(
     eventId,
     validated.templateId,
   );
@@ -49,7 +49,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
     );
   }
 
-  const assignment = await service.assignTemplate(
+  const assignment = await eventRepo.assignTemplate(
     eventId,
     validated.templateId,
   );

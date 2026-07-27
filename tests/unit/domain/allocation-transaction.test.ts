@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("@/lib/db", () => {
@@ -28,7 +31,7 @@ vi.mock("@/lib/db", () => {
   };
 });
 
-vi.mock("@/lib/services/event-status-guard", () => ({
+vi.mock("@/lib/domain/event-status", () => ({
   assertEventStatusAllows: vi.fn(),
 }));
 
@@ -49,19 +52,27 @@ vi.mock("@/lib/algorithm/optimizer", () => ({
   }),
 }));
 
+vi.mock("@/lib/repositories/event.repository", () => ({
+  EventRepository: class {
+    findById = vi.fn().mockResolvedValue({ id: "ev1", config: null });
+  },
+}));
+
+vi.mock("@/lib/repositories/team-member.repository", () => ({
+  TeamMemberRepository: class {
+    getAttributes = vi.fn().mockResolvedValue([]);
+  },
+}));
+
+vi.mock("@/lib/repositories/assignment.repository", () => ({
+  AssignmentRepository: class {},
+}));
+
 import { prisma } from "@/lib/db";
-import { AssignmentsService } from "../assignments.service";
+import { runAllocation } from "@/lib/domain/allocation";
 
 describe("runAllocation transaction safety", () => {
-  it("wraps deleteByEvent + bulkCreate in a single $transaction", async () => {
-    const service = new AssignmentsService();
-    service["eventRepo"] = {
-      findById: vi.fn().mockResolvedValue({ id: "ev1", config: null }),
-    } as any;
-    service["membersService"] = {
-      getAttributes: vi.fn().mockResolvedValue([]),
-    } as any;
-
+  it("wraps delete + create in a single $transaction", async () => {
     (prisma.eventRegistration.findMany as any).mockResolvedValue([
       {
         member: {
@@ -85,9 +96,8 @@ describe("runAllocation transaction safety", () => {
       },
     ]);
 
-    await service.runAllocation("ev1");
+    await runAllocation("ev1");
 
-    // $transaction should be called (either by service directly or by repo)
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 });

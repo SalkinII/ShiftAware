@@ -8,11 +8,11 @@ import {
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { createEventSchema } from "@/lib/validations/event";
-import { EventsService } from "@/lib/services/events.service";
+import { EventRepository } from "@/lib/repositories/event.repository";
 
 export const GET = withAuth(withErrorHandling(async () => {
-  const service = new EventsService();
-  const events = await service.listEventsWithStats();
+  const eventRepo = new EventRepository();
+  const events = await eventRepo.findAllWithStats();
 
   return createSuccessResponse(events);
 }));
@@ -36,10 +36,10 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
 
   const { name, startDate, endDate } = validation.data;
 
-  const service = new EventsService();
+  const eventRepo = new EventRepository();
 
   // Create event with config
-  const event = await service.createEventWithConfig(
+  const event = await eventRepo.createWithConfig(
     {
       name,
       startDate: new Date(startDate),

@@ -2,22 +2,28 @@ import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 // app/api/swap-requests/[id]/route.ts
 import { isAdmin } from "@/lib/auth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createSuccessResponse,
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { updateSwapRequestSchema } from "@/lib/validations/swap-request";
-import { SwapRequestsService } from "@/lib/services/swap-requests.service";
-const service = new SwapRequestsService();
+import { SwapRequestRepository } from "@/lib/repositories/swap-request.repository";
+import {
+  approveSwapRequest,
+  cancelSwapRequest,
+  declineSwapRequest,
+} from "@/lib/domain/swap";
+
+const swapRepo = new SwapRequestRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
 
   const { id } = await params;
 
-  const swapRequest = await service.getSwapRequest(id);
+  const swapRequest = await swapRepo.findById(id);
 
   return createSuccessResponse(swapRequest);
 }));
@@ -38,11 +44,11 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
 
   let updated;
   if (validated.status === "APPROVED") {
-    updated = await service.approveSwapRequest(id);
+    updated = await approveSwapRequest(id);
   } else if (validated.status === "DECLINED") {
-    updated = await service.declineSwapRequest(id);
+    updated = await declineSwapRequest(id);
   } else {
-    updated = await service.updateSwapRequest(id, validated.status);
+    updated = await swapRepo.update(id, { status: validated.status as any });
   }
 
   try {
@@ -65,7 +71,7 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
 
   const { id } = await params;
 
-  const result = await service.cancelSwapRequest(id);
+  const result = await cancelSwapRequest(id);
 
   try {
     await createAuditLog({

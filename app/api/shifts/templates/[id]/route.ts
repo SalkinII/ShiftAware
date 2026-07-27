@@ -4,15 +4,16 @@ import {
   createSuccessResponse,
 } from "@/lib/api-errors";
 import { shiftTemplateSchema } from "@/lib/validations/template";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
-import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
-const service = new ShiftTemplatesService();
+import { ShiftTemplateRepository } from "@/lib/repositories/shift-template.repository";
+
+const templateRepo = new ShiftTemplateRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
   const { id } = await params;
-  const template = await service.getTemplate(id);
+  const template = await templateRepo.findById(id);
 
   return createSuccessResponse(template);
 }));
@@ -26,10 +27,10 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
   const { requiredRoles, ...templateData } = validated;
 
   // Get existing template for audit
-  const existing = await service.getTemplate(id);
+  const existing = await templateRepo.findById(id);
 
   // Update template and roles
-  const template = await service.updateTemplate(
+  const template = await templateRepo.updateWithRoles(
     id,
     templateData,
     requiredRoles,
@@ -51,9 +52,9 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
   const { id } = await params;
 
-  const existing = await service.getTemplate(id);
+  const existing = await templateRepo.findById(id);
 
-  await service.deleteTemplate(id);
+  await templateRepo.delete(id);
 
   await createAuditLog({
     action: AuditAction.DELETE,

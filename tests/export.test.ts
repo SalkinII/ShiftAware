@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { exportScheduleToPDF } from "../lib/services/export";
+import { exportScheduleToPDF } from "../lib/utils/export";
 
 const textMock = vi.fn();
 const setFontSizeMock = vi.fn();

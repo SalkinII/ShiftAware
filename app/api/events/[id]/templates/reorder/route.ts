@@ -6,8 +6,8 @@ import {
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { reorderTemplatesSchema } from "@/lib/validations/event-template";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const PATCH = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
@@ -17,12 +17,12 @@ export const PATCH = withAuth(withErrorHandling(async (request: Request,
 
   const { id: eventId } = await params;
 
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
   const body = await request.json();
   const validated = reorderTemplatesSchema.parse(body);
 
-  await service.reorderEventTemplates(eventId, validated.order);
+  await eventRepo.reorderEventTemplates(eventId, validated.order);
 
   return createSuccessResponse({ success: true });
 }));

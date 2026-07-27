@@ -5,8 +5,9 @@ import {
 } from "@/lib/api-errors";
 import { scheduleTemplateSchema } from "@/lib/validations/template";
 import { setHours, setMinutes } from "date-fns";
-import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
-const service = new ShiftTemplatesService();
+import { ShiftTemplateRepository } from "@/lib/repositories/shift-template.repository";
+
+const templateRepo = new ShiftTemplateRepository();
 
 export const POST = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
@@ -15,7 +16,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   const validated = scheduleTemplateSchema.parse({ ...body, templateId });
 
   // Get template for validation
-  const template = await service.getTemplate(templateId);
+  const template = await templateRepo.findById(templateId);
 
   // Parse date and template startTime
   const date = new Date(validated.date);
@@ -23,7 +24,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   const startTime = setMinutes(setHours(date, hours), minutes);
 
   // Create scheduled shift
-  const scheduledShift = await service.scheduleTemplate(
+  const scheduledShift = await templateRepo.createScheduledShift(
     templateId,
     validated.eventId,
     startTime,

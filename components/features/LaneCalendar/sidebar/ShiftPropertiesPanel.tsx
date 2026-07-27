@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import {
   canManuallyAssign,
   canMutateShifts,
-} from "@/lib/services/event-status-permissions";
+} from "@/lib/domain/event-status";
 import type { EventStatus } from "@prisma/client";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 

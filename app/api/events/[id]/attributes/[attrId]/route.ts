@@ -6,8 +6,8 @@ import {
   createForbiddenResponse,
 } from "@/lib/api-errors";
 import { attributeDefinitionSchema } from "@/lib/validations/attribute";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const PUT = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string; attrId: string }> },) => {
@@ -20,7 +20,7 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
   const body = await request.json();
   const validated = attributeDefinitionSchema.partial().parse(body);
 
-  const updated = await service.updateEventAttribute(
+  const updated = await eventRepo.updateEventAttribute(
     eventId,
     attrId,
     validated,
@@ -37,7 +37,7 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
 
   const { id: eventId, attrId } = await params;
 
-  await service.deleteEventAttribute(eventId, attrId);
+  await eventRepo.deleteEventAttribute(eventId, attrId);
 
   return createSuccessResponse({ deleted: true });
 }));

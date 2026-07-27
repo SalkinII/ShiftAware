@@ -1,9 +1,7 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { prisma } from "@/lib/db";
-import { MembersService } from "@/lib/services/members.service";
-
-const membersService = new MembersService();
+import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import {
   validateShiftOverlap,
   validateShiftCapacity,
@@ -14,6 +12,8 @@ import {
   createSuccessResponse,
 } from "@/lib/api-errors";
 import { Prisma } from "@prisma/client";
+
+const memberRepo = new TeamMemberRepository();
 
 // Type definitions for Prisma includes
 type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
@@ -122,7 +122,7 @@ export const GET = withAuth(withErrorHandling(async () => {
   const memberAttributesMap = new Map<string, Map<string, string>>();
   for (const member of members) {
     try {
-      const attrs = await membersService.getAttributes(member.id);
+      const attrs = await memberRepo.getAttributes(member.id);
       const attrMap = new Map<string, string>();
       for (const attr of attrs) {
         try {

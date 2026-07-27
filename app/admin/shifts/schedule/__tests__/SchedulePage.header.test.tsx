@@ -44,7 +44,7 @@ vi.mock(
   "@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel",
   () => ({ ShiftPropertiesPanel: () => null }),
 );
-vi.mock("@/lib/services/event-status-permissions", () => ({
+vi.mock("@/lib/domain/event-status", () => ({
   canMutateShifts: () => true,
   canShowSwapPanel: () => true,
 }));

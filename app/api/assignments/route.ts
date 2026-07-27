@@ -1,13 +1,19 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/lib/api-errors";
-import { AssignmentsService } from "@/lib/services/assignments.service";
-const service = new AssignmentsService();
+import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
+import {
+  createManualAssignment,
+  deleteAssignment,
+  runAllocation,
+} from "@/lib/domain/allocation";
+
+const assignmentRepo = new AssignmentRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
@@ -22,7 +28,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
     where.teamMemberId = teamMemberId;
   }
 
-  const assignments = await service.listAssignments(where);
+  const assignments = await assignmentRepo.findAll(where);
 
   return createSuccessResponse(assignments);
 }));
@@ -42,7 +48,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
     }
     const created: any[] = [];
     for (const a of assignments) {
-      const result = await service.createManualAssignment({
+      const result = await createManualAssignment({
         shiftId: a.shiftId,
         teamMemberId: a.teamMemberId,
         role: a.role || "TEAM_MEMBER",
@@ -69,7 +75,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
     );
   }
 
-  const result = await service.runAllocation(eventId, preview);
+  const result = await runAllocation(eventId, preview);
 
   // Only create audit log if not preview
   if (!preview) {
@@ -99,7 +105,7 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request) => {
     );
   }
 
-  await service.deleteAssignment(id);
+  await deleteAssignment(id);
 
   await createAuditLog({
     action: AuditAction.DELETE,

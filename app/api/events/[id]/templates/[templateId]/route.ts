@@ -6,8 +6,8 @@ import {
   createSuccessResponse,
   createForbiddenResponse,
 } from "@/lib/api-errors";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const DELETE = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string; templateId: string }> },) => {
@@ -17,7 +17,7 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
 
   const { id: eventId, templateId } = await params;
 
-  await service.unassignTemplate(eventId, templateId);
+  await eventRepo.deleteEventTemplate(eventId, templateId);
 
   return createSuccessResponse({ deleted: true });
 }));

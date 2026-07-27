@@ -50,7 +50,7 @@ vi.mock("@/components/ui/Popover", () => ({
 vi.mock("@/components/features/TemplatePalette/TemplatePalette", () => ({ TemplatePalette: () => null }));
 vi.mock("@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel", () => ({ ShiftPropertiesPanel: () => null }));
 vi.mock("@/components/features/SwapRequestsPanel/SwapRequestsPanel", () => ({ SwapRequestsPanel: () => null }));
-vi.mock("@/lib/services/event-status-permissions", () => ({ canMutateShifts: () => true, canShowSwapPanel: () => false }));
+vi.mock("@/lib/domain/event-status", () => ({ canMutateShifts: () => true, canShowSwapPanel: () => false }));
 vi.mock("@/lib/validations/event-transition", () => ({ getNextStatus: () => null, getPreviousStatus: () => null }));
 vi.mock("@/lib/cache/utils", () => ({ getShiftsCacheKey: (id: string) => `shifts-${id}` }));
 vi.mock("@/lib/cache/invalidateEventCache", () => ({ invalidateEventCache: vi.fn() }));

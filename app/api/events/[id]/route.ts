@@ -1,23 +1,24 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { isAdmin } from "@/lib/auth";
-import { EventsService } from "@/lib/services/events.service";
+import { EventRepository } from "@/lib/repositories/event.repository";
+import { assertEventStatusAllows } from "@/lib/domain/event-status";
 import {
   createErrorResponse,
   createSuccessResponse,
   createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import { updateEventSchema } from "@/lib/validations/event";
-const service = new EventsService();
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
 
   const { id } = await params;
-  const event = await service.getEvent(id);
+  const event = await eventRepo.findById(id);
   return createSuccessResponse(event);
 }));
 
@@ -49,7 +50,8 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
   // Remove id from the update payload (it's in the where clause)
   delete eventData.id;
 
-  const event = await service.updateEvent(id, eventData as any);
+  await assertEventStatusAllows(id, "EVENT_MUTATE");
+  const event = await eventRepo.update(id, eventData as any);
 
   await createAuditLog({
     action: AuditAction.UPDATE,
@@ -70,12 +72,13 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
 
   const { id } = await params;
 
-  const event = await service.getEvent(id);
+  const event = await eventRepo.findById(id);
   if (!event) {
     return createNotFoundResponse("Event");
   }
 
-  await service.permanentDeleteEvent(id);
+  await assertEventStatusAllows(id, "EVENT_DELETE");
+  await eventRepo.permanentDelete(id);
 
   await createAuditLog({
     action: AuditAction.DELETE,

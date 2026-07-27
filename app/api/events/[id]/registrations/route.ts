@@ -2,24 +2,24 @@ import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 // app/api/events/[id]/registrations/route.ts
 import { isAdmin } from "@/lib/auth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/lib/api-errors";
 import { createRegistrationSchema } from "@/lib/validations/event-registration";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
 
   const { id: eventId } = await params;
 
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
-  const registrations = await service.listRegistrations(eventId);
+  const registrations = await eventRepo.listRegistrations(eventId);
 
   return createSuccessResponse(registrations);
 }));
@@ -30,7 +30,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   const { id: eventId } = await params;
 
   // Verify event exists
-  await service.getEvent(eventId);
+  await eventRepo.findById(eventId);
 
   const body = await request.json();
   const validated = createRegistrationSchema.parse(body);
@@ -44,7 +44,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   }
 
   // Check not already registered
-  const existing = await service.findRegistration(
+  const existing = await eventRepo.findRegistration(
     eventId,
     validated.memberId,
   );
@@ -56,7 +56,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
     );
   }
 
-  const registration = await service.createRegistration(
+  const registration = await eventRepo.createRegistration(
     eventId,
     validated.memberId,
     validated.status,

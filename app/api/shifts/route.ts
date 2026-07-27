@@ -1,14 +1,16 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { shiftSchema } from "@/lib/validations/shift";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import {
   createSuccessResponse,
 } from "@/lib/api-errors";
-import { ShiftsService } from "@/lib/services/shifts.service";
-const service = new ShiftsService();
+import { ShiftRepository } from "@/lib/repositories/shift.repository";
+import { assertEventStatusAllows } from "@/lib/domain/event-status";
+
+const shiftRepo = new ShiftRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
@@ -34,8 +36,8 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
   const shifts =
     Object.keys(where).length > 0
-      ? await service.listShiftsWithDetails(where)
-      : await service.listShiftsWithDetails();
+      ? await shiftRepo.findAllWithDetails(where)
+      : await shiftRepo.findAllWithDetails();
 
   return createSuccessResponse(shifts);
 }));
@@ -47,7 +49,9 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   // Create shift with required roles
   const { requiredRoles, eventId, templateId, ...shiftData } = validated;
 
-  const shift = await service.createShift({
+  await assertEventStatusAllows(eventId, "SHIFT_MUTATE");
+
+  const shift = await shiftRepo.create({
     ...shiftData,
     startTime: new Date(validated.startTime),
     endTime: new Date(validated.endTime),

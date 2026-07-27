@@ -32,7 +32,7 @@ import { useEventContext } from "@/lib/hooks/useEventContext";
 import {
   canMutateShifts,
   canShowSwapPanel,
-} from "@/lib/services/event-status-permissions";
+} from "@/lib/domain/event-status";
 import {
   getNextStatus,
   getPreviousStatus,

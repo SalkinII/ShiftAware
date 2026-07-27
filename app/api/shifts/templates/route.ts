@@ -4,17 +4,20 @@ import {
   createSuccessResponse,
 } from "@/lib/api-errors";
 import { shiftTemplateSchema } from "@/lib/validations/template";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
-import { ShiftTemplatesService } from "@/lib/services/shift-templates.service";
-const service = new ShiftTemplatesService();
+import { ShiftTemplateRepository } from "@/lib/repositories/shift-template.repository";
+
+const templateRepo = new ShiftTemplateRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get("eventId") || undefined;
   const includeGlobal = searchParams.get("includeGlobal") !== "false";
 
-  const templates = await service.listTemplates(eventId, includeGlobal);
+  const templates = eventId
+    ? await templateRepo.findForEvent(eventId, includeGlobal !== false)
+    : await templateRepo.findGlobal();
 
   return createSuccessResponse(templates);
 }));
@@ -25,7 +28,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
 
   const { requiredRoles, eventId, ...templateData } = validated;
 
-  const template = await service.createTemplate({
+  const template = await templateRepo.create({
     ...templateData,
     ...(eventId ? { event: { connect: { id: eventId } } } : {}),
     requiredRoles: {

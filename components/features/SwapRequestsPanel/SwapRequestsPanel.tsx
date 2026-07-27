@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
-import { canShowSwapPanel } from "@/lib/services/event-status-permissions";
+import { canShowSwapPanel } from "@/lib/domain/event-status";
 import { cn } from "@/lib/utils";
 
 interface SwapRequest {

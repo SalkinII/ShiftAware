@@ -15,7 +15,7 @@ vi.mock("@/components/ui/Toast", () => ({
 vi.mock("@/components/features/Identity/ProfileDetailCard", () => ({
   ProfileDetailCard: () => null,
 }));
-vi.mock("@/lib/services/event-status-permissions", () => ({
+vi.mock("@/lib/domain/event-status", () => ({
   canManuallyAssign: () => false,
   canMutateShifts: () => false,
 }));

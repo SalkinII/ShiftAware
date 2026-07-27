@@ -2,7 +2,7 @@ import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { NextRequest } from "next/server";
 import { isAdmin } from "@/lib/auth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
@@ -10,18 +10,18 @@ import {
 } from "@/lib/api-errors";
 import { z } from "zod";
 import { eventConfigSchema } from "@/lib/validations/event-config";
-import { EventsService } from "@/lib/services/events.service";
-const service = new EventsService();
+import { EventRepository } from "@/lib/repositories/event.repository";
+const eventRepo = new EventRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: NextRequest,
   { params }: { params: Promise<{ id: string }> },) => {
   const { id } = await params;
 
-  const config = await service.getConfig(id);
+  const config = await eventRepo.getConfig(id);
 
   if (!config) {
     // Return default config structure if none exists
-    const event = await service.getEvent(id);
+    const event = await eventRepo.findById(id);
 
     return createSuccessResponse({
       event,
@@ -53,7 +53,7 @@ export const PUT = withAuth(withErrorHandling(async (request: NextRequest,
   const body = await request.json();
   const validated = eventConfigSchema.parse(body);
 
-  const config = await service.upsertConfig(id, {
+  const config = await eventRepo.upsertConfig(id, {
     minShiftsPerPerson: validated.minShiftsPerPerson,
     algorithmWeights: validated.algorithmWeights || {},
     balanceThresholds: validated.balanceThresholds || {},

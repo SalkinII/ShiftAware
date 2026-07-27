@@ -1,6 +1,8 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock prisma before importing service
 vi.mock("@/lib/db", () => {
   const txMock = {
     swapRequest: {
@@ -39,7 +41,7 @@ vi.mock("@/lib/db", () => {
   };
 });
 
-vi.mock("@/lib/services/event-status-guard", () => ({
+vi.mock("@/lib/domain/event-status", () => ({
   assertEventStatusAllows: vi.fn(),
 }));
 
@@ -52,15 +54,34 @@ vi.mock("@/lib/algorithm/optimizer", () => ({
   }),
 }));
 
+vi.mock("@/lib/repositories/event.repository", () => ({
+  EventRepository: class {
+    findById = vi.fn().mockResolvedValue({ id: "ev1", config: null });
+  },
+}));
+
+vi.mock("@/lib/repositories/team-member.repository", () => ({
+  TeamMemberRepository: class {
+    getAttributes = vi.fn().mockResolvedValue([]);
+  },
+}));
+
+vi.mock("@/lib/repositories/assignment.repository", () => ({
+  AssignmentRepository: class {
+    createManual = vi.fn();
+    delete = vi.fn();
+    findById = vi.fn();
+    findAll = vi.fn();
+    swapAssignments = vi.fn();
+  },
+}));
+
 import { prisma } from "@/lib/db";
-import { AssignmentsService } from "../assignments.service";
+import { runAllocation, createManualAssignment } from "@/lib/domain/allocation";
 
 describe("assignment scoping", () => {
-  let service: AssignmentsService;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new AssignmentsService();
   });
 
   describe("runAllocation", () => {
@@ -88,26 +109,9 @@ describe("assignment scoping", () => {
         mockRegistrations,
       );
       (prisma.shift.findMany as any).mockResolvedValue([]);
-      (prisma.event.findUnique as any).mockResolvedValue({
-        id: "ev1",
-        config: null,
-      });
 
-      // Stub the eventRepo.findById since service uses it
-      service["eventRepo"] = {
-        findById: vi.fn().mockResolvedValue({ id: "ev1", config: null }),
-      } as any;
-      service["membersService"] = {
-        getAttributes: vi.fn().mockResolvedValue([]),
-      } as any;
-      service["repo"] = {
-        deleteByEvent: vi.fn().mockResolvedValue({ count: 0 }),
-        bulkCreate: vi.fn().mockResolvedValue([]),
-      } as any;
+      await runAllocation("ev1");
 
-      await service.runAllocation("ev1");
-
-      // Should query registrations, NOT teamMember.findMany
       expect(prisma.eventRegistration.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { eventId: "ev1" },
@@ -127,7 +131,7 @@ describe("assignment scoping", () => {
       (prisma.eventRegistration.findUnique as any).mockResolvedValue(null);
 
       await expect(
-        service.createManualAssignment({
+        createManualAssignment({
           shiftId: "s1",
           teamMemberId: "m-unregistered",
         }),

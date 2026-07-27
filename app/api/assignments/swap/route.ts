@@ -1,15 +1,16 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
-import { createAuditLog } from "@/lib/services/audit";
+import { createAuditLog } from "@/lib/utils/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/lib/api-errors";
-import { AssignmentsService } from "@/lib/services/assignments.service";
+import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
+import { swapAssignments } from "@/lib/domain/allocation";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
-const service = new AssignmentsService();
+const assignmentRepo = new AssignmentRepository();
 
 export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const body = await request.json();
@@ -25,11 +26,11 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
 
   try {
     // Get original assignments for audit
-    const a1 = await service.getAssignment(assignment1Id);
-    const a2 = await service.getAssignment(assignment2Id);
+    const a1 = await assignmentRepo.findById(assignment1Id);
+    const a2 = await assignmentRepo.findById(assignment2Id);
 
     // Perform swap
-    const [newA1, newA2] = await service.swapAssignments(
+    const [newA1, newA2] = await swapAssignments(
       assignment1Id,
       assignment2Id,
     );

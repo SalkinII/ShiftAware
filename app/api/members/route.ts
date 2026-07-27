@@ -2,14 +2,16 @@ import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
 import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
-import { createAuditLog } from "@/lib/services/audit";
-import { MembersService } from "@/lib/services/members.service";
+import { createAuditLog } from "@/lib/utils/audit";
+import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import { AuditAction, EntityType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import {
   createSuccessResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
-const service = new MembersService();
+
+const memberRepo = new TeamMemberRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
@@ -21,18 +23,36 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
   let members;
   if (eventId) {
-    members = await service.listMembersWithEventContext(
-      eventId,
-      includeUnregistered,
-      search || undefined,
-    );
+    const where: Prisma.TeamMemberWhereInput = { isActive: true };
+    const include: Prisma.TeamMemberInclude = {};
+
+    if (search) {
+      where.alias = { contains: search, mode: "insensitive" };
+    }
+
+    if (includeUnregistered) {
+      include.eventRegistrations = { where: { eventId } };
+      include.attributes = {
+        where: { definition: { eventId } },
+        include: { definition: true },
+      };
+    } else {
+      where.eventRegistrations = { some: { eventId } };
+      include.eventRegistrations = { where: { eventId } };
+      include.attributes = {
+        where: { definition: { eventId } },
+        include: { definition: true },
+      };
+    }
+
+    members = await memberRepo.findAllWithIncludes(where, include);
   } else {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const where: any = includeInactive ? {} : { isActive: true };
     if (search) {
       where.alias = { contains: search, mode: "insensitive" };
     }
-    members = await service.listMembers(where);
+    members = await memberRepo.findAll(where);
   }
 
   return createSuccessResponse(members);
@@ -52,7 +72,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
     return createConflictResponse("Alias already exists");
   }
 
-  const member = await service.createMember(validated);
+  const member = await memberRepo.create(validated);
 
   await createAuditLog({
     action: AuditAction.CREATE,
