@@ -28,7 +28,7 @@ import { Popover } from "@/components/ui/Popover";
 import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
-import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useEventContext } from "@/lib/contexts/EventContext";
 import {
   canMutateShifts,
   canShowSwapPanel,
@@ -37,8 +37,10 @@ import {
   getNextStatus,
   getPreviousStatus,
 } from "@/lib/validations/event-transition";
-import { getShiftsCacheKey } from "@/lib/cache/utils";
-import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
+import {
+  getShiftsCacheKey,
+  invalidateEventCache,
+} from "@/lib/cache/invalidateEventCache";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { deriveLanesFromTemplates } from "@/lib/types/lane";
 import { getShiftDisplayInfo } from "@/lib/utils/shift-display";

@@ -5,6 +5,11 @@ export type CacheScope =
   | "preferences"
   | "registrations";
 
+/** Generate cache key for shifts filtered by event */
+export function getShiftsCacheKey(eventId?: string): string {
+  return eventId ? `shifts:event:${eventId}` : "shifts";
+}
+
 /**
  * Dispatch cache invalidation event for event-scoped data.
  * Components listening on `shiftaware:cache-invalidate` will refetch.

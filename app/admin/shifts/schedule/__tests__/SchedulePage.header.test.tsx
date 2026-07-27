@@ -9,7 +9,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) => () => <div data-testid="lane-canvas" />,
 }));
-vi.mock("@/lib/hooks/useEventContext", () => ({
+vi.mock("@/lib/contexts/EventContext", () => ({
   useEventContext: () => ({
     selectedEventId: "evt-1",
     selectedEvent: {
@@ -52,10 +52,8 @@ vi.mock("@/lib/validations/event-transition", () => ({
   getNextStatus: () => null,
   getPreviousStatus: () => null,
 }));
-vi.mock("@/lib/cache/utils", () => ({
-  getShiftsCacheKey: (id: string) => `shifts-${id}`,
-}));
 vi.mock("@/lib/cache/invalidateEventCache", () => ({
+  getShiftsCacheKey: (id: string) => `shifts-${id}`,
   invalidateEventCache: vi.fn(),
 }));
 vi.mock("@/lib/types/lane", () => ({

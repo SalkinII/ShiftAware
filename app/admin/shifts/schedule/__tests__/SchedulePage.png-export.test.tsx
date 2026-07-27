@@ -17,7 +17,7 @@ vi.mock("next/dynamic", () => ({
       return <div data-testid="lane-canvas" />;
     }),
 }));
-vi.mock("@/lib/hooks/useEventContext", () => ({
+vi.mock("@/lib/contexts/EventContext", () => ({
   useEventContext: () => ({
     selectedEventId: "evt-1",
     selectedEvent: {
@@ -52,8 +52,10 @@ vi.mock("@/components/features/LaneCalendar/sidebar/ShiftPropertiesPanel", () =>
 vi.mock("@/components/features/SwapRequestsPanel/SwapRequestsPanel", () => ({ SwapRequestsPanel: () => null }));
 vi.mock("@/lib/domain/event-status", () => ({ canMutateShifts: () => true, canShowSwapPanel: () => false }));
 vi.mock("@/lib/validations/event-transition", () => ({ getNextStatus: () => null, getPreviousStatus: () => null }));
-vi.mock("@/lib/cache/utils", () => ({ getShiftsCacheKey: (id: string) => `shifts-${id}` }));
-vi.mock("@/lib/cache/invalidateEventCache", () => ({ invalidateEventCache: vi.fn() }));
+vi.mock("@/lib/cache/invalidateEventCache", () => ({
+  getShiftsCacheKey: (id: string) => `shifts-${id}`,
+  invalidateEventCache: vi.fn(),
+}));
 vi.mock("@/lib/types/lane", () => ({ deriveLanesFromTemplates: () => [] }));
 vi.mock("@/lib/utils/shift-display", () => ({ getShiftDisplayInfo: () => ({ date: "", timeRange: "", assignedCount: 0, capacity: 0 }) }));
 

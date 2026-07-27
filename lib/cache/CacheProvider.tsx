@@ -7,8 +7,27 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { CacheContextValue, CacheEntry } from "./types";
-import { isCacheEntryValid } from "./utils";
+
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  ttl?: number;
+}
+
+interface CacheContextValue {
+  get: (key: string) => CacheEntry | null;
+  set: (key: string, data: any, ttl?: number) => void;
+  invalidate: (key: string | string[]) => void;
+  clear: () => void;
+}
+
+function isCacheEntryValid(entry: CacheEntry | null): boolean {
+  if (!entry) return false;
+  if (entry.ttl) {
+    return Date.now() - entry.timestamp < entry.ttl;
+  }
+  return true;
+}
 
 const CacheContext = createContext<CacheContextValue | null>(null);
 
