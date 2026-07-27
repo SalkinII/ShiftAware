@@ -6,12 +6,12 @@ import {
 } from "@/lib/api-errors";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
-type Handler = (req: Request, ctx?: { params: Record<string, string | string[]> }) => Promise<Response>;
+type AnyHandler = (...args: any[]) => Promise<Response>;
 
-export function withErrorHandling(handler: Handler): Handler {
-  return async (req, ctx) => {
+export function withErrorHandling(handler: AnyHandler): AnyHandler {
+  return async (...args: any[]) => {
     try {
-      return await handler(req, ctx);
+      return await handler(...args);
     } catch (error) {
       if (error instanceof RepositoryError) {
         if (error.code === "NOT_FOUND") return createNotFoundResponse();

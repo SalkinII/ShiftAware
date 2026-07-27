@@ -1,30 +1,19 @@
-import { isAuthenticated } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 import {
-  createErrorResponse,
   createSuccessResponse,
-  createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { EventsService } from "@/lib/services/events.service";
 
 const service = new EventsService();
 
-export async function GET() {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
-    }
+export const GET = withAuth(withErrorHandling(async () => {
+  const event = await service.getCurrentEvent();
 
-    const event = await service.getCurrentEvent();
-
-    if (!event) {
-      return createNotFoundResponse("Event");
-    }
-
-    return createSuccessResponse(event);
-  } catch (error) {
-    console.error("Get current event error:", error);
-    return createErrorResponse(error, "Failed to fetch current event");
+  if (!event) {
+    return createNotFoundResponse("Event");
   }
-}
+
+  return createSuccessResponse(event);
+}));

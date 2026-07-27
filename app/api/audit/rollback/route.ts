@@ -1,4 +1,5 @@
-import { isAuthenticated } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 import { prisma } from "@/lib/db";
 import {
   AuditAction,
@@ -14,11 +15,9 @@ import {
 import {
   createErrorResponse,
   createSuccessResponse,
-  createUnauthorizedResponse,
   createNotFoundResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
-
 // Type definitions for rollback data
 type TeamMemberBeforeAfter = {
   alias?: string;
@@ -93,122 +92,112 @@ function isValidAssignmentType(value: unknown): value is AssignmentType {
   );
 }
 
-export async function POST(request: Request) {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
+export const POST = withAuth(withErrorHandling(async (request: Request) => {
+  const body = await request.json();
+  const { auditLogId } = body;
+
+  if (!auditLogId) {
+    return createErrorResponse(
+      new Error("auditLogId is required"),
+      "Missing audit log ID",
+      400,
+    );
+  }
+
+  // Fetch audit log entry
+  const auditLog = await prisma.auditLog.findUnique({
+    where: { id: auditLogId },
+  });
+
+  if (!auditLog) {
+    return createNotFoundResponse("Audit log entry");
+  }
+
+  // Prevent rolling back rollback entries (entries with reason containing "Rollback of")
+  if (auditLog.reason && auditLog.reason.includes("Rollback of")) {
+    return createConflictResponse(
+      "Cannot rollback a rollback action. Please rollback the original action instead.",
+    );
+  }
+
+  // Check if rollback is possible
+  const rollbackableActions: AuditAction[] = [
+    AuditAction.CREATE,
+    AuditAction.UPDATE,
+    AuditAction.DELETE,
+    AuditAction.MANUAL_SWAP,
+    AuditAction.PREFERENCE_SUBMIT, // Treated as CREATE for preferences
+  ];
+
+  if (!rollbackableActions.includes(auditLog.action)) {
+    return createConflictResponse(
+      `Cannot rollback ${auditLog.action} actions`,
+    );
+  }
+
+  // Check for subsequent changes (warn but allow)
+  const subsequentChanges = await prisma.auditLog.count({
+    where: {
+      entityType: auditLog.entityType,
+      entityId: auditLog.entityId,
+      createdAt: { gt: auditLog.createdAt },
+    },
+  });
+
+  // Execute rollback in transaction
+  const result = await prisma.$transaction(async (tx) => {
+    let rollbackResult: {
+      success: boolean;
+      message: string;
+      action: AuditAction;
+    };
+
+    switch (auditLog.entityType) {
+      case EntityType.TEAM_MEMBER:
+        rollbackResult = await rollbackTeamMember(tx, auditLog);
+        break;
+      case EntityType.SHIFT:
+        rollbackResult = await rollbackShift(tx, auditLog);
+        break;
+      case EntityType.ASSIGNMENT:
+        rollbackResult = await rollbackAssignment(tx, auditLog);
+        break;
+      case EntityType.PREFERENCE:
+        rollbackResult = await rollbackPreference(tx, auditLog);
+        break;
+      default:
+        throw new Error(`Unsupported entity type: ${auditLog.entityType}`);
     }
 
-    const body = await request.json();
-    const { auditLogId } = body;
-
-    if (!auditLogId) {
-      return createErrorResponse(
-        new Error("auditLogId is required"),
-        "Missing audit log ID",
-        400,
-      );
-    }
-
-    // Fetch audit log entry
-    const auditLog = await prisma.auditLog.findUnique({
-      where: { id: auditLogId },
-    });
-
-    if (!auditLog) {
-      return createNotFoundResponse("Audit log entry");
-    }
-
-    // Prevent rolling back rollback entries (entries with reason containing "Rollback of")
-    if (auditLog.reason && auditLog.reason.includes("Rollback of")) {
-      return createConflictResponse(
-        "Cannot rollback a rollback action. Please rollback the original action instead.",
-      );
-    }
-
-    // Check if rollback is possible
-    const rollbackableActions: AuditAction[] = [
-      AuditAction.CREATE,
-      AuditAction.UPDATE,
-      AuditAction.DELETE,
-      AuditAction.MANUAL_SWAP,
-      AuditAction.PREFERENCE_SUBMIT, // Treated as CREATE for preferences
-    ];
-
-    if (!rollbackableActions.includes(auditLog.action)) {
-      return createConflictResponse(
-        `Cannot rollback ${auditLog.action} actions`,
-      );
-    }
-
-    // Check for subsequent changes (warn but allow)
-    const subsequentChanges = await prisma.auditLog.count({
-      where: {
+    // Create audit log entry for rollback
+    await tx.auditLog.create({
+      data: {
+        userId: auditLog.userId,
+        action: AuditAction.UPDATE, // Use UPDATE to represent rollback
         entityType: auditLog.entityType,
         entityId: auditLog.entityId,
-        createdAt: { gt: auditLog.createdAt },
+        before: auditLog.after ? (auditLog.after as object) : undefined, // Current state
+        after: auditLog.before ? (auditLog.before as object) : undefined, // Rolled back state
+        reason: `Rollback of ${auditLog.action} action from ${auditLog.createdAt.toISOString()}`,
+        ipAddress: request.headers.get("x-forwarded-for") || undefined,
       },
     });
 
-    // Execute rollback in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      let rollbackResult: {
-        success: boolean;
-        message: string;
-        action: AuditAction;
-      };
+    return {
+      ...rollbackResult,
+      subsequentChanges,
+    };
+  });
 
-      switch (auditLog.entityType) {
-        case EntityType.TEAM_MEMBER:
-          rollbackResult = await rollbackTeamMember(tx, auditLog);
-          break;
-        case EntityType.SHIFT:
-          rollbackResult = await rollbackShift(tx, auditLog);
-          break;
-        case EntityType.ASSIGNMENT:
-          rollbackResult = await rollbackAssignment(tx, auditLog);
-          break;
-        case EntityType.PREFERENCE:
-          rollbackResult = await rollbackPreference(tx, auditLog);
-          break;
-        default:
-          throw new Error(`Unsupported entity type: ${auditLog.entityType}`);
-      }
-
-      // Create audit log entry for rollback
-      await tx.auditLog.create({
-        data: {
-          userId: auditLog.userId,
-          action: AuditAction.UPDATE, // Use UPDATE to represent rollback
-          entityType: auditLog.entityType,
-          entityId: auditLog.entityId,
-          before: auditLog.after ? (auditLog.after as object) : undefined, // Current state
-          after: auditLog.before ? (auditLog.before as object) : undefined, // Rolled back state
-          reason: `Rollback of ${auditLog.action} action from ${auditLog.createdAt.toISOString()}`,
-          ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        },
-      });
-
-      return {
-        ...rollbackResult,
-        subsequentChanges,
-      };
-    });
-
-    return createSuccessResponse({
-      success: true,
-      message: result.message,
-      rolledBackAction: auditLog.action,
-      entityType: auditLog.entityType,
-      entityId: auditLog.entityId,
-      subsequentChanges: result.subsequentChanges,
-    });
-  } catch (error) {
-    console.error("Rollback error:", error);
-    return createErrorResponse(error, "Failed to rollback action");
-  }
-}
+  return createSuccessResponse({
+    success: true,
+    message: result.message,
+    rolledBackAction: auditLog.action,
+    entityType: auditLog.entityType,
+    entityId: auditLog.entityId,
+    subsequentChanges: result.subsequentChanges,
+  });
+}));
 
 // Rollback functions for each entity type
 

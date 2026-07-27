@@ -1,4 +1,5 @@
-import { isAuthenticated } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 import { prisma } from "@/lib/db";
 import { MembersService } from "@/lib/services/members.service";
 
@@ -10,9 +11,7 @@ import {
 } from "@/lib/algorithm/validator";
 import { AssignmentState } from "@/lib/algorithm/types";
 import {
-  createErrorResponse,
   createSuccessResponse,
-  createUnauthorizedResponse,
 } from "@/lib/api-errors";
 import { Prisma } from "@prisma/client";
 
@@ -62,160 +61,150 @@ export interface ResolutionSuggestion {
   confidence: number;
 }
 
-export async function GET() {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
-    }
+export const GET = withAuth(withErrorHandling(async () => {
+  // Fetch all assignments with shifts and members
+  const assignments = await prisma.assignment.findMany({
+    include: {
+      shift: true,
+      teamMember: true,
+    },
+  });
 
-    // Fetch all assignments with shifts and members
-    const assignments = await prisma.assignment.findMany({
-      include: {
-        shift: true,
-        teamMember: true,
+  // Fetch all shifts for overlap checking
+  const shifts = await prisma.shift.findMany({
+    include: {
+      assignments: {
+        include: { teamMember: true },
       },
-    });
+      requiredRoles: true,
+    },
+  });
 
-    // Fetch all shifts for overlap checking
-    const shifts = await prisma.shift.findMany({
-      include: {
-        assignments: {
-          include: { teamMember: true },
-        },
-        requiredRoles: true,
+  // Fetch all members for minimum shifts checking
+  const members = await prisma.teamMember.findMany({
+    where: { isActive: true },
+    include: {
+      assignments: {
+        include: { shift: true },
       },
-    });
+    },
+  });
 
-    // Fetch all members for minimum shifts checking
-    const members = await prisma.teamMember.findMany({
-      where: { isActive: true },
-      include: {
-        assignments: {
-          include: { shift: true },
-        },
-      },
-    });
+  // Build assignment state for validator functions
+  const assignmentState: AssignmentState = {
+    assignments: new Map(),
+    memberShifts: new Map(),
+    shiftCoverage: new Map(),
+  };
 
-    // Build assignment state for validator functions
-    const assignmentState: AssignmentState = {
-      assignments: new Map(),
-      memberShifts: new Map(),
-      shiftCoverage: new Map(),
-    };
+  assignments.forEach((assignment) => {
+    const shiftAssignments =
+      assignmentState.assignments.get(assignment.shiftId) || [];
+    shiftAssignments.push(assignment);
+    assignmentState.assignments.set(assignment.shiftId, shiftAssignments);
 
-    assignments.forEach((assignment) => {
-      const shiftAssignments =
-        assignmentState.assignments.get(assignment.shiftId) || [];
-      shiftAssignments.push(assignment);
-      assignmentState.assignments.set(assignment.shiftId, shiftAssignments);
+    const memberShifts =
+      assignmentState.memberShifts.get(assignment.teamMemberId) || [];
+    memberShifts.push(assignment.shiftId);
+    assignmentState.memberShifts.set(assignment.teamMemberId, memberShifts);
 
-      const memberShifts =
-        assignmentState.memberShifts.get(assignment.teamMemberId) || [];
-      memberShifts.push(assignment.shiftId);
-      assignmentState.memberShifts.set(assignment.teamMemberId, memberShifts);
+    assignmentState.shiftCoverage.set(
+      assignment.shiftId,
+      (assignmentState.shiftCoverage.get(assignment.shiftId) || 0) + 1,
+    );
+  });
 
-      assignmentState.shiftCoverage.set(
-        assignment.shiftId,
-        (assignmentState.shiftCoverage.get(assignment.shiftId) || 0) + 1,
-      );
-    });
+  // Build maps for quick lookup
+  const shiftsMap = new Map(shifts.map((s) => [s.id, s]));
+  const membersMap = new Map(members.map((m) => [m.id, m]));
 
-    // Build maps for quick lookup
-    const shiftsMap = new Map(shifts.map((s) => [s.id, s]));
-    const membersMap = new Map(members.map((m) => [m.id, m]));
-
-    // Load member attributes for gender balance checks
-    const memberAttributesMap = new Map<string, Map<string, string>>();
-    for (const member of members) {
-      try {
-        const attrs = await membersService.getAttributes(member.id);
-        const attrMap = new Map<string, string>();
-        for (const attr of attrs) {
-          try {
-            attrMap.set(attr.definition.name, JSON.parse(attr.value));
-          } catch {
-            attrMap.set(attr.definition.name, attr.value);
-          }
+  // Load member attributes for gender balance checks
+  const memberAttributesMap = new Map<string, Map<string, string>>();
+  for (const member of members) {
+    try {
+      const attrs = await membersService.getAttributes(member.id);
+      const attrMap = new Map<string, string>();
+      for (const attr of attrs) {
+        try {
+          attrMap.set(attr.definition.name, JSON.parse(attr.value));
+        } catch {
+          attrMap.set(attr.definition.name, attr.value);
         }
-        memberAttributesMap.set(member.id, attrMap);
-      } catch {
-        // Member may not have attributes — skip
       }
+      memberAttributesMap.set(member.id, attrMap);
+    } catch {
+      // Member may not have attributes — skip
     }
-
-    // Detect conflicts
-    const conflicts: Conflict[] = [];
-
-    // 1. Detect SHIFT_OVERLAP conflicts
-    const overlapConflicts = detectOverlapConflicts(
-      assignments,
-      shiftsMap,
-      assignmentState,
-    );
-    conflicts.push(...overlapConflicts);
-
-    // 2. Detect SHIFT_CAPACITY conflicts
-    const capacityConflicts = detectCapacityConflicts(shifts, assignmentState);
-    conflicts.push(...capacityConflicts);
-
-    // 3. Detect GENDER_BALANCE conflicts
-    const genderConflicts = detectGenderBalanceConflicts(
-      shifts,
-      membersMap,
-      assignmentState,
-      memberAttributesMap,
-    );
-    conflicts.push(...genderConflicts);
-
-    // 4. Detect MINIMUM_SHIFTS conflicts (deferred - needs event config)
-    // const minimumShiftsConflicts = detectMinimumShiftsConflicts(...);
-    // conflicts.push(...minimumShiftsConflicts);
-
-    // Generate suggestions for each conflict
-    const conflictsWithSuggestions = conflicts.map((conflict, index) => ({
-      ...conflict,
-      id: `conflict-${index}`,
-      suggestions: generateSuggestions(
-        conflict,
-        assignments,
-        shifts,
-        members,
-        assignmentState,
-        shiftsMap,
-        membersMap,
-        memberAttributesMap,
-      ),
-    }));
-
-    // Calculate summary
-    const summary = {
-      total: conflictsWithSuggestions.length,
-      byType: conflictsWithSuggestions.reduce(
-        (acc, c) => {
-          acc[c.type] = (acc[c.type] || 0) + 1;
-          return acc;
-        },
-        {} as Record<ConflictType, number>,
-      ),
-      bySeverity: conflictsWithSuggestions.reduce(
-        (acc, c) => {
-          acc[c.severity] = (acc[c.severity] || 0) + 1;
-          return acc;
-        },
-        {} as Record<"hard" | "soft", number>,
-      ),
-    };
-
-    return createSuccessResponse({
-      conflicts: conflictsWithSuggestions,
-      summary,
-    });
-  } catch (error) {
-    console.error("Get conflicts error:", error);
-    return createErrorResponse(error, "Failed to detect conflicts");
   }
-}
+
+  // Detect conflicts
+  const conflicts: Conflict[] = [];
+
+  // 1. Detect SHIFT_OVERLAP conflicts
+  const overlapConflicts = detectOverlapConflicts(
+    assignments,
+    shiftsMap,
+    assignmentState,
+  );
+  conflicts.push(...overlapConflicts);
+
+  // 2. Detect SHIFT_CAPACITY conflicts
+  const capacityConflicts = detectCapacityConflicts(shifts, assignmentState);
+  conflicts.push(...capacityConflicts);
+
+  // 3. Detect GENDER_BALANCE conflicts
+  const genderConflicts = detectGenderBalanceConflicts(
+    shifts,
+    membersMap,
+    assignmentState,
+    memberAttributesMap,
+  );
+  conflicts.push(...genderConflicts);
+
+  // 4. Detect MINIMUM_SHIFTS conflicts (deferred - needs event config)
+  // const minimumShiftsConflicts = detectMinimumShiftsConflicts(...);
+  // conflicts.push(...minimumShiftsConflicts);
+
+  // Generate suggestions for each conflict
+  const conflictsWithSuggestions = conflicts.map((conflict, index) => ({
+    ...conflict,
+    id: `conflict-${index}`,
+    suggestions: generateSuggestions(
+      conflict,
+      assignments,
+      shifts,
+      members,
+      assignmentState,
+      shiftsMap,
+      membersMap,
+      memberAttributesMap,
+    ),
+  }));
+
+  // Calculate summary
+  const summary = {
+    total: conflictsWithSuggestions.length,
+    byType: conflictsWithSuggestions.reduce(
+      (acc, c) => {
+        acc[c.type] = (acc[c.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<ConflictType, number>,
+    ),
+    bySeverity: conflictsWithSuggestions.reduce(
+      (acc, c) => {
+        acc[c.severity] = (acc[c.severity] || 0) + 1;
+        return acc;
+      },
+      {} as Record<"hard" | "soft", number>,
+    ),
+  };
+
+  return createSuccessResponse({
+    conflicts: conflictsWithSuggestions,
+    summary,
+  });
+}));
 
 // Conflict detection functions
 

@@ -1,6 +1,7 @@
-import { isAuthenticated, isAdmin } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
+import { isAdmin } from "@/lib/auth";
 import { EventsService } from "@/lib/services/events.service";
-import { RepositoryError } from "@/lib/repositories/base.repository";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -10,119 +11,79 @@ import {
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import { updateEventSchema } from "@/lib/validations/event";
-import { StatusGuardError } from "@/lib/services/event-status-guard";
-
 const service = new EventsService();
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    if (!(await isAuthenticated())) {
-      return createUnauthorizedResponse();
-    }
+export const GET = withAuth(withErrorHandling(async (request: Request,
+  { params }: { params: Promise<{ id: string }> },) => {
 
-    const { id } = await params;
-    const event = await service.getEvent(id);
-    return createSuccessResponse(event);
-  } catch (error) {
-    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
-      return createNotFoundResponse("Event");
-    }
-    return createErrorResponse(error, "Failed to fetch event");
+  const { id } = await params;
+  const event = await service.getEvent(id);
+  return createSuccessResponse(event);
+}));
+
+export const PUT = withAuth(withErrorHandling(async (request: Request,
+  { params }: { params: Promise<{ id: string }> },) => {
+  if (!(await isAdmin())) {
+    return createUnauthorizedResponse();
   }
-}
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    if (!(await isAdmin())) {
-      return createUnauthorizedResponse();
-    }
+  const { id } = await params;
+  const body = await request.json();
 
-    const { id } = await params;
-    const body = await request.json();
-
-    const validation = updateEventSchema.safeParse({ ...body, id });
-    if (!validation.success) {
-      return createErrorResponse(
-        new Error(validation.error.errors[0].message),
-        validation.error.errors[0].message,
-        400,
-      );
-    }
-
-    const { startDate, endDate, ...eventFields } = validation.data;
-
-    // Convert date strings to Date objects for Prisma
-    const eventData: Record<string, unknown> = { ...eventFields };
-    if (startDate) eventData.startDate = new Date(startDate);
-    if (endDate) eventData.endDate = new Date(endDate);
-
-    // Remove id from the update payload (it's in the where clause)
-    delete eventData.id;
-
-    const event = await service.updateEvent(id, eventData as any);
-
-    await createAuditLog({
-      action: AuditAction.UPDATE,
-      entityType: EntityType.EVENT,
-      entityId: id,
-      after: validation.data,
-      ipAddress: request.headers.get("x-forwarded-for") || undefined,
-    });
-
-    return createSuccessResponse(event);
-  } catch (error) {
-    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
-      return createNotFoundResponse("Event");
-    }
-    return createErrorResponse(error, "Failed to update event");
+  const validation = updateEventSchema.safeParse({ ...body, id });
+  if (!validation.success) {
+    return createErrorResponse(
+      new Error(validation.error.errors[0].message),
+      validation.error.errors[0].message,
+      400,
+    );
   }
-}
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    if (!(await isAdmin())) {
-      return createUnauthorizedResponse();
-    }
+  const { startDate, endDate, ...eventFields } = validation.data;
 
-    const { id } = await params;
+  // Convert date strings to Date objects for Prisma
+  const eventData: Record<string, unknown> = { ...eventFields };
+  if (startDate) eventData.startDate = new Date(startDate);
+  if (endDate) eventData.endDate = new Date(endDate);
 
-    const event = await service.getEvent(id);
-    if (!event) {
-      return createNotFoundResponse("Event");
-    }
+  // Remove id from the update payload (it's in the where clause)
+  delete eventData.id;
 
-    await service.permanentDeleteEvent(id);
+  const event = await service.updateEvent(id, eventData as any);
 
-    await createAuditLog({
-      action: AuditAction.DELETE,
-      entityType: EntityType.EVENT,
-      entityId: id,
-      before: { id: event.id, name: event.name, status: event.status },
-      ipAddress: request.headers.get("x-forwarded-for") || undefined,
-    });
+  await createAuditLog({
+    action: AuditAction.UPDATE,
+    entityType: EntityType.EVENT,
+    entityId: id,
+    after: validation.data,
+    ipAddress: request.headers.get("x-forwarded-for") || undefined,
+  });
 
-    return createSuccessResponse({ success: true });
-  } catch (error) {
-    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
-      return createNotFoundResponse("Event");
-    }
-    if (error instanceof StatusGuardError) {
-      return createErrorResponse(
-        error,
-        error.message,
-        403,
-      );
-    }
-    console.error("Delete event error:", error);
-    return createErrorResponse(error, "Failed to delete event");
+  return createSuccessResponse(event);
+}));
+
+export const DELETE = withAuth(withErrorHandling(async (request: Request,
+  { params }: { params: Promise<{ id: string }> },) => {
+  if (!(await isAdmin())) {
+    return createUnauthorizedResponse();
   }
-}
+
+  const { id } = await params;
+
+  const event = await service.getEvent(id);
+  if (!event) {
+    return createNotFoundResponse("Event");
+  }
+
+  await service.permanentDeleteEvent(id);
+
+  await createAuditLog({
+    action: AuditAction.DELETE,
+    entityType: EntityType.EVENT,
+    entityId: id,
+    before: { id: event.id, name: event.name, status: event.status },
+    ipAddress: request.headers.get("x-forwarded-for") || undefined,
+  });
+
+  return createSuccessResponse({ success: true });
+}));

@@ -1,34 +1,29 @@
-import { isAuthenticated } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
   createErrorResponse,
   createSuccessResponse,
-  createUnauthorizedResponse,
 } from "@/lib/api-errors";
 import { AssignmentsService } from "@/lib/services/assignments.service";
 import { RepositoryError } from "@/lib/repositories/base.repository";
 
 const service = new AssignmentsService();
 
-export async function POST(request: Request) {
+export const POST = withAuth(withErrorHandling(async (request: Request) => {
+  const body = await request.json();
+  const { assignment1Id, assignment2Id, reason } = body;
+
+  if (!assignment1Id || !assignment2Id) {
+    return createErrorResponse(
+      new Error("Two assignments are required for a swap"),
+      "Two assignments are required for a swap",
+      400,
+    );
+  }
+
   try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
-    }
-
-    const body = await request.json();
-    const { assignment1Id, assignment2Id, reason } = body;
-
-    if (!assignment1Id || !assignment2Id) {
-      return createErrorResponse(
-        new Error("Two assignments are required for a swap"),
-        "Two assignments are required for a swap",
-        400,
-      );
-    }
-
     // Get original assignments for audit
     const a1 = await service.getAssignment(assignment1Id);
     const a2 = await service.getAssignment(assignment2Id);
@@ -52,8 +47,7 @@ export async function POST(request: Request) {
 
     return createSuccessResponse({ success: true, a1: newA1, a2: newA2 });
   } catch (error: any) {
-    console.error("Swap assignments error:", error);
-
+    // Domain-specific mappings not covered by withErrorHandling
     if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
       return createErrorResponse(error, error.message, 404);
     }
@@ -67,7 +61,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Handle Prisma unique constraint errors
     if (error.code === "P2002") {
       return createErrorResponse(
         error,
@@ -76,7 +69,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Handle other Prisma errors
     if (error.code && error.code.startsWith("P")) {
       return createErrorResponse(
         error,
@@ -85,6 +77,6 @@ export async function POST(request: Request) {
       );
     }
 
-    return createErrorResponse(error, "Failed to swap assignments");
+    throw error;
   }
-}
+}));

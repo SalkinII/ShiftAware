@@ -1,86 +1,66 @@
-import { isAuthenticated } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/services/audit";
 import { MembersService } from "@/lib/services/members.service";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
-  createErrorResponse,
   createSuccessResponse,
-  createUnauthorizedResponse,
   createConflictResponse,
 } from "@/lib/api-errors";
-
 const service = new MembersService();
 
-export async function GET(request: Request) {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
+export const GET = withAuth(withErrorHandling(async (request: Request) => {
+
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("eventId");
+  const search = searchParams.get("search");
+  const includeUnregistered =
+    searchParams.get("includeUnregistered") === "true";
+
+  let members;
+  if (eventId) {
+    members = await service.listMembersWithEventContext(
+      eventId,
+      includeUnregistered,
+      search || undefined,
+    );
+  } else {
+    const includeInactive = searchParams.get("includeInactive") === "true";
+    const where: any = includeInactive ? {} : { isActive: true };
+    if (search) {
+      where.alias = { contains: search, mode: "insensitive" };
     }
-
-    const { searchParams } = new URL(request.url);
-    const eventId = searchParams.get("eventId");
-    const search = searchParams.get("search");
-    const includeUnregistered =
-      searchParams.get("includeUnregistered") === "true";
-
-    let members;
-    if (eventId) {
-      members = await service.listMembersWithEventContext(
-        eventId,
-        includeUnregistered,
-        search || undefined,
-      );
-    } else {
-      const includeInactive = searchParams.get("includeInactive") === "true";
-      const where: any = includeInactive ? {} : { isActive: true };
-      if (search) {
-        where.alias = { contains: search, mode: "insensitive" };
-      }
-      members = await service.listMembers(where);
-    }
-
-    return createSuccessResponse(members);
-  } catch (error) {
-    console.error("Get members error:", error);
-    return createErrorResponse(error, "Failed to fetch members");
+    members = await service.listMembers(where);
   }
-}
 
-export async function POST(request: Request) {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
-    }
+  return createSuccessResponse(members);
+}));
 
-    const body = await request.json();
-    const validated = teamMemberSchema.parse(body);
+export const POST = withAuth(withErrorHandling(async (request: Request) => {
 
-    // Check if alias already exists
-    const existing = await prisma.teamMember.findUnique({
-      where: { alias: validated.alias },
-    });
+  const body = await request.json();
+  const validated = teamMemberSchema.parse(body);
 
-    if (existing) {
-      return createConflictResponse("Alias already exists");
-    }
+  // Check if alias already exists
+  const existing = await prisma.teamMember.findUnique({
+    where: { alias: validated.alias },
+  });
 
-    const member = await service.createMember(validated);
-
-    await createAuditLog({
-      action: AuditAction.CREATE,
-      entityType: EntityType.TEAM_MEMBER,
-      entityId: member.id,
-      after: validated,
-      ipAddress: request.headers.get("x-forwarded-for") || undefined,
-    });
-
-    return createSuccessResponse(member, 201);
-  } catch (error) {
-    console.error("Create member error:", error);
-    return createErrorResponse(error, "Failed to create member");
+  if (existing) {
+    return createConflictResponse("Alias already exists");
   }
-}
+
+  const member = await service.createMember(validated);
+
+  await createAuditLog({
+    action: AuditAction.CREATE,
+    entityType: EntityType.TEAM_MEMBER,
+    entityId: member.id,
+    after: validated,
+    ipAddress: request.headers.get("x-forwarded-for") || undefined,
+  });
+
+  return createSuccessResponse(member, 201);
+}));

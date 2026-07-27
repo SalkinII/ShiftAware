@@ -1,11 +1,11 @@
 import { isAuthenticated } from "@/lib/auth";
 import { createUnauthorizedResponse } from "@/lib/api-errors";
 
-type Handler = (req: Request, ctx?: { params: Record<string, string | string[]> }) => Promise<Response>;
+type AnyHandler = (...args: any[]) => Promise<Response>;
 
-export function withAuth(handler: Handler): Handler {
-  return async (req, ctx) => {
-    if (!await isAuthenticated()) return createUnauthorizedResponse();
-    return handler(req, ctx);
+export function withAuth(handler: AnyHandler): AnyHandler {
+  return async (...args: any[]) => {
+    if (!(await isAuthenticated())) return createUnauthorizedResponse();
+    return handler(...args);
   };
 }

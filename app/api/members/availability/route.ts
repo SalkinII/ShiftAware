@@ -1,7 +1,7 @@
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
-import { createUnauthorizedResponse } from "@/lib/api-errors";
 import { Prisma, ShiftType, Role } from "@prisma/client";
 
 // Type definitions for Prisma includes
@@ -188,191 +188,176 @@ function calculateAvailabilityStatus(
   };
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check authentication
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      return createUnauthorizedResponse();
-    }
+export const GET = withAuth(withErrorHandling(async (request: NextRequest) => {
+  // Check authentication
 
-    // Parse query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const memberIdsParam = searchParams.get("memberIds");
-    const shiftIdsParam = searchParams.get("shiftIds");
-    const startDateParam = searchParams.get("startDate");
-    const endDateParam = searchParams.get("endDate");
-    const shiftTypeParam = searchParams.get("shiftType");
-    const eventIdParam = searchParams.get("eventId") || undefined;
+  // Parse query parameters
+  const searchParams = request.nextUrl.searchParams;
+  const memberIdsParam = searchParams.get("memberIds");
+  const shiftIdsParam = searchParams.get("shiftIds");
+  const startDateParam = searchParams.get("startDate");
+  const endDateParam = searchParams.get("endDate");
+  const shiftTypeParam = searchParams.get("shiftType");
+  const eventIdParam = searchParams.get("eventId") || undefined;
 
-    const memberIds = memberIdsParam
-      ? memberIdsParam.split(",").filter(Boolean)
-      : undefined;
-    const shiftIds = shiftIdsParam
-      ? shiftIdsParam.split(",").filter(Boolean)
-      : undefined;
-    const startDate = startDateParam ? new Date(startDateParam) : undefined;
-    const endDate = endDateParam ? new Date(endDateParam) : undefined;
+  const memberIds = memberIdsParam
+    ? memberIdsParam.split(",").filter(Boolean)
+    : undefined;
+  const shiftIds = shiftIdsParam
+    ? shiftIdsParam.split(",").filter(Boolean)
+    : undefined;
+  const startDate = startDateParam ? new Date(startDateParam) : undefined;
+  const endDate = endDateParam ? new Date(endDateParam) : undefined;
 
-    // Fetch members
-    const membersWhere: Prisma.TeamMemberWhereInput = { isActive: true };
-    if (memberIds && memberIds.length > 0) {
-      membersWhere.id = { in: memberIds };
-    }
-
-    const members = await prisma.teamMember.findMany({
-      where: membersWhere,
-      include: {
-        preferences: {
-          include: {
-            shift: true,
-          },
-        },
-        assignments: {
-          include: {
-            shift: true,
-          },
-        },
-      },
-      orderBy: {
-        alias: "asc",
-      },
-    });
-
-    // Fetch shifts
-    const shiftsWhere: Prisma.ShiftWhereInput = {};
-    if (shiftIds && shiftIds.length > 0) {
-      shiftsWhere.id = { in: shiftIds };
-    }
-    if (startDate) {
-      shiftsWhere.startTime = { gte: startDate };
-    }
-    if (endDate) {
-      shiftsWhere.endTime = { lte: endDate };
-    }
-    if (shiftTypeParam) {
-      shiftsWhere.type = shiftTypeParam as ShiftType;
-    }
-    if (eventIdParam) {
-      shiftsWhere.eventId = eventIdParam;
-    }
-
-    const shifts = await prisma.shift.findMany({
-      where: shiftsWhere,
-      include: {
-        requiredRoles: true,
-        template: { select: { id: true, name: true } },
-        assignments: {
-          include: {
-            teamMember: true,
-          },
-        },
-        preferences: {
-          include: {
-            teamMember: true,
-          },
-        },
-      },
-      orderBy: {
-        startTime: "asc",
-      },
-    });
-
-    // Build maps for efficient lookup
-    const memberPreferences = new Map<string, string[]>();
-    const memberAssignments = new Map<
-      string,
-      Prisma.AssignmentGetPayload<{ include: { shift: true } }>[]
-    >();
-
-    members.forEach((member) => {
-      const preferredShiftIds = member.preferences?.map((p) => p.shiftId) || [];
-      memberPreferences.set(member.id, preferredShiftIds);
-
-      const assignments = member.assignments || [];
-      memberAssignments.set(member.id, assignments);
-    });
-
-    // Calculate availability matrix
-    const availability: AvailabilityStatus[][] = members.map((member) =>
-      shifts.map((shift) =>
-        calculateAvailabilityStatus(
-          member,
-          shift,
-          memberPreferences,
-          memberAssignments,
-          shifts,
-        ),
-      ),
-    );
-
-    // Calculate summary
-    let availableCount = 0;
-    let partialCount = 0;
-    let unavailableCount = 0;
-    let neutralCount = 0;
-
-    availability.forEach((row) => {
-      row.forEach((cell) => {
-        switch (cell.status) {
-          case "available":
-            availableCount++;
-            break;
-          case "partial":
-            partialCount++;
-            break;
-          case "unavailable":
-            unavailableCount++;
-            break;
-          case "neutral":
-            neutralCount++;
-            break;
-        }
-      });
-    });
-
-    const response: HeatmapData = {
-      members: members.map((m) => ({
-        id: m.id,
-        alias: m.alias,
-        avatarId: m.avatarId,
-        experienceLevel: m.experienceLevel,
-        capabilities: m.capabilities,
-        isActive: m.isActive,
-      })),
-      shifts: shifts.map((s) => ({
-        id: s.id,
-        type: s.type,
-        templateName: s.template?.name ?? s.type.replace(/_/g, " "),
-        startTime: s.startTime,
-        endTime: s.endTime,
-        capacity: s.capacity,
-        priority: s.priority,
-        requiredRoles: s.requiredRoles?.map((r) => ({
-          role: r.role,
-          count: r.count,
-        })),
-      })),
-      availability,
-      summary: {
-        totalMembers: members.length,
-        totalShifts: shifts.length,
-        availableCount,
-        partialCount,
-        unavailableCount,
-        neutralCount,
-      },
-    };
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error("Error fetching availability:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch availability data",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+  // Fetch members
+  const membersWhere: Prisma.TeamMemberWhereInput = { isActive: true };
+  if (memberIds && memberIds.length > 0) {
+    membersWhere.id = { in: memberIds };
   }
-}
+
+  const members = await prisma.teamMember.findMany({
+    where: membersWhere,
+    include: {
+      preferences: {
+        include: {
+          shift: true,
+        },
+      },
+      assignments: {
+        include: {
+          shift: true,
+        },
+      },
+    },
+    orderBy: {
+      alias: "asc",
+    },
+  });
+
+  // Fetch shifts
+  const shiftsWhere: Prisma.ShiftWhereInput = {};
+  if (shiftIds && shiftIds.length > 0) {
+    shiftsWhere.id = { in: shiftIds };
+  }
+  if (startDate) {
+    shiftsWhere.startTime = { gte: startDate };
+  }
+  if (endDate) {
+    shiftsWhere.endTime = { lte: endDate };
+  }
+  if (shiftTypeParam) {
+    shiftsWhere.type = shiftTypeParam as ShiftType;
+  }
+  if (eventIdParam) {
+    shiftsWhere.eventId = eventIdParam;
+  }
+
+  const shifts = await prisma.shift.findMany({
+    where: shiftsWhere,
+    include: {
+      requiredRoles: true,
+      template: { select: { id: true, name: true } },
+      assignments: {
+        include: {
+          teamMember: true,
+        },
+      },
+      preferences: {
+        include: {
+          teamMember: true,
+        },
+      },
+    },
+    orderBy: {
+      startTime: "asc",
+    },
+  });
+
+  // Build maps for efficient lookup
+  const memberPreferences = new Map<string, string[]>();
+  const memberAssignments = new Map<
+    string,
+    Prisma.AssignmentGetPayload<{ include: { shift: true } }>[]
+  >();
+
+  members.forEach((member) => {
+    const preferredShiftIds = member.preferences?.map((p) => p.shiftId) || [];
+    memberPreferences.set(member.id, preferredShiftIds);
+
+    const assignments = member.assignments || [];
+    memberAssignments.set(member.id, assignments);
+  });
+
+  // Calculate availability matrix
+  const availability: AvailabilityStatus[][] = members.map((member) =>
+    shifts.map((shift) =>
+      calculateAvailabilityStatus(
+        member,
+        shift,
+        memberPreferences,
+        memberAssignments,
+        shifts,
+      ),
+    ),
+  );
+
+  // Calculate summary
+  let availableCount = 0;
+  let partialCount = 0;
+  let unavailableCount = 0;
+  let neutralCount = 0;
+
+  availability.forEach((row) => {
+    row.forEach((cell) => {
+      switch (cell.status) {
+        case "available":
+          availableCount++;
+          break;
+        case "partial":
+          partialCount++;
+          break;
+        case "unavailable":
+          unavailableCount++;
+          break;
+        case "neutral":
+          neutralCount++;
+          break;
+      }
+    });
+  });
+
+  const response: HeatmapData = {
+    members: members.map((m) => ({
+      id: m.id,
+      alias: m.alias,
+      avatarId: m.avatarId,
+      experienceLevel: m.experienceLevel,
+      capabilities: m.capabilities,
+      isActive: m.isActive,
+    })),
+    shifts: shifts.map((s) => ({
+      id: s.id,
+      type: s.type,
+      templateName: s.template?.name ?? s.type.replace(/_/g, " "),
+      startTime: s.startTime,
+      endTime: s.endTime,
+      capacity: s.capacity,
+      priority: s.priority,
+      requiredRoles: s.requiredRoles?.map((r) => ({
+        role: r.role,
+        count: r.count,
+      })),
+    })),
+    availability,
+    summary: {
+      totalMembers: members.length,
+      totalShifts: shifts.length,
+      availableCount,
+      partialCount,
+      unavailableCount,
+      neutralCount,
+    },
+  };
+
+  return NextResponse.json(response);
+}));

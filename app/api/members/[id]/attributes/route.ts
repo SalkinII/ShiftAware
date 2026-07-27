@@ -1,85 +1,54 @@
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
+import { withAuth } from "@/lib/api/withAuth";
 // app/api/members/[id]/attributes/route.ts
-import { isAuthenticated } from "@/lib/auth";
 import {
-  createErrorResponse,
   createSuccessResponse,
-  createUnauthorizedResponse,
   createNotFoundResponse,
 } from "@/lib/api-errors";
 import { createAttributeSchema } from "@/lib/validations/member-attribute";
 import { MembersService } from "@/lib/services/members.service";
-import { RepositoryError } from "@/lib/repositories/base.repository";
-
 const service = new MembersService();
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) return createUnauthorizedResponse();
+export const GET = withAuth(withErrorHandling(async (request: Request,
+  { params }: { params: Promise<{ id: string }> },) => {
 
-    const { id: memberId } = await params;
-    const { searchParams } = new URL(request.url);
-    const eventId = searchParams.get("eventId") || undefined;
+  const { id: memberId } = await params;
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("eventId") || undefined;
 
-    const attributes = await service.getAttributes(memberId, eventId);
+  const attributes = await service.getAttributes(memberId, eventId);
 
-    return createSuccessResponse(attributes);
-  } catch (error) {
-    console.error("Get member attributes error:", error);
+  return createSuccessResponse(attributes);
+}));
 
-    if (error instanceof RepositoryError) {
-      return createErrorResponse(error, error.message);
-    }
+export const POST = withAuth(withErrorHandling(async (request: Request,
+  { params }: { params: Promise<{ id: string }> },) => {
 
-    return createErrorResponse(error, "Failed to fetch attributes");
-  }
-}
+  const { id: memberId } = await params;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) return createUnauthorizedResponse();
+  await service.getMember(memberId);
 
-    const { id: memberId } = await params;
+  const body = await request.json();
+  const validated = createAttributeSchema.parse(body);
 
-    await service.getMember(memberId);
+  // Find attribute definition
+  const definition = await service.findAttributeDefinition(
+    validated.eventId,
+    validated.key,
+  );
 
-    const body = await request.json();
-    const validated = createAttributeSchema.parse(body);
-
-    // Find attribute definition
-    const definition = await service.findAttributeDefinition(
-      validated.eventId,
-      validated.key,
+  if (!definition) {
+    return createNotFoundResponse(
+      `Attribute definition '${validated.key}' not found for this event`,
     );
-
-    if (!definition) {
-      return createNotFoundResponse(
-        `Attribute definition '${validated.key}' not found for this event`,
-      );
-    }
-
-    // Upsert attribute value
-    const attribute = await service.upsertAttribute(
-      memberId,
-      definition.id,
-      JSON.stringify(validated.value),
-    );
-
-    return createSuccessResponse(attribute, 201);
-  } catch (error) {
-    console.error("Create member attribute error:", error);
-
-    if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
-      return createNotFoundResponse("Member");
-    }
-
-    return createErrorResponse(error, "Failed to save attribute");
   }
-}
+
+  // Upsert attribute value
+  const attribute = await service.upsertAttribute(
+    memberId,
+    definition.id,
+    JSON.stringify(validated.value),
+  );
+
+  return createSuccessResponse(attribute, 201);
+}));
