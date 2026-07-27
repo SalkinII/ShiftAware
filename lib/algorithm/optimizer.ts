@@ -11,11 +11,9 @@ import {
 import { scoreAssignment } from "./scorer";
 import {
   validateMinimumShifts,
-  validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
 import {
-  filterByRules,
   getRuleFilterExclusionReason,
   validateComplementaryRules,
   getBalanceRules,
@@ -195,19 +193,19 @@ export async function runAssignmentAlgorithm(
     while ((state.shiftCoverage.get(shift.id) || 0) < shift.capacity) {
       const candidates = members
         .map((member) => {
-          // Skip member if already at max shifts
-          const memberShiftCount = (state.memberShifts.get(member.id) || [])
-            .length;
-          if (memberShiftCount >= maxShiftsPerPerson) return null;
-
-          const overlapViolation = validateNoOverlaps(
+          const memberAttrs =
+            eventConfig.memberAttributes?.get(member.id) ??
+            new Map<string, string>();
+          const { eligible } = canAssign(
             member.id,
             shift,
             state,
+            { maxShiftsPerPerson, minRestMs },
+            allocationRules,
             allShiftsMap,
-            minRestMs,
+            memberAttrs,
           );
-          if (overlapViolation) return null;
+          if (!eligible) return null;
 
           const score = scoreAssignment(
             member,
@@ -231,21 +229,10 @@ export async function runAssignmentAlgorithm(
         )
         .sort((a, b) => b.score.overall - a.score.overall);
 
-      // Filter by hard FILTER rules
-      const filteredByFilter =
-        allocationRules.length > 0
-          ? filterByRules(
-              candidates,
-              shift.templateId ?? shift.type,
-              allocationRules,
-              eventConfig.memberAttributes || new Map(),
-            )
-          : candidates;
-
-      if (filteredByFilter.length === 0) {
-        if (candidates.length > 0 && allocationRules.length > 0) {
+      if (candidates.length === 0) {
+        if (allocationRules.length > 0) {
           const reason = getRuleFilterExclusionReason(
-            candidates.map((c) => ({ member: c.member })),
+            members.map((m) => ({ member: m })),
             shift.id,
             shift.templateId ?? shift.type,
             allocationRules,
@@ -261,7 +248,7 @@ export async function runAssignmentAlgorithm(
         shift.capacity - (state.shiftCoverage.get(shift.id) || 0);
       const currentShiftAssignments = state.assignments.get(shift.id) || [];
       const filteredCandidates = enforceBalanceReservation(
-        filteredByFilter,
+        candidates,
         shift.templateId ?? shift.type,
         getBalanceRules(allocationRules),
         currentShiftAssignments,
