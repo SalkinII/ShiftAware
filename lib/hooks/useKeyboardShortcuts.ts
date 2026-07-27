@@ -44,30 +44,3 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [shortcuts]);
 }
-
-// Common shortcut handlers
-export const commonShortcuts = {
-  escape: (handler: () => void) => ({
-    key: "Escape",
-    handler: () => handler(),
-    description: "Close dialog/form",
-  }),
-  save: (handler: () => void) => ({
-    key: "s",
-    ctrl: true,
-    handler: (e: KeyboardEvent) => {
-      e.preventDefault();
-      handler();
-    },
-    description: "Save (Ctrl+S)",
-  }),
-  search: (handler: () => void) => ({
-    key: "k",
-    ctrl: true,
-    handler: (e: KeyboardEvent) => {
-      e.preventDefault();
-      handler();
-    },
-    description: "Search (Ctrl+K)",
-  }),
-};
