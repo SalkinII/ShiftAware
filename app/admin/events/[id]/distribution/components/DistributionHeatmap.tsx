@@ -2,9 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { HeatmapCell } from "./HeatmapCell";
+import { RedistributeOverlay } from "./RedistributeOverlay";
 import { deriveCellState, CellState } from "../hooks/useCellState";
-import type { ShiftWithRelations, AssignmentState } from "@/lib/algorithm/types";
+import type { ShiftWithRelations, AssignmentState, Violation } from "@/lib/algorithm/types";
 import { unwrapApiResponse } from "@/lib/api-errors";
+
+interface RedistributePreview {
+  assignments: unknown[];
+  violations: Violation[];
+}
 
 const HEATMAP_API = (eventId: string) =>
   `/api/events/${eventId}/distribution/heatmap`;
@@ -36,6 +42,10 @@ export function DistributionHeatmap({
 }: Props) {
   const [data, setData] = useState<HeatmapData | null>(null);
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+  const [redistributePreview, setRedistributePreview] =
+    useState<RedistributePreview | null>(null);
+  const [isCommitting, setIsCommitting] = useState(false);
   const [shiftTypeFilter, setShiftTypeFilter] = useState<string>("all");
 
   const refetch = useCallback(() => {
@@ -84,6 +94,51 @@ export function DistributionHeatmap({
     [eventId, data?.assignments, refetch],
   );
 
+  const toggleMemberSelection = useCallback(
+    (memberId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setSelectedMembers((prev) => {
+        const next = new Set(prev);
+        if (next.has(memberId)) next.delete(memberId);
+        else next.add(memberId);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleRedistribute = useCallback(async () => {
+    const res = await fetch(`/api/events/${eventId}/assignments/redistribute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scope: { memberIds: [...selectedMembers] },
+        dryRun: true,
+      }),
+    });
+    const json = await res.json();
+    setRedistributePreview(unwrapApiResponse<RedistributePreview>(json));
+  }, [eventId, selectedMembers]);
+
+  const handleConfirmRedistribute = useCallback(async () => {
+    setIsCommitting(true);
+    try {
+      await fetch(`/api/events/${eventId}/assignments/redistribute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scope: { memberIds: [...selectedMembers] },
+          dryRun: false,
+        }),
+      });
+      setRedistributePreview(null);
+      setSelectedMembers(new Set());
+      window.location.reload();
+    } finally {
+      setIsCommitting(false);
+    }
+  }, [eventId, selectedMembers]);
+
   if (!data) return <div className="text-sm text-gray-400">Loading heatmap...</div>;
 
   const shifts = data.shifts ?? [];
@@ -121,6 +176,14 @@ export function DistributionHeatmap({
             </option>
           ))}
         </select>
+        {selectedMembers.size > 0 && (
+          <button
+            onClick={handleRedistribute}
+            className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Redistribute {selectedMembers.size} selected
+          </button>
+        )}
         <span className="text-xs text-gray-400 ml-auto">
           ✗ blocked · eligible ★ preferred ■ assigned ▲ conflict
         </span>
@@ -129,6 +192,7 @@ export function DistributionHeatmap({
         <table className="text-xs">
           <thead>
             <tr>
+              <th className="w-6" />
               <th className="w-24 text-left pr-2">Member</th>
               {visibleShifts.map((s) => (
                 <th
@@ -170,6 +234,15 @@ export function DistributionHeatmap({
                     )
                   }
                 >
+                  <td className="px-1" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedMembers.has(member.id)}
+                      onChange={() => {}}
+                      onClick={(e) => toggleMemberSelection(member.id, e)}
+                      aria-label={`Select ${member.alias}`}
+                    />
+                  </td>
                   <td className="pr-2 font-medium cursor-pointer">{member.alias}</td>
                   {visibleShifts.map((shift) => {
                     const isAssigned = memberShifts.includes(shift.id);
@@ -212,6 +285,14 @@ export function DistributionHeatmap({
           </tbody>
         </table>
       </div>
+      {redistributePreview !== null && (
+        <RedistributeOverlay
+          dryRunResult={redistributePreview}
+          onConfirm={handleConfirmRedistribute}
+          onCancel={() => setRedistributePreview(null)}
+          isCommitting={isCommitting}
+        />
+      )}
     </div>
   );
 }
