@@ -80,6 +80,7 @@ export async function runAssignmentAlgorithm(
     assignments: new Map(),
     memberShifts: new Map(),
     shiftCoverage: new Map(),
+    reservedSlots: new Map(),
   };
 
   const allShiftsMap = new Map(shifts.map((s) => [s.id, s]));

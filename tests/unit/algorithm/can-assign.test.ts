@@ -7,6 +7,7 @@ function makeState(overrides: Partial<AssignmentState> = {}): AssignmentState {
     assignments: new Map(),
     memberShifts: new Map(),
     shiftCoverage: new Map(),
+    reservedSlots: new Map(),
     ...overrides,
   };
 }

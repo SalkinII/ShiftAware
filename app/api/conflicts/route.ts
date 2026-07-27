@@ -95,6 +95,7 @@ export const GET = withAuth(withErrorHandling(async () => {
     assignments: new Map(),
     memberShifts: new Map(),
     shiftCoverage: new Map(),
+    reservedSlots: new Map(),
   };
 
   assignments.forEach((assignment) => {

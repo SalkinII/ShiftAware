@@ -12,6 +12,7 @@ describe("validateNoOverlaps with minRestMs", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const shift: Shift = {
       id: "s2",
@@ -45,6 +46,7 @@ describe("validateNoOverlaps with minRestMs", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const shift: Shift = {
       id: "s2",
@@ -81,6 +83,7 @@ describe("validateRestPeriod (post-hoc)", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1", "s2"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const allShifts = new Map<string, Shift>([
       [
@@ -113,6 +116,7 @@ describe("validateRestPeriod (post-hoc)", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1", "s2"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const allShifts = new Map<string, Shift>([
       [
@@ -144,6 +148,7 @@ describe("validateRestPeriod (post-hoc)", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1", "s2"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const allShifts = new Map<string, Shift>([
       [
@@ -174,6 +179,7 @@ describe("validateRestPeriod (post-hoc)", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1", "s2"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const allShifts = new Map<string, Shift>([
       [
@@ -204,6 +210,7 @@ describe("validateRestPeriod (post-hoc)", () => {
       assignments: new Map(),
       memberShifts: new Map([["m1", ["s1", "s2"]]]),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const allShifts = new Map<string, Shift>([
       [

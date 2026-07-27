@@ -4,6 +4,7 @@ export interface AssignmentState {
   assignments: Map<string, Assignment[]>; // shiftId -> assignments
   memberShifts: Map<string, string[]>; // memberId -> shiftIds
   shiftCoverage: Map<string, number>; // shiftId -> current count
+  reservedSlots: Map<string, number>; // shiftId → slots reserved for BALANCE
 }
 
 export interface AssignmentScore {
@@ -54,3 +55,10 @@ export type ShiftWithRelations = Shift & {
   requiredRoles: { role: string; count: number }[];
   event: { id: string; startDate: Date; endDate: Date };
 };
+
+export interface Violation {
+  kind: "max_shifts" | "filter_rule" | "balance_rule" | "capacity" | "min_shifts" | "time_conflict";
+  memberId?: string;
+  shiftId?: string;
+  detail: string;
+}

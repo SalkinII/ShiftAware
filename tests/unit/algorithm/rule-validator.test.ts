@@ -298,6 +298,7 @@ describe("validateComplementaryRules", () => {
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
 
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
@@ -324,6 +325,7 @@ describe("validateComplementaryRules", () => {
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
 
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
@@ -362,6 +364,7 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
 
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
@@ -404,6 +407,7 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
 
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
@@ -437,6 +441,7 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       assignments: new Map([["s1", []]]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
     const memberAttrs = new Map<string, Map<string, string>>();
@@ -475,6 +480,7 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
     const memberAttrs = new Map<string, Map<string, string>>([
@@ -519,6 +525,7 @@ describe("validateComplementaryRules with REQUIRE_RATIO", () => {
       ]),
       memberShifts: new Map(),
       shiftCoverage: new Map(),
+      reservedSlots: new Map(),
     };
     const shifts = [{ id: "s1", type: "STATIONARY" } as any];
     const memberAttrs = new Map<string, Map<string, string>>([

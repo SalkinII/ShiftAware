@@ -15,6 +15,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map(),
         memberShifts: new Map([["member1", ["shift1", "shift2"]]]),
         shiftCoverage: new Map(),
+        reservedSlots: new Map(),
       };
 
       const coreShifts: Shift[] = [];
@@ -28,6 +29,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map(),
         memberShifts: new Map([["member1", ["shift1"]]]),
         shiftCoverage: new Map(),
+        reservedSlots: new Map(),
       };
 
       const coreShifts: Shift[] = [];
@@ -42,6 +44,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map(),
         memberShifts: new Map([["member1", ["shift1"]]]),
         shiftCoverage: new Map(),
+        reservedSlots: new Map(),
       };
 
       const coreShifts: Shift[] = [
@@ -61,6 +64,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map([["shift1", []]]),
         memberShifts: new Map(),
         shiftCoverage: new Map([["shift1", 1]]),
+        reservedSlots: new Map(),
       };
 
       const result = validateShiftCapacity("shift1", state, 3);
@@ -73,6 +77,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map([["shift1", [{ id: "a1" } as any]]]),
         memberShifts: new Map(),
         shiftCoverage: new Map([["shift1", 2]]),
+        reservedSlots: new Map(),
       };
 
       const result = validateShiftCapacity("shift1", state, 2);
@@ -173,6 +178,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map(),
         memberShifts: new Map([["member1", ["shift1"]]]),
         shiftCoverage: new Map(),
+        reservedSlots: new Map(),
       };
 
       const shift: Shift = {
@@ -203,6 +209,7 @@ describe("Algorithm Validator", () => {
         assignments: new Map(),
         memberShifts: new Map([["member1", ["shift1"]]]),
         shiftCoverage: new Map(),
+        reservedSlots: new Map(),
       };
 
       const shift: Shift = {
