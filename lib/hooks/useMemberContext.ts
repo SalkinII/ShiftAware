@@ -53,6 +53,11 @@ export function useMemberContext(): MemberContextState {
         const data = await res.json();
         const member = unwrapApiResponse<Member>(data);
         setSelectedMember(member);
+      } else if (res.status === 404) {
+        // Member was permanently deleted — clear stale localStorage entry
+        setSelectedMemberIdState(null);
+        setSelectedMember(null);
+        localStorage.removeItem(STORAGE_KEY);
       }
     } catch (error) {
       console.error("Failed to load member:", error);
