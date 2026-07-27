@@ -1,14 +1,24 @@
-- Distribution logic gates don't enforce requirements.
+- Distribution logic gates don't enforce requirements. This is essential.
 
-- Even with 100% fairness we get violations for max shifts.
+- Even with 100% fairness we get violations for max shifts. 
 
 - Heatmap does not work at all (requirements). It shows that people can make shifts they don't have requirements for.
 
-- Heatmap display should be able to call allocation to shifts.
+- Heatmap display should be able to call allocation to shifts. New Ui feature
 
-- Distribution should be analyzable - like the preview (seeing violations etc.)
+- Heatmap display of shift date and time is very confusing. This could be done better.
+
+
+- Distribution should be analyzable - like the preview (seeing violations, having lists of potential people to add to shifts etc.)
+
+- Feature: Filtering on attributes, shifts, people on the heat map. Neat design. Helping more informed distribution.
+
+- Export function (PDF list) at all stages where distribution happens. (Heatmap export: Who has how many shifts?, do we have hard gate violations?, Do we have attribute imbalances?)
+
+- Rerun distribution algo based on missmatches.
 
 - Poll on the attributes, the counts of shifts per person, the violations etc. - to get a good overview of the acutal distribution. Like a flat table.
+
 
 
 
@@ -38,8 +48,24 @@
     Zod schemas + assertEventStatusAllows() in every service + event-status-permissions.ts.
     Consolidate into single getEventStatusRules() middleware utility.
 
+- BACKLOG:
+
+- Plan multi event Flow and cross event booking - member in different events will cross block time slots for other event if shift in first event is already booked.
+
+- Extend attributes for time constraint (will only arrive by - cannot work 22:00 to 06:00 - will need to leave on date - time - setting gard gates for planning)
+
+- Optimise distribution (random Pick for order of distribution, hard Gates for shift requirements etc.)
+
+- Make heatmap usable for Quick swaps in admin - real Attribute validation for shifts
+
+- Swap banner not to overlay date display field in canvas when on mobile.
+
+- Bespoke lane - 0 person shifts with editable markers for comments and other time table aspects to write into the shift plan. e.g. replacing "The unassigned" lane.
+
+- Ui canonicals accross all pages and elements.
 
   ########
+
   BACKLOG for later:
   - feat: tableware - tab - timetable tab? Overlay?
   - architecture: Engelsystem?
