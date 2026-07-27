@@ -11,19 +11,17 @@ import {
 import { scoreAssignment } from "./scorer";
 import {
   validateMinimumShifts,
-  validateShiftCapacity,
   validateNoOverlaps,
   validateRestPeriod,
 } from "./validator";
 import {
-  evaluateRule,
   filterByRules,
   getRuleFilterExclusionReason,
   validateComplementaryRules,
-  getFilterRules,
   getBalanceRules,
   enforceBalanceReservation,
 } from "./rule-validator";
+import { canAssign } from "./can-assign";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
   preferenceMatch: 0.7,
@@ -99,6 +97,20 @@ export async function runAssignmentAlgorithm(
     state.memberShifts.set(member.id, []);
   });
 
+  const balanceRulesAll = getBalanceRules(allocationRules);
+  shifts.forEach((shift) => {
+    const applicable = balanceRulesAll.filter(
+      (r) => r.shiftType === (shift.templateId ?? shift.type),
+    );
+    const reserved = applicable.reduce((sum, rule) => {
+      if (rule.balanceMode === "REQUIRE_ONE") return sum + 1;
+      if (rule.balanceMode === "REQUIRE_RATIO")
+        return sum + Math.ceil((rule.minRatio ?? 0) * shift.capacity);
+      return sum;
+    }, 0);
+    state.reservedSlots.set(shift.id, Math.min(reserved, shift.capacity));
+  });
+
   // Phase 1: Assign preferred shifts
   for (const member of members) {
     const preferences = member.preferences
@@ -109,37 +121,18 @@ export async function runAssignmentAlgorithm(
       const shift = allShiftsMap.get(pref.shiftId);
       if (!shift) continue;
 
-      // Check constraints
-      const overlapViolation = validateNoOverlaps(
+      const memberAttrs =
+        eventConfig.memberAttributes?.get(member.id) ?? new Map<string, string>();
+      const { eligible } = canAssign(
         member.id,
         shift,
         state,
+        { maxShiftsPerPerson, minRestMs },
+        allocationRules,
         allShiftsMap,
-        minRestMs,
+        memberAttrs,
       );
-      if (overlapViolation) continue;
-
-      const capacityViolation = validateShiftCapacity(
-        shift.id,
-        state,
-        shift.capacity,
-      );
-      if (capacityViolation) continue;
-
-      // Check hard FILTER allocation rules (BALANCE rules are handled separately)
-      const filterRules = getFilterRules(allocationRules);
-      if (filterRules.length > 0) {
-        const memberAttrs =
-          eventConfig.memberAttributes?.get(member.id) ||
-          new Map<string, string>();
-        const applicableRules = filterRules.filter(
-          (r) => r.shiftType === shift.templateId,
-        );
-        const passesRules = applicableRules.every((rule) =>
-          evaluateRule(rule, memberAttrs),
-        );
-        if (!passesRules) continue;
-      }
+      if (!eligible) continue;
 
       // Determine role based on shift requirements
       // Find first available role requirement
