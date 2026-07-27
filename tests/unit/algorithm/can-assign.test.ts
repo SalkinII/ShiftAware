@@ -1,0 +1,98 @@
+import { describe, it, expect } from "vitest";
+import { canAssign } from "@/lib/algorithm/can-assign";
+import type { AssignmentState, AllocationRule, ShiftWithRelations } from "@/lib/algorithm/types";
+
+function makeState(overrides: Partial<AssignmentState> = {}): AssignmentState {
+  return {
+    assignments: new Map(),
+    memberShifts: new Map(),
+    shiftCoverage: new Map(),
+    ...overrides,
+  };
+}
+
+const baseShift = {
+  id: "shift-1",
+  type: "MOBILE_TEAM",
+  templateId: "tmpl-1",
+  capacity: 3,
+  startTime: new Date("2026-08-01T08:00:00Z"),
+  endTime: new Date("2026-08-01T16:00:00Z"),
+  requiredRoles: [],
+  preferences: [],
+  assignments: [],
+  event: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
+} as unknown as ShiftWithRelations;
+
+const baseConfig = { maxShiftsPerPerson: 3, minRestMs: 15 * 60 * 1000 };
+const noRules: AllocationRule[] = [];
+
+describe("canAssign", () => {
+  it("returns eligible when no constraints violated", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map());
+    expect(result.eligible).toBe(true);
+  });
+
+  it("blocks when member is at maxShiftsPerPerson", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", ["s1", "s2", "s3"]);
+    state.shiftCoverage.set("shift-1", 0);
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map());
+    expect(result.eligible).toBe(false);
+    expect(result.reason).toBe("max_shifts");
+  });
+
+  it("blocks when shift is at capacity", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 3); // capacity is 3
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map());
+    expect(result.eligible).toBe(false);
+    expect(result.reason).toBe("capacity");
+  });
+
+  it("blocks when FILTER rule not satisfied", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const rules: AllocationRule[] = [{
+      id: "rule-1", ruleKind: "FILTER", shiftType: "tmpl-1",
+      attribute: "role", operator: "EQUALS", value: "medic",
+    }];
+    const memberAttrs = new Map([["role", "driver"]]); // doesn't match
+    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
+    expect(result.eligible).toBe(false);
+    expect(result.reason).toBe("filter_rule");
+  });
+
+  it("allows when FILTER rule is satisfied", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const rules: AllocationRule[] = [{
+      id: "rule-1", ruleKind: "FILTER", shiftType: "tmpl-1",
+      attribute: "role", operator: "EQUALS", value: "medic",
+    }];
+    const memberAttrs = new Map([["role", "medic"]]);
+    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
+    expect(result.eligible).toBe(true);
+  });
+
+  it("ignores BALANCE rules (BALANCE handled separately via reservedSlots)", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const rules: AllocationRule[] = [{
+      id: "rule-1", ruleKind: "BALANCE", shiftType: "tmpl-1",
+      attribute: "experience", operator: "EQUALS", value: "senior",
+      balanceMode: "REQUIRE_RATIO", minRatio: 0.5, maxRatio: 1,
+    }];
+    const memberAttrs = new Map([["experience", "junior"]]); // doesn't satisfy BALANCE
+    // canAssign should NOT block for BALANCE rules — handled separately
+    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
+    expect(result.eligible).toBe(true);
+  });
+});
