@@ -1,7 +1,7 @@
 # ShiftAware Architecture Guide
 
-> Comprehensive reference for system architecture, data flow, and the three-layer pattern.
-> Last updated: 2026-02-28
+> Comprehensive reference for system architecture, data flow, and the route → domain → repository pattern.
+> Last updated: 2026-07-27 (v2.5 Sub-project A structural refactor)
 
 ---
 
@@ -22,22 +22,23 @@
          ▼                           ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │                      API ROUTES (/api/*)                              │
-│  Validation | Auth | Response Formatting                             │
+│  withAuth + withErrorHandling HOFs | Zod validation | audit          │
 │  members | events | shifts | templates | preferences | assignments   │
 └──────────────────────────────────────────────────────────────────────┘
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│                      SERVICES (lib/services/)                         │
-│  Business Logic | Orchestration | Transaction Management             │
-│  MembersService | EventsService | ShiftsService | PreferencesService │
+│                   DOMAIN (lib/domain/) — when needed                  │
+│  Orchestration & status guards (plain async functions, no classes)   │
+│  event-status | allocation | swap | members                          │
+│  Simple CRUD routes call repositories directly (no domain hop)       │
 └──────────────────────────────────────────────────────────────────────┘
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │                  REPOSITORIES (lib/repositories/)                     │
 │  Data Access | Prisma Abstraction | Error Handling                   │
-│  TeamMemberRepository | EventRepository | ShiftRepository | ...      │
+│  TeamMemberRepository | EventRepository | EventConfigRepository | …  │
 └──────────────────────────────────────────────────────────────────────┘
          │
          ▼
@@ -51,26 +52,25 @@ Stack: Next.js 15.5.14 App Router | React 19 | @xyflow/react 12.10 | Prisma 5.18
 
 ---
 
-## 2. Three-Layer Architecture Pattern
+## 2. Route → Domain → Repository Pattern
 
-ShiftAware uses a clean three-layer architecture to separate concerns:
+As of v2.5 Sub-project A, the old `lib/services/` layer is gone. Routes are thin intent + HOFs; domain functions hold orchestration when needed; repositories own Prisma.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  ROUTE LAYER (app/api/*)                                    │
 │  ─────────────────────────                                  │
-│  • HTTP request handling                                    │
-│  • Authentication & authorization                           │
+│  • Wrapped: withAuth(withErrorHandling(...))                │
 │  • Input validation (Zod schemas)                           │
 │  • Response formatting                                      │
-│  • Audit logging                                            │
-│  • Query param extraction and filtering                    │
+│  • Audit logging (createAuditLog from lib/utils/audit)      │
+│  • Query param extraction                                   │
 │  ✓ Direct Prisma allowed for: business validation,         │
 │    audit "before" snapshots, analytical utilities          │
 │  ✗ No direct Prisma for core data operations              │
 └─────────────────────────────────────────────────────────────┘
                           │
-                          ▼ delegates to
+                          ▼ domain function OR repository
 
 ### Authentication & Session Security
 
@@ -82,33 +82,31 @@ ShiftAware uses a shared-password model with two roles (admin, user). The auth s
 
 **Hashed passwords.** Passwords are stored as `salt:scryptHash` in `ADMIN_PASSWORD_HASH` / `USER_PASSWORD_HASH` env vars. Scrypt is memory-hard, making brute-force expensive even if hashes leak. Verification uses `timingSafeEqual` to prevent timing side-channels. Plain-text `ADMIN_PASSWORD` is supported as a dev fallback with a logged warning.
 
-Key files: `lib/crypto.ts` (signing), `lib/rate-limit.ts` (throttling), `lib/auth.ts` (verification), `middleware.ts` (enforcement).
+Key files: `lib/crypto.ts` (signing), `lib/rate-limit.ts` (throttling), `lib/auth.ts` (verification), `middleware.ts` (enforcement). Route wrappers: `lib/api/withAuth.ts`, `lib/api/withErrorHandling.ts`.
 
 ```
 
                           │
-                          ▼ delegates to
+                          ▼
 
 ┌─────────────────────────────────────────────────────────────┐
-│ SERVICE LAYER (lib/services/) │
-│ ────────────────────────────── │
-│ • Business logic │
-│ • Workflow orchestration │
-│ • Transaction management │
-│ • Repository coordination │
-│ ✗ No HTTP concerns │
-│ ✗ No direct Prisma calls │
+│ DOMAIN (lib/domain/) — orchestration when needed            │
+│ ─────────────────────────────────────────────────────────── │
+│ • Status guards (assertEventStatusAllows, canRunAlgorithm)  │
+│ • Allocation / swap / member compound workflows             │
+│ • Plain async functions — no service classes                │
+│ ✗ No HTTP concerns                                          │
 └─────────────────────────────────────────────────────────────┘
 │
 ▼ uses
 ┌─────────────────────────────────────────────────────────────┐
-│ REPOSITORY LAYER (lib/repositories/) │
-│ ──────────────────────────────────── │
-│ • Data access abstraction │
-│ • Prisma client calls │
-│ • Consistent error handling (RepositoryError) │
-│ • Query construction │
-│ • Single responsibility (one entity per repo) │
+│ REPOSITORY LAYER (lib/repositories/)                        │
+│ ────────────────────────────────────                        │
+│ • Data access abstraction                                   │
+│ • Prisma client calls                                       │
+│ • Consistent error handling (RepositoryError)               │
+│ • Query construction                                        │
+│ • Focused repos (Event* split into 4 classes in v2.5-A)     │
 └─────────────────────────────────────────────────────────────┘
 │
 ▼ calls
@@ -120,21 +118,16 @@ Prisma → Database
 
 ```typescript
 // 1. ROUTE: app/api/members/route.ts
-export async function POST(request: Request) {
-  // Auth & validation
-  if (!(await isAuthenticated())) return createUnauthorizedResponse();
+export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const validated = teamMemberSchema.parse(await request.json());
 
-  // Business validation (alias uniqueness)
   const existing = await prisma.teamMember.findUnique({
     where: { alias: validated.alias }
   });
   if (existing) return createConflictResponse("Alias already exists");
 
-  // Delegate to service
-  const member = await service.createMember(validated);
+  const member = await memberRepo.create(validated);
 
-  // Audit logging
   await createAuditLog({
     action: AuditAction.CREATE,
     entityType: EntityType.TEAM_MEMBER,
@@ -143,16 +136,9 @@ export async function POST(request: Request) {
   });
 
   return createSuccessResponse(member, 201);
-}
+}));
 
-// 2. SERVICE: lib/services/members.service.ts
-export class MembersService {
-  async createMember(data: Prisma.TeamMemberCreateInput) {
-    return this.repo.create(data);
-  }
-}
-
-// 3. REPOSITORY: lib/repositories/team-member.repository.ts
+// 2. REPOSITORY: lib/repositories/team-member.repository.ts
 export class TeamMemberRepository extends BaseRepository {
   async create(data: Prisma.TeamMemberCreateInput) {
     try {
@@ -280,7 +266,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
      └─[5]─ Create new profile
             │
             ├── POST /api/members ─────► Create TeamMember
-            │   (Route validates → Service → Repository → Prisma)
+            │   (Route → TeamMemberRepository → Prisma)
             ├── POST /api/events/{id}/registrations ► Register for event
             └── POST /api/members/{id}/attributes ► Save custom attributes
 ```
@@ -291,9 +277,10 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 /admin/shifts/schedule
      │
      ├─[1]─ useEventContext() ─────────► Get selectedEventId from header
+     │      (from @/lib/contexts/EventContext)
      │
      ├─[2]─ GET /api/shifts?eventId ───► Load existing shifts
-     │      (Service → Repository → Prisma with relations)
+     │      (Route → ShiftRepository → Prisma with relations)
      │
      ├─[3]─ GET /api/events/{id}/templates ► Load templates → derive lanes
      │
@@ -302,7 +289,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
      ├─[5]─ Admin drags template to calendar
      │      │
      │      ├── POST /api/shifts ──────► { eventId, templateId, startTime, ... }
-     │      │   (Route validates → ShiftsService → ShiftRepository → Prisma)
+     │      │   (Route → ShiftRepository → Prisma)
      │      │
      │      └── Shift appears in correct lane (by templateId)
      │
@@ -310,7 +297,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
             │
             └── POST /api/events/{id}/transition
                 └── { targetStatus: "OPEN_FOR_PREFERENCES" }
-                └── EventsService.transitionStatus() validates + updates
+                └── Route validates via lib/domain/event-status + EventRepository
 ```
 
 ### Journey C: Team Votes on Preferences (OPEN_FOR_PREFERENCES)
@@ -319,6 +306,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 /app/calendar
      │
      ├─[1]─ useEventContext() ─────────► Get selectedEventId, selectedMemberId
+     │      (from @/lib/contexts/EventContext)
      │
      ├─[2]─ GET /api/shifts?eventId ───► Load all shifts with assignments
      │
@@ -330,7 +318,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
      └─[5]─ User votes on shift
             │
             ├── POST /api/preferences ► { shiftId, wantLevel: WANT|DONT_WANT }
-            │   (Route validates → PreferencesService → PreferenceRepository)
+            │   (Route → PreferenceRepository)
             │
             └── UI shows vote confirmation
 ```
@@ -355,7 +343,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
      ├─[5]─ Click "Run Assignment"
      │      │
      │      └── POST /api/assignments?eventId=X
-     │          └── AssignmentsService.runAllocation() saves to DB
+     │          └── lib/domain/allocation.runAllocation() saves to DB
      │
      └─[6]─ Admin clicks "Finalize Schedule"
             │
@@ -509,31 +497,34 @@ lib/
 │   ├── optimizer.ts           # 3-phase algorithm orchestration
 │   ├── scorer.ts              # Scoring functions
 │   ├── validator.ts           # Constraint validation functions
-│   └── rule-validator.ts      # Attribute-based rule enforcement (v3.10)
+│   └── rule-validator.ts      # Attribute-based rule enforcement
+├── api/                       # Route HOF wrappers (v2.5-A)
+│   ├── withAuth.ts
+│   └── withErrorHandling.ts
+├── domain/                    # Orchestration & guards (v2.5-A; replaced services)
+│   ├── event-status.ts        # assertEventStatusAllows, canMutateShifts, canRunAlgorithm, …
+│   ├── allocation.ts          # runAllocation, manual assign/delete/swap
+│   ├── swap.ts                # swap request state machine
+│   └── members.ts             # permanentDeleteMember, …
 ├── repositories/              # Repository Layer
 │   ├── base.repository.ts
 │   ├── team-member.repository.ts
-│   ├── event.repository.ts
+│   ├── event.repository.ts              # CRUD + cascade delete
+│   ├── event-config.repository.ts       # getConfig / upsertConfig
+│   ├── event-registration.repository.ts # registrations + cleanup
+│   ├── event-metadata.repository.ts     # templates + attributes
 │   ├── shift.repository.ts
 │   ├── preference.repository.ts
 │   ├── shift-template.repository.ts
 │   ├── assignment.repository.ts
 │   └── swap-request.repository.ts
-├── services/                  # Service Layer
-│   ├── members.service.ts
-│   ├── events.service.ts
-│   ├── shifts.service.ts
-│   ├── preferences.service.ts
-│   ├── shift-templates.service.ts
-│   ├── assignments.service.ts        # Orchestrates algorithm
-│   ├── swap-requests.service.ts
-│   ├── event-status-guard.ts         # assertEventStatusAllows()
-│   ├── event-status-permissions.ts   # canMutateShifts(), canRunAlgorithm(), ...
-│   ├── audit.ts
-│   └── export.ts
+├── contexts/
+│   └── EventContext.tsx       # useEventContext lives here (wrapper hook deleted in v2.5-A)
 ├── hooks/
-│   ├── useEventContext.ts
 │   └── useMemberContext.ts
+├── utils/
+│   ├── audit.ts               # createAuditLog
+│   └── export.ts              # exportScheduleToPDF
 ├── types/
 │   └── lane.ts                # Lane type + deriveLanesFromTemplates()
 ├── validations/
@@ -546,8 +537,9 @@ lib/
 tests/
 ├── unit/
 │   ├── algorithm/             # scorer, validator, optimizer, rule-validator tests
-│   ├── repositories/          # Repository unit tests (mock Prisma)
-│   └── services/              # Service unit tests (mock repos)
+│   ├── api/                   # withAuth / withErrorHandling tests
+│   ├── domain/                # domain function unit tests
+│   └── repositories/          # Repository unit tests (mock Prisma)
 └── integration.test.ts
 
 prisma/
@@ -579,16 +571,11 @@ async findById(id: string) {
   return member;
 }
 
-// Routes handle RepositoryErrors
-try {
-  const member = await service.getMember(id);
+// Routes use withErrorHandling HOF — maps RepositoryError / StatusGuardError / ZodError
+export const GET = withAuth(withErrorHandling(async (_req, ctx) => {
+  const member = await memberRepo.findById(ctx.params.id);
   return createSuccessResponse(member);
-} catch (error) {
-  if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
-    return createNotFoundResponse("Team member");
-  }
-  return createErrorResponse(error, "Failed to fetch member");
-}
+}));
 ```
 
 ### Error Code Mapping
@@ -610,8 +597,8 @@ try {
 
 ### StatusGuardError
 
-- Thrown by `assertEventStatusAllows()` in lib/services/event-status-guard.ts
-- HTTP 403 in routes that catch it
+- Thrown by `assertEventStatusAllows()` in `lib/domain/event-status.ts`
+- Mapped to HTTP 409 by `withErrorHandling`
 
 ---
 
@@ -633,13 +620,14 @@ async createMember(data: Prisma.TeamMemberCreateInput) {
 
 ## 10. Testing Strategy
 
-Current test count: ~420 tests, 62 test files
+Current test count: ~462 tests (post v2.5-A; service-layer tests removed)
 Test runner: Vitest 4.1.1
 
 Layers:
 
 - Repository tests: mock Prisma client via vi.mock('@/lib/db')
-- Service tests: mock repositories directly
+- Domain tests: mock repositories / pure domain logic
+- API wrapper tests: withAuth / withErrorHandling
 - Algorithm tests: pure function tests in tests/unit/algorithm/ — no mocking needed
 
 Run tests: `npm test` | `npx vitest run --reporter=verbose` | `npx vitest run tests/unit/algorithm/`
@@ -650,6 +638,7 @@ Run tests: `npm test` | `npx vitest run --reporter=verbose` | `npx vitest run te
 
 ### useEventContext
 
+- Import from `@/lib/contexts/EventContext` (the old `lib/hooks/useEventContext` re-export was deleted in v2.5-A)
 - Admin: localStorage key = 'adminSelectedEventId'
 - User: localStorage key = 'selectedEventId'
 - Returns: { selectedEventId, selectedEvent, events, setSelectedEventId, refreshEvents, loading }

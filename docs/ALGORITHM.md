@@ -19,7 +19,7 @@ The allocation algorithm assigns team members to shifts fairly, respecting hard 
 ## Entry Point
 
 ```typescript
-// lib/services/assignments.service.ts calls:
+// lib/domain/allocation.ts → runAllocation() calls:
 runAssignmentAlgorithm(
   members: TeamMemberWithRelations[],
   shifts: ShiftWithRelations[],

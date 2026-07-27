@@ -147,7 +147,7 @@ These prop patterns must be consistent across all shared and feature components.
 | `readOnly`    | `boolean?`    | Standard gate for disabling interactions in shared components (e.g. `LaneCalendarCanvas`, `ShiftBlockNode`).    |
 | `onClose`     | `() => void`  | Panels always receive this. Never manage close state internally inside a panel.                                 |
 | `eventStatus` | `EventStatus` | Passed down from page level. Components never fetch event status themselves.                                    |
-| `eventId`     | `string`      | Always explicit. Only use `useEventContext` when a component is deeply nested and prop-drilling is impractical. |
+| `eventId`     | `string`      | Always explicit. Only use `useEventContext` (from `@/lib/contexts/EventContext`) when a component is deeply nested and prop-drilling is impractical. |
 
 ---
 

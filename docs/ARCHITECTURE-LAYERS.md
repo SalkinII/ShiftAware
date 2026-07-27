@@ -2,14 +2,14 @@
 
 ## Overview
 
-ShiftAware uses a three-layer architecture to separate concerns and improve testability:
+> **v2.5-A (2026-07-27):** `lib/services/` deleted. Live path is Route (`withAuth` + `withErrorHandling`) → Domain (`lib/domain/`) when orchestration is needed, else Repository directly → Prisma. Sections below that still say "Service" describe the pre-refactor pattern; prefer `docs/ARCHITECTURE.md` for current layout.
 
 ```
 HTTP Request
     ↓
-Route Handler (validation, auth, response)
+Route Handler — withAuth(withErrorHandling(...)) + Zod + audit
     ↓
-Service (business logic, orchestration)
+Domain (lib/domain/) OR Repository directly
     ↓
 Repository (data access, Prisma calls)
     ↓
@@ -26,14 +26,14 @@ Database
 
 **Responsibilities:**
 
+- ✅ Wrap with `withAuth(withErrorHandling(...))` from `lib/api/`
 - ✅ Validate request (Zod schemas already in place)
-- ✅ Check authentication/authorization
-- ✅ Call service methods
+- ✅ Call domain functions or repositories (no service layer)
 - ✅ Format response (createSuccessResponse, createErrorResponse)
-- ✅ Create audit logs
+- ✅ Create audit logs (`lib/utils/audit`)
 - ✅ Handle complex query logic (event filtering, includes for relations)
 - ✅ Business validation that crosses layers (uniqueness checks)
-- ❌ **No direct Prisma calls**
+- ❌ **No direct Prisma for core CRUD** (validation/audit snapshots OK)
 
 **Example:**
 
@@ -91,13 +91,13 @@ export async function POST(request: Request) {
 
 ---
 
-### Service Layer (`lib/services/`)
+### Domain Layer (`lib/domain/`) — replaced Service Layer in v2.5-A
 
-**Purpose:** Contain business logic and orchestrate repositories
+**Purpose:** Contain orchestration and status guards as plain async functions (no classes). Former `lib/services/` deleted.
 
 **Responsibilities:**
 
-- ✅ Contain business logic
+- ✅ Contain business logic / workflows (`allocation`, `swap`, `members`, `event-status`)
 - ✅ Orchestrate multiple repositories if needed
 - ✅ Handle transactions (future enhancement)
 - ✅ Repository coordination
