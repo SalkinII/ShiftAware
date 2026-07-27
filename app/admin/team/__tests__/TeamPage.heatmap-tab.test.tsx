@@ -8,7 +8,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 // Capture eventId prop passed to heatmap
 let lastHeatmapEventId: string | undefined;
 
-vi.mock("@/lib/hooks/useEventContext", () => ({
+vi.mock("@/lib/contexts/EventContext", () => ({
   useEventContext: () => ({
     selectedEventId: "event-1",
     selectedEvent: { id: "event-1", name: "Test Event" },

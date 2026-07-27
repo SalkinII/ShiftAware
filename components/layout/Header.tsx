@@ -9,7 +9,7 @@ import { EventSelector } from "@/components/ui/EventSelector";
 import {
   useEventContext,
   formatEventDateRange,
-} from "@/lib/hooks/useEventContext";
+} from "@/lib/contexts/EventContext";
 import { useMemberContext } from "@/lib/hooks/useMemberContext";
 import {
   EMOJI_ADMIN,

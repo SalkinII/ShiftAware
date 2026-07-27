@@ -5,7 +5,7 @@ import { Plus, Trash2, Info } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useEventContext } from "@/lib/contexts/EventContext";
 import { canRunAlgorithm } from "@/lib/domain/event-status";
 import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";

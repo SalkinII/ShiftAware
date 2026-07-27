@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useEventContext } from "@/lib/contexts/EventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
 interface AttributeDefinition {

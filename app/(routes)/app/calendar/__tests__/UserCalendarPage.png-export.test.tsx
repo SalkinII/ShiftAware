@@ -18,7 +18,7 @@ vi.mock("next/dynamic", () => ({
       return <div data-testid="lane-canvas" />;
     }),
 }));
-vi.mock("@/lib/hooks/useEventContext", () => {
+vi.mock("@/lib/contexts/EventContext", () => {
   const selectedEvent = {
     id: "evt-1",
     name: "Test",

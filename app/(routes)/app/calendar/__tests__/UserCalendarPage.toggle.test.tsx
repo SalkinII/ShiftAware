@@ -7,7 +7,7 @@ import { render, screen } from "@testing-library/react";
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) => () => <div data-testid="lane-canvas" />,
 }));
-vi.mock("@/lib/hooks/useEventContext", () => {
+vi.mock("@/lib/contexts/EventContext", () => {
   const selectedEvent = {
     id: "evt-1",
     name: "Test",

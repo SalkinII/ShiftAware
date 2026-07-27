@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Activity, Users, UserCog, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useEventContext } from "@/lib/contexts/EventContext";
 import { DistributionSettings } from "./components/DistributionSettings";
 import { MemberListByEvent } from "./components/MemberListByEvent";
 import { MemberManagement } from "./components/MemberManagement";

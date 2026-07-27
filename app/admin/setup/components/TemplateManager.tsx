@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
-import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useEventContext } from "@/lib/contexts/EventContext";
 import { cn } from "@/lib/utils";
 
 interface ShiftTemplate {

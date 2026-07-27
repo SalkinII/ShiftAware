@@ -5,7 +5,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-vi.mock("@/lib/hooks/useEventContext", () => ({
+vi.mock("@/lib/contexts/EventContext", () => ({
   useEventContext: () => ({
     selectedEventId: "event-1",
     selectedEvent: { id: "event-1", name: "Test Event" },

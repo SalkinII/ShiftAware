@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
 import { ShiftPreferencePanel } from "@/components/features/ShiftPropertiesPanel/ShiftPreferencePanel";
-import { useEventContext } from "@/lib/hooks/useEventContext";
+import { useEventContext } from "@/lib/contexts/EventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
