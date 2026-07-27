@@ -317,4 +317,187 @@ describe("Integration Tests - Critical Flows", () => {
       }
     });
   });
+
+  describe("Member permanent deletion flow", () => {
+    let memberId: string;
+
+    it("creates and deactivates a test member", async () => {
+      // Create member
+      const createRes = await authenticatedFetch(`${BASE_URL}/api/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alias: `test-perm-delete-${Date.now()}`,
+          avatarId: "🧪",
+          experienceLevel: "JUNIOR",
+          capabilities: ["TEAM_MEMBER"],
+        }),
+      });
+      expect(createRes.status).toBe(201);
+      const createData = await createRes.json();
+      memberId = createData.data.id;
+
+      // Deactivate member (soft delete)
+      const deactivateRes = await authenticatedFetch(
+        `${BASE_URL}/api/members/${memberId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      expect(deactivateRes.status).toBe(200);
+      const deactivateData = await deactivateRes.json();
+      expect(deactivateData.data.isActive).toBe(false);
+    });
+
+    it("returns 409 when trying to permanently delete an active member", async () => {
+      // Create a fresh active member
+      const createRes = await authenticatedFetch(`${BASE_URL}/api/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alias: `test-active-${Date.now()}`,
+          avatarId: "🧪",
+          experienceLevel: "JUNIOR",
+          capabilities: ["TEAM_MEMBER"],
+        }),
+      });
+      expect(createRes.status).toBe(201);
+      const data = await createRes.json();
+      const activeId = data.data.id;
+
+      const res = await authenticatedFetch(
+        `${BASE_URL}/api/members/${activeId}/permanent`,
+        { method: "DELETE" },
+      );
+      expect(res.status).toBe(409);
+
+      // Clean up
+      await authenticatedFetch(`${BASE_URL}/api/members/${activeId}`, {
+        method: "DELETE",
+      });
+      await authenticatedFetch(
+        `${BASE_URL}/api/members/${activeId}/permanent`,
+        { method: "DELETE" },
+      );
+    });
+
+    it("permanently deletes an inactive member", async () => {
+      const res = await authenticatedFetch(
+        `${BASE_URL}/api/members/${memberId}/permanent`,
+        { method: "DELETE" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.data.success).toBe(true);
+    });
+
+    it("returns 404 after permanent deletion", async () => {
+      const res = await authenticatedFetch(
+        `${BASE_URL}/api/members/${memberId}`,
+      );
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("Event permanent deletion flow", () => {
+    let eventId: string;
+
+    it("creates a PLANNING event", async () => {
+      const res = await authenticatedFetch(`${BASE_URL}/api/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `Test Delete Event ${Date.now()}`,
+          startDate: "2099-01-01",
+          endDate: "2099-01-03",
+        }),
+      });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      eventId = data.data.id;
+      expect(data.data.status).toBe("PLANNING");
+    });
+
+    it("returns 403 when trying to delete an ASSIGNING event", async () => {
+      // Create a separate event and transition it
+      const createRes = await authenticatedFetch(`${BASE_URL}/api/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `Test Assigning ${Date.now()}`,
+          startDate: "2099-02-01",
+          endDate: "2099-02-03",
+        }),
+      });
+      const created = await createRes.json();
+      const blockId = created.data.id;
+
+      // Add a shift so it can transition to OPEN_FOR_PREFERENCES
+      const shiftRes = await authenticatedFetch(`${BASE_URL}/api/shifts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: blockId,
+          templateId: null,
+          type: "STATIONARY",
+          startTime: "2099-02-01T10:00:00.000Z",
+          endTime: "2099-02-01T14:00:00.000Z",
+          durationMinutes: 240,
+          capacity: 2,
+          desirabilityScore: 3,
+          requiredRoles: [],
+        }),
+      });
+
+      if (shiftRes.ok) {
+        // Transition to OPEN_FOR_PREFERENCES
+        await authenticatedFetch(
+          `${BASE_URL}/api/events/${blockId}/transition`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetStatus: "OPEN_FOR_PREFERENCES" }),
+          },
+        );
+
+        // Try to delete — should fail
+        const delRes = await authenticatedFetch(
+          `${BASE_URL}/api/events/${blockId}`,
+          { method: "DELETE" },
+        );
+        expect(delRes.status).toBe(403);
+
+        // Transition back to PLANNING and clean up
+        await authenticatedFetch(
+          `${BASE_URL}/api/events/${blockId}/transition`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetStatus: "PLANNING" }),
+          },
+        );
+      }
+
+      await authenticatedFetch(`${BASE_URL}/api/events/${blockId}`, {
+        method: "DELETE",
+      });
+    });
+
+    it("permanently deletes a PLANNING event", async () => {
+      const res = await authenticatedFetch(
+        `${BASE_URL}/api/events/${eventId}`,
+        { method: "DELETE" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.data.success).toBe(true);
+    });
+
+    it("returns 404 after event deletion", async () => {
+      const res = await authenticatedFetch(
+        `${BASE_URL}/api/events/${eventId}`,
+      );
+      expect(res.status).toBe(404);
+    });
+  });
 });

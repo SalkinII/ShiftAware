@@ -42,6 +42,11 @@ export class EventsService {
     return this.repo.delete(id);
   }
 
+  async permanentDeleteEvent(id: string) {
+    await assertEventStatusAllows(id, "EVENT_DELETE");
+    return this.repo.permanentDelete(id);
+  }
+
   async transitionStatus(eventId: string, targetStatus: string) {
     const event = await this.repo.findByIdWithShifts(eventId);
 
@@ -116,7 +121,7 @@ export class EventsService {
   }
 
   async deleteRegistration(eventId: string, memberId: string) {
-    return this.repo.deleteRegistration(eventId, memberId);
+    return this.repo.deleteRegistrationWithCleanup(eventId, memberId);
   }
 
   // --- Event Templates ---

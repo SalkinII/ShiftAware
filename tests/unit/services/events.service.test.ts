@@ -1,6 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EventsService } from "@/lib/services/events.service";
 
+vi.mock("@/lib/services/event-status-guard", () => ({
+  assertEventStatusAllows: vi.fn(),
+  StatusGuardError: class StatusGuardError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "StatusGuardError";
+    }
+  },
+}));
+
+const { assertEventStatusAllows, StatusGuardError } = await import(
+  "@/lib/services/event-status-guard"
+);
+
 describe("EventsService", () => {
   let service: EventsService;
   let mockRepo: any;
@@ -10,11 +24,31 @@ describe("EventsService", () => {
       findById: vi.fn(),
       findByIdWithShifts: vi.fn(),
       findAll: vi.fn(),
+      findAllWithStats: vi.fn(),
       findCurrent: vi.fn(),
       create: vi.fn(),
+      createWithConfig: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      permanentDelete: vi.fn(),
+      getConfig: vi.fn(),
+      upsertConfig: vi.fn(),
+      listRegistrations: vi.fn(),
+      createRegistration: vi.fn(),
+      findRegistration: vi.fn(),
+      getRegistration: vi.fn(),
+      updateRegistration: vi.fn(),
+      deleteRegistrationWithCleanup: vi.fn(),
+      listEventTemplates: vi.fn(),
+      assignTemplate: vi.fn(),
+      findEventTemplate: vi.fn(),
+      deleteEventTemplate: vi.fn(),
       reorderEventTemplates: vi.fn(),
+      listEventAttributes: vi.fn(),
+      createEventAttribute: vi.fn(),
+      getEventAttribute: vi.fn(),
+      updateEventAttribute: vi.fn(),
+      deleteEventAttribute: vi.fn(),
     };
 
     service = new EventsService(mockRepo);
@@ -112,6 +146,18 @@ describe("EventsService", () => {
       { templateId: "tpl-b", order: 1 },
     ]);
   });
+
+  it("deleteRegistration calls repo.deleteRegistrationWithCleanup", async () => {
+    mockRepo.deleteRegistrationWithCleanup.mockResolvedValue({ id: "reg-1" });
+
+    const result = await service.deleteRegistration("event-1", "member-1");
+
+    expect(mockRepo.deleteRegistrationWithCleanup).toHaveBeenCalledWith(
+      "event-1",
+      "member-1",
+    );
+    expect(result).toEqual({ id: "reg-1" });
+  });
 });
 
 describe("EventsService.transitionStatus", () => {
@@ -181,5 +227,81 @@ describe("EventsService.transitionStatus", () => {
     await expect(
       service.transitionStatus("e1", "OPEN_FOR_PREFERENCES"),
     ).rejects.toThrow("at least 1 shift");
+  });
+});
+
+describe("permanentDeleteEvent", () => {
+  let service: EventsService;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    mockRepo = {
+      findById: vi.fn(),
+      findByIdWithShifts: vi.fn(),
+      findAll: vi.fn(),
+      findAllWithStats: vi.fn(),
+      findCurrent: vi.fn(),
+      create: vi.fn(),
+      createWithConfig: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      permanentDelete: vi.fn(),
+      getConfig: vi.fn(),
+      upsertConfig: vi.fn(),
+      listRegistrations: vi.fn(),
+      createRegistration: vi.fn(),
+      findRegistration: vi.fn(),
+      getRegistration: vi.fn(),
+      updateRegistration: vi.fn(),
+      deleteRegistrationWithCleanup: vi.fn(),
+      listEventTemplates: vi.fn(),
+      assignTemplate: vi.fn(),
+      findEventTemplate: vi.fn(),
+      deleteEventTemplate: vi.fn(),
+      reorderEventTemplates: vi.fn(),
+      listEventAttributes: vi.fn(),
+      createEventAttribute: vi.fn(),
+      getEventAttribute: vi.fn(),
+      updateEventAttribute: vi.fn(),
+      deleteEventAttribute: vi.fn(),
+    };
+
+    service = new EventsService(mockRepo);
+    vi.clearAllMocks();
+  });
+
+  it("calls assertEventStatusAllows with EVENT_DELETE before deleting", async () => {
+    const eventId = "event-1";
+    vi.mocked(assertEventStatusAllows).mockResolvedValue(undefined);
+    mockRepo.permanentDelete.mockResolvedValue({ id: eventId });
+
+    await service.permanentDeleteEvent(eventId);
+
+    expect(assertEventStatusAllows).toHaveBeenCalledWith(eventId, "EVENT_DELETE");
+    expect(mockRepo.permanentDelete).toHaveBeenCalledWith(eventId);
+  });
+
+  it("throws StatusGuardError when status is OPEN_FOR_PREFERENCES", async () => {
+    const eventId = "event-2";
+    vi.mocked(assertEventStatusAllows).mockRejectedValue(
+      new StatusGuardError("Action not allowed: event status is OPEN_FOR_PREFERENCES"),
+    );
+
+    await expect(service.permanentDeleteEvent(eventId)).rejects.toThrow(
+      "Action not allowed",
+    );
+    expect(mockRepo.permanentDelete).not.toHaveBeenCalled();
+  });
+
+  it("throws StatusGuardError when status is FINALIZED", async () => {
+    const eventId = "event-3";
+    vi.mocked(assertEventStatusAllows).mockRejectedValue(
+      new StatusGuardError("Action not allowed: event status is FINALIZED"),
+    );
+
+    await expect(service.permanentDeleteEvent(eventId)).rejects.toThrow(
+      "Action not allowed",
+    );
+    expect(mockRepo.permanentDelete).not.toHaveBeenCalled();
   });
 });

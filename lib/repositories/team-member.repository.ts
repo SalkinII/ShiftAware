@@ -116,14 +116,97 @@ export class TeamMemberRepository extends BaseRepository {
     }
   }
 
-  async softDelete(id: string) {
+  async deactivate(id: string) {
     try {
-      return await prisma.teamMember.update({
-        where: { id },
-        data: { isActive: false },
+      return await prisma.$transaction(async (tx) => {
+        const registrations = await tx.eventRegistration.findMany({
+          where: { memberId: id, event: { status: { not: "COMPLETED" } } },
+          select: { eventId: true },
+        });
+        const eventIds = registrations.map((r) => r.eventId);
+
+        for (const eventId of eventIds) {
+          const memberSwaps = await tx.swapRequest.findMany({
+            where: {
+              requesterId: id,
+              fromAssignment: { shift: { eventId } },
+            },
+            select: { id: true },
+          });
+          const swapIds = memberSwaps.map((s) => s.id);
+
+          if (swapIds.length > 0) {
+            await tx.swapRequest.updateMany({
+              where: { matchedWithId: { in: swapIds } },
+              data: { matchedWithId: null },
+            });
+            await tx.swapRequest.deleteMany({
+              where: { id: { in: swapIds } },
+            });
+          }
+
+          await tx.assignment.deleteMany({
+            where: { teamMemberId: id, shift: { eventId } },
+          });
+
+          await tx.shiftPreference.deleteMany({
+            where: { teamMemberId: id, shift: { eventId } },
+          });
+
+          await tx.eventRegistration.delete({
+            where: { memberId_eventId: { memberId: id, eventId } },
+          });
+        }
+
+        return tx.teamMember.update({
+          where: { id },
+          data: { isActive: false },
+        });
       });
     } catch (error) {
-      throw this.handlePrismaError(error, "Failed to soft-delete member");
+      throw this.handlePrismaError(error, "Failed to deactivate member");
+    }
+  }
+
+  async permanentDelete(id: string) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        await tx.auditLog.updateMany({
+          where: { userId: id },
+          data: { userId: null },
+        });
+
+        const memberSwaps = await tx.swapRequest.findMany({
+          where: { requesterId: id },
+          select: { id: true },
+        });
+        const memberSwapIds = memberSwaps.map((s) => s.id);
+
+        if (memberSwapIds.length > 0) {
+          await tx.swapRequest.updateMany({
+            where: { matchedWithId: { in: memberSwapIds } },
+            data: { matchedWithId: null },
+          });
+        }
+
+        await tx.swapRequest.deleteMany({
+          where: { requesterId: id },
+        });
+
+        await tx.assignment.deleteMany({
+          where: { teamMemberId: id },
+        });
+
+        await tx.shiftPreference.deleteMany({
+          where: { teamMemberId: id },
+        });
+
+        return tx.teamMember.delete({
+          where: { id },
+        });
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to permanently delete member");
     }
   }
 

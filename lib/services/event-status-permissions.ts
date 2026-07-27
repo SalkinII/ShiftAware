@@ -10,7 +10,8 @@ export type GuardAction =
   | "ASSIGNMENT_ALGORITHM"
   | "ASSIGNMENT_MANUAL"
   | "REGISTRATION_MUTATE"
-  | "EVENT_MUTATE";
+  | "EVENT_MUTATE"
+  | "EVENT_DELETE";
 
 export const PERMISSION_MAP: Record<
   EventStatus,
@@ -23,6 +24,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_MANUAL: false,
     REGISTRATION_MUTATE: true,
     EVENT_MUTATE: true,
+    EVENT_DELETE: true,
   },
   OPEN_FOR_PREFERENCES: {
     SHIFT_MUTATE: false,
@@ -31,6 +33,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_MANUAL: false,
     REGISTRATION_MUTATE: true,
     EVENT_MUTATE: false,
+    EVENT_DELETE: false,
   },
   ASSIGNING: {
     SHIFT_MUTATE: false,
@@ -39,6 +42,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_MANUAL: true,
     REGISTRATION_MUTATE: true,
     EVENT_MUTATE: false,
+    EVENT_DELETE: false,
   },
   FINALIZED: {
     SHIFT_MUTATE: false,
@@ -47,6 +51,7 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_MANUAL: true,
     REGISTRATION_MUTATE: true,
     EVENT_MUTATE: false,
+    EVENT_DELETE: false,
   },
   COMPLETED: {
     SHIFT_MUTATE: false,
@@ -55,12 +60,10 @@ export const PERMISSION_MAP: Record<
     ASSIGNMENT_MANUAL: false,
     REGISTRATION_MUTATE: false,
     EVENT_MUTATE: false,
+    EVENT_DELETE: true,
   },
 };
 
-/**
- * Pure client-safe check — no DB call.
- */
 export function canMutateShifts(status: EventStatus): boolean {
   return PERMISSION_MAP[status]?.SHIFT_MUTATE === true;
 }
@@ -79,4 +82,8 @@ export function canMutateEvent(status: EventStatus): boolean {
 
 export function canShowSwapPanel(status: EventStatus): boolean {
   return status === "ASSIGNING" || status === "FINALIZED";
+}
+
+export function canDeleteEvent(status: EventStatus): boolean {
+  return PERMISSION_MAP[status]?.EVENT_DELETE === true;
 }

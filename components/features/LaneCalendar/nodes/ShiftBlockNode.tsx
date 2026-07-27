@@ -21,6 +21,7 @@ export type ShiftBlockData = {
   assignedMembers?: Array<{ alias: string; avatarId?: string }>;
   currentMemberId?: string;
   isAssignedToCurrentUser?: boolean;
+  userPreference?: "WANT" | "DONT_WANT" | null;
   onResizeEnd?: (
     nodeId: string,
     p: { width: number; x?: number },
@@ -49,6 +50,7 @@ function ShiftContent({
   readOnly,
   onVoteWant,
   onVoteDontWant,
+  userPreference,
 }: {
   shiftId: string;
   templateName: string;
@@ -61,6 +63,7 @@ function ShiftContent({
   readOnly?: boolean;
   onVoteWant?: (shiftId: string) => void;
   onVoteDontWant?: (shiftId: string) => void;
+  userPreference?: "WANT" | "DONT_WANT" | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mW, setMW] = useState(0);
@@ -97,6 +100,21 @@ function ShiftContent({
       ref={containerRef}
       className="h-full w-full flex flex-col px-[16px] py-[8px] gap-[8px] overflow-hidden"
     >
+      {userPreference && (
+        <div
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 8,
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: userPreference === "WANT" ? "#22c55e" : "#ef4444",
+            flexShrink: 0,
+          }}
+          aria-label={userPreference === "WANT" ? "You want this shift" : "You don't want this shift"}
+        />
+      )}
       {/* Row 1: name (left) + time (right) */}
       {showNames && (
         <div className="flex justify-between items-center gap-2 min-w-0">
@@ -210,6 +228,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
     readOnly,
     onVoteWant,
     onVoteDontWant,
+    userPreference,
   } = data as ShiftBlockData;
 
   return (
@@ -270,6 +289,7 @@ function ShiftBlockNodeComponent({ data, selected }: NodeProps) {
           readOnly={readOnly}
           onVoteWant={onVoteWant}
           onVoteDontWant={onVoteDontWant}
+          userPreference={userPreference}
         />
       </div>
     </>

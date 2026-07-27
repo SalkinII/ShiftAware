@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
@@ -19,6 +20,13 @@ export function FestivalSettings() {
   } = useEventContext(true);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteEventDialog, setDeleteEventDialog] = useState<{
+    isOpen: boolean;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    isLoading: false,
+  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -95,12 +103,59 @@ export function FestivalSettings() {
     }
   }
 
+  async function handleDeleteEvent() {
+    setDeleteEventDialog({ isOpen: true, isLoading: false });
+  }
+
+  async function confirmDeleteEvent() {
+    if (!selectedEventId) return;
+
+    setDeleteEventDialog((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Event deleted");
+        localStorage.removeItem("adminSelectedEventId");
+        setSelectedEventId("");
+        await refreshEvents();
+        setDeleteEventDialog({ isOpen: false, isLoading: false });
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Failed to delete event");
+        setDeleteEventDialog((prev) => ({ ...prev, isLoading: false }));
+      }
+    } catch {
+      toast.error("Failed to delete event. Please try again.");
+      setDeleteEventDialog((prev) => ({ ...prev, isLoading: false }));
+    }
+  }
+
   if (loading) {
     return <div className="text-gray-500">Loading events...</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <ConfirmDialog
+        isOpen={deleteEventDialog.isOpen}
+        onClose={() => {
+          if (!deleteEventDialog.isLoading) {
+            setDeleteEventDialog({ isOpen: false, isLoading: false });
+          }
+        }}
+        onConfirm={confirmDeleteEvent}
+        title="Delete Event"
+        message={`This will permanently delete "${selectedEvent?.name}" along with all its shifts, assignments, preferences, and registrations. This cannot be undone.`}
+        confirmText="Delete Event"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={deleteEventDialog.isLoading}
+      />
+      <div className="space-y-6">
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-2">
           Event Configuration
@@ -177,15 +232,30 @@ export function FestivalSettings() {
         </div>
       </div>
 
-      <div className="flex justify-end pt-4">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving
-            ? "Saving..."
-            : selectedEventId === "new"
-              ? "Create Event"
-              : "Update Event"}
-        </Button>
+      <div className="flex justify-between pt-4">
+        {!isCreatingNew &&
+          selectedEventId &&
+          (selectedEvent?.status === "PLANNING" ||
+            selectedEvent?.status === "COMPLETED") && (
+            <Button
+              variant="destructive"
+              onClick={handleDeleteEvent}
+              disabled={saving || deleteEventDialog.isLoading}
+            >
+              Delete Event
+            </Button>
+          )}
+        <div className="ml-auto">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving
+              ? "Saving..."
+              : selectedEventId === "new"
+                ? "Create Event"
+                : "Update Event"}
+          </Button>
+        </div>
       </div>
     </div>
+    </>
   );
 }

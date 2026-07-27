@@ -40,6 +40,7 @@ agents/
 docs/mobile-audit
 .playwright-cli/
 superpowers/
+!docs/superpowers/
 .superpowers/
 
 # debug

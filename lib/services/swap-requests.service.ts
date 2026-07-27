@@ -117,4 +117,23 @@ export class SwapRequestsService {
     await this.repo.cancelRequest(id);
     return { cancelled: true };
   }
+
+  async declineSwapRequest(id: string) {
+    const existing = await this.repo.findById(id);
+
+    if (existing.status === "PENDING") {
+      await this.repo.delete(id);
+      return { declined: true };
+    }
+
+    if (existing.status === "MATCHED") {
+      const isCanonical = !!existing.matchedWithId;
+      const partnerId = existing.matchedWithId ?? existing.matchedBy?.id;
+      if (!partnerId) throw new Error("MATCHED swap request has no counterpart");
+      await this.repo.declineMatchedPair(id, partnerId, isCanonical);
+      return { declined: true };
+    }
+
+    throw new Error("Can only decline PENDING or MATCHED requests");
+  }
 }

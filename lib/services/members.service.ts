@@ -62,8 +62,16 @@ export class MembersService {
     return this.repo.findByIdWithRelations(id);
   }
 
-  async softDeleteMember(id: string) {
-    return this.repo.softDelete(id);
+  async deactivateMember(id: string) {
+    return this.repo.deactivate(id);
+  }
+
+  async permanentDeleteMember(id: string) {
+    const member = await this.repo.findById(id);
+    if (member?.isActive) {
+      throw new Error("MEMBER_STILL_ACTIVE");
+    }
+    return this.repo.permanentDelete(id);
   }
 
   // --- Attributes ---

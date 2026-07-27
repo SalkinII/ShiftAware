@@ -14,6 +14,7 @@ vi.mock("@/lib/db", () => ({
     event: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -22,11 +23,14 @@ vi.mock("@/lib/db", () => ({
       create: vi.fn(),
       findUnique: vi.fn(),
       upsert: vi.fn(),
+      deleteMany: vi.fn(),
     },
     eventRegistration: {
       findMany: vi.fn(),
       create: vi.fn(),
       findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     eventTemplate: {
       findMany: vi.fn(),
@@ -34,13 +38,39 @@ vi.mock("@/lib/db", () => ({
       findUnique: vi.fn(),
       updateMany: vi.fn(),
       count: vi.fn(),
+      delete: vi.fn(),
     },
     shiftTemplate: {
       findMany: vi.fn(),
+      deleteMany: vi.fn(),
     },
     eventAttributeDefinition: {
       findMany: vi.fn(),
       create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    shift: {
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    swapRequest: {
+      findMany: vi.fn(),
+      updateMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    assignment: {
+      deleteMany: vi.fn(),
+    },
+    shiftPreference: {
+      deleteMany: vi.fn(),
+    },
+    shiftRole: {
+      deleteMany: vi.fn(),
+    },
+    scheduledShift: {
+      deleteMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -618,5 +648,247 @@ describe("EventRepository", () => {
     const result = await repo.createEventAttribute("event-1", data);
 
     expect(result).toEqual(mockAttribute);
+  });
+
+  describe("permanentDelete", () => {
+    it("executes all cleanup steps inside a transaction in correct order", async () => {
+      const eventId = "event-1";
+      const mockShiftIds = [{ id: "shift-1" }, { id: "shift-2" }];
+      const mockSwapIds = [{ id: "swap-1" }];
+      const deletedEvent = {
+        id: eventId,
+        name: "Summer Fest",
+        startDate: new Date(),
+        endDate: new Date(),
+        status: "PLANNING" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockTx = {
+        shift: {
+          findMany: vi.fn().mockResolvedValue(mockShiftIds),
+          deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+        },
+        swapRequest: {
+          findMany: vi.fn().mockResolvedValue(mockSwapIds),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        assignment: { deleteMany: vi.fn().mockResolvedValue({ count: 4 }) },
+        shiftPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 6 }) },
+        shiftRole: { deleteMany: vi.fn().mockResolvedValue({ count: 4 }) },
+        scheduledShift: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
+        eventConfig: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        shiftTemplate: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        event: { delete: vi.fn().mockResolvedValue(deletedEvent) },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      const result = await repo.permanentDelete(eventId);
+
+      expect(result).toEqual(deletedEvent);
+
+      // Verify shiftIds collection
+      expect(mockTx.shift.findMany).toHaveBeenCalledWith({
+        where: { eventId },
+        select: { id: true },
+      });
+
+      // Verify swap targeting these shifts collected
+      expect(mockTx.swapRequest.findMany).toHaveBeenCalledWith({
+        where: { toShiftId: { in: ["shift-1", "shift-2"] } },
+        select: { id: true },
+      });
+
+      // Verify matched partner nullified before deletion
+      expect(mockTx.swapRequest.updateMany).toHaveBeenCalledWith({
+        where: { matchedWithId: { in: ["swap-1"] } },
+        data: { matchedWithId: null },
+      });
+
+      expect(mockTx.swapRequest.deleteMany).toHaveBeenCalledWith({
+        where: { toShiftId: { in: ["shift-1", "shift-2"] } },
+      });
+
+      expect(mockTx.assignment.deleteMany).toHaveBeenCalledWith({
+        where: { shiftId: { in: ["shift-1", "shift-2"] } },
+      });
+
+      expect(mockTx.shiftPreference.deleteMany).toHaveBeenCalledWith({
+        where: { shiftId: { in: ["shift-1", "shift-2"] } },
+      });
+
+      expect(mockTx.shiftRole.deleteMany).toHaveBeenCalledWith({
+        where: { shiftId: { in: ["shift-1", "shift-2"] } },
+      });
+
+      expect(mockTx.shift.deleteMany).toHaveBeenCalledWith({
+        where: { eventId },
+      });
+
+      expect(mockTx.scheduledShift.deleteMany).toHaveBeenCalledWith({
+        where: { eventId },
+      });
+
+      expect(mockTx.eventConfig.deleteMany).toHaveBeenCalledWith({
+        where: { eventId },
+      });
+
+      expect(mockTx.shiftTemplate.deleteMany).toHaveBeenCalledWith({
+        where: { eventId },
+      });
+
+      expect(mockTx.event.delete).toHaveBeenCalledWith({
+        where: { id: eventId },
+      });
+
+      // Verify order: shifts collected first, event deleted last
+      const shiftFindOrder = mockTx.shift.findMany.mock.invocationCallOrder[0];
+      const shiftDelOrder = mockTx.shift.deleteMany.mock.invocationCallOrder[0];
+      const eventDelOrder = mockTx.event.delete.mock.invocationCallOrder[0];
+
+      expect(shiftFindOrder).toBeLessThan(shiftDelOrder);
+      expect(shiftDelOrder).toBeLessThan(eventDelOrder);
+    });
+
+    it("skips shift-related cleanup when event has no shifts", async () => {
+      const eventId = "empty-event";
+      const deletedEvent = {
+        id: eventId,
+        name: "Empty Event",
+        startDate: new Date(),
+        endDate: new Date(),
+        status: "PLANNING" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockTx = {
+        shift: {
+          findMany: vi.fn().mockResolvedValue([]),
+          deleteMany: vi.fn(),
+        },
+        swapRequest: {
+          findMany: vi.fn(),
+          updateMany: vi.fn(),
+          deleteMany: vi.fn(),
+        },
+        assignment: { deleteMany: vi.fn() },
+        shiftPreference: { deleteMany: vi.fn() },
+        shiftRole: { deleteMany: vi.fn() },
+        scheduledShift: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        eventConfig: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        shiftTemplate: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        event: { delete: vi.fn().mockResolvedValue(deletedEvent) },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      await repo.permanentDelete(eventId);
+
+      expect(mockTx.swapRequest.findMany).not.toHaveBeenCalled();
+      expect(mockTx.swapRequest.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.assignment.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.shiftPreference.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.shiftRole.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.shift.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.event.delete).toHaveBeenCalledWith({ where: { id: eventId } });
+    });
+  });
+
+  describe("deleteRegistrationWithCleanup", () => {
+    it("deletes swap requests, assignments, preferences, and registration in a transaction", async () => {
+      const eventId = "event-1";
+      const memberId = "member-1";
+      const deletedRegistration = {
+        id: "reg-1",
+        memberId,
+        eventId,
+        status: "REGISTERED" as const,
+        registeredAt: new Date(),
+      };
+
+      const mockTx = {
+        swapRequest: {
+          findMany: vi.fn().mockResolvedValue([{ id: "swap-1" }]),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        assignment: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
+        shiftPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        eventRegistration: {
+          delete: vi.fn().mockResolvedValue(deletedRegistration),
+        },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      const result = await repo.deleteRegistrationWithCleanup(eventId, memberId);
+
+      expect(result).toEqual(deletedRegistration);
+
+      expect(mockTx.swapRequest.findMany).toHaveBeenCalledWith({
+        where: {
+          requesterId: memberId,
+          fromAssignment: { shift: { eventId } },
+        },
+        select: { id: true },
+      });
+      expect(mockTx.swapRequest.updateMany).toHaveBeenCalledWith({
+        where: { matchedWithId: { in: ["swap-1"] } },
+        data: { matchedWithId: null },
+      });
+      expect(mockTx.swapRequest.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ["swap-1"] } },
+      });
+      expect(mockTx.assignment.deleteMany).toHaveBeenCalledWith({
+        where: { teamMemberId: memberId, shift: { eventId } },
+      });
+      expect(mockTx.shiftPreference.deleteMany).toHaveBeenCalledWith({
+        where: { teamMemberId: memberId, shift: { eventId } },
+      });
+      expect(mockTx.eventRegistration.delete).toHaveBeenCalledWith({
+        where: { memberId_eventId: { memberId, eventId } },
+      });
+    });
+
+    it("skips swap cleanup when member has no swaps in the event", async () => {
+      const eventId = "event-1";
+      const memberId = "member-no-swaps";
+
+      const mockTx = {
+        swapRequest: {
+          findMany: vi.fn().mockResolvedValue([]),
+          updateMany: vi.fn(),
+          deleteMany: vi.fn(),
+        },
+        assignment: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        shiftPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        eventRegistration: { delete: vi.fn().mockResolvedValue({}) },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
+        fn(mockTx),
+      );
+
+      await repo.deleteRegistrationWithCleanup(eventId, memberId);
+
+      expect(mockTx.swapRequest.updateMany).not.toHaveBeenCalled();
+      expect(mockTx.swapRequest.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.assignment.deleteMany).toHaveBeenCalledWith({
+        where: { teamMemberId: memberId, shift: { eventId } },
+      });
+      expect(mockTx.eventRegistration.delete).toHaveBeenCalledWith({
+        where: { memberId_eventId: { memberId, eventId } },
+      });
+    });
   });
 });

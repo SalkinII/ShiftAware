@@ -34,7 +34,8 @@ export async function GET(request: Request) {
         search || undefined,
       );
     } else {
-      const where: any = { isActive: true };
+      const includeInactive = searchParams.get("includeInactive") === "true";
+      const where: any = includeInactive ? {} : { isActive: true };
       if (search) {
         where.alias = { contains: search, mode: "insensitive" };
       }

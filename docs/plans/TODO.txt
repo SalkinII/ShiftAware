@@ -1,1 +1,45 @@
-(all items resolved — see 2026-04-08-mobile-and-png-fixes.md, 2026-04-13-loop-and-cleanup-fixes.md, and 2026-04-13-mobile-fixes-and-user-export.md)
+- Distribution logic gates don't enforce requirements.
+
+- Even with 100% fairness we get violations for max shifts.
+
+- Heatmap does not work at all (requirements). It shows that people can make shifts they don't have requirements for.
+
+- Heatmap display should be able to call allocation to shifts.
+
+- Distribution should be analyzable - like the preview (seeing violations etc.)
+
+- Poll on the attributes, the counts of shifts per person, the violations etc. - to get a good overview of the acutal distribution. Like a flat table.
+
+
+
+  ########
+  STRUCTURAL REFACTOR BACKLOG (from ponytail-audit 2026-07-27):
+  These are coordinated changes — do as a dedicated sprint, not piecemeal.
+
+  - arch: Collapse Service + Repository two-tier wrapper (~600 lines).
+    Both layers only delegate → Prisma. Merge into single domain query layer.
+    Move guards (assertEventStatusAllows) to API middleware, not every service method.
+
+  - arch: Extract API auth + error-handling middleware (~300 lines).
+    37 route handlers each repeat auth check + try/catch + createErrorResponse.
+    Extract withAuth() / withErrorHandling() wrappers.
+
+  - arch: Simplify cache system (~200 lines).
+    5-file custom cache (TTL, custom events, wildcard invalidation) used in 2 pages.
+    Consider replacing with fetch() + HTTP cache headers.
+
+  - refactor: Split EventRepository (536 lines, 5 concerns) into focused classes:
+    EventRepository, EventConfigRepository, EventRegistrationRepository, EventTemplateRepository.
+
+  - cleanup: Delete lib/hooks/useEventContext.ts re-export wrapper (12 lines).
+    Requires updating 8 test mock paths + 9 production imports in one coordinated change.
+
+  - cleanup: Merge validation guard logic split across 3 places:
+    Zod schemas + assertEventStatusAllows() in every service + event-status-permissions.ts.
+    Consolidate into single getEventStatusRules() middleware utility.
+
+
+  ########
+  BACKLOG for later:
+  - feat: tableware - tab - timetable tab? Overlay?
+  - architecture: Engelsystem?

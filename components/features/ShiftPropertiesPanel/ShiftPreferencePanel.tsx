@@ -1,6 +1,6 @@
 "use client";
 
-import { ThumbsUp, ThumbsDown, Clock, Users, Star } from "lucide-react";
+import { Clock, Users, Star } from "lucide-react";
 import { format } from "date-fns";
 
 interface ShiftPreferencePanelProps {
@@ -15,9 +15,11 @@ interface ShiftPreferencePanelProps {
     templateName?: string;
     assignedMembers?: Array<{ alias: string }>;
   };
+  teamMemberId: string;
   currentVote?: "WANT" | "DONT_WANT" | null;
   onVoteWant: (shiftId: string) => void;
   onVoteDontWant: (shiftId: string) => void;
+  onVoteNeutral: (shiftId: string) => void;
   onClose: () => void;
 }
 
@@ -26,6 +28,7 @@ export function ShiftPreferencePanel({
   currentVote,
   onVoteWant,
   onVoteDontWant,
+  onVoteNeutral,
   onClose,
 }: ShiftPreferencePanelProps) {
   return (
@@ -68,46 +71,45 @@ export function ShiftPreferencePanel({
             {shift.assignmentCount ?? 0}/{shift.capacity} staffed
           </span>
         </div>
-
-        {/* Current vote status */}
-        {currentVote && (
-          <div
-            className={`p-3 rounded-lg text-sm font-medium ${
-              currentVote === "WANT"
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
-            }`}
-          >
-            You voted: {currentVote === "WANT" ? "Want" : "Don&apos;t want"}{" "}
-            this shift
-          </div>
-        )}
       </div>
 
-      {/* Vote buttons — large and prominent */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
-        <button
-          onClick={() => onVoteWant(shift.id)}
-          className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors ${
-            currentVote === "WANT"
-              ? "bg-green-600 text-white"
-              : "bg-green-50 text-green-700 hover:bg-green-100"
-          }`}
-        >
-          <ThumbsUp className="w-5 h-5" />
-          Want this shift
-        </button>
-        <button
-          onClick={() => onVoteDontWant(shift.id)}
-          className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors ${
-            currentVote === "DONT_WANT"
-              ? "bg-red-600 text-white"
-              : "bg-red-50 text-red-700 hover:bg-red-100"
-          }`}
-        >
-          <ThumbsDown className="w-5 h-5" />
-          Don&apos;t want this shift
-        </button>
+      {/* Three-state vote buttons */}
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex gap-2">
+          <button
+            onClick={() => onVoteWant(shift.id)}
+            aria-label="Want this shift"
+            className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${
+              currentVote === "WANT"
+                ? "bg-green-600 text-white"
+                : "bg-green-50 text-green-700 hover:bg-green-100"
+            }`}
+          >
+            👍 Want
+          </button>
+          <button
+            onClick={() => onVoteNeutral(shift.id)}
+            aria-label="Neutral"
+            className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${
+              currentVote == null
+                ? "bg-gray-200 text-gray-700"
+                : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+            }`}
+          >
+            — Neutral
+          </button>
+          <button
+            onClick={() => onVoteDontWant(shift.id)}
+            aria-label="Don't want this shift"
+            className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${
+              currentVote === "DONT_WANT"
+                ? "bg-red-600 text-white"
+                : "bg-red-50 text-red-700 hover:bg-red-100"
+            }`}
+          >
+            👎 Don&apos;t want
+          </button>
+        </div>
       </div>
     </div>
   );

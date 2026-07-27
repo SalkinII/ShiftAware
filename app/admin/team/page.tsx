@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, Users, Zap } from "lucide-react";
+import { Activity, Users, UserCog, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { useEventContext } from "@/lib/hooks/useEventContext";
 import { DistributionSettings } from "./components/DistributionSettings";
 import { MemberListByEvent } from "./components/MemberListByEvent";
+import { MemberManagement } from "./components/MemberManagement";
 import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 
-type TabType = "members" | "allocation" | "heatmap";
+type TabType = "directory" | "members" | "allocation" | "heatmap";
 
 export default function TeamPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("members");
+  const [activeTab, setActiveTab] = useState<TabType>("directory");
   const { selectedEventId, selectedEvent } = useEventContext(true);
 
   const tabs = [
-    { id: "members" as TabType, label: "Team Members", icon: Users },
+    { id: "directory" as TabType, label: "Member Directory", icon: UserCog },
+    { id: "members" as TabType, label: "Event Members", icon: Users },
     {
       id: "allocation" as TabType,
       label: "Allocation & Distribution",
@@ -62,6 +64,8 @@ export default function TeamPage() {
 
       {/* Tab Content */}
       <div className="py-6">
+        {activeTab === "directory" && <MemberManagement />}
+
         {activeTab === "members" && (
           <Card className="p-6">
             {selectedEventId ? (
@@ -82,6 +86,7 @@ export default function TeamPage() {
         )}
 
         {activeTab === "allocation" && <DistributionSettings />}
+
         {activeTab === "heatmap" && (
           selectedEventId ? (
             <AvailabilityHeatmap eventId={selectedEventId} />

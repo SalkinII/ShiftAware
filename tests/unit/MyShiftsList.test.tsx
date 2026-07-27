@@ -28,8 +28,11 @@ const baseShift = {
 const baseProps = {
   shifts: [baseShift],
   userId: "user-1",
+  teamMemberId: "user-1",
+  eventStatus: "PUBLISHED",
   preferences: [],
   onVoteWant: vi.fn(),
+  onVoteNeutral: vi.fn(),
   onVoteDontWant: vi.fn(),
   onRequestSwap: vi.fn(),
   onCancelSwap: vi.fn(),

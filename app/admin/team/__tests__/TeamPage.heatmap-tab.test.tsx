@@ -34,6 +34,10 @@ vi.mock("../components/MemberListByEvent", () => ({
   MemberListByEvent: () => <div>Member List</div>,
 }));
 
+vi.mock("../components/MemberManagement", () => ({
+  MemberManagement: () => <div data-testid="member-management">Member Management</div>,
+}));
+
 import TeamPage from "../page";
 
 describe("TeamPage – heatmap tab", () => {
@@ -62,5 +66,24 @@ describe("TeamPage – heatmap receives selectedEventId", () => {
     render(<TeamPage />);
     fireEvent.click(screen.getByText("Availability Heatmap"));
     expect(lastHeatmapEventId).toBe("event-1");
+  });
+});
+
+describe("TeamPage – Member Directory tab", () => {
+  it("renders the Member Directory tab button", () => {
+    render(<TeamPage />);
+    expect(screen.getByText("Member Directory")).toBeInTheDocument();
+  });
+
+  it("shows MemberManagement when Member Directory tab is clicked", () => {
+    render(<TeamPage />);
+    fireEvent.click(screen.getByText("Member Directory"));
+    expect(screen.getByTestId("member-management")).toBeInTheDocument();
+  });
+
+  it("renames the event-scoped tab to Event Members", () => {
+    render(<TeamPage />);
+    expect(screen.getByText("Event Members")).toBeInTheDocument();
+    expect(screen.queryByText("Team Members")).not.toBeInTheDocument();
   });
 });

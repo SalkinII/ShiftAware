@@ -13,6 +13,7 @@ vi.mock("@/lib/db", () => ({
       update: vi.fn(),
       updateMany: vi.fn(),
       deleteMany: vi.fn(),
+      delete: vi.fn(),
     },
     assignment: {
       update: vi.fn(),
@@ -241,20 +242,45 @@ describe("SwapRequestRepository", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
-  it("should cancel pending request", async () => {
+  it("cancelRequest hard-deletes a pending request", async () => {
     vi.mocked(prisma.swapRequest.findUnique).mockResolvedValue({
       id: "req-1",
       status: "PENDING",
     } as any);
+    vi.mocked(prisma.swapRequest.delete).mockResolvedValue({ id: "req-1" } as any);
 
-    vi.mocked(prisma.swapRequest.update).mockResolvedValue({
-      id: "req-1",
-      status: "CANCELLED",
-    } as any);
+    await repo.cancelRequest("req-1");
 
-    const result = await repo.cancelRequest("req-1");
+    expect(prisma.swapRequest.delete).toHaveBeenCalledWith({ where: { id: "req-1" } });
+    expect(prisma.swapRequest.update).not.toHaveBeenCalled();
+  });
 
-    expect(result.status).toBe("CANCELLED");
+  it("declineMatchedPair (canonical) nulls own FK, reverts partner to PENDING, deletes canonical", async () => {
+    (prisma.$transaction as any).mockImplementation(async (ops: any[]) =>
+      Promise.all(ops.map((op) => Promise.resolve(op))),
+    );
+    vi.mocked(prisma.swapRequest.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.swapRequest.delete).mockResolvedValue({ id: "req-1" } as any);
+
+    await repo.declineMatchedPair("req-1", "req-2", true);
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    const ops = (prisma.$transaction as any).mock.calls[0][0];
+    expect(ops).toHaveLength(3); // null FK, revert partner, delete
+  });
+
+  it("declineMatchedPair (partner) nulls canonical FK and reverts to PENDING, deletes partner", async () => {
+    (prisma.$transaction as any).mockImplementation(async (ops: any[]) =>
+      Promise.all(ops.map((op) => Promise.resolve(op))),
+    );
+    vi.mocked(prisma.swapRequest.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.swapRequest.delete).mockResolvedValue({ id: "req-p" } as any);
+
+    await repo.declineMatchedPair("req-p", "req-canonical", false);
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    const ops = (prisma.$transaction as any).mock.calls[0][0];
+    expect(ops).toHaveLength(2); // revert+null canonical, delete partner
   });
 
   it("should throw error when cancelling non-pending request", async () => {

@@ -61,6 +61,8 @@ export async function PUT(
     let updated;
     if (validated.status === "APPROVED") {
       updated = await service.approveSwapRequest(id);
+    } else if (validated.status === "DECLINED") {
+      updated = await service.declineSwapRequest(id);
     } else {
       updated = await service.updateSwapRequest(id, validated.status);
     }

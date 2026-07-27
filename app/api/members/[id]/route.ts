@@ -107,7 +107,7 @@ export async function DELETE(
     const member = await service.getMember(id);
 
     // Soft delete by setting isActive to false
-    const deleted = await service.softDeleteMember(id);
+    const deleted = await service.deactivateMember(id);
 
     await createAuditLog({
       action: AuditAction.DELETE,

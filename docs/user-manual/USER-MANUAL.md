@@ -267,14 +267,22 @@ The **My Schedule** page has two views: **My Shifts** and **Full Schedule**.
 
 **My Shifts view** (default)
 
-Shows only the shifts you are assigned to. Each card lists the shift name, date, time, and your fellow team members on that shift.
+Shows your shifts and any preferences you have set, in one chronological list. Each card shows the
+shift name, date, and time range. A small colored dot indicates your preference: green = you want
+this shift, red = you don't want it.
 
 ![Calendar — My Shifts](images/1-4-calendar-myshifts.png)
 *My Shifts — your personal assignment list.*
 
-- If preferences are open (event status is "Open for preferences"), a **Want / Don't Want** toggle appears on each shift card so you can vote.
-- If the schedule is finalized, the cards are read-only.
-- Click **Request Swap** on any of your assigned shifts to open the swap request modal (see below).
+When the event status is "Open for preferences," a three-state toggle appears on each card:
+- **Want** — you want this shift (green)
+- **Neutral** — no preference (removes any existing preference record)
+- **Don't want** — you don't want this shift (red)
+
+After the schedule is finalized, the toggle is hidden and only your assigned shifts are shown.
+Shifts you had preferences on but were not assigned to no longer appear in this view.
+
+Click **Request Swap** on any of your assigned shifts to open the swap request modal (see below).
 
 **Full Schedule view**
 
@@ -283,9 +291,12 @@ Shows the complete event schedule as a lane calendar. All shifts are visible acr
 ![Calendar — Full Schedule](images/1-6-calendar-fullschedule.png)
 *Full Schedule — the complete lane calendar for the event.*
 
-- When preferences are open, click any shift block to open the **Preference panel** on the right and vote Want or Don't Want.
+- When preferences are open, click any shift block to open the **Preference panel** on the right.
+  Use the three-state toggle (Want / Neutral / Don't want) to vote. Selecting Neutral removes
+  a previously set preference.
 - Use the **Coverage** and **Member** filters above the calendar to focus on specific staffing states or colleagues.
-- The desirability legend at the top explains the color tinting: blue tint = lower score (easier to get), orange tint = higher score (popular, harder to get).
+- The preference legend at the top of the view explains the dot colors: green = you want this
+  shift, red = you don't want it. A green ring around a card means the shift is assigned to you.
 
 **Requesting a shift swap**
 

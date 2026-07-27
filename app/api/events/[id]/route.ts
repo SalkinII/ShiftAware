@@ -10,6 +10,7 @@ import {
 import { createAuditLog } from "@/lib/services/audit";
 import { AuditAction, EntityType } from "@prisma/client";
 import { updateEventSchema } from "@/lib/validations/event";
+import { StatusGuardError } from "@/lib/services/event-status-guard";
 
 const service = new EventsService();
 
@@ -93,20 +94,35 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await service.deleteEvent(id);
+
+    const event = await service.getEvent(id);
+    if (!event) {
+      return createNotFoundResponse("Event");
+    }
+
+    await service.permanentDeleteEvent(id);
 
     await createAuditLog({
       action: AuditAction.DELETE,
       entityType: EntityType.EVENT,
       entityId: id,
+      before: { id: event.id, name: event.name, status: event.status },
       ipAddress: request.headers.get("x-forwarded-for") || undefined,
     });
 
-    return createSuccessResponse({ deleted: true });
+    return createSuccessResponse({ success: true });
   } catch (error) {
     if (error instanceof RepositoryError && error.code === "NOT_FOUND") {
       return createNotFoundResponse("Event");
     }
+    if (error instanceof StatusGuardError) {
+      return createErrorResponse(
+        error,
+        error.message,
+        403,
+      );
+    }
+    console.error("Delete event error:", error);
     return createErrorResponse(error, "Failed to delete event");
   }
 }
