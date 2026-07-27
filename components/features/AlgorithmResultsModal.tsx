@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, AlertTriangle, CheckCircle, Users } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import type { Violation } from "@/lib/algorithm/types";
 
 interface PreviewAssignment {
   shiftId: string;
@@ -20,7 +21,7 @@ interface PreviewScore {
 
 interface PreviewResult {
   assignments: PreviewAssignment[];
-  violations: string[];
+  violations: Violation[];
   scores: Record<string, PreviewScore>;
   explanations: Record<string, string>;
   ruleMatchSummaries?: string[];
@@ -217,8 +218,8 @@ export function AlgorithmResultsModal({
 
           {/* Rest Period Violations */}
           {(() => {
-            const restViolations = result.violations.filter((v) =>
-              /rest|insufficient/i.test(v),
+            const restViolations = result.violations.filter(
+              (v) => v.kind === "time_conflict",
             );
             return restViolations.length > 0 ? (
               <div>
@@ -233,7 +234,7 @@ export function AlgorithmResultsModal({
                       className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
                     >
                       <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      {v}
+                      {v.detail}
                     </div>
                   ))}
                 </div>
@@ -266,7 +267,7 @@ export function AlgorithmResultsModal({
           {/* Other Constraint Violations */}
           {(() => {
             const otherViolations = result.violations.filter(
-              (v) => !/rest|insufficient/i.test(v),
+              (v) => v.kind !== "time_conflict",
             );
             return otherViolations.length > 0 ? (
               <div>
@@ -281,7 +282,7 @@ export function AlgorithmResultsModal({
                       className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
                     >
                       <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      {v}
+                      {v.detail}
                     </div>
                   ))}
                 </div>

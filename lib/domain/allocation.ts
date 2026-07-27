@@ -9,12 +9,17 @@ const assignmentRepo = new AssignmentRepository();
 const eventRepo = new EventRepository();
 const memberRepo = new TeamMemberRepository();
 
-export async function runAllocation(eventId: string, preview = false) {
-  await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
+async function loadAllocationContext(
+  eventId: string,
+  scope?: { memberIds?: string[]; shiftIds?: string[] },
+) {
   const event = await eventRepo.findById(eventId);
 
   const registrations = await prisma.eventRegistration.findMany({
-    where: { eventId },
+    where: {
+      eventId,
+      ...(scope?.memberIds ? { memberId: { in: scope.memberIds } } : {}),
+    },
     include: {
       member: {
         include: {
@@ -27,7 +32,10 @@ export async function runAllocation(eventId: string, preview = false) {
   const members = registrations.map((r) => r.member);
 
   const shifts = await prisma.shift.findMany({
-    where: { eventId },
+    where: {
+      eventId,
+      ...(scope?.shiftIds ? { id: { in: scope.shiftIds } } : {}),
+    },
     include: {
       preferences: { include: { teamMember: true } },
       assignments: { include: { teamMember: true } },
@@ -69,6 +77,34 @@ export async function runAllocation(eventId: string, preview = false) {
     memberAttributes.set(member.id, attrMap);
   }
 
+  return {
+    members,
+    assignableShifts,
+    coreShifts,
+    config,
+    weights,
+    minRestHours,
+    maxShiftsPerPerson,
+    allocationRules,
+    memberAttributes,
+  };
+}
+
+export async function runAllocation(eventId: string, dryRun = false) {
+  await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
+
+  const {
+    members,
+    assignableShifts,
+    coreShifts,
+    config,
+    weights,
+    minRestHours,
+    maxShiftsPerPerson,
+    allocationRules,
+    memberAttributes,
+  } = await loadAllocationContext(eventId);
+
   const result = await runAssignmentAlgorithm(
     members as any,
     assignableShifts as any,
@@ -80,10 +116,11 @@ export async function runAllocation(eventId: string, preview = false) {
       allocationRules,
       weights,
       memberAttributes,
+      dryRun,
     },
   );
 
-  if (preview) {
+  if (dryRun) {
     const memberAliases = Object.fromEntries(members.map((m) => [m.id, m.alias]));
     const shiftCoverage: Record<string, { assigned: number; capacity: number }> = {};
     for (const s of assignableShifts) {
@@ -98,6 +135,7 @@ export async function runAllocation(eventId: string, preview = false) {
       ruleMatchSummaries: result.ruleMatchSummaries ?? [],
       memberAliases,
       shiftCoverage,
+      dryRun: true,
     };
   }
 
@@ -129,6 +167,76 @@ export async function runAllocation(eventId: string, preview = false) {
     scores: Object.fromEntries(result.scores),
     explanations: Object.fromEntries(result.explanations),
   };
+}
+
+export async function redistributeScoped(
+  eventId: string,
+  scope: { memberIds?: string[]; shiftIds?: string[] },
+  dryRun = false,
+) {
+  await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
+
+  const {
+    members,
+    assignableShifts,
+    coreShifts,
+    config,
+    weights,
+    minRestHours,
+    maxShiftsPerPerson,
+    allocationRules,
+    memberAttributes,
+  } = await loadAllocationContext(eventId, scope);
+
+  const result = await runAssignmentAlgorithm(
+    members as any,
+    assignableShifts as any,
+    {
+      minShiftsPerPerson: config.minShiftsPerPerson || 2,
+      maxShiftsPerPerson,
+      minRestMs: minRestHours * 3600000,
+      coreShifts,
+      allocationRules,
+      weights,
+      memberAttributes,
+      dryRun,
+    },
+  );
+
+  if (dryRun) {
+    return {
+      assignments: result.assignments,
+      violations: result.violations,
+      dryRun: true,
+    };
+  }
+
+  const saved = await prisma.$transaction(async (tx) => {
+    const deleteWhere: any = { shift: { eventId } };
+    if (scope.memberIds) deleteWhere.teamMemberId = { in: scope.memberIds };
+    if (scope.shiftIds) deleteWhere.shiftId = { in: scope.shiftIds };
+    await tx.assignment.deleteMany({ where: deleteWhere });
+    const created = [];
+    for (const assignment of result.assignments) {
+      const key = `${assignment.teamMemberId}-${assignment.shiftId}`;
+      const record = await tx.assignment.create({
+        data: {
+          shiftId: assignment.shiftId,
+          teamMemberId: assignment.teamMemberId,
+          role: assignment.role as any,
+          isLead: assignment.isLead || false,
+          assignmentType: assignment.assignmentType as any,
+          algorithmScore: (result.scores.get(key) as any) ?? null,
+          notes: result.explanations.get(key) || null,
+        },
+        include: { shift: true, teamMember: true },
+      });
+      created.push(record);
+    }
+    return created;
+  });
+
+  return { assignments: saved, violations: result.violations };
 }
 
 export async function createManualAssignment(data: {

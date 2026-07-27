@@ -44,7 +44,7 @@ describe("runAssignmentAlgorithm", () => {
     });
 
     expect(result.violations.length).toBeGreaterThan(0);
-    expect(result.violations[0]).toContain("minimum");
+    expect(result.violations[0].detail.toLowerCase()).toContain("minimum");
   });
 
   it("enforces rest period constraint in Phase 2", async () => {
@@ -289,7 +289,9 @@ describe("runAssignmentAlgorithm", () => {
 
     // No complementary violations — FILTER rules shouldn't be checked post-hoc
     const compViolations = result.violations.filter(
-      (v) => v.includes("no member has") || v.includes("ratio"),
+      (v) =>
+        v.kind === "balance_rule" &&
+        (/no member has/i.test(v.detail) || /ratio/i.test(v.detail)),
     );
     expect(compViolations).toHaveLength(0);
   });

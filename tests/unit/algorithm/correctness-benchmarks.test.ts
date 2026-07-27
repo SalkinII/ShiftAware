@@ -242,7 +242,9 @@ describe("Correctness Benchmarks", () => {
 
       // Phase 3 reports violation
       expect(result.violations.length).toBeGreaterThan(0);
-      expect(result.violations.some((v) => v.includes("unicorn"))).toBe(true);
+      expect(
+        result.violations.some((v) => v.detail.includes("unicorn")),
+      ).toBe(true);
     });
   });
 

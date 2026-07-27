@@ -7,6 +7,7 @@ import {
   ShiftWithRelations,
   AssignmentScore,
   AllocationRule,
+  Violation,
 } from "./types";
 import { scoreAssignment } from "./scorer";
 import {
@@ -66,6 +67,7 @@ export async function runAssignmentAlgorithm(
     allocationRules?: AllocationRule[];
     memberAttributes?: Map<string, Map<string, string>>;
     weights?: AlgorithmWeights;
+    dryRun?: boolean;
   },
 ): Promise<AlgorithmResult> {
   const weights = eventConfig.weights || DEFAULT_WEIGHTS;
@@ -81,7 +83,7 @@ export async function runAssignmentAlgorithm(
 
   const allShiftsMap = new Map(shifts.map((s) => [s.id, s]));
   const membersMap = new Map(members.map((m) => [m.id, m]));
-  const violations: string[] = [];
+  const violations: Violation[] = [];
   const ruleMatchSummaries: string[] = [];
   const explanations = new Map<string, string>();
   const scores = new Map<string, AssignmentScore>();
@@ -305,7 +307,11 @@ export async function runAssignmentAlgorithm(
       eventConfig.minShiftsPerPerson,
     );
     if (minShiftViolation) {
-      violations.push(`${member.alias}: ${minShiftViolation.message}`);
+      violations.push({
+        kind: "min_shifts",
+        memberId: member.id,
+        detail: `${member.alias}: ${minShiftViolation.message}`,
+      });
     }
   }
 
@@ -318,7 +324,11 @@ export async function runAssignmentAlgorithm(
       minRestMs,
     );
     for (const v of restViolations) {
-      violations.push(`${member.alias}: ${v.message}`);
+      violations.push({
+        kind: "time_conflict",
+        memberId: member.id,
+        detail: `${member.alias}: ${v.message}`,
+      });
     }
   }
 
@@ -332,7 +342,12 @@ export async function runAssignmentAlgorithm(
       eventConfig.memberAttributes || new Map(),
     );
     for (const v of compViolations) {
-      violations.push(v.message);
+      const shiftIdMatch = v.message.match(/^Shift ([^:]+):/);
+      violations.push({
+        kind: "balance_rule",
+        shiftId: shiftIdMatch?.[1],
+        detail: v.message,
+      });
     }
   }
 

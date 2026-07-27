@@ -21,7 +21,7 @@ export interface AlgorithmWeights {
 export interface AlgorithmResult {
   assignments: Assignment[];
   scores: Map<string, AssignmentScore>; // assignmentId -> score
-  violations: string[];
+  violations: Violation[];
   explanations: Map<string, string>; // assignmentId -> explanation
   ruleMatchSummaries?: string[]; // per-shift rule filter exclusion reasons
 }
