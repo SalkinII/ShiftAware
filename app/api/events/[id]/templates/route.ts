@@ -9,7 +9,9 @@ import {
 } from "@/lib/api-errors";
 import { assignTemplateSchema } from "@/lib/validations/event-template";
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { EventMetadataRepository } from "@/lib/repositories/event-metadata.repository";
 const eventRepo = new EventRepository();
+const metadataRepo = new EventMetadataRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
@@ -18,7 +20,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request,
 
   await eventRepo.findById(eventId);
 
-  const templates = await eventRepo.listEventTemplates(eventId);
+  const templates = await metadataRepo.listEventTemplates(eventId);
 
   return createSuccessResponse(templates);
 }));
@@ -37,7 +39,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   const validated = assignTemplateSchema.parse(body);
 
   // Check not already assigned
-  const existing = await eventRepo.findEventTemplate(
+  const existing = await metadataRepo.findEventTemplate(
     eventId,
     validated.templateId,
   );
@@ -49,7 +51,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
     );
   }
 
-  const assignment = await eventRepo.assignTemplate(
+  const assignment = await metadataRepo.assignTemplate(
     eventId,
     validated.templateId,
   );

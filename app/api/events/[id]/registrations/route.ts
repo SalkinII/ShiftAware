@@ -10,7 +10,9 @@ import {
 } from "@/lib/api-errors";
 import { createRegistrationSchema } from "@/lib/validations/event-registration";
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { EventRegistrationRepository } from "@/lib/repositories/event-registration.repository";
 const eventRepo = new EventRepository();
+const registrationRepo = new EventRegistrationRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
@@ -19,7 +21,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request,
 
   await eventRepo.findById(eventId);
 
-  const registrations = await eventRepo.listRegistrations(eventId);
+  const registrations = await registrationRepo.listRegistrations(eventId);
 
   return createSuccessResponse(registrations);
 }));
@@ -44,7 +46,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   }
 
   // Check not already registered
-  const existing = await eventRepo.findRegistration(
+  const existing = await registrationRepo.findRegistration(
     eventId,
     validated.memberId,
   );
@@ -56,7 +58,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
     );
   }
 
-  const registration = await eventRepo.createRegistration(
+  const registration = await registrationRepo.createRegistration(
     eventId,
     validated.memberId,
     validated.status,

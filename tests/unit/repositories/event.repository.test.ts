@@ -7,6 +7,9 @@ import {
   ShiftPriority,
 } from "@prisma/client";
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { EventConfigRepository } from "@/lib/repositories/event-config.repository";
+import { EventRegistrationRepository } from "@/lib/repositories/event-registration.repository";
+import { EventMetadataRepository } from "@/lib/repositories/event-metadata.repository";
 
 // Mock the prisma client
 vi.mock("@/lib/db", () => ({
@@ -81,9 +84,15 @@ const { prisma } = await import("@/lib/db");
 
 describe("EventRepository", () => {
   let repo: EventRepository;
+  let configRepo: EventConfigRepository;
+  let registrationRepo: EventRegistrationRepository;
+  let metadataRepo: EventMetadataRepository;
 
   beforeEach(() => {
     repo = new EventRepository();
+    configRepo = new EventConfigRepository();
+    registrationRepo = new EventRegistrationRepository();
+    metadataRepo = new EventMetadataRepository();
     vi.clearAllMocks();
   });
 
@@ -258,7 +267,7 @@ describe("EventRepository", () => {
 
     vi.mocked(prisma.eventConfig.findUnique).mockResolvedValue(mockConfig);
 
-    const result = await repo.getConfig("event-1");
+    const result = await configRepo.getConfig("event-1");
 
     expect(result).toEqual(mockConfig);
     expect(prisma.eventConfig.findUnique).toHaveBeenCalledWith({
@@ -300,7 +309,7 @@ describe("EventRepository", () => {
 
     vi.mocked(prisma.eventConfig.upsert).mockResolvedValue(mockConfig);
 
-    const result = await repo.upsertConfig("event-1", data);
+    const result = await configRepo.upsertConfig("event-1", data);
 
     expect(result).toEqual(mockConfig);
   });
@@ -326,7 +335,7 @@ describe("EventRepository", () => {
       mockRegistrations,
     );
 
-    const result = await repo.listRegistrations("event-1");
+    const result = await registrationRepo.listRegistrations("event-1");
 
     expect(result).toEqual(mockRegistrations);
     expect(prisma.eventRegistration.findMany).toHaveBeenCalledWith({
@@ -359,7 +368,7 @@ describe("EventRepository", () => {
       mockRegistration,
     );
 
-    const result = await repo.createRegistration(
+    const result = await registrationRepo.createRegistration(
       "event-1",
       "member-2",
       RegistrationStatus.REGISTERED,
@@ -381,7 +390,7 @@ describe("EventRepository", () => {
       mockRegistration,
     );
 
-    const result = await repo.findRegistration("event-1", "member-1");
+    const result = await registrationRepo.findRegistration("event-1", "member-1");
 
     expect(result).toEqual(mockRegistration);
   });
@@ -438,7 +447,7 @@ describe("EventRepository", () => {
       mockEventSpecific,
     );
 
-    const result = await repo.listEventTemplates("event-1");
+    const result = await metadataRepo.listEventTemplates("event-1");
 
     expect(result.assigned).toHaveLength(1);
     expect(result.eventSpecific).toHaveLength(1);
@@ -499,7 +508,7 @@ describe("EventRepository", () => {
     vi.mocked(prisma.eventTemplate.findMany).mockResolvedValue(mockAssignments);
     vi.mocked(prisma.shiftTemplate.findMany).mockResolvedValue([]);
 
-    const result = await repo.listEventTemplates("event-1");
+    const result = await metadataRepo.listEventTemplates("event-1");
 
     // Should include laneOrder from EventTemplate.order
     expect(result.assigned[0].laneOrder).toBe(2);
@@ -528,7 +537,7 @@ describe("EventRepository", () => {
 
     vi.mocked(prisma.eventTemplate.create).mockResolvedValue(mockAssignment);
 
-    const result = await repo.assignTemplate("event-1", "template-1");
+    const result = await metadataRepo.assignTemplate("event-1", "template-1");
 
     expect(result).toEqual(mockAssignment);
   });
@@ -544,7 +553,7 @@ describe("EventRepository", () => {
       template: { id: "template-new", name: "New Template" },
     } as any);
 
-    const result = await repo.assignTemplate("event-1", "template-new");
+    const result = await metadataRepo.assignTemplate("event-1", "template-new");
 
     expect(prisma.eventTemplate.count).toHaveBeenCalledWith({
       where: { eventId: "event-1" },
@@ -559,7 +568,7 @@ describe("EventRepository", () => {
   it("should reorder event templates", async () => {
     vi.mocked(prisma.eventTemplate.updateMany).mockResolvedValue({ count: 1 });
 
-    await repo.reorderEventTemplates("event-1", [
+    await metadataRepo.reorderEventTemplates("event-1", [
       { templateId: "tpl-a", order: 0 },
       { templateId: "tpl-b", order: 1 },
     ]);
@@ -588,7 +597,7 @@ describe("EventRepository", () => {
       mockAssignment,
     );
 
-    const result = await repo.findEventTemplate("event-1", "template-1");
+    const result = await metadataRepo.findEventTemplate("event-1", "template-1");
 
     expect(result).toEqual(mockAssignment);
   });
@@ -613,7 +622,7 @@ describe("EventRepository", () => {
       mockAttributes,
     );
 
-    const result = await repo.listEventAttributes("event-1");
+    const result = await metadataRepo.listEventAttributes("event-1");
 
     expect(result).toEqual(mockAttributes);
     expect(prisma.eventAttributeDefinition.findMany).toHaveBeenCalledWith({
@@ -645,7 +654,7 @@ describe("EventRepository", () => {
       mockAttribute,
     );
 
-    const result = await repo.createEventAttribute("event-1", data);
+    const result = await metadataRepo.createEventAttribute("event-1", data);
 
     expect(result).toEqual(mockAttribute);
   });
@@ -831,7 +840,7 @@ describe("EventRepository", () => {
         fn(mockTx),
       );
 
-      const result = await repo.deleteRegistrationWithCleanup(eventId, memberId);
+      const result = await registrationRepo.deleteRegistrationWithCleanup(eventId, memberId);
 
       expect(result).toEqual(deletedRegistration);
 
@@ -879,7 +888,7 @@ describe("EventRepository", () => {
         fn(mockTx),
       );
 
-      await repo.deleteRegistrationWithCleanup(eventId, memberId);
+      await registrationRepo.deleteRegistrationWithCleanup(eventId, memberId);
 
       expect(mockTx.swapRequest.updateMany).not.toHaveBeenCalled();
       expect(mockTx.swapRequest.deleteMany).not.toHaveBeenCalled();

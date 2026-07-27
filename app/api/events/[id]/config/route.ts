@@ -11,13 +11,15 @@ import {
 import { z } from "zod";
 import { eventConfigSchema } from "@/lib/validations/event-config";
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { EventConfigRepository } from "@/lib/repositories/event-config.repository";
 const eventRepo = new EventRepository();
+const configRepo = new EventConfigRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: NextRequest,
   { params }: { params: Promise<{ id: string }> },) => {
   const { id } = await params;
 
-  const config = await eventRepo.getConfig(id);
+  const config = await configRepo.getConfig(id);
 
   if (!config) {
     // Return default config structure if none exists
@@ -53,7 +55,7 @@ export const PUT = withAuth(withErrorHandling(async (request: NextRequest,
   const body = await request.json();
   const validated = eventConfigSchema.parse(body);
 
-  const config = await eventRepo.upsertConfig(id, {
+  const config = await configRepo.upsertConfig(id, {
     minShiftsPerPerson: validated.minShiftsPerPerson,
     algorithmWeights: validated.algorithmWeights || {},
     balanceThresholds: validated.balanceThresholds || {},

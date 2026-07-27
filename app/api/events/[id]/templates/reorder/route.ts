@@ -7,7 +7,9 @@ import {
 } from "@/lib/api-errors";
 import { reorderTemplatesSchema } from "@/lib/validations/event-template";
 import { EventRepository } from "@/lib/repositories/event.repository";
+import { EventMetadataRepository } from "@/lib/repositories/event-metadata.repository";
 const eventRepo = new EventRepository();
+const metadataRepo = new EventMetadataRepository();
 
 export const PATCH = withAuth(withErrorHandling(async (request: Request,
   { params }: { params: Promise<{ id: string }> },) => {
@@ -22,7 +24,7 @@ export const PATCH = withAuth(withErrorHandling(async (request: Request,
   const body = await request.json();
   const validated = reorderTemplatesSchema.parse(body);
 
-  await eventRepo.reorderEventTemplates(eventId, validated.order);
+  await metadataRepo.reorderEventTemplates(eventId, validated.order);
 
   return createSuccessResponse({ success: true });
 }));
