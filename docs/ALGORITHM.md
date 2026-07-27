@@ -8,11 +8,12 @@ The allocation algorithm assigns team members to shifts fairly, respecting hard 
 
 | File                              | Role                                                                                                                                            |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/algorithm/types.ts`          | Interfaces: AssignmentState, AllocationRule, AlgorithmWeights, AlgorithmResult, ConstraintViolation, AssignmentScore                            |
-| `lib/algorithm/optimizer.ts`      | Main entry point: `runAssignmentAlgorithm()` — 3-phase orchestration                                                                            |
+| `lib/algorithm/types.ts`          | Interfaces: AssignmentState (incl. reservedSlots), AllocationRule, AlgorithmWeights, AlgorithmResult, Violation, ConstraintViolation, AssignmentScore |
+| `lib/algorithm/can-assign.ts`     | Unified pure gate: max shifts, capacity, overlap/rest, FILTER rules (client-safe)                                                               |
+| `lib/algorithm/optimizer.ts`      | Main entry point: `runAssignmentAlgorithm()` — 3-phase orchestration; calls `canAssign` in Phase 1+2                                            |
 | `lib/algorithm/scorer.ts`         | Scoring functions: calculatePreferenceScore, calculateExperienceBalance, calculateWorkloadFairness, calculateCoreShiftCoverage, scoreAssignment |
 | `lib/algorithm/validator.ts`      | Constraint functions: validateMinimumShifts, validateShiftCapacity, validateNoOverlaps, validateRestPeriod                                      |
-| `lib/algorithm/rule-validator.ts` | Attribute rules: evaluateRule, filterByRules, validateComplementaryRules                                                                        |
+| `lib/algorithm/rule-validator.ts` | Attribute rules: evaluateRule, filterByRules, validateComplementaryRules, BALANCE reservedSlots helpers                                         |
 
 ---
 
