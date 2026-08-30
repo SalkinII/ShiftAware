@@ -120,7 +120,3 @@ The following will be the next iteration. You will not do this yet. You will rep
 
 - Ui canonicals accross all pages and elements.
 
-  ########
-
-  - feat: tableware - tab - timetable tab? Overlay?
-  - architecture: Engelsystem?
