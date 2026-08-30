@@ -188,6 +188,89 @@ describe("DistributionHeatmap", () => {
     expect(screen.queryByText("Bob")).not.toBeInTheDocument();
   });
 
+  it("does not disable a blocked cell (admin can still click it)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          config: { balanceThresholds: { maxShiftsPerPerson: 0 } },
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    const cell = await screen.findByTitle(/blocked/);
+    expect(cell).not.toBeDisabled();
+  });
+
+  it("asks for confirmation naming the reason, and does not assign when cancelled", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        ...heatmapData,
+        config: { balanceThresholds: { maxShiftsPerPerson: 0 } },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    const cell = await screen.findByTitle(/blocked/);
+    fireEvent.click(cell);
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      expect.stringContaining("maximum shift count"),
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/assignments",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("assigns the member anyway when the override is confirmed", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        ...heatmapData,
+        config: { balanceThresholds: { maxShiftsPerPerson: 0 } },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    const cell = await screen.findByTitle(/blocked/);
+    fireEvent.click(cell);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/assignments",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
   it("still selects the member when clicking the member name", async () => {
     const onMemberSelect = vi.fn();
     render(

@@ -1,7 +1,12 @@
-import { canAssign, CanAssignConfig } from "@/lib/algorithm/can-assign";
+import { canAssign, CanAssignConfig, CanAssignResult } from "@/lib/algorithm/can-assign";
 import type { AllocationRule, ShiftWithRelations, AssignmentState } from "@/lib/algorithm/types";
 
 export type CellState = "blocked" | "eligible" | "preferred" | "assigned" | "conflict";
+
+export interface CellStateResult {
+  state: CellState;
+  reason?: NonNullable<CanAssignResult["reason"]>;
+}
 
 export function deriveCellState(
   memberId: string,
@@ -13,13 +18,20 @@ export function deriveCellState(
   rules: AllocationRule[],
   allShiftsMap: Map<string, ShiftWithRelations>,
   memberAttrs: Map<string, string>,
-): CellState {
+): CellStateResult {
+  const { eligible, reason } = canAssign(
+    memberId,
+    shift,
+    state,
+    config,
+    rules,
+    allShiftsMap,
+    memberAttrs,
+  );
   if (isAssigned) {
-    const { eligible } = canAssign(memberId, shift, state, config, rules, allShiftsMap, memberAttrs);
-    return eligible ? "assigned" : "conflict";
+    return eligible ? { state: "assigned" } : { state: "conflict", reason };
   }
-  const { eligible } = canAssign(memberId, shift, state, config, rules, allShiftsMap, memberAttrs);
-  if (!eligible) return "blocked";
-  if (hasWantPreference) return "preferred";
-  return "eligible";
+  if (!eligible) return { state: "blocked", reason };
+  if (hasWantPreference) return { state: "preferred" };
+  return { state: "eligible" };
 }

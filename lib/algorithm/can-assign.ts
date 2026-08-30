@@ -13,6 +13,16 @@ export interface CanAssignResult {
   reason?: "max_shifts" | "time_conflict" | "filter_rule" | "capacity";
 }
 
+export const CAN_ASSIGN_REASON_LABELS: Record<
+  NonNullable<CanAssignResult["reason"]>,
+  string
+> = {
+  max_shifts: "is already at their maximum shift count",
+  time_conflict: "has an overlapping or too-close shift",
+  filter_rule: "doesn't meet a required attribute for this shift type",
+  capacity: "would exceed this shift's capacity",
+};
+
 export function canAssign(
   memberId: string,
   shift: ShiftWithRelations,

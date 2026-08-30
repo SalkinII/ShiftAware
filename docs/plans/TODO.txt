@@ -92,6 +92,16 @@ USER: Yet another assetrion. Either you did not bind this properly into the app 
   Still deferred (not in A):
   - Consider replacing custom cache with fetch() + HTTP cache headers (~200 lines)
 USER: No partial fixes any longer!!!
+  → CLOSED, won't-do (2026-08-30, confirmed with user): this was already
+    evaluated during the actual v2.5-A build and explicitly decided against —
+    see docs/superpowers/specs/2026-07-27-v2.5-revamp-design.md, "Cache: trim
+    but keep CustomEvent pattern (Option B)". The CustomEvent broadcast
+    (CacheProvider/useCache/invalidateEventCache/invalidateIdentity) does real
+    cross-component cache invalidation (e.g. editing a shift on the schedule
+    page invalidates the calendar page's cache) that plain HTTP cache headers
+    can't replicate declaratively. It's already trimmed to 298 lines across 4
+    files with 4 real consumers — not neglected, just not swapped out for a
+    weaker mechanism with no user-visible benefit.
 
 - Optimise distribution (random Pick for order of distribution, hard Gates for shift requirements etc.)
   → DONE v2.5-B (hard gates); random pick order still open
@@ -106,6 +116,30 @@ USER: No partial fixes any longer!!!
     asserts both win at least once — this reproduced the bug (RED) before the
     fix and passes (GREEN) after, stable across repeated runs.
 
+
+- Admin manual assignment must be able to override hard constraints (attribute/
+  max-shifts/rest/capacity gates) that block a member from a shift. Only the
+  automated algorithm should be strictly bound by them.
+  → DONE (2026-08-30). Investigated first: the backend (createManualAssignment
+    in lib/domain/allocation.ts) never actually enforced canAssign() — the
+    restriction was purely a frontend guard (HeatmapCell disabled the button,
+    DistributionHeatmap's handleCellToggle bailed out early on "blocked").
+    The optimizer already never proposes blocked members as candidates in the
+    first place, so the algorithm side needed no change at all.
+    Fix: blocked cells are clickable again; clicking one now shows a
+    confirmation naming the actual canAssign reason (e.g. "This member is
+    already at their maximum shift count for this shift. Assign anyway?" —
+    reason threaded through deriveCellState, labels in
+    lib/algorithm/can-assign.ts CAN_ASSIGN_REASON_LABELS so the heatmap tooltip
+    and the confirm dialog share one source of truth). On confirm, the
+    assignment is created via the existing manual-assignment path; on cancel,
+    nothing happens. The overridden assignment then correctly renders as
+    ▲ conflict (not silently "assigned") since deriveCellState already treats
+    assigned-but-ineligible that way — so it stays visible in both the heatmap
+    and the Analysis table's violations rather than disappearing.
+    Verified live: clicked a real blocked cell, got the exact reason in the
+    confirm dialog, accepted it, confirmed POST /api/assignments -> 201; on a
+    second blocked cell, dismissed the dialog and confirmed no request fired.
 
 The following will be the next iteration. You will not do this yet. You will report on the above how you fixed it. only after our next merge cycle when all of the above is done we will move on to the points that follow here:
 - BACKLOG:

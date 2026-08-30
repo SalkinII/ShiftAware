@@ -6,6 +6,7 @@ import { RedistributeOverlay } from "./RedistributeOverlay";
 import { deriveCellState, CellState } from "../hooks/useCellState";
 import type { ShiftWithRelations, AssignmentState, Violation } from "@/lib/algorithm/types";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { CAN_ASSIGN_REASON_LABELS, CanAssignResult } from "@/lib/algorithm/can-assign";
 
 interface RedistributePreview {
   assignments: unknown[];
@@ -62,8 +63,20 @@ export function DistributionHeatmap({
   }, [refetch]);
 
   const handleCellToggle = useCallback(
-    async (memberId: string, shiftId: string, currentState: CellState) => {
-      if (currentState === "blocked") return;
+    async (
+      memberId: string,
+      shiftId: string,
+      currentState: CellState,
+      reason?: NonNullable<CanAssignResult["reason"]>,
+    ) => {
+      if (currentState === "blocked") {
+        const label = reason
+          ? CAN_ASSIGN_REASON_LABELS[reason]
+          : "fails a hard constraint";
+        if (!confirm(`This member ${label} for this shift. Assign anyway?`)) {
+          return;
+        }
+      }
 
       if (currentState === "assigned" || currentState === "conflict") {
         if (!confirm("Remove this assignment?")) return;
@@ -356,7 +369,7 @@ export function DistributionHeatmap({
                     const memberAttrs = new Map(
                       Object.entries(member.attributes ?? {}),
                     );
-                    const cellState = deriveCellState(
+                    const { state: cellState, reason } = deriveCellState(
                       member.id,
                       shift,
                       isAssigned,
@@ -372,6 +385,7 @@ export function DistributionHeatmap({
                       <td key={shift.id} className="px-0.5">
                         <HeatmapCell
                           state={cellState}
+                          reason={reason}
                           memberId={member.id}
                           shiftId={shift.id}
                           selected={selectedCells.has(`${member.id}:${shift.id}`)}

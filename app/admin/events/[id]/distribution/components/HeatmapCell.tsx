@@ -1,6 +1,7 @@
 "use client";
 
 import { CellState } from "../hooks/useCellState";
+import { CAN_ASSIGN_REASON_LABELS, CanAssignResult } from "@/lib/algorithm/can-assign";
 
 const CELL_STYLES: Record<CellState, string> = {
   blocked: "bg-red-100 text-red-400 cursor-not-allowed",
@@ -20,13 +21,27 @@ const CELL_ICONS: Record<CellState, string> = {
 
 interface Props {
   state: CellState;
+  reason?: NonNullable<CanAssignResult["reason"]>;
   memberId: string;
   shiftId: string;
   selected: boolean;
-  onToggle: (memberId: string, shiftId: string, currentState: CellState) => void;
+  onToggle: (
+    memberId: string,
+    shiftId: string,
+    currentState: CellState,
+    reason?: NonNullable<CanAssignResult["reason"]>,
+  ) => void;
 }
 
-export function HeatmapCell({ state, memberId, shiftId, selected, onToggle }: Props) {
+export function HeatmapCell({
+  state,
+  reason,
+  memberId,
+  shiftId,
+  selected,
+  onToggle,
+}: Props) {
+  const title = reason ? `${state} — ${CAN_ASSIGN_REASON_LABELS[reason]}` : state;
   return (
     <button
       className={`w-8 h-8 text-xs flex items-center justify-center border rounded
@@ -34,10 +49,9 @@ export function HeatmapCell({ state, memberId, shiftId, selected, onToggle }: Pr
         ${selected ? "ring-2 ring-blue-500" : ""}`}
       onClick={(e) => {
         e.stopPropagation();
-        onToggle(memberId, shiftId, state);
+        onToggle(memberId, shiftId, state, reason);
       }}
-      title={`${state}`}
-      disabled={state === "blocked"}
+      title={title}
     >
       {CELL_ICONS[state]}
     </button>
