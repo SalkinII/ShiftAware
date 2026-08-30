@@ -7,7 +7,9 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 // --- All vi.mock() calls must come before any imports of the mocked modules ---
 
 vi.mock("next/dynamic", () => ({
-  default: (_fn: unknown) => () => <div data-testid="lane-canvas" />,
+  default: (_fn: unknown) => (props: { topRightOverlay?: React.ReactNode }) => (
+    <div data-testid="lane-canvas">{props.topRightOverlay}</div>
+  ),
 }));
 vi.mock("@/lib/contexts/EventContext", () => ({
   useEventContext: () => ({
@@ -118,6 +120,24 @@ describe("SchedulePage – mobile swap drawer", () => {
     });
     const badge = await screen.findByText(/3 swaps pending/);
     expect(badge.closest("button")!.className).toContain("lg:hidden");
+  });
+
+  it("passes the badge to the canvas instead of positioning it itself", async () => {
+    render(<ShiftsPage />);
+    fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
+    act(() => {
+      triggerHasRequests?.(true, 4);
+    });
+    const badge = await screen.findByText(/4 swaps pending/);
+    const button = badge.closest("button")!;
+    // Positioning now lives inside LaneCalendarCanvas (anchored to its own
+    // flow area, below the ruler) — the page no longer guesses an offset
+    // that ignores the lock banner's variable height sitting above it.
+    expect(button.className).not.toContain("absolute");
+    expect(button.className).not.toContain("top-3");
+    expect(button.style.top).toBe("");
+    // Rendered through the canvas's topRightOverlay slot, not as a sibling.
+    expect(button.closest('[data-testid="lane-canvas"]')).not.toBeNull();
   });
 });
 

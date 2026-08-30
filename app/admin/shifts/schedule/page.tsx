@@ -803,23 +803,24 @@ export default function ShiftsPage() {
                     onShiftCreated={handleShiftCreated}
                     onShiftUpdated={handleShiftUpdated}
                     shiftMutationLocked={shiftMutationLocked}
+                    topRightOverlay={
+                      hasSwapRequests &&
+                      selectedEventId &&
+                      selectedEvent &&
+                      canShowSwapPanel(
+                        selectedEvent.status as import("@prisma/client").EventStatus,
+                      ) ? (
+                        <button
+                          onClick={() => setSwapDrawerOpen(true)}
+                          className="lg:hidden flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                        >
+                          ⇄ {swapCount} swaps pending{" "}
+                          <span className="text-[10px]">↑</span>
+                        </button>
+                      ) : undefined
+                    }
                   />
                 )}
-                {/* Mobile swap badge — hidden on desktop via lg:hidden */}
-                {hasSwapRequests &&
-                  selectedEventId &&
-                  selectedEvent &&
-                  canShowSwapPanel(
-                    selectedEvent.status as import("@prisma/client").EventStatus,
-                  ) && (
-                    <button
-                      onClick={() => setSwapDrawerOpen(true)}
-                      className="lg:hidden absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
-                    >
-                      ⇄ {swapCount} swaps pending{" "}
-                      <span className="text-[10px]">↑</span>
-                    </button>
-                  )}
               </div>
 
               {/* Shift properties panel — beside canvas when shift is selected */}

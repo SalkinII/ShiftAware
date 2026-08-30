@@ -37,6 +37,7 @@ import {
   DEFAULT_ZOOM,
   LANE_HEIGHT,
   SNAP_PIXELS,
+  RULER_HEIGHT,
 } from "./utils/constants";
 import { useScreenCoordinates } from "./hooks/useScreenCoordinates";
 import { Shield } from "lucide-react";
@@ -136,6 +137,8 @@ interface LaneCalendarCanvasProps {
   /** When set (user calendar), highlights shifts assigned to this member */
   selectedMemberId?: string | null;
   preferences?: Map<string, "WANT" | "DONT_WANT">;
+  /** Rendered top-right over the flow area, below the time ruler (e.g. a mobile swap-pending badge) */
+  topRightOverlay?: React.ReactNode;
 }
 
 export interface LaneCalendarCanvasHandle {
@@ -159,6 +162,7 @@ function LaneCalendarCanvasInner(
     onVoteDontWant,
     selectedMemberId,
     preferences,
+    topRightOverlay,
   }: LaneCalendarCanvasProps,
   ref: React.Ref<LaneCalendarCanvasHandle>,
 ) {
@@ -390,20 +394,28 @@ function LaneCalendarCanvasInner(
 
   return (
     <div
-      className="relative"
-      style={{
-        height: "80vh",
-        minHeight: 600,
-        paddingTop: shiftMutationLocked ? 36 : 0,
-      }}
+      className="relative flex flex-col"
+      style={{ height: "80vh", minHeight: 600 }}
     >
       {shiftMutationLocked && (
-        <div className="absolute top-0 left-0 right-0 z-10 bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800 flex items-center gap-2">
+        <div
+          data-testid="shift-mutation-locked-banner"
+          className="flex-shrink-0 z-10 bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800 flex items-center gap-2"
+        >
           <Shield className="w-4 h-4 flex-shrink-0" />
           {shiftMutationLockedMessage}
         </div>
       )}
-      <div ref={flowContainerRef} style={{ height: "100%" }}>
+      <div ref={flowContainerRef} className="relative flex-1 min-h-0">
+        {topRightOverlay && (
+          <div
+            data-testid="canvas-top-right-overlay"
+            className="absolute right-3 z-20"
+            style={{ top: RULER_HEIGHT + 12 }}
+          >
+            {topRightOverlay}
+          </div>
+        )}
         <ReactFlow
           nodes={nodes}
           edges={[]}

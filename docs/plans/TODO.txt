@@ -4,6 +4,26 @@
 - Extend attributes for time constraint (will only arrive by - cannot work 22:00 to 06:00 - will need to leave on date - time - setting gard gates for planning)
 
 - Swap banner not to overlay date display field in canvas when on mobile.
+  → DONE (2026-08-31): the actual culprit was the "⇄ N swaps pending" mobile
+    badge in app/admin/shifts/schedule/page.tsx, absolutely positioned
+    top-3/right-3 relative to the page-level canvas container. Root cause:
+    that offset assumed the ruler starts at the container's own top, which
+    broke whenever the shiftMutationLocked banner (a separate, variable-
+    height element) was also showing above it — confirmed live in a browser
+    at a 390x844 viewport with both active simultaneously, where the badge
+    still covered the "03:00" ruler label after a first attempt that only
+    accounted for the ruler.
+    Along the way also fixed a second, real overlap bug in the same
+    component: the shiftMutationLocked lock bar itself was `position:
+    absolute` with a hardcoded `paddingTop: 36` reservation, so on mobile
+    the message wrapped to two lines and its own overflow covered the ruler.
+    Fixed both by removing the magic-number layout entirely: the lock bar is
+    now a normal flex-column child (LaneCalendarCanvas.tsx), and the swap
+    badge moved from the page into a new `topRightOverlay` prop on
+    LaneCalendarCanvas, anchored inside its flow-container div (which always
+    starts exactly at the ruler, regardless of the lock banner's presence or
+    height). Verified live: lock banner + "2 swaps pending" badge shown
+    together, ruler fully readable, no overlap.
 
 - Bespoke lane - 0 person shifts with editable markers for comments and other time table aspects to write into the shift plan. e.g. replacing "The unassigned" lane.
 
