@@ -43,54 +43,70 @@ this project's own conventions explicitly warn against.
 
 ---
 
-## 1. Color tokens: single source of truth
+## 1. Color tokens: `tailwind.config.ts` is dead code, and `error` is a live bug
 
-**Problem:** `app/globals.css:15-18` defines `--color-primary-500..800` as
-HSL blues (`hsl(220, 58%, 45%)` for 600). `tailwind.config.ts:41-52`
-separately defines a `primary` palette as **different hex blues**
-(`#0284c7` for 600 — sky/cyan, not indigo). `bg-primary-600` and
-`var(--color-primary-600)` currently render two different colors. Same
-issue for `secondary`/`accent` (`tailwind.config.ts:53-77`) against the CSS
-vars' semantic equivalents — and `secondary` and `accent` in
-`tailwind.config.ts` are byte-for-byte identical to each other (dead
-duplication on top of the mismatch).
+**Correction (found during plan-stage Gate 2 docs-first verification,
+2026-08-31):** this section originally diagnosed a "two systems disagree"
+problem and proposed reconciling `tailwind.config.ts` with `globals.css`.
+That diagnosis was wrong. This project runs **Tailwind CSS v4**
+(`package.json`: `"tailwindcss": "^4.0.0"`), and `app/globals.css:1-3` uses
+the v4 CSS-first setup — `@import "tailwindcss";` followed directly by an
+`@theme { ... }` block. `postcss.config.cjs` registers `@tailwindcss/postcss`
+with no config path, and no file anywhere in the repo contains an `@config`
+directive (confirmed via grep). **Tailwind v4 has no mechanism that reads
+`tailwind.config.ts` unless a CSS file explicitly `@config`s it — so the
+file is never loaded.** Its 195 lines (`primary`/`secondary`/`accent`/
+`success`/`error`/`warning`/`info`/`gray`/`shift-*` colors, the `fontSize`/
+`boxShadow`/`borderRadius`/`borderWidth` extensions, even the `content`
+array) are pure dead code today.
 
-**Fix:** the CSS-variable system in `globals.css` is the richer one
-(semantic tokens like `--status-bg`, `--glass-bg`, per-status accent
-colors that the Tailwind palette has no equivalent for) — it becomes the
-single source of truth, for the three color families that actually have a
-matching CSS-var scale today:
+Two consequences, verified live (`playwright-cli`, injecting a probe
+element and reading `getComputedStyle`):
 
-- `primary` → `var(--color-primary-50..900)` (the confirmed mismatch —
-  `tailwind.config.ts`'s hardcoded sky-blue vs. `globals.css`'s indigo-blue).
-- `secondary` and `accent` → both point at `var(--color-accent-50..900)`.
-  `globals.css` only defines `--color-accent-*` (no separate
-  `--color-secondary-*` — matching `tailwind.config.ts:54`'s own comment,
-  "Using accent as secondary for now"), and `accent-*` classes are
-  actually used (`app/admin/shifts/schedule/page.tsx`,
-  `app/admin/audit/page.tsx`, `app/login/page.tsx`) so neither key is dead
-  weight to delete — they become two names for one var-backed scale
-  instead of two copies of one hardcoded scale.
-- `success` → `var(--color-success-50..900)` (exists in `globals.css:34-43`;
-  confirm the two scales' actual rendered colors during implementation —
-  unlike `primary`, this pair wasn't confirmed to visibly clash, but
-  should still be var-backed for the same single-source-of-truth reason).
+1. **The "primary mismatch" isn't real.** `bg-primary-600` already renders
+   `globals.css`'s indigo (`--color-primary-600: hsl(220, 58%, 45%)`) in
+   the actual app, because `@theme` is the only place that color could
+   come from — `tailwind.config.ts`'s sky-blue `#0284c7` never reaches the
+   browser. Same for `accent`/`success`: they already render from
+   `@theme`, unconditionally. No reconciliation needed for any of these
+   three.
+2. **`error` is a genuine, currently-live bug — not a contrast nitpick.**
+   `globals.css`'s `@theme` block never defines an `--color-error-*` scale
+   (confirmed: grepped the full 352-line file). `tailwind.config.ts` does
+   define one, but since that file is dead, every `error-*` Tailwind class
+   in the codebase today generates **zero CSS**. Confirmed live: a probe
+   div with `class="bg-error-600 text-error-600 border-error-300"`
+   resolved to `background: transparent`, `color:` the default body-text
+   color, `border-color:` the default gray reset — no red anywhere. This
+   class is used in five real files:
+   `components/ui/Input.tsx` (required-field asterisk, invalid-state
+   border/ring), `components/ui/Select.tsx` (invalid-state border/ring),
+   `components/ui/Button.tsx` (destructive variant background, §2), and
+   two admin pages' delete icons (`DistributionSettings.tsx:765`,
+   `AttributeDefinitions.tsx:325`). **All of it is silently rendering with
+   no red indication today** — required-field markers, validation-error
+   borders, and destructive buttons all look like normal UI. This is a
+   correctness bug, not a preference.
+   (`secondary`/`warning`/`info`/custom `gray`/`shift-*` are also dead but
+   have zero live usages — grepped, no matches — so they need no fix
+   beyond removing the dead file.)
 
-**`error` is a different kind of gap, not a conflict**: `globals.css` has
-no `--color-error-*` scale at all — only a single semantic
-`--color-unfilled` shade (`hsl(10, 75%, 55%)`, `globals.css:225`), not a
-50-900 range. There's nothing to redirect Tailwind's `error` palette to
-yet. Since `Button`'s `destructive` variant (fixed in §2) is the one
-variant still sourced from a palette with no CSS-var backing once
-`primary`/`secondary`/`accent`/`success` are converted, add a
-`--color-error-50..900` HSL scale to `globals.css` (following the same
-pattern as the existing `--color-success-*` block) and point Tailwind's
-`error` at it — closing the gap rather than leaving one color family
-permanently unbacked.
+**Fix:** add `--color-error-50..900` directly to `app/globals.css`'s
+`@theme` block (the same pattern as the existing `--color-success-50..900`
+entries at `globals.css:33-43`) — this is the only place that produces a
+real Tailwind utility in this project. No `tailwind.config.ts` edit can fix
+this, because nothing reads that file.
+
+**New scope item, needs your confirmation:** delete `tailwind.config.ts`
+entirely. It is fully dead code under this build, and leaving it in place
+is exactly what let this bug hide — a future edit to "fix" a color there
+would silently do nothing again. If there's a reason to keep it (e.g. a
+tool outside the Next.js build still reads it), say so and this becomes
+"leave in place, add a comment marking it unused" instead.
 
 ---
 
-## 2. Fix: `Button`'s `destructive` variant contrast bug
+## 2. Fix: `Button`'s `destructive` variant
 
 **File:** `components/ui/Button.tsx:49-50`
 
@@ -102,10 +118,18 @@ destructive: "bg-error-600 text-red-600 hover:bg-error-700 active:bg-error-800 .
 destructive: "bg-error-600 text-white hover:bg-error-700 active:bg-error-800 ...",
 ```
 
-Dark-red background with medium-red text is a real readability defect
-(and the only variant not using `text-white`/`text-gray-700` consistently
-with its background darkness — `primary` already uses `text-white` on the
-same kind of saturated background). This is a bug fix, not a preference.
+Today this variant has no visible background at all (§1 — `bg-error-600`
+is a phantom class), so `text-red-600` (a real default-palette color,
+unaffected by §1) is the only color currently showing — on whatever the
+button's fallback background is. Once §1 adds `--color-error-*` to
+`@theme`, `bg-error-600` starts rendering a real dark red, and at that
+point medium-red text on a dark-red background becomes the readability
+defect the original diagnosis described — so the fix (`text-white`, the
+only variant not already using it for a saturated background, matching
+`primary`) is still correct, just for a diagnosis that only becomes true
+after §1 ships. **Sequencing matters: §2 must land after §1**, or this
+variant briefly regresses from "invisible" to "actively hard to read"
+with no red at all in between only being fixed by luck of ordering.
 
 ---
 
