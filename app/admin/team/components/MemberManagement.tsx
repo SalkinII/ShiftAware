@@ -13,8 +13,6 @@ import { unwrapApiResponse } from "@/lib/api-errors";
 import { ExperienceLevel, Role } from "@prisma/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { cn } from "@/lib/utils";
-import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
 interface TeamMember {
@@ -31,7 +29,6 @@ export function MemberManagement() {
   const [profileCardMember, setProfileCardMember] = useState<TeamMember | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "heatmap">("list");
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     memberId: string | null;
@@ -359,30 +356,6 @@ export function MemberManagement() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="bg-gray-100 rounded-xl p-1 flex">
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
-                  viewMode === "list"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700",
-                )}
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode("heatmap")}
-                className={cn(
-                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all",
-                  viewMode === "heatmap"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700",
-                )}
-              >
-                Heatmap
-              </button>
-            </div>
             <Button
               variant="secondary"
               onClick={handleExportMapping}
@@ -395,131 +368,123 @@ export function MemberManagement() {
           </div>
         </div>
 
-        {viewMode === "heatmap" ? (
-          <AvailabilityHeatmap
-            onCellClick={(memberId, shiftId, status) => {
-              console.log("Cell clicked:", { memberId, shiftId, status });
-            }}
-          />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="shadow-sm p-2">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by alias..."
-                    className="w-full pl-12 pr-4 py-3 bg-transparent focus:outline-none text-gray-900 font-medium placeholder:text-gray-400"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="shadow-sm p-2">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by alias..."
+                  className="w-full pl-12 pr-4 py-3 bg-transparent focus:outline-none text-gray-900 font-medium placeholder:text-gray-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </Card>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {filteredMembers.map((member) => (
-                  <Card
-                    key={member.id}
-                    className="shadow-sm hover:shadow-md transition-all p-6 group"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => setProfileCardMember(member)}
-                          className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl shadow-inner border border-gray-100 group-hover:scale-110 transition-transform cursor-pointer"
-                          title={`View ${member.alias}'s profile`}
-                        >
-                          {member.avatarId}
-                        </button>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 leading-tight">
-                            {member.alias}
-                          </h3>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!member.isActive && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              Inactive
-                            </span>
-                            <button
-                              onClick={() => handleReactivateMember(member.id)}
-                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                              aria-label={`Reactivate ${member.alias}`}
-                              title="Reactivate member"
-                            >
-                              <UserCheck className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handlePermanentDeleteMember(member.id)}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                              aria-label={`Permanently delete ${member.alias}`}
-                              title="Permanently delete member"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        {member.isActive && (
-                          <button
-                            onClick={() => handleDeleteMember(member.id)}
-                            className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                            aria-label={`Deactivate ${member.alias}`}
-                            title="Deactivate member"
-                          >
-                            <UserX className="w-4 h-4" />
-                          </button>
-                        )}
+            <div className="grid gap-4 md:grid-cols-2">
+              {filteredMembers.map((member) => (
+                <Card
+                  key={member.id}
+                  className="shadow-sm hover:shadow-md transition-all p-6 group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => setProfileCardMember(member)}
+                        className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-3xl shadow-inner border border-gray-100 group-hover:scale-110 transition-transform cursor-pointer"
+                        title={`View ${member.alias}'s profile`}
+                      >
+                        {member.avatarId}
+                      </button>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                          {member.alias}
+                        </h3>
                       </div>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-8 border-none shadow-xl">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-                  <UserCircle2 className="w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-black mb-2 leading-tight">
-                  Privacy First Staffing
-                </h3>
-                <p className="text-sm text-primary-100 leading-relaxed opacity-90">
-                  Team members use aliases to protect their real identities in
-                  the system. Use the mapping template to keep local track of
-                  real names.
-                </p>
-              </Card>
-
-              <Card className="bg-white border-none shadow-sm p-6">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-                  Quick Stats
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">
-                      Total Records
-                    </span>
-                    <span className="text-sm font-black text-gray-900">
-                      {members?.length || 0}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {!member.isActive && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Inactive
+                          </span>
+                          <button
+                            onClick={() => handleReactivateMember(member.id)}
+                            className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                            aria-label={`Reactivate ${member.alias}`}
+                            title="Reactivate member"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handlePermanentDeleteMember(member.id)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            aria-label={`Permanently delete ${member.alias}`}
+                            title="Permanently delete member"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                      {member.isActive && (
+                        <button
+                          onClick={() => handleDeleteMember(member.id)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                          aria-label={`Deactivate ${member.alias}`}
+                          title="Deactivate member"
+                        >
+                          <UserX className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">
-                      Active Duty
-                    </span>
-                    <span className="text-sm font-black text-success-600">
-                      {(members || []).filter((m) => m.isActive).length}
-                    </span>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              ))}
             </div>
           </div>
-        )}
+
+          <div className="space-y-6">
+            <Card className="bg-gradient-to-br from-primary-600 to-primary-700 text-white p-8 border-none shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
+                <UserCircle2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-2xl font-black mb-2 leading-tight">
+                Privacy First Staffing
+              </h3>
+              <p className="text-sm text-primary-100 leading-relaxed opacity-90">
+                Team members use aliases to protect their real identities in
+                the system. Use the mapping template to keep local track of
+                real names.
+              </p>
+            </Card>
+
+            <Card className="bg-white border-none shadow-sm p-6">
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                Quick Stats
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">
+                    Total Records
+                  </span>
+                  <span className="text-sm font-black text-gray-900">
+                    {members?.length || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">
+                    Active Duty
+                  </span>
+                  <span className="text-sm font-black text-success-600">
+                    {(members || []).filter((m) => m.isActive).length}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
 
       <ProfileDetailCard

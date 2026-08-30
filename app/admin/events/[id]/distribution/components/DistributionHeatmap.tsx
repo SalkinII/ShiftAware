@@ -47,6 +47,9 @@ export function DistributionHeatmap({
     useState<RedistributePreview | null>(null);
   const [isCommitting, setIsCommitting] = useState(false);
   const [shiftTypeFilter, setShiftTypeFilter] = useState<string>("all");
+  const [memberSearch, setMemberSearch] = useState<string>("");
+  const [attributeKey, setAttributeKey] = useState<string>("all");
+  const [attributeValue, setAttributeValue] = useState<string>("all");
 
   const refetch = useCallback(() => {
     fetch(HEATMAP_API(eventId))
@@ -151,6 +154,33 @@ export function DistributionHeatmap({
 
   const shiftTypes = [...new Set(shifts.map((s) => s.type))];
 
+  const attributeKeys = [
+    ...new Set(members.flatMap((m) => Object.keys(m.attributes ?? {}))),
+  ];
+  const attributeValues =
+    attributeKey === "all"
+      ? []
+      : [
+          ...new Set(
+            members
+              .map((m) => m.attributes?.[attributeKey])
+              .filter((v): v is string => v !== undefined),
+          ),
+        ];
+
+  const visibleMembers = members.filter((m) => {
+    if (
+      memberSearch.trim() &&
+      !m.alias.toLowerCase().includes(memberSearch.trim().toLowerCase())
+    ) {
+      return false;
+    }
+    if (attributeKey !== "all" && attributeValue !== "all") {
+      if ((m.attributes ?? {})[attributeKey] !== attributeValue) return false;
+    }
+    return true;
+  });
+
   const canAssignConfig = {
     maxShiftsPerPerson:
       data.config?.balanceThresholds?.maxShiftsPerPerson ?? Infinity,
@@ -176,6 +206,54 @@ export function DistributionHeatmap({
             </option>
           ))}
         </select>
+        <input
+          type="text"
+          placeholder="Search member..."
+          value={memberSearch}
+          onChange={(e) => setMemberSearch(e.target.value)}
+          className="text-xs border rounded px-2 py-1 w-32"
+        />
+        <label className="sr-only" htmlFor="heatmap-attribute-key">
+          Attribute
+        </label>
+        <select
+          id="heatmap-attribute-key"
+          aria-label="Attribute"
+          value={attributeKey}
+          onChange={(e) => {
+            setAttributeKey(e.target.value);
+            setAttributeValue("all");
+          }}
+          className="text-xs border rounded px-2 py-1"
+        >
+          <option value="all">All attributes</option>
+          {attributeKeys.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+        {attributeKey !== "all" && (
+          <>
+            <label className="sr-only" htmlFor="heatmap-attribute-value">
+              Attribute value
+            </label>
+            <select
+              id="heatmap-attribute-value"
+              aria-label="Attribute value"
+              value={attributeValue}
+              onChange={(e) => setAttributeValue(e.target.value)}
+              className="text-xs border rounded px-2 py-1"
+            >
+              <option value="all">Any value</option>
+              {attributeValues.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
         {selectedMembers.size > 0 && (
           <button
             onClick={handleRedistribute}
@@ -194,19 +272,42 @@ export function DistributionHeatmap({
             <tr>
               <th className="w-6" />
               <th className="w-24 text-left pr-2">Member</th>
-              {visibleShifts.map((s) => (
-                <th
-                  key={s.id}
-                  className="w-8 text-center px-0.5"
-                  title={String(s.startTime)}
-                >
-                  {new Date(s.startTime).getDate()}
-                </th>
-              ))}
+              {visibleShifts.map((s) => {
+                const start = new Date(s.startTime);
+                const end = new Date(s.endTime);
+                const weekday = start.toLocaleDateString("en-US", {
+                  weekday: "short",
+                });
+                const dayMonth = `${start.getMonth() + 1}/${start.getDate()}`;
+                const startTime = start.toLocaleTimeString("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                const endTime = end.toLocaleTimeString("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                return (
+                  <th
+                    key={s.id}
+                    className="w-14 text-center px-0.5 align-bottom"
+                    title={`${s.type} · ${weekday} ${dayMonth} ${startTime}–${endTime}`}
+                  >
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[9px] text-gray-500">
+                        {weekday} {dayMonth}
+                      </span>
+                      <span className="text-[10px] font-medium">
+                        {startTime}
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {members.map((member) => {
+            {visibleMembers.map((member) => {
               const memberShifts = (data.assignments ?? [])
                 .filter((a) => a.teamMemberId === member.id)
                 .map((a) => a.shiftId);

@@ -28,6 +28,19 @@ const DEFAULT_WEIGHTS: AlgorithmWeights = {
 };
 
 /**
+ * Fisher-Yates shuffle. Randomizes iteration/tie-break order so the same
+ * member doesn't always win a contested shift on every run.
+ */
+function shuffle<T>(items: T[]): T[] {
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
  * Runs the assignment algorithm to assign team members to shifts.
  *
  * The algorithm operates in three phases:
@@ -112,7 +125,9 @@ export async function runAssignmentAlgorithm(
   });
 
   // Phase 1: Assign preferred shifts
-  for (const member of members) {
+  // Iteration order is shuffled so contested shifts don't always go to
+  // whichever member happens to be first in the input array.
+  for (const member of shuffle(members)) {
     const preferences = member.preferences
       .filter((p) => p.wantLevel === "WANT")
       .slice(0, 10); // Limit to top 10 preferences
@@ -193,7 +208,9 @@ export async function runAssignmentAlgorithm(
 
   for (const shift of unfilledShifts) {
     while ((state.shiftCoverage.get(shift.id) || 0) < shift.capacity) {
-      const candidates = members
+      // Shuffle before scoring so members tied on score.overall don't
+      // always resolve in the same order via the stable sort below.
+      const candidates = shuffle(members)
         .map((member) => {
           const memberAttrs =
             eventConfig.memberAttributes?.get(member.id) ??

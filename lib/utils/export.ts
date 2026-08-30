@@ -240,3 +240,80 @@ export function exportScheduleToPDF(
   const filename = `${processedData.eventName.replace(/\s+/g, "_")}_Schedule_${format(new Date(), "yyyyMMdd")}.pdf`;
   doc.save(filename);
 }
+
+interface DistributionAnalysisMember {
+  alias: string;
+  avatarId?: string;
+  assignedCount: number;
+  minShifts: number;
+  maxShifts: number;
+  violations: string[];
+}
+
+export function exportDistributionAnalysisToPDF(
+  eventName: string,
+  members: DistributionAnalysisMember[],
+) {
+  if (members.length === 0) {
+    throw new Error("No distribution data available to export");
+  }
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+  const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const totalViolations = members.reduce(
+    (sum, m) => sum + m.violations.length,
+    0,
+  );
+
+  doc.setFontSize(18);
+  doc.text(`${eventName} — Distribution Analysis`, 40, 40);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Generated on: ${timestamp}`, 40, 56);
+
+  doc.setFontSize(11);
+  doc.text(`Violations: ${totalViolations}`, 40, 72);
+
+  const tableData = members.map((m) => [
+    `${m.avatarId ?? ""} ${m.alias}`.trim(),
+    m.assignedCount,
+    m.minShifts,
+    m.maxShifts === Infinity ? "∞" : m.maxShifts,
+    m.violations.length > 0 ? m.violations.join("; ") : "None",
+  ]);
+
+  autoTable(doc, {
+    startY: 88,
+    head: [["Member", "Assigned", "Min", "Max", "Violations"]],
+    body: tableData,
+    theme: "striped",
+    styles: {
+      fontSize: 8,
+      cellPadding: 4,
+      overflow: "linebreak",
+      valign: "middle",
+    },
+    headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 8 },
+    margin: { left: 40, right: 40 },
+  });
+
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  const footerText = `Page {page} of ${pageCount} - Privacy-first shift management`;
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.text(
+      footerText.replace("{page}", String(i)),
+      pageWidth / 2,
+      pageHeight - 10,
+      { align: "center" },
+    );
+  }
+
+  const filename = `${eventName.replace(/\s+/g, "_")}_Distribution_Analysis_${format(new Date(), "yyyyMMdd")}.pdf`;
+  doc.save(filename);
+}

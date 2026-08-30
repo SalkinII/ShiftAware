@@ -486,7 +486,6 @@ components/
 │   ├── Identity/
 │   │   └── ProfileDetailCard.tsx      # Read-only member info on avatar click
 │   ├── SwapInterface/
-│   ├── AvailabilityHeatmap/
 │   └── ConflictWizard/
 ├── layout/
 └── ui/

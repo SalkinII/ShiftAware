@@ -237,7 +237,7 @@ Domain-level components in `components/features/`. Before building a new feature
 | `SwapRequestsPanel`                         | Admin swap queue (approve/decline); shown only in ASSIGNING/FINALIZED; calendar sidebar animates width when empty | Admin schedule                    |
 | `AlgorithmResultsModal`                     | Display algorithm preview results                         | Admin team (DistributionSettings) |
 | `SwapInterface`                             | Swap request workflow with conflict detection             | User calendar                     |
-| `AvailabilityHeatmap`                       | Member availability matrix                                | Admin team                        |
+| `DistributionControlCenter`                 | Eligibility heatmap + analysis table, click-to-assign, redistribute | Admin team ("Availability Heatmap" tab), `/admin/events/[id]/distribution` |
 | `ConflictWizard`                            | Conflict detection and resolution flow                    | Admin team                        |
 | `Identity/ProfileDetailCard`                | Read-only member profile card (avatar, alias, attributes) | Canvas sidebar, team views        |
 | `ShiftPropertiesPanel/ShiftPreferencePanel` | User preference three-state toggle (Want / Neutral / Don't want) on a shift | — | ✓ |

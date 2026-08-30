@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { exportScheduleToPDF } from "../lib/utils/export";
+import {
+  exportScheduleToPDF,
+  exportDistributionAnalysisToPDF,
+} from "../lib/utils/export";
 
 const textMock = vi.fn();
 const setFontSizeMock = vi.fn();
@@ -126,5 +129,64 @@ describe("exportScheduleToPDF", () => {
       (text as string).startsWith("Coverage:"),
     );
     expect(coverageLine?.[0]).toContain("Coverage:");
+  });
+});
+
+const sampleAnalysisMembers = [
+  {
+    id: "m1",
+    alias: "Alpha",
+    avatarId: "A",
+    assignedCount: 3,
+    minShifts: 2,
+    maxShifts: 5,
+    violations: [],
+  },
+  {
+    id: "m2",
+    alias: "Bravo",
+    avatarId: "B",
+    assignedCount: 1,
+    minShifts: 2,
+    maxShifts: 5,
+    violations: ["Below minimum (1/2)"],
+  },
+];
+
+describe("exportDistributionAnalysisToPDF", () => {
+  it("throws when no members are provided", () => {
+    expect(() =>
+      exportDistributionAnalysisToPDF("Starlight", []),
+    ).toThrow("No distribution data available to export");
+  });
+
+  it("builds a table row per member with assigned/min/max/violations", () => {
+    exportDistributionAnalysisToPDF("Starlight", sampleAnalysisMembers);
+
+    const [, tableCfg] = autoTableMock.mock.calls[0];
+    expect(tableCfg.body).toHaveLength(2);
+    expect(tableCfg.body[0]).toEqual(["A Alpha", 3, 2, 5, "None"]);
+    expect(tableCfg.body[1]).toEqual([
+      "B Bravo",
+      1,
+      2,
+      5,
+      "Below minimum (1/2)",
+    ]);
+  });
+
+  it("includes a violation count summary line", () => {
+    exportDistributionAnalysisToPDF("Starlight", sampleAnalysisMembers);
+    const summaryLine = textMock.mock.calls.find(([text]) =>
+      (text as string).startsWith("Violations:"),
+    );
+    expect(summaryLine?.[0]).toContain("1");
+  });
+
+  it("saves a filename derived from the event name", () => {
+    exportDistributionAnalysisToPDF("Starlight", sampleAnalysisMembers);
+    expect(saveMock).toHaveBeenCalledTimes(1);
+    expect(saveMock.mock.calls[0][0]).toContain("Starlight");
+    expect(saveMock.mock.calls[0][0]).toContain("Distribution_Analysis");
   });
 });

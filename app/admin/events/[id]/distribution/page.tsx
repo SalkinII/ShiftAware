@@ -22,7 +22,11 @@ export default async function DistributionPage({ params }: Props) {
         <span className="text-sm text-gray-500">{event.name}</span>
       </div>
       <Suspense fallback={<div>Loading...</div>}>
-        <DistributionControlCenter eventId={id} eventStatus={event.status} />
+        <DistributionControlCenter
+          eventId={id}
+          eventStatus={event.status}
+          eventName={event.name}
+        />
       </Suspense>
     </div>
   );

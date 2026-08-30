@@ -8,7 +8,7 @@ import { useEventContext } from "@/lib/contexts/EventContext";
 import { DistributionSettings } from "./components/DistributionSettings";
 import { MemberListByEvent } from "./components/MemberListByEvent";
 import { MemberManagement } from "./components/MemberManagement";
-import { AvailabilityHeatmap } from "@/components/features/AvailabilityHeatmap/AvailabilityHeatmap";
+import { DistributionControlCenter } from "../events/[id]/distribution/components/DistributionControlCenter";
 
 type TabType = "directory" | "members" | "allocation" | "heatmap";
 
@@ -89,7 +89,11 @@ export default function TeamPage() {
 
         {activeTab === "heatmap" && (
           selectedEventId ? (
-            <AvailabilityHeatmap eventId={selectedEventId} />
+            <DistributionControlCenter
+              eventId={selectedEventId}
+              eventStatus={selectedEvent?.status ?? ""}
+              eventName={selectedEvent?.name ?? ""}
+            />
           ) : (
             <Card className="p-6">
               <div className="text-center py-8 text-gray-500">

@@ -62,7 +62,7 @@ describe("getShiftDisplayInfo", () => {
   });
 });
 
-describe("AvailabilityHeatmap shift shape", () => {
+describe("Distribution heatmap shift shape", () => {
   it("ShiftSummary should include templateName when available", () => {
     // This documents the API contract — templateName should be a string
     const shift = {

@@ -99,10 +99,11 @@ For new panels, use the `GlassPanel` structure from DESIGN.md §8.
 | `LaneCalendar/sidebar/ShiftPropertiesPanel` | Edit shift, manage assignments    | ✓            | —            |
 | `AlgorithmResultsModal`                     | Display algorithm preview results | ✓            | —            |
 | `SwapInterface`                             | Swap request workflow             | —            | ✓            |
-| `AvailabilityHeatmap`                       | Member availability matrix        | ✓            | —            |
 | `ConflictWizard`                            | Conflict detection and resolution | ✓            | —            |
 | `Identity/ProfileDetailCard`                | Read-only member profile card     | ✓            | ✓            |
 | `ShiftPropertiesPanel/ShiftPreferencePanel` | Three-state preference toggle (Want/Neutral/Don't want); Neutral deletes the preference | — | ✓ |
+
+Distribution heatmap + analysis (`DistributionControlCenter`, `DistributionHeatmap`, `AnalysisTable`) lives under `app/admin/events/[id]/distribution/components/` — mounted event-scoped in the Team Management "Availability Heatmap" tab, and standalone at `/admin/events/[id]/distribution`. Superseded the old `components/features/AvailabilityHeatmap` (role-only eligibility, no click-to-assign) — that component and `GET /api/members/availability` were deleted.
 
 ---
 

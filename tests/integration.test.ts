@@ -244,28 +244,6 @@ describe("Integration Tests - Critical Flows", () => {
     });
   });
 
-  describe("Availability Heatmap Flow", () => {
-    it("should calculate and return availability matrix", async () => {
-      const availabilityResponse = await authenticatedFetch(
-        `${BASE_URL}/api/members/availability`,
-      );
-      expect(availabilityResponse.ok).toBe(true);
-
-      const data = await availabilityResponse.json();
-      expect(data).toHaveProperty("members");
-      expect(data).toHaveProperty("shifts");
-      expect(data).toHaveProperty("availability");
-      expect(data).toHaveProperty("summary");
-      expect(Array.isArray(data.members)).toBe(true);
-      expect(Array.isArray(data.shifts)).toBe(true);
-      expect(Array.isArray(data.availability)).toBe(true);
-      expect(data.availability.length).toBe(data.members.length);
-      if (data.shifts.length > 0 && data.members.length > 0) {
-        expect(data.availability[0].length).toBe(data.shifts.length);
-      }
-    });
-  });
-
   describe("Audit Log and Rollback Flow", () => {
     it("should create audit log entry and allow rollback", async () => {
       // Create a member to generate audit log

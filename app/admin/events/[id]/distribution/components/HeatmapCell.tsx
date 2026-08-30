@@ -32,7 +32,10 @@ export function HeatmapCell({ state, memberId, shiftId, selected, onToggle }: Pr
       className={`w-8 h-8 text-xs flex items-center justify-center border rounded
         ${CELL_STYLES[state]}
         ${selected ? "ring-2 ring-blue-500" : ""}`}
-      onClick={() => onToggle(memberId, shiftId, state)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle(memberId, shiftId, state);
+      }}
       title={`${state}`}
       disabled={state === "blocked"}
     >

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { unwrapApiResponse } from "@/lib/api-errors";
+import { exportDistributionAnalysisToPDF } from "@/lib/utils/export";
 
 interface AnalysisMember {
   id: string;
@@ -16,12 +17,14 @@ interface AnalysisMember {
 
 interface Props {
   eventId: string;
+  eventName: string;
   onMemberSelect: (id: string | null) => void;
   selectedMemberId: string | null;
 }
 
 export function AnalysisTable({
   eventId,
+  eventName,
   onMemberSelect,
   selectedMemberId,
 }: Props) {
@@ -52,6 +55,12 @@ export function AnalysisTable({
           />
           Violations only
         </label>
+        <button
+          onClick={() => exportDistributionAnalysisToPDF(eventName, data.members)}
+          className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+        >
+          Export PDF
+        </button>
       </div>
       <table className="text-xs w-full">
         <thead>

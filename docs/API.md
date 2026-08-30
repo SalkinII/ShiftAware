@@ -111,13 +111,6 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 **Body:** `{ "attributeDefinitionId": string, "value": string }`
 **Response:** `{ "data": TeamMemberAttribute }` (201)
 
-### `GET /api/members/availability`
-
-**Auth required:** Yes
-**Query params:** `eventId` (string, required)
-**Response:** Availability heatmap matrix (analytical — complex nested structure)
-**Notes:** Direct Prisma (complex analytical query). Not backed by service layer.
-
 ---
 
 ## Events
@@ -448,11 +441,6 @@ Previously soft-cancelled; now permanently removed consistent with the approved 
 ## Analytical Utilities
 
 These routes contain embedded business logic with direct Prisma access (not backed by service layer).
-
-### `GET /api/members/availability`
-
-Availability heatmap matrix by member and time slot. Complex analytical query.
-**Query params:** `eventId` (string, required)
 
 ### `GET /api/conflicts`
 

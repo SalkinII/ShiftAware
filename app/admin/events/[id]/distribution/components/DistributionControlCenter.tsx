@@ -7,9 +7,14 @@ import { AnalysisTable } from "./AnalysisTable";
 interface Props {
   eventId: string;
   eventStatus: string;
+  eventName: string;
 }
 
-export function DistributionControlCenter({ eventId, eventStatus }: Props) {
+export function DistributionControlCenter({
+  eventId,
+  eventStatus,
+  eventName,
+}: Props) {
   const [previewData, setPreviewData] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -87,6 +92,7 @@ export function DistributionControlCenter({ eventId, eventStatus }: Props) {
         />
         <AnalysisTable
           eventId={eventId}
+          eventName={eventName}
           onMemberSelect={setSelectedMemberId}
           selectedMemberId={selectedMemberId}
         />
