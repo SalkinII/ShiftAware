@@ -37,6 +37,7 @@ vi.mock("@/lib/db", () => {
       teamMember: { findMany: vi.fn() },
       event: { findUnique: vi.fn() },
       assignment: { findMany: vi.fn().mockResolvedValue([]) },
+      eventAttributeDefinition: { findMany: vi.fn().mockResolvedValue([]) },
     },
   };
 });
@@ -140,6 +141,22 @@ describe("assignment scoping", () => {
             expect.objectContaining({ memberId: "member-1", shift: expect.objectContaining({ id: "other-shift" }) }),
           ],
         }),
+      );
+    });
+
+    it("passes timeConstraintAttrNames from TIME_CONSTRAINT attribute definitions", async () => {
+      const { runAssignmentAlgorithm } = await import("@/lib/algorithm/optimizer");
+      (prisma.eventRegistration.findMany as any).mockResolvedValue([]);
+      (prisma.shift.findMany as any).mockResolvedValue([]);
+      (prisma.assignment.findMany as any).mockResolvedValue([]);
+      (prisma.eventAttributeDefinition.findMany as any).mockResolvedValue([{ name: "availability" }]);
+
+      await runAllocation("evt-1", true);
+
+      expect(runAssignmentAlgorithm).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ timeConstraintAttrNames: ["availability"] }),
       );
     });
   });

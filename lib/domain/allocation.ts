@@ -94,6 +94,12 @@ async function loadAllocationContext(
     },
   })) as CrossEventAssignment[];
 
+  const attrDefs = await prisma.eventAttributeDefinition.findMany({
+    where: { eventId, type: "TIME_CONSTRAINT" },
+    select: { name: true },
+  });
+  const timeConstraintAttrNames = attrDefs.map((d) => d.name);
+
   return {
     members,
     assignableShifts,
@@ -105,6 +111,7 @@ async function loadAllocationContext(
     allocationRules,
     memberAttributes,
     crossEventAssignments,
+    timeConstraintAttrNames,
   };
 }
 
@@ -122,6 +129,7 @@ export async function runAllocation(eventId: string, dryRun = false) {
     allocationRules,
     memberAttributes,
     crossEventAssignments,
+    timeConstraintAttrNames,
   } = await loadAllocationContext(eventId);
 
   const result = await runAssignmentAlgorithm(
@@ -136,6 +144,7 @@ export async function runAllocation(eventId: string, dryRun = false) {
       weights,
       memberAttributes,
       crossEventAssignments,
+      timeConstraintAttrNames,
       dryRun,
     },
   );
@@ -207,6 +216,7 @@ export async function redistributeScoped(
     allocationRules,
     memberAttributes,
     crossEventAssignments,
+    timeConstraintAttrNames,
   } = await loadAllocationContext(eventId, scope);
 
   const result = await runAssignmentAlgorithm(
@@ -221,6 +231,7 @@ export async function redistributeScoped(
       weights,
       memberAttributes,
       crossEventAssignments,
+      timeConstraintAttrNames,
       dryRun,
     },
   );

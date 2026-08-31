@@ -70,6 +70,11 @@ export const GET = withAuth(withErrorHandling(async (
     },
   });
 
+  const attributeDefinitions = await prisma.eventAttributeDefinition.findMany({
+    where: { eventId },
+    select: { id: true, name: true, type: true },
+  });
+
   return createSuccessResponse({
     shifts,
     members,
@@ -78,5 +83,6 @@ export const GET = withAuth(withErrorHandling(async (
     config,
     allocationRules,
     crossEventAssignments: crossEventRows.map((r) => ({ memberId: r.teamMemberId, shift: r.shift })),
+    attributeDefinitions,
   });
 }));

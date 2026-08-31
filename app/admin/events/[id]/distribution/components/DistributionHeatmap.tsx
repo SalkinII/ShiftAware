@@ -28,6 +28,7 @@ interface HeatmapData {
   };
   allocationRules?: import("@/lib/algorithm/types").AllocationRule[];
   crossEventAssignments?: { memberId: string; shift: { id: string; eventId: string; startTime: string; endTime: string } }[];
+  attributeDefinitions?: { id: string; name: string; type: string }[];
 }
 
 interface Props {
@@ -210,6 +211,10 @@ export function DistributionHeatmap({
     }
     return true;
   });
+
+  const timeConstraintAttrNames = (data.attributeDefinitions ?? [])
+    .filter((d) => d.type === "TIME_CONSTRAINT")
+    .map((d) => d.name);
 
   const canAssignConfig = {
     maxShiftsPerPerson:
@@ -400,7 +405,7 @@ export function DistributionHeatmap({
                       data.allocationRules ?? [],
                       allShiftsMap,
                       memberAttrs,
-                      [], // TODO(Task 7): replace with derived timeConstraintAttrNames
+                      timeConstraintAttrNames,
                     );
 
                     return (

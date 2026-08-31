@@ -322,4 +322,40 @@ describe("DistributionHeatmap", () => {
     const cell = await screen.findByTitle(/blocked/);
     expect(cell.title).toContain("another event");
   });
+
+  it("renders a blackout_window-blocked cell as blocked", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          members: [
+            {
+              id: "m1",
+              alias: "Alice",
+              attributes: {
+                availability: JSON.stringify({
+                  availabilityWindows: [],
+                  dailyBlackouts: [{ date: "2026-08-01", startHour: 0, endHour: 23 }],
+                }),
+              },
+            },
+          ],
+          attributeDefinitions: [{ id: "d1", name: "availability", type: "TIME_CONSTRAINT" }],
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    const cell = await screen.findByTitle(/blocked/);
+    expect(cell.title).toContain("blackout");
+  });
 });
