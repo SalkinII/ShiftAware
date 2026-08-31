@@ -12,10 +12,11 @@ export type MarkerNodeData = {
   readOnly?: boolean;
   onSave?: (text: string) => void | Promise<void>;
   onDelete?: () => void | Promise<void>;
+  onResizeEnd?: (event: unknown, params: { width: number; x?: number }) => void | Promise<void>;
 };
 
 function MarkerNodeComponent({ data, selected }: NodeProps) {
-  const { text, readOnly, onSave, onDelete } = data as MarkerNodeData;
+  const { text, readOnly, onSave, onDelete, onResizeEnd } = data as MarkerNodeData;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
 
@@ -33,6 +34,7 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
           handleStyle={{ width: 8, height: 24, borderRadius: 2 }}
           lineStyle={{ borderWidth: 0 }}
           keepAspectRatio={false}
+          onResizeEnd={onResizeEnd}
         />
       )}
       <div

@@ -288,6 +288,7 @@ function LaneCalendarCanvasInner(
     readOnly: effectiveReadOnly,
     onSave: effectiveReadOnly ? undefined : handleMarkerSave,
     onDelete: effectiveReadOnly ? undefined : handleMarkerDelete,
+    onResizeEnd: effectiveReadOnly ? undefined : handleResizeEnd,
   });
 
   const [nodes, setNodes] = useState<Node[]>([]);

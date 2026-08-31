@@ -15,6 +15,7 @@ export interface UseMarkerNodesOptions {
   readOnly?: boolean;
   onSave?: (markerId: string, text: string) => void | Promise<void>;
   onDelete?: (markerId: string) => void | Promise<void>;
+  onResizeEnd?: (nodeId: string, params: { width: number; x?: number }) => void | Promise<void>;
 }
 
 export function buildMarkerNodes(
@@ -23,7 +24,7 @@ export function buildMarkerNodes(
   eventStart: Date,
   options?: UseMarkerNodesOptions,
 ): Node[] {
-  const { readOnly = false, onSave, onDelete } = options ?? {};
+  const { readOnly = false, onSave, onDelete, onResizeEnd } = options ?? {};
   const laneIndex = lanes.findIndex((l) => l.templateId === null);
   if (laneIndex < 0) return [];
   const y = laneIndexToY(laneIndex);
@@ -46,6 +47,10 @@ export function buildMarkerNodes(
         readOnly,
         onSave: !readOnly && onSave ? (text: string) => onSave(marker.id, text) : undefined,
         onDelete: !readOnly && onDelete ? () => onDelete(marker.id) : undefined,
+        onResizeEnd:
+          !readOnly && onResizeEnd
+            ? (_e: unknown, p: { width: number; x?: number }) => onResizeEnd(nodeId, p)
+            : undefined,
       },
       style: { width, height: SHIFT_NODE_HEIGHT },
       draggable: !readOnly,
@@ -61,9 +66,9 @@ export function useMarkerNodes(
   eventStart: Date | null,
   options?: UseMarkerNodesOptions,
 ) {
-  const { readOnly = false, onSave, onDelete } = options ?? {};
+  const { readOnly = false, onSave, onDelete, onResizeEnd } = options ?? {};
   return useMemo(() => {
     if (!markers || !eventStart || lanes.length === 0) return [];
-    return buildMarkerNodes(markers, lanes, eventStart, { readOnly, onSave, onDelete });
-  }, [markers, lanes, eventStart, readOnly, onSave, onDelete]);
+    return buildMarkerNodes(markers, lanes, eventStart, { readOnly, onSave, onDelete, onResizeEnd });
+  }, [markers, lanes, eventStart, readOnly, onSave, onDelete, onResizeEnd]);
 }

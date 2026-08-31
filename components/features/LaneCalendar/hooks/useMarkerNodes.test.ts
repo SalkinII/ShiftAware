@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { buildMarkerNodes } from "./useMarkerNodes";
 import { UNASSIGNED_LANE_ID, type LaneConfig } from "@/lib/types/lane";
 import { LANE_HEIGHT } from "../utils/constants";
@@ -20,5 +20,30 @@ describe("buildMarkerNodes", () => {
     expect(nodes[0].id).toBe("marker-m1");
     expect(nodes[0].type).toBe("marker");
     expect(nodes[0].position.y).toBe(lanes.findIndex((l) => l.templateId === null) * LANE_HEIGHT);
+  });
+
+  it("wires onResizeEnd into node data so a resize actually reaches the caller's handler", () => {
+    const onResizeEnd = vi.fn();
+    const nodes = buildMarkerNodes(
+      [{ id: "m1", text: "Lunch", startTime: "2026-08-01T12:00:00Z", endTime: "2026-08-01T12:30:00Z" }],
+      lanes,
+      eventStart,
+      { onResizeEnd },
+    );
+    const data = nodes[0].data as any;
+    expect(typeof data.onResizeEnd).toBe("function");
+    data.onResizeEnd({}, { width: 200 });
+    expect(onResizeEnd).toHaveBeenCalledWith("marker-m1", { width: 200 });
+  });
+
+  it("omits onResizeEnd from node data when readOnly", () => {
+    const onResizeEnd = vi.fn();
+    const nodes = buildMarkerNodes(
+      [{ id: "m1", text: "Lunch", startTime: "2026-08-01T12:00:00Z", endTime: "2026-08-01T12:30:00Z" }],
+      lanes,
+      eventStart,
+      { onResizeEnd, readOnly: true },
+    );
+    expect((nodes[0].data as any).onResizeEnd).toBeUndefined();
   });
 });

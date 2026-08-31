@@ -5,8 +5,12 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { MarkerNode } from "../MarkerNode";
 
+let capturedResizerProps: any;
 vi.mock("@xyflow/react", () => ({
-  NodeResizer: () => null,
+  NodeResizer: (props: any) => {
+    capturedResizerProps = props;
+    return null;
+  },
 }));
 
 const baseData = { markerId: "m1", text: "Lunch break", onSave: vi.fn(), onDelete: vi.fn(), readOnly: false };
@@ -45,5 +49,18 @@ describe("MarkerNode", () => {
     fireEvent.click(screen.getByLabelText("Delete marker"));
     expect(data.onDelete).toHaveBeenCalled();
     vi.unstubAllGlobals();
+  });
+
+  it("wires NodeResizer's onResizeEnd through to data.onResizeEnd", () => {
+    const onResizeEnd = vi.fn();
+    render(<MarkerNode {...({ id: "marker-m1", data: { ...baseData, onResizeEnd }, selected: true } as any)} />);
+    capturedResizerProps.onResizeEnd({}, { width: 300 });
+    expect(onResizeEnd).toHaveBeenCalledWith({}, { width: 300 });
+  });
+
+  it("does not render NodeResizer when readOnly", () => {
+    capturedResizerProps = undefined;
+    render(<MarkerNode {...({ id: "marker-m1", data: { ...baseData, readOnly: true }, selected: true } as any)} />);
+    expect(capturedResizerProps).toBeUndefined();
   });
 });
