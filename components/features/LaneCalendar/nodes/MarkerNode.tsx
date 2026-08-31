@@ -1,9 +1,10 @@
 "use client";
 
 import { memo, useState } from "react";
-import { type NodeProps } from "@xyflow/react";
+import { type NodeProps, NodeResizer } from "@xyflow/react";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SNAP_PIXELS } from "../utils/constants";
 
 export type MarkerNodeData = {
   markerId: string;
@@ -24,15 +25,25 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-2 flex flex-col",
-        selected && "ring-2 ring-blue-400",
+    <>
+      {!readOnly && (
+        <NodeResizer
+          isVisible={selected}
+          minWidth={SNAP_PIXELS}
+          handleStyle={{ width: 8, height: 24, borderRadius: 2 }}
+          lineStyle={{ borderWidth: 0 }}
+          keepAspectRatio={false}
+        />
       )}
-      onClick={() => {
-        if (!readOnly) setEditing(true);
-      }}
-    >
+      <div
+        className={cn(
+          "w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-2 flex flex-col",
+          selected && "ring-2 ring-blue-400",
+        )}
+        onClick={() => {
+          if (!readOnly) setEditing(true);
+        }}
+      >
       {editing && !readOnly ? (
         <textarea
           autoFocus
@@ -59,7 +70,8 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
           <Trash2 size={12} />
         </button>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
