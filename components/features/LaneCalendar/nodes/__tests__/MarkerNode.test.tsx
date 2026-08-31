@@ -25,5 +25,25 @@ describe("MarkerNode", () => {
     render(<MarkerNode {...({ id: "marker-m1", data: { ...baseData, readOnly: true }, selected: false } as any)} />);
     fireEvent.click(screen.getByText("Lunch break"));
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Delete marker")).not.toBeInTheDocument();
+  });
+
+  it("confirms before deleting, and does not delete when the confirm is dismissed", () => {
+    const data = { ...baseData, onDelete: vi.fn() };
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    render(<MarkerNode {...({ id: "marker-m1", data, selected: false } as any)} />);
+    fireEvent.click(screen.getByLabelText("Delete marker"));
+    expect(window.confirm).toHaveBeenCalledWith("Delete this note?");
+    expect(data.onDelete).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("deletes when the confirm is accepted", () => {
+    const data = { ...baseData, onDelete: vi.fn() };
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    render(<MarkerNode {...({ id: "marker-m1", data, selected: false } as any)} />);
+    fireEvent.click(screen.getByLabelText("Delete marker"));
+    expect(data.onDelete).toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });

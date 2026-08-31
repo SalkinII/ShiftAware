@@ -52,7 +52,7 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
           className="self-end mt-1 text-gray-400 hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
-            onDelete();
+            if (confirm("Delete this note?")) onDelete();
           }}
           aria-label="Delete marker"
         >
