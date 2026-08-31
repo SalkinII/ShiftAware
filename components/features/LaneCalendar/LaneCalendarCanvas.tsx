@@ -26,10 +26,12 @@ import { type LaneConfig, UNASSIGNED_LANE_ID } from "@/lib/types/lane";
 import { LaneZoneNode } from "./nodes/LaneZoneNode";
 import { HourGridNode } from "./nodes/HourGridNode";
 import { type ShiftBlockData, ShiftBlockNode } from "./nodes/ShiftBlockNode";
+import { MarkerNode } from "./nodes/MarkerNode";
 import { TimeRulerPanel } from "./panels/TimeRulerPanel";
 import { LaneLabelPanel } from "./panels/LaneLabelPanel";
 import { useLaneNodes } from "./hooks/useLaneNodes";
 import { useShiftNodes, type ShiftLike } from "./hooks/useShiftNodes";
+import { useMarkerNodes, type MarkerLike } from "./hooks/useMarkerNodes";
 import { useCanvasActions } from "./hooks/useCanvasActions";
 import {
   MIN_ZOOM,
@@ -55,7 +57,7 @@ export function mergeNodes(
 ): Node[] {
   const currentShiftMap = new Map<string, Node>();
   for (const node of currentNodes) {
-    if (node.id.startsWith("shift-")) {
+    if (node.id.startsWith("shift-") || node.id.startsWith("marker-")) {
       currentShiftMap.set(node.id, node);
     }
   }
@@ -83,6 +85,7 @@ const nodeTypes = {
   laneZone: LaneZoneNode,
   hourGrid: HourGridNode,
   shiftBlock: ShiftBlockNode,
+  marker: MarkerNode,
 };
 
 /** Renders vertical alignment guide lines during shift drag */
@@ -119,6 +122,7 @@ function AlignmentGuides({ guides }: { guides: number[] }) {
 
 interface LaneCalendarCanvasProps {
   shifts: ShiftLike[] | null;
+  markers?: MarkerLike[] | null;
   lanes: LaneConfig[];
   eventStart: Date | null;
   eventEnd: Date | null;
@@ -148,6 +152,7 @@ export interface LaneCalendarCanvasHandle {
 function LaneCalendarCanvasInner(
   {
     shifts,
+    markers = null,
     lanes,
     eventStart,
     eventEnd,
@@ -253,6 +258,10 @@ function LaneCalendarCanvasInner(
     }
   }
 
+  // TODO(Task 14): replace with real implementations from useCanvasActions
+  const handleMarkerSave = useCallback(() => {}, []);
+  const handleMarkerDelete = useCallback(() => {}, []);
+
   const { fitView } = useReactFlow();
   const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);
   const canvasHeight = orderedLanes.length * LANE_HEIGHT;
@@ -265,16 +274,22 @@ function LaneCalendarCanvasInner(
     preferences,
   });
 
+  const markerNodes = useMarkerNodes(markers, orderedLanes, eventStart, {
+    readOnly: effectiveReadOnly,
+    onSave: effectiveReadOnly ? undefined : handleMarkerSave,
+    onDelete: effectiveReadOnly ? undefined : handleMarkerDelete,
+  });
+
   const [nodes, setNodes] = useState<Node[]>([]);
 
   const lastReorderCountRef = useRef(0);
 
-  // Merge shift nodes into current state, preserving React Flow position during drag
+  // Merge shift + marker nodes into current state, preserving React Flow position during drag
   useEffect(() => {
     const forceY = reorderCountRef.current !== lastReorderCountRef.current;
     lastReorderCountRef.current = reorderCountRef.current;
-    setNodes((current) => mergeNodes(current, laneNodes, shiftNodes, forceY));
-  }, [laneNodes, shiftNodes]);
+    setNodes((current) => mergeNodes(current, laneNodes, [...shiftNodes, ...markerNodes], forceY));
+  }, [laneNodes, shiftNodes, markerNodes]);
 
   // fitView only on initial load and event change — never on refetch
   const fitViewDoneRef = useRef<string | null>(null);

@@ -4,7 +4,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { LaneCalendarCanvas } from "../LaneCalendarCanvas";
+import { LaneCalendarCanvas, mergeNodes } from "../LaneCalendarCanvas";
 import { ToastProvider } from "@/components/ui/Toast";
 import { RULER_HEIGHT } from "../utils/constants";
 
@@ -92,5 +92,11 @@ describe("LaneCalendarCanvas — mobile lock banner layout", () => {
     expect(overlayWrapper.className).toMatch(/\babsolute\b/);
     expect(overlayWrapper.style.top).toBe(`${RULER_HEIGHT + 12}px`);
     expect(overlayWrapper.textContent).toContain("2 swaps pending");
+  });
+
+  it("preserves a marker node's ReactFlow-owned position across a refetch, same as a shift node", () => {
+    const current = [{ id: "marker-m1", position: { x: 999, y: 5 }, data: {}, type: "marker" }] as any;
+    const merged = mergeNodes(current, [], [{ id: "marker-m1", position: { x: 0, y: 5 }, data: { text: "new" }, type: "marker" }] as any);
+    expect(merged.find((n: any) => n.id === "marker-m1")?.position.x).toBe(999);
   });
 });
