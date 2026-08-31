@@ -42,6 +42,19 @@
   --color-success-800: hsl(145, 38%, 22%);
   --color-success-900: hsl(145, 28%, 14%);
 
+  /* Error - Red (added: was previously only defined in the now-deleted
+     dead tailwind.config.ts, so error-* classes rendered nothing at all) */
+  --color-error-50: hsl(0, 86%, 97%);
+  --color-error-100: hsl(0, 93%, 94%);
+  --color-error-200: hsl(0, 96%, 89%);
+  --color-error-300: hsl(0, 94%, 82%);
+  --color-error-400: hsl(0, 91%, 71%);
+  --color-error-500: hsl(0, 84%, 60%); /* Base */
+  --color-error-600: hsl(0, 72%, 51%);
+  --color-error-700: hsl(0, 74%, 42%);
+  --color-error-800: hsl(0, 70%, 35%);
+  --color-error-900: hsl(0, 63%, 31%);
+
   --color-violet-50: #edebff;
   --color-violet-100: #dddaff;
   --color-violet-200: #c4bcff;
