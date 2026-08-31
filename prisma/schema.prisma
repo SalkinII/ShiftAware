@@ -72,6 +72,7 @@ enum AttributeType {
   SELECT
   MULTISELECT
   TEXT
+  TIME_CONSTRAINT
 }
 
 enum RegistrationStatus {
