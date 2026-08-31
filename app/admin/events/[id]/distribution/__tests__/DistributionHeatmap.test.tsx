@@ -287,4 +287,39 @@ describe("DistributionHeatmap", () => {
 
     expect(onMemberSelect).toHaveBeenCalledWith("m1");
   });
+
+  it("renders a cross-event-conflicted cell as blocked", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          shifts: [{ ...heatmapData.shifts[0], eventId: "evt-1" }],
+          crossEventAssignments: [
+            {
+              memberId: "m1",
+              shift: {
+                id: "x",
+                eventId: "evt-2",
+                startTime: "2026-08-01T09:00:00.000Z",
+                endTime: "2026-08-01T12:00:00.000Z",
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    const cell = await screen.findByTitle(/blocked/);
+    expect(cell.title).toContain("another event");
+  });
 });

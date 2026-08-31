@@ -7,6 +7,7 @@ import { deriveCellState, CellState } from "../hooks/useCellState";
 import type { ShiftWithRelations, AssignmentState, Violation } from "@/lib/algorithm/types";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { CAN_ASSIGN_REASON_LABELS, CanAssignResult } from "@/lib/algorithm/can-assign";
+import { seedCrossEventConflicts } from "@/lib/algorithm/cross-event-conflicts";
 
 interface RedistributePreview {
   assignments: unknown[];
@@ -26,6 +27,7 @@ interface HeatmapData {
     minRestHours?: number;
   };
   allocationRules?: import("@/lib/algorithm/types").AllocationRule[];
+  crossEventAssignments?: { memberId: string; shift: { id: string; eventId: string; startTime: string; endTime: string } }[];
 }
 
 interface Props {
@@ -160,6 +162,21 @@ export function DistributionHeatmap({
   const shifts = data.shifts ?? [];
   const members = data.members ?? [];
   const allShiftsMap = new Map(shifts.map((s) => [s.id, s]));
+  const crossEventMemberShifts = new Map<string, string[]>();
+  seedCrossEventConflicts(
+    crossEventMemberShifts,
+    allShiftsMap,
+    (data.crossEventAssignments ?? []).map(({ memberId, shift }) => ({
+      memberId,
+      shift: {
+        ...shift,
+        preferences: [],
+        assignments: [],
+        requiredRoles: [],
+        event: { id: shift.eventId, startDate: shift.startTime, endDate: shift.endTime },
+      } as unknown as ShiftWithRelations,
+    })),
+  );
   const visibleShifts =
     shiftTypeFilter === "all"
       ? shifts
@@ -324,10 +341,14 @@ export function DistributionHeatmap({
               const memberShifts = (data.assignments ?? [])
                 .filter((a) => a.teamMemberId === member.id)
                 .map((a) => a.shiftId);
+              const combinedMemberShifts = [
+                ...memberShifts,
+                ...(crossEventMemberShifts.get(member.id) ?? []),
+              ];
 
               const state: AssignmentState = {
                 assignments: new Map(),
-                memberShifts: new Map([[member.id, memberShifts]]),
+                memberShifts: new Map([[member.id, combinedMemberShifts]]),
                 shiftCoverage: new Map(
                   shifts.map((s) => [
                     s.id,

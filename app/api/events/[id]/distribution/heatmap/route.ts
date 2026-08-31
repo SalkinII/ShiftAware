@@ -61,6 +61,15 @@ export const GET = withAuth(withErrorHandling(async (
     ? config.allocationRules
     : [];
 
+  const memberIds = registrations.map((r) => r.memberId);
+  const crossEventRows = await prisma.assignment.findMany({
+    where: { teamMemberId: { in: memberIds }, shift: { eventId: { not: eventId } } },
+    select: {
+      teamMemberId: true,
+      shift: { select: { id: true, eventId: true, startTime: true, endTime: true } },
+    },
+  });
+
   return createSuccessResponse({
     shifts,
     members,
@@ -68,5 +77,6 @@ export const GET = withAuth(withErrorHandling(async (
     preferences,
     config,
     allocationRules,
+    crossEventAssignments: crossEventRows.map((r) => ({ memberId: r.teamMemberId, shift: r.shift })),
   });
 }));
