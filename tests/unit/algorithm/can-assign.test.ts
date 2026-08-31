@@ -33,7 +33,7 @@ describe("canAssign", () => {
     const state = makeState();
     state.memberShifts.set("member-1", []);
     state.shiftCoverage.set("shift-1", 0);
-    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map());
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map(), []);
     expect(result.eligible).toBe(true);
   });
 
@@ -41,7 +41,7 @@ describe("canAssign", () => {
     const state = makeState();
     state.memberShifts.set("member-1", ["s1", "s2", "s3"]);
     state.shiftCoverage.set("shift-1", 0);
-    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map());
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map(), []);
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe("max_shifts");
   });
@@ -50,7 +50,7 @@ describe("canAssign", () => {
     const state = makeState();
     state.memberShifts.set("member-1", []);
     state.shiftCoverage.set("shift-1", 3); // capacity is 3
-    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map());
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map(), []);
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe("capacity");
   });
@@ -64,7 +64,7 @@ describe("canAssign", () => {
       attribute: "role", operator: "EQUALS", value: "medic",
     }];
     const memberAttrs = new Map([["role", "driver"]]); // doesn't match
-    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
+    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs, []);
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe("filter_rule");
   });
@@ -78,7 +78,7 @@ describe("canAssign", () => {
       attribute: "role", operator: "EQUALS", value: "medic",
     }];
     const memberAttrs = new Map([["role", "medic"]]);
-    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
+    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs, []);
     expect(result.eligible).toBe(true);
   });
 
@@ -93,7 +93,7 @@ describe("canAssign", () => {
     }];
     const memberAttrs = new Map([["experience", "junior"]]); // doesn't satisfy BALANCE
     // canAssign should NOT block for BALANCE rules — handled separately
-    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
+    const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs, []);
     expect(result.eligible).toBe(true);
   });
 
@@ -103,7 +103,7 @@ describe("canAssign", () => {
     state.shiftCoverage.set("shift-1", 0);
     const otherShift = { ...baseShift, id: "other-shift", eventId: "evt-1" } as unknown as ShiftWithRelations;
     const allShiftsMap = new Map([[baseShift.id, baseShift], ["other-shift", otherShift]]);
-    const result = canAssign("member-1", { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations, state, baseConfig, noRules, allShiftsMap, new Map());
+    const result = canAssign("member-1", { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations, state, baseConfig, noRules, allShiftsMap, new Map(), []);
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe("time_conflict");
   });
@@ -115,8 +115,44 @@ describe("canAssign", () => {
     const otherEventShift = { ...baseShift, id: "other-event-shift", eventId: "evt-2" } as unknown as ShiftWithRelations;
     const shiftInEventOne = { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations;
     const allShiftsMap = new Map([[baseShift.id, shiftInEventOne], ["other-event-shift", otherEventShift]]);
-    const result = canAssign("member-1", shiftInEventOne, state, baseConfig, noRules, allShiftsMap, new Map());
+    const result = canAssign("member-1", shiftInEventOne, state, baseConfig, noRules, allShiftsMap, new Map(), []);
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe("cross_event_conflict");
+  });
+
+  it("blocks with outside_availability when the member's window excludes the shift", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const memberAttrs = new Map([
+      ["availability", JSON.stringify({
+        availabilityWindows: [{ arriveAfter: "2026-08-02T00:00:00Z", leaveBefore: "2026-08-03T00:00:00Z" }],
+        dailyBlackouts: [],
+      })],
+    ]);
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), memberAttrs, ["availability"]);
+    expect(result).toEqual({ eligible: false, reason: "outside_availability" });
+  });
+
+  it("blocks with blackout_window when the shift overlaps a blackout", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const memberAttrs = new Map([
+      ["availability", JSON.stringify({
+        availabilityWindows: [],
+        dailyBlackouts: [{ date: "2026-08-01", startHour: 8, endHour: 12 }],
+      })],
+    ]);
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), memberAttrs, ["availability"]);
+    expect(result).toEqual({ eligible: false, reason: "blackout_window" });
+  });
+
+  it("does not block when the member has no TIME_CONSTRAINT value set", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []);
+    state.shiftCoverage.set("shift-1", 0);
+    const result = canAssign("member-1", baseShift, state, baseConfig, noRules, new Map([[baseShift.id, baseShift]]), new Map(), ["availability"]);
+    expect(result.eligible).toBe(true);
   });
 });

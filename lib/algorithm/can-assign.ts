@@ -2,6 +2,7 @@
 import type { AssignmentState, AllocationRule, ShiftWithRelations } from "./types";
 import { validateNoOverlaps } from "./validator";
 import { evaluateRule, getFilterRules } from "./rule-validator";
+import { evaluateTimeConstraint, type TimeConstraintValue } from "./time-constraint";
 
 export interface CanAssignConfig {
   maxShiftsPerPerson: number;
@@ -10,7 +11,14 @@ export interface CanAssignConfig {
 
 export interface CanAssignResult {
   eligible: boolean;
-  reason?: "max_shifts" | "time_conflict" | "cross_event_conflict" | "filter_rule" | "capacity";
+  reason?:
+    | "max_shifts"
+    | "time_conflict"
+    | "cross_event_conflict"
+    | "filter_rule"
+    | "capacity"
+    | "outside_availability"
+    | "blackout_window";
 }
 
 export const CAN_ASSIGN_REASON_LABELS: Record<
@@ -22,6 +30,8 @@ export const CAN_ASSIGN_REASON_LABELS: Record<
   cross_event_conflict: "is already booked for an overlapping or too-close shift in another event",
   filter_rule: "doesn't meet a required attribute for this shift type",
   capacity: "would exceed this shift's capacity",
+  outside_availability: "is not present during this shift's arrival/departure window",
+  blackout_window: "has a blackout period overlapping this shift",
 };
 
 export function canAssign(
@@ -32,6 +42,7 @@ export function canAssign(
   rules: AllocationRule[],
   allShiftsMap: Map<string, ShiftWithRelations>,
   memberAttrs: Map<string, string>,
+  timeConstraintAttrNames: string[],
 ): CanAssignResult {
   // 1. Max shifts cap
   const memberShiftCount = (state.memberShifts.get(memberId) ?? []).length;
@@ -66,6 +77,19 @@ export function canAssign(
   const filterRules = getFilterRules(rules).filter((r) => r.shiftType === shiftType);
   if (filterRules.length > 0 && !filterRules.every((rule) => evaluateRule(rule, memberAttrs))) {
     return { eligible: false, reason: "filter_rule" };
+  }
+
+  // 5. Time-constraint attributes — hard block.
+  for (const attrName of timeConstraintAttrNames) {
+    const raw = memberAttrs.get(attrName);
+    if (!raw) continue;
+    const parsed: TimeConstraintValue = JSON.parse(raw);
+    const result = evaluateTimeConstraint(
+      parsed,
+      new Date(shift.startTime),
+      new Date(shift.endTime),
+    );
+    if (!result.ok) return { eligible: false, reason: result.reason };
   }
 
   return { eligible: true };

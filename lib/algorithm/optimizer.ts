@@ -83,6 +83,7 @@ export async function runAssignmentAlgorithm(
     weights?: AlgorithmWeights;
     dryRun?: boolean;
     crossEventAssignments?: CrossEventAssignment[];
+    timeConstraintAttrNames?: string[];
   },
 ): Promise<AlgorithmResult> {
   const weights = eventConfig.weights || DEFAULT_WEIGHTS;
@@ -150,6 +151,7 @@ export async function runAssignmentAlgorithm(
         allocationRules,
         allShiftsMap,
         memberAttrs,
+        eventConfig.timeConstraintAttrNames ?? [],
       );
       if (!eligible) continue;
 
@@ -227,6 +229,7 @@ export async function runAssignmentAlgorithm(
             allocationRules,
             allShiftsMap,
             memberAttrs,
+            eventConfig.timeConstraintAttrNames ?? [],
           );
           if (!eligible) return null;
 

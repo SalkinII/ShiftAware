@@ -400,6 +400,7 @@ export function DistributionHeatmap({
                       data.allocationRules ?? [],
                       allShiftsMap,
                       memberAttrs,
+                      [], // TODO(Task 7): replace with derived timeConstraintAttrNames
                     );
 
                     return (

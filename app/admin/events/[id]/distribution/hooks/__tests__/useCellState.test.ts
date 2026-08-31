@@ -44,6 +44,7 @@ describe("deriveCellState", () => {
       [],
       allShiftsMap,
       new Map(),
+      [],
     );
 
     expect(result).toEqual({ state: "eligible" });
@@ -64,6 +65,7 @@ describe("deriveCellState", () => {
       [],
       allShiftsMap,
       new Map(),
+      [],
     );
 
     expect(result).toEqual({ state: "blocked", reason: "max_shifts" });
@@ -84,6 +86,7 @@ describe("deriveCellState", () => {
       [],
       allShiftsMap,
       new Map(),
+      [],
     );
 
     expect(result).toEqual({ state: "conflict", reason: "max_shifts" });

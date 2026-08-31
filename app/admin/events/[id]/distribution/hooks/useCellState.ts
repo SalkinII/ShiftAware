@@ -18,6 +18,7 @@ export function deriveCellState(
   rules: AllocationRule[],
   allShiftsMap: Map<string, ShiftWithRelations>,
   memberAttrs: Map<string, string>,
+  timeConstraintAttrNames: string[],
 ): CellStateResult {
   const { eligible, reason } = canAssign(
     memberId,
@@ -27,6 +28,7 @@ export function deriveCellState(
     rules,
     allShiftsMap,
     memberAttrs,
+    timeConstraintAttrNames,
   );
   if (isAssigned) {
     return eligible ? { state: "assigned" } : { state: "conflict", reason };
