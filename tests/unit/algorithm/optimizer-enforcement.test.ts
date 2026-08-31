@@ -70,4 +70,29 @@ describe("optimizer enforcement", () => {
     );
     expect(result.assignments.filter((a) => a.teamMemberId === "m1")).toHaveLength(0);
   });
+
+  it("skips a member whose cross-event assignment overlaps their only preferred shift", async () => {
+    const crossEventShift = makeShift("other-event-shift", {
+      eventId: "evt-2",
+      startTime: new Date("2026-08-01T08:00:00Z"),
+      endTime: new Date("2026-08-01T16:00:00Z"),
+    });
+    const shifts = [
+      makeShift("s1", {
+        eventId: "evt-1",
+        startTime: new Date("2026-08-01T09:00:00Z"),
+        endTime: new Date("2026-08-01T11:00:00Z"),
+      }),
+    ];
+    const member = makeMember("m1", ["s1"]);
+    member.preferences = [{ shiftId: "s1", wantLevel: "WANT", shift: shifts[0] }] as any;
+
+    const result = await runAssignmentAlgorithm([member], shifts, {
+      minShiftsPerPerson: 0,
+      coreShifts: [],
+      crossEventAssignments: [{ memberId: "m1", shift: crossEventShift }],
+    } as any);
+
+    expect(result.assignments).toHaveLength(0);
+  });
 });

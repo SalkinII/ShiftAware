@@ -36,7 +36,7 @@ vi.mock("@/lib/db", () => {
       },
       teamMember: { findMany: vi.fn() },
       event: { findUnique: vi.fn() },
-      assignment: { findMany: vi.fn() },
+      assignment: { findMany: vi.fn().mockResolvedValue([]) },
     },
   };
 });
@@ -118,6 +118,29 @@ describe("assignment scoping", () => {
         }),
       );
       expect(prisma.teamMember.findMany).not.toHaveBeenCalled();
+    });
+
+    it("passes crossEventAssignments from other-event assignments into runAssignmentAlgorithm", async () => {
+      const { runAssignmentAlgorithm } = await import("@/lib/algorithm/optimizer");
+      (prisma.eventRegistration.findMany as any).mockResolvedValue([
+        { member: { id: "member-1", preferences: [], assignments: [] } },
+      ]);
+      (prisma.shift.findMany as any).mockResolvedValue([]);
+      (prisma.assignment.findMany as any).mockResolvedValue([
+        { teamMemberId: "member-1", shift: { id: "other-shift", eventId: "evt-2", startTime: new Date(), endTime: new Date() } },
+      ]);
+
+      await runAllocation("evt-1", true);
+
+      expect(runAssignmentAlgorithm).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          crossEventAssignments: [
+            expect.objectContaining({ memberId: "member-1", shift: expect.objectContaining({ id: "other-shift" }) }),
+          ],
+        }),
+      );
     });
   });
 

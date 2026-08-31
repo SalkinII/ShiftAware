@@ -21,6 +21,7 @@ import {
   enforceBalanceReservation,
 } from "./rule-validator";
 import { canAssign } from "./can-assign";
+import { seedCrossEventConflicts, type CrossEventAssignment } from "./cross-event-conflicts";
 
 const DEFAULT_WEIGHTS: AlgorithmWeights = {
   preferenceMatch: 0.7,
@@ -81,6 +82,7 @@ export async function runAssignmentAlgorithm(
     memberAttributes?: Map<string, Map<string, string>>;
     weights?: AlgorithmWeights;
     dryRun?: boolean;
+    crossEventAssignments?: CrossEventAssignment[];
   },
 ): Promise<AlgorithmResult> {
   const weights = eventConfig.weights || DEFAULT_WEIGHTS;
@@ -109,6 +111,8 @@ export async function runAssignmentAlgorithm(
   members.forEach((member) => {
     state.memberShifts.set(member.id, []);
   });
+
+  seedCrossEventConflicts(state.memberShifts, allShiftsMap, eventConfig.crossEventAssignments ?? []);
 
   const balanceRulesAll = getBalanceRules(allocationRules);
   shifts.forEach((shift) => {

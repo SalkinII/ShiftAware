@@ -27,6 +27,7 @@ vi.mock("@/lib/db", () => {
       shift: { findMany: vi.fn().mockResolvedValue([]) },
       event: { findUnique: vi.fn() },
       teamMember: { findMany: vi.fn() },
+      assignment: { findMany: vi.fn().mockResolvedValue([]) },
     },
   };
 });

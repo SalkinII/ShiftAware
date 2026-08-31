@@ -4,6 +4,7 @@ import { EventRepository } from "@/lib/repositories/event.repository";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import { assertEventStatusAllows } from "@/lib/domain/event-status";
 import { runAssignmentAlgorithm } from "@/lib/algorithm/optimizer";
+import type { CrossEventAssignment } from "@/lib/algorithm/cross-event-conflicts";
 
 const assignmentRepo = new AssignmentRepository();
 const eventRepo = new EventRepository();
@@ -77,6 +78,22 @@ async function loadAllocationContext(
     memberAttributes.set(member.id, attrMap);
   }
 
+  const memberIds = members.map((m) => m.id);
+  const crossEventRows = await prisma.assignment.findMany({
+    where: { teamMemberId: { in: memberIds }, shift: { eventId: { not: eventId } } },
+    include: { shift: true },
+  });
+  const crossEventAssignments: CrossEventAssignment[] = crossEventRows.map((a) => ({
+    memberId: a.teamMemberId,
+    shift: {
+      ...a.shift,
+      preferences: [],
+      assignments: [],
+      requiredRoles: [],
+      event: { id: a.shift.eventId, startDate: a.shift.startTime, endDate: a.shift.endTime },
+    },
+  })) as CrossEventAssignment[];
+
   return {
     members,
     assignableShifts,
@@ -87,6 +104,7 @@ async function loadAllocationContext(
     maxShiftsPerPerson,
     allocationRules,
     memberAttributes,
+    crossEventAssignments,
   };
 }
 
@@ -103,6 +121,7 @@ export async function runAllocation(eventId: string, dryRun = false) {
     maxShiftsPerPerson,
     allocationRules,
     memberAttributes,
+    crossEventAssignments,
   } = await loadAllocationContext(eventId);
 
   const result = await runAssignmentAlgorithm(
@@ -116,6 +135,7 @@ export async function runAllocation(eventId: string, dryRun = false) {
       allocationRules,
       weights,
       memberAttributes,
+      crossEventAssignments,
       dryRun,
     },
   );
@@ -186,6 +206,7 @@ export async function redistributeScoped(
     maxShiftsPerPerson,
     allocationRules,
     memberAttributes,
+    crossEventAssignments,
   } = await loadAllocationContext(eventId, scope);
 
   const result = await runAssignmentAlgorithm(
@@ -199,6 +220,7 @@ export async function redistributeScoped(
       allocationRules,
       weights,
       memberAttributes,
+      crossEventAssignments,
       dryRun,
     },
   );
