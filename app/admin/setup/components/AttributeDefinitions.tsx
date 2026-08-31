@@ -235,6 +235,7 @@ export function AttributeDefinitions() {
                 <option value="SELECT">Single Select</option>
                 <option value="MULTISELECT">Multi Select</option>
                 <option value="TEXT">Free Text</option>
+                <option value="TIME_CONSTRAINT">Availability Window</option>
               </Select>
               <div className="flex items-center gap-2 pt-6">
                 <input

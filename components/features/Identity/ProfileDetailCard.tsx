@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { EmojiPicker } from "@/components/ui/EmojiPicker";
 import { useToast } from "@/components/ui/Toast";
+import { AttributeValueField } from "./AttributeValueField";
 interface ProfileMember {
   id?: string;
   alias: string;
@@ -20,7 +21,7 @@ interface AttributeDefinition {
   id: string;
   name: string;
   label: string;
-  type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT";
+  type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT" | "TIME_CONSTRAINT";
   required: boolean;
   options?: string[];
 }
@@ -37,22 +38,37 @@ interface ProfileDetailCardProps {
 
 function AttributeList({
   attributes,
+  definitions = [],
 }: {
   attributes: { name: string; value: string }[];
+  definitions?: AttributeDefinition[];
 }) {
   return (
     <div className="space-y-1">
-      {attributes.map((attr) => (
-        <div
-          key={attr.name}
-          className="flex justify-between items-center px-3 py-1.5 bg-gray-50 rounded-lg"
-        >
-          <span className="text-xs font-medium text-gray-600">
-            {humanize(attr.name)}
-          </span>
-          <span className="text-xs font-bold text-gray-900">{attr.value}</span>
-        </div>
-      ))}
+      {attributes.map((attr) => {
+        const def = definitions.find((d) => d.name === attr.name);
+        if (def?.type === "TIME_CONSTRAINT") {
+          return (
+            <div key={attr.name} className="px-3 py-1.5 bg-gray-50 rounded-lg">
+              <span className="text-xs font-medium text-gray-600 block mb-1">
+                {humanize(attr.name)}
+              </span>
+              <AttributeValueField attr={def} value={attr.value} readOnly />
+            </div>
+          );
+        }
+        return (
+          <div
+            key={attr.name}
+            className="flex justify-between items-center px-3 py-1.5 bg-gray-50 rounded-lg"
+          >
+            <span className="text-xs font-medium text-gray-600">
+              {humanize(attr.name)}
+            </span>
+            <span className="text-xs font-bold text-gray-900">{attr.value}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -202,54 +218,13 @@ export function ProfileDetailCard({
                     <span className="text-red-500 ml-1">*</span>
                   )}
                 </label>
-                {attr.type === "BOOLEAN" && (
-                  <input
-                    type="checkbox"
-                    checked={(attributeValues[attr.name] as boolean) || false}
-                    onChange={(e) =>
-                      setAttributeValues((prev) => ({
-                        ...prev,
-                        [attr.name]: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
-                )}
-                {attr.type === "TEXT" && (
-                  <Input
-                    value={(attributeValues[attr.name] as string) || ""}
-                    onChange={(e) =>
-                      setAttributeValues((prev) => ({
-                        ...prev,
-                        [attr.name]: e.target.value,
-                      }))
-                    }
-                    className="text-sm"
-                  />
-                )}
-                {(attr.type === "SELECT" || attr.type === "MULTISELECT") && (
-                  <select
-                    value={
-                      Array.isArray(attributeValues[attr.name])
-                        ? (attributeValues[attr.name] as string[])[0]
-                        : (attributeValues[attr.name] as string) || ""
-                    }
-                    onChange={(e) =>
-                      setAttributeValues((prev) => ({
-                        ...prev,
-                        [attr.name]: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                  >
-                    <option value="">Select...</option>
-                    {(attr.options || []).map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                <AttributeValueField
+                  attr={attr}
+                  value={attributeValues[attr.name]}
+                  onChange={(v) =>
+                    setAttributeValues((prev) => ({ ...prev, [attr.name]: v }))
+                  }
+                />
               </div>
             ))}
           </div>
@@ -261,7 +236,7 @@ export function ProfileDetailCard({
             <p className="text-xs font-black uppercase tracking-widest text-gray-400 text-center">
               Attributes
             </p>
-            <AttributeList attributes={displayMember.attributes} />
+            <AttributeList attributes={displayMember.attributes} definitions={attributeDefinitions} />
           </div>
         )
       )}

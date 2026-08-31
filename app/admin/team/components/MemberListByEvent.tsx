@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
+import { AttributeValueField } from "@/components/features/Identity/AttributeValueField";
 import {
   CreateProfileForm,
   type ProfileData,
@@ -48,7 +49,7 @@ export function MemberListByEvent({
       id: string;
       name: string;
       label: string;
-      type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT";
+      type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT" | "TIME_CONSTRAINT";
       required: boolean;
       options?: string[];
     }>
@@ -472,76 +473,13 @@ export function MemberListByEvent({
                       <span className="text-red-500 ml-1">*</span>
                     )}
                   </label>
-                  {attr.type === "BOOLEAN" && (
-                    <input
-                      type="checkbox"
-                      checked={attributeValues[attr.name] || false}
-                      onChange={(e) =>
-                        setAttributeValues((prev) => ({
-                          ...prev,
-                          [attr.name]: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded"
-                    />
-                  )}
-                  {attr.type === "TEXT" && (
-                    <input
-                      type="text"
-                      value={attributeValues[attr.name] || ""}
-                      onChange={(e) =>
-                        setAttributeValues((prev) => ({
-                          ...prev,
-                          [attr.name]: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                  )}
-                  {attr.type === "SELECT" && (
-                    <select
-                      value={attributeValues[attr.name] || ""}
-                      onChange={(e) =>
-                        setAttributeValues((prev) => ({
-                          ...prev,
-                          [attr.name]: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                      <option value="">Select...</option>
-                      {attr.options?.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  {attr.type === "MULTISELECT" && (
-                    <div className="space-y-1">
-                      {attr.options?.map((opt) => (
-                        <label key={opt} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={(
-                              attributeValues[attr.name] || []
-                            ).includes(opt)}
-                            onChange={(e) => {
-                              const current = attributeValues[attr.name] || [];
-                              setAttributeValues((prev) => ({
-                                ...prev,
-                                [attr.name]: e.target.checked
-                                  ? [...current, opt]
-                                  : current.filter((v: string) => v !== opt),
-                              }));
-                            }}
-                            className="w-4 h-4 text-primary-600 border-gray-300 rounded"
-                          />
-                          <span className="text-sm">{opt}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                  <AttributeValueField
+                    attr={attr}
+                    value={attributeValues[attr.name]}
+                    onChange={(v) =>
+                      setAttributeValues((prev) => ({ ...prev, [attr.name]: v }))
+                    }
+                  />
                 </div>
               ))}
             </div>

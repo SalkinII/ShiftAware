@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmojiPicker } from "@/components/ui/EmojiPicker";
+import { AttributeValueField } from "@/components/features/Identity/AttributeValueField";
 interface CreateProfileFormProps {
   onSubmit: (profileData: ProfileData) => void;
   defaultEventId?: string;
@@ -26,7 +27,7 @@ interface AttributeDefinition {
   id: string;
   name: string;
   label: string;
-  type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT";
+  type: "BOOLEAN" | "SELECT" | "MULTISELECT" | "TEXT" | "TIME_CONSTRAINT";
   required: boolean;
   options?: string[];
 }
@@ -170,66 +171,11 @@ export function CreateProfileForm({
                     <span className="text-red-500 ml-1">*</span>
                   )}
                 </label>
-                {attr.type === "BOOLEAN" && (
-                  <input
-                    type="checkbox"
-                    checked={formData.attributes?.[attr.name] || false}
-                    onChange={(e) =>
-                      handleAttributeChange(attr.name, e.target.checked)
-                    }
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                  />
-                )}
-                {attr.type === "TEXT" && (
-                  <Input
-                    value={formData.attributes?.[attr.name] || ""}
-                    onChange={(e) =>
-                      handleAttributeChange(attr.name, e.target.value)
-                    }
-                    required={attr.required}
-                  />
-                )}
-                {attr.type === "SELECT" && (
-                  <select
-                    value={formData.attributes?.[attr.name] || ""}
-                    onChange={(e) =>
-                      handleAttributeChange(attr.name, e.target.value)
-                    }
-                    required={attr.required}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="">Select...</option>
-                    {attr.options?.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {attr.type === "MULTISELECT" && (
-                  <div className="space-y-2">
-                    {attr.options?.map((opt) => (
-                      <label key={opt} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={(
-                            formData.attributes?.[attr.name] || []
-                          ).includes(opt)}
-                          onChange={(e) => {
-                            const current =
-                              formData.attributes?.[attr.name] || [];
-                            const updated = e.target.checked
-                              ? [...current, opt]
-                              : current.filter((v: string) => v !== opt);
-                            handleAttributeChange(attr.name, updated);
-                          }}
-                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                        />
-                        <span className="text-sm">{opt}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
+                <AttributeValueField
+                  attr={attr}
+                  value={formData.attributes?.[attr.name]}
+                  onChange={(v) => handleAttributeChange(attr.name, v)}
+                />
               </div>
             ))
           )}

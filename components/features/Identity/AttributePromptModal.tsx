@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import type { AttributeDefinitionLike } from "@/lib/utils/attribute-check";
+import { AttributeValueField } from "./AttributeValueField";
 
 interface AttributePromptModalProps {
   definitions: AttributeDefinitionLike[];
@@ -52,59 +52,11 @@ export function AttributePromptModal({
                 {attr.label}
                 {attr.required && <span className="text-red-500 ml-1">*</span>}
               </label>
-              {attr.type === "BOOLEAN" && (
-                <input
-                  type="checkbox"
-                  checked={(values[attr.name] as boolean) ?? false}
-                  onChange={(e) => handleChange(attr.name, e.target.checked)}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-              )}
-              {attr.type === "TEXT" && (
-                <Input
-                  value={(values[attr.name] as string) ?? ""}
-                  onChange={(e) => handleChange(attr.name, e.target.value)}
-                  required={attr.required}
-                />
-              )}
-              {attr.type === "SELECT" && (
-                <select
-                  value={(values[attr.name] as string) ?? ""}
-                  onChange={(e) => handleChange(attr.name, e.target.value)}
-                  required={attr.required}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Select...</option>
-                  {attr.options?.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {attr.type === "MULTISELECT" && (
-                <div className="space-y-2">
-                  {attr.options?.map((opt) => (
-                    <label key={opt} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={(
-                          (values[attr.name] as string[]) || []
-                        ).includes(opt)}
-                        onChange={(e) => {
-                          const current = (values[attr.name] as string[]) || [];
-                          const updated = e.target.checked
-                            ? [...current, opt]
-                            : current.filter((v) => v !== opt);
-                          handleChange(attr.name, updated);
-                        }}
-                        className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                      />
-                      <span className="text-sm">{opt}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+              <AttributeValueField
+                attr={attr as any}
+                value={values[attr.name]}
+                onChange={(v) => handleChange(attr.name, v)}
+              />
             </div>
           ))}
 
