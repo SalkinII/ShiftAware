@@ -49,6 +49,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import type { MarkerLike } from "@/components/features/LaneCalendar/hooks/useMarkerNodes";
+import { AddMarkerPill } from "@/components/features/LaneCalendar/AddMarkerPill";
 
 // ssr:false prevents Next.js from server-rendering React Flow, which uses
 // browser-only APIs (ResizeObserver, window) unavailable in the Node.js runtime.
@@ -202,13 +204,31 @@ export default function ShiftsPage() {
     enabled: !!selectedEventId,
   });
 
+  const {
+    data: cachedMarkers,
+    refetch: refetchMarkers,
+  } = useCache<MarkerLike[]>({
+    key: selectedEventId ? `markers-${selectedEventId}` : "markers-none",
+    fetchFn: async () => {
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/markers?eventId=${selectedEventId}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return unwrapApiResponse<MarkerLike[]>(json);
+    },
+    enabled: !!selectedEventId,
+  });
+  const markers = Array.isArray(cachedMarkers) ? cachedMarkers : [];
+
   const handleShiftCreated = useCallback(() => {
     refetchShifts();
-  }, [refetchShifts]);
+    refetchMarkers();
+  }, [refetchShifts, refetchMarkers]);
 
   const handleShiftUpdated = useCallback(() => {
     refetchShifts();
-  }, [refetchShifts]);
+    refetchMarkers();
+  }, [refetchShifts, refetchMarkers]);
 
   // Fetch templates for the selected event to derive lanes
   const { data: eventTemplates } = useCache<any[]>({
@@ -768,10 +788,13 @@ export default function ShiftsPage() {
         {viewMode === "calendar" ? (
           <div className="space-y-2">
             {/* Template palette — above canvas, horizontal */}
-            <TemplatePalette
-              eventId={selectedEventId ?? undefined}
-              layout="horizontal"
-            />
+            <div className="flex items-center gap-2">
+              <TemplatePalette
+                eventId={selectedEventId ?? undefined}
+                layout="horizontal"
+              />
+              {!shiftMutationLocked && <AddMarkerPill />}
+            </div>
 
             {/* Canvas row: canvas + optional shift details panel */}
             <div
@@ -795,6 +818,7 @@ export default function ShiftsPage() {
                   <LaneCalendarCanvas
                     ref={canvasRef}
                     shifts={shifts}
+                    markers={markers}
                     lanes={derivedLanes}
                     eventStart={eventStartDate}
                     eventEnd={eventEndDate}

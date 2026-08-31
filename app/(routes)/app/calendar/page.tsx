@@ -27,6 +27,7 @@ import { useEventContext } from "@/lib/contexts/EventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
+import type { MarkerLike } from "@/components/features/LaneCalendar/hooks/useMarkerNodes";
 
 type CoverageState = "full" | "partial" | "empty";
 
@@ -158,6 +159,19 @@ export default function UserCalendarPage() {
     },
     enabled: !!selectedEventId,
   });
+
+  const { data: cachedMarkers } = useCache<MarkerLike[]>({
+    key: selectedEventId ? `markers-${selectedEventId}` : "markers-none",
+    fetchFn: async () => {
+      if (!selectedEventId) return [];
+      const res = await fetch(`/api/markers?eventId=${selectedEventId}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return unwrapApiResponse<MarkerLike[]>(json);
+    },
+    enabled: !!selectedEventId,
+  });
+  const markers = Array.isArray(cachedMarkers) ? cachedMarkers : [];
 
   // Auto-refresh shift data every 30 seconds for live preference updates
   useEffect(() => {
@@ -820,6 +834,7 @@ export default function UserCalendarPage() {
                 <LaneCalendarCanvas
                   ref={canvasRef}
                   shifts={filteredShifts}
+                  markers={markers}
                   lanes={derivedLanes}
                   eventStart={eventStartDate}
                   eventEnd={eventEndDate}
