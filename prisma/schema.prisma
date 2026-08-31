@@ -130,6 +130,7 @@ model Event {
   registrations          EventRegistration[]
   templateAssignments    EventTemplate[]
   eventSpecificTemplates ShiftTemplate[]           @relation("EventSpecificTemplates")
+  planMarkers            PlanMarker[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -394,4 +395,17 @@ model TeamMemberAttribute {
   @@unique([memberId, definitionId])
   @@index([memberId])
   @@index([definitionId])
+}
+
+model PlanMarker {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  text      String
+  startTime DateTime
+  endTime   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, startTime])
 }
