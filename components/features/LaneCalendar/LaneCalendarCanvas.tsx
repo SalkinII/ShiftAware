@@ -258,9 +258,19 @@ function LaneCalendarCanvasInner(
     }
   }
 
-  // TODO(Task 14): replace with real implementations from useCanvasActions
-  const handleMarkerSave = useCallback(() => {}, []);
-  const handleMarkerDelete = useCallback(() => {}, []);
+  const handleMarkerSave = useCallback(async (markerId: string, text: string) => {
+    await fetch(`/api/markers/${markerId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    onShiftUpdated?.();
+  }, [onShiftUpdated]);
+
+  const handleMarkerDelete = useCallback(async (markerId: string) => {
+    await fetch(`/api/markers/${markerId}`, { method: "DELETE" });
+    onShiftUpdated?.();
+  }, [onShiftUpdated]);
 
   const { fitView } = useReactFlow();
   const laneNodes = useLaneNodes(orderedLanes, eventStart, eventEnd);

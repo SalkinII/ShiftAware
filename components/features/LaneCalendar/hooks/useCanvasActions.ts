@@ -61,6 +61,36 @@ export function useCanvasActions({
       event.preventDefault();
       if (!eventStart || !eventId) return;
 
+      const markerData = event.dataTransfer.getData("application/shiftaware-marker");
+      if (markerData) {
+        try {
+          const marker = JSON.parse(markerData);
+          const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          const snappedX = Math.max(0, snapX(flowPos.x));
+          const startTime = xToTime(snappedX, eventStart);
+          const endTime = new Date(startTime.getTime() + (marker.durationMinutes ?? 30) * 60000);
+
+          const res = await fetch("/api/markers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              eventId,
+              text: "",
+              startTime: startTime.toISOString(),
+              endTime: endTime.toISOString(),
+            }),
+          });
+          if (res.ok) {
+            onShiftCreated?.();
+          } else {
+            toast.error("Failed to create note");
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Failed to create note");
+        }
+        return;
+      }
+
       const templateData = event.dataTransfer.getData(
         "application/shiftaware-template",
       );
@@ -138,6 +168,7 @@ export function useCanvasActions({
    */
   const handleNodeDragStop = useCallback(
     async (_event: React.MouseEvent, node: Node) => {
+      if (node.id.startsWith("marker-")) return;
       if (!node.id.startsWith("shift-") || !eventStart) return;
 
       if (!isShiftNodeData(node.data)) {
@@ -198,6 +229,39 @@ export function useCanvasActions({
    */
   const handleResizeEnd = useCallback(
     async (nodeId: string, params: { width: number; x?: number }) => {
+      if (nodeId.startsWith("marker-")) {
+        if (!eventStart) return;
+        const markerId = nodeId.replace("marker-", "");
+        const node = getNode(nodeId);
+        if (!node?.data) return;
+
+        let newStartTime: Date;
+        if (params.x != null) {
+          newStartTime = xToTime(Math.max(0, snapX(params.x)), eventStart);
+        } else {
+          // marker nodes don't carry startTime in data (buildMarkerNodes
+          // doesn't set it) — recompute from the node's current x position instead
+          newStartTime = xToTime(Math.max(0, snapX(node.position.x)), eventStart);
+        }
+        const durationMinutes =
+          Math.round(widthToDuration(params.width) / SNAP_INTERVAL_MINUTES) * SNAP_INTERVAL_MINUTES;
+        const newEndTime = new Date(
+          newStartTime.getTime() + Math.max(SNAP_INTERVAL_MINUTES, durationMinutes) * 60 * 1000,
+        );
+
+        try {
+          const res = await fetch(`/api/markers/${markerId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ startTime: newStartTime.toISOString(), endTime: newEndTime.toISOString() }),
+          });
+          if (res.ok) onShiftUpdated?.();
+          else toast.error("Failed to resize note");
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Failed to resize note");
+        }
+        return;
+      }
       if (!eventStart || !eventId || !nodeId.startsWith("shift-")) return;
 
       const shiftId = nodeId.replace("shift-", "");
