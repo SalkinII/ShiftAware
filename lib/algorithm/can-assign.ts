@@ -10,7 +10,7 @@ export interface CanAssignConfig {
 
 export interface CanAssignResult {
   eligible: boolean;
-  reason?: "max_shifts" | "time_conflict" | "filter_rule" | "capacity";
+  reason?: "max_shifts" | "time_conflict" | "cross_event_conflict" | "filter_rule" | "capacity";
 }
 
 export const CAN_ASSIGN_REASON_LABELS: Record<
@@ -19,6 +19,7 @@ export const CAN_ASSIGN_REASON_LABELS: Record<
 > = {
   max_shifts: "is already at their maximum shift count",
   time_conflict: "has an overlapping or too-close shift",
+  cross_event_conflict: "is already booked for an overlapping or too-close shift in another event",
   filter_rule: "doesn't meet a required attribute for this shift type",
   capacity: "would exceed this shift's capacity",
 };
@@ -53,7 +54,11 @@ export function canAssign(
     config.minRestMs,
   );
   if (overlapViolation) {
-    return { eligible: false, reason: "time_conflict" };
+    const conflictingShift = overlapViolation.conflictingShiftId
+      ? allShiftsMap.get(overlapViolation.conflictingShiftId)
+      : undefined;
+    const isCrossEvent = conflictingShift && conflictingShift.eventId !== shift.eventId;
+    return { eligible: false, reason: isCrossEvent ? "cross_event_conflict" : "time_conflict" };
   }
 
   // 4. FILTER rules — hard block. BALANCE rules are handled separately via reservedSlots.

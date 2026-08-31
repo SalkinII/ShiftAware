@@ -75,6 +75,30 @@ describe("validateNoOverlaps with minRestMs", () => {
     expect(result).not.toBeNull();
     expect(result?.type).toBe("REST_PERIOD");
   });
+
+  it("includes the conflicting shift's id in the returned violation", () => {
+    const state: AssignmentState = {
+      assignments: new Map(),
+      memberShifts: new Map([["member-1", ["existing-shift"]]]),
+      shiftCoverage: new Map(),
+      reservedSlots: new Map(),
+    };
+    const existingShift = {
+      id: "existing-shift",
+      startTime: new Date("2026-08-01T08:00:00Z"),
+      endTime: new Date("2026-08-01T16:00:00Z"),
+    } as Shift;
+    const newShift = {
+      id: "new-shift",
+      startTime: new Date("2026-08-01T15:00:00Z"),
+      endTime: new Date("2026-08-01T20:00:00Z"),
+    } as Shift;
+    const allShifts = new Map([["existing-shift", existingShift]]);
+
+    const violation = validateNoOverlaps("member-1", newShift, state, allShifts);
+
+    expect(violation?.conflictingShiftId).toBe("existing-shift");
+  });
 });
 
 describe("validateRestPeriod (post-hoc)", () => {

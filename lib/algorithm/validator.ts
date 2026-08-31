@@ -157,6 +157,7 @@ export function validateNoOverlaps(
           ? "Shift overlaps with existing assignment"
           : `Insufficient rest period between shifts (required: ${Math.round(minRestMs / 3600000)}h)`,
         severity: "hard",
+        conflictingShiftId: existingShiftId,
       };
     }
   }

@@ -30,6 +30,7 @@ export interface ConstraintViolation {
   type: string;
   message: string;
   severity: "hard" | "soft";
+  conflictingShiftId?: string;
 }
 
 export interface AllocationRule {

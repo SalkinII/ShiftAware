@@ -96,4 +96,27 @@ describe("canAssign", () => {
     const result = canAssign("member-1", baseShift, state, baseConfig, rules, new Map([[baseShift.id, baseShift]]), memberAttrs);
     expect(result.eligible).toBe(true);
   });
+
+  it("reports time_conflict for a same-event overlap", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", ["other-shift"]);
+    state.shiftCoverage.set("shift-1", 0);
+    const otherShift = { ...baseShift, id: "other-shift", eventId: "evt-1" } as unknown as ShiftWithRelations;
+    const allShiftsMap = new Map([[baseShift.id, baseShift], ["other-shift", otherShift]]);
+    const result = canAssign("member-1", { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations, state, baseConfig, noRules, allShiftsMap, new Map());
+    expect(result.eligible).toBe(false);
+    expect(result.reason).toBe("time_conflict");
+  });
+
+  it("reports cross_event_conflict when the conflicting shift belongs to another event", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", ["other-event-shift"]);
+    state.shiftCoverage.set("shift-1", 0);
+    const otherEventShift = { ...baseShift, id: "other-event-shift", eventId: "evt-2" } as unknown as ShiftWithRelations;
+    const shiftInEventOne = { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations;
+    const allShiftsMap = new Map([[baseShift.id, shiftInEventOne], ["other-event-shift", otherEventShift]]);
+    const result = canAssign("member-1", shiftInEventOne, state, baseConfig, noRules, allShiftsMap, new Map());
+    expect(result.eligible).toBe(false);
+    expect(result.reason).toBe("cross_event_conflict");
+  });
 });
