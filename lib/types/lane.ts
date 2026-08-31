@@ -73,11 +73,11 @@ export function deriveLanesFromTemplates(
     type: t.type,
   }));
 
-  // Add Unassigned catch-all lane for shifts with templateId = null
+  // Add Notes catch-all lane for shifts with templateId = null, and for markers
   lanes.push({
     id: UNASSIGNED_LANE_ID,
     templateId: null,
-    label: "Unassigned",
+    label: "Notes",
     color: "#6b7280",
     order: 999,
     type: "MOBILE_TEAM", // fallback for API
