@@ -2,7 +2,8 @@ import { TeamMember, Shift, Assignment, ShiftPreference } from "@prisma/client";
 
 export interface AssignmentState {
   assignments: Map<string, Assignment[]>; // shiftId -> assignments
-  memberShifts: Map<string, string[]>; // memberId -> shiftIds
+  memberShifts: Map<string, string[]>; // memberId -> shiftIds, THIS event only — counts toward maxShiftsPerPerson
+  crossEventShifts?: Map<string, string[]>; // memberId -> shiftIds from OTHER events — overlap/rest-time checks only, never counted toward maxShiftsPerPerson
   shiftCoverage: Map<string, number>; // shiftId -> current count
   reservedSlots: Map<string, number>; // shiftId → slots reserved for BALANCE
 }

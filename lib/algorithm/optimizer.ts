@@ -93,6 +93,7 @@ export async function runAssignmentAlgorithm(
   const state: AssignmentState = {
     assignments: new Map(),
     memberShifts: new Map(),
+    crossEventShifts: new Map(),
     shiftCoverage: new Map(),
     reservedSlots: new Map(),
   };
@@ -113,7 +114,7 @@ export async function runAssignmentAlgorithm(
     state.memberShifts.set(member.id, []);
   });
 
-  seedCrossEventConflicts(state.memberShifts, allShiftsMap, eventConfig.crossEventAssignments ?? []);
+  seedCrossEventConflicts(state.crossEventShifts!, allShiftsMap, eventConfig.crossEventAssignments ?? []);
 
   const balanceRulesAll = getBalanceRules(allocationRules);
   shifts.forEach((shift) => {

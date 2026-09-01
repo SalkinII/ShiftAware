@@ -99,6 +99,31 @@ describe("validateNoOverlaps with minRestMs", () => {
 
     expect(violation?.conflictingShiftId).toBe("existing-shift");
   });
+
+  it("detects an overlap against a shift held only in crossEventShifts", () => {
+    const state: AssignmentState = {
+      assignments: new Map(),
+      memberShifts: new Map([["member-1", []]]),
+      crossEventShifts: new Map([["member-1", ["other-event-shift"]]]),
+      shiftCoverage: new Map(),
+      reservedSlots: new Map(),
+    };
+    const otherEventShift = {
+      id: "other-event-shift",
+      startTime: new Date("2026-08-01T08:00:00Z"),
+      endTime: new Date("2026-08-01T16:00:00Z"),
+    } as Shift;
+    const newShift = {
+      id: "new-shift",
+      startTime: new Date("2026-08-01T15:00:00Z"),
+      endTime: new Date("2026-08-01T20:00:00Z"),
+    } as Shift;
+    const allShifts = new Map([["other-event-shift", otherEventShift]]);
+
+    const violation = validateNoOverlaps("member-1", newShift, state, allShifts);
+
+    expect(violation?.conflictingShiftId).toBe("other-event-shift");
+  });
 });
 
 describe("validateRestPeriod (post-hoc)", () => {

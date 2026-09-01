@@ -46,6 +46,17 @@ describe("canAssign", () => {
     expect(result.reason).toBe("max_shifts");
   });
 
+  it("does not count cross-event shifts toward maxShiftsPerPerson", () => {
+    const state = makeState();
+    state.memberShifts.set("member-1", []); // zero shifts in THIS event
+    // two non-overlapping shifts booked in OTHER events — must not count against this event's cap
+    state.crossEventShifts = new Map([["member-1", ["other-event-shift-a", "other-event-shift-b"]]]);
+    state.shiftCoverage.set("shift-1", 0);
+    const config = { maxShiftsPerPerson: 1, minRestMs: 15 * 60 * 1000 };
+    const result = canAssign("member-1", baseShift, state, config, noRules, new Map([[baseShift.id, baseShift]]), new Map(), []);
+    expect(result.eligible).toBe(true);
+  });
+
   it("blocks when shift is at capacity", () => {
     const state = makeState();
     state.memberShifts.set("member-1", []);

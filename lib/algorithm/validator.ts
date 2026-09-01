@@ -136,7 +136,10 @@ export function validateNoOverlaps(
   allShifts: Map<string, Shift>,
   minRestMs: number = 15 * 60 * 1000,
 ): ConstraintViolation | null {
-  const memberShiftIds = state.memberShifts.get(memberId) || [];
+  const memberShiftIds = [
+    ...(state.memberShifts.get(memberId) || []),
+    ...(state.crossEventShifts?.get(memberId) || []),
+  ];
 
   for (const existingShiftId of memberShiftIds) {
     const existingShift = allShifts.get(existingShiftId);

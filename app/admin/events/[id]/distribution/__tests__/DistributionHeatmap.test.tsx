@@ -358,4 +358,39 @@ describe("DistributionHeatmap", () => {
     const cell = await screen.findByTitle(/blocked/);
     expect(cell.title).toContain("blackout");
   });
+
+  it("does not count a non-overlapping cross-event assignment toward maxShiftsPerPerson", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          shifts: [{ ...heatmapData.shifts[0], eventId: "evt-1" }],
+          config: { balanceThresholds: { maxShiftsPerPerson: 1 } },
+          crossEventAssignments: [
+            {
+              memberId: "m1",
+              shift: {
+                id: "x",
+                eventId: "evt-2",
+                startTime: "2026-08-02T09:00:00.000Z",
+                endTime: "2026-08-02T12:00:00.000Z",
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByTitle("eligible")).toBeInTheDocument();
+  });
 });

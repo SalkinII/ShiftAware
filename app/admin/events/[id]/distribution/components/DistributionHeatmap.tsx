@@ -298,7 +298,7 @@ export function DistributionHeatmap({
           </button>
         )}
         <span className="text-xs text-gray-400 ml-auto">
-          ✗ blocked · eligible ★ preferred ■ assigned ▲ conflict
+          blocked · eligible · preferred · assigned · conflict
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -346,14 +346,13 @@ export function DistributionHeatmap({
               const memberShifts = (data.assignments ?? [])
                 .filter((a) => a.teamMemberId === member.id)
                 .map((a) => a.shiftId);
-              const combinedMemberShifts = [
-                ...memberShifts,
-                ...(crossEventMemberShifts.get(member.id) ?? []),
-              ];
 
               const state: AssignmentState = {
                 assignments: new Map(),
-                memberShifts: new Map([[member.id, combinedMemberShifts]]),
+                memberShifts: new Map([[member.id, memberShifts]]),
+                crossEventShifts: new Map([
+                  [member.id, crossEventMemberShifts.get(member.id) ?? []],
+                ]),
                 shiftCoverage: new Map(
                   shifts.map((s) => [
                     s.id,
