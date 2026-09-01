@@ -63,4 +63,11 @@ describe("MarkerNode", () => {
     render(<MarkerNode {...({ id: "marker-m1", data: { ...baseData, readOnly: true }, selected: true } as any)} />);
     expect(capturedResizerProps).toBeUndefined();
   });
+
+  it("renders note text at the same world-scale font size as shift blocks, not Tailwind's text-xs", () => {
+    render(<MarkerNode {...({ id: "marker-m1", data: baseData, selected: false } as any)} />);
+    const span = screen.getByText("Lunch break");
+    expect(span.className).not.toMatch(/\btext-xs\b/);
+    expect(span.className).toMatch(/text-\[100px\]/);
+  });
 });

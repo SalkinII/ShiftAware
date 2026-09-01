@@ -39,7 +39,7 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
       )}
       <div
         className={cn(
-          "w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-2 flex flex-col",
+          "w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col px-[16px] py-[8px] gap-[8px]",
           selected && "ring-2 ring-blue-400",
         )}
         onClick={() => {
@@ -49,27 +49,27 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
       {editing && !readOnly ? (
         <textarea
           autoFocus
-          className="flex-1 w-full resize-none bg-transparent text-xs text-gray-700 outline-none"
+          className="flex-1 w-full resize-none bg-transparent text-[100px] leading-[1.15] text-gray-700 outline-none"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
         />
       ) : (
-        <span className="text-xs text-gray-600 whitespace-pre-wrap break-words">
+        <span className="text-[100px] leading-[1.15] text-gray-600 whitespace-pre-wrap break-words">
           {text || "Click to add a note"}
         </span>
       )}
       {!readOnly && onDelete && (
         <button
           type="button"
-          className="self-end mt-1 text-gray-400 hover:text-red-500"
+          className="self-end text-gray-400 hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
             if (confirm("Delete this note?")) onDelete();
           }}
           aria-label="Delete marker"
         >
-          <Trash2 size={12} />
+          <Trash2 size={60} />
         </button>
       )}
       </div>
