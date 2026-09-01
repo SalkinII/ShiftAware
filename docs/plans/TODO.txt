@@ -2,3 +2,4 @@ UX for member time constraint.
 
 Availability time selection bleeds out of the modal to the right.
 the time selection in the thing is off by 2 hours when clicked. there is no "confirmation" on time selection.
+blackout selection up/down fields don't show anything. the remove bleeds out too.
