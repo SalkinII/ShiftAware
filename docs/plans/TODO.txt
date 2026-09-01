@@ -1,1 +1,3 @@
 UX for member time constraint.
+
+Availability time selection bleeds out of the modal to the right.
