@@ -1,8 +1,8 @@
-- In the newly added "Notes" the font size is again tiny. this is a common bug you recreate. I had to make the font of the shifts larger deliberately because the font size you choose is so small.
+ - I cannot see how I would set the new feature arrives / black out / leaves for a member. How is the intended flow?
 
-- The cross event validation works nicely. However there are a couple of things about the heatmap:
--- Firstly the total amount of shifts for one member is scoped for an event, not cross event. I can have a maximum shift of 2 in one event and 2 in another. Only if those shifts overlap or violate resting time this is a problem and should be flagged.
--- Secondly the icons of the heatmap are not really pretty. I am asking myself if this is the best we can do within our design principle.
--- The crossed out sign cursor over the red crosses is really irritating. We never agreed on that as a feature.
--- It seems that the export PDF tries to pass on the emojis but doesn't render. Why not leave them out in the first place?
+ - The new glyphs in heatmap do not have a corresponding glyph in the legend. but also the legend can be scrapped as the info is already in a mouse over.
+
+ - I do not understand how the attribute filter in the heatmap works. What do I select for? It doesn't show all possible values for an attribute. especially the boolean doesn't have any options. Very confusing.
+
+ - The note in the canvas bleeds out of the canvas card if it becomes to narrow. this is not our standard behaviour for the shift cards in the canvas.
 
