@@ -19,7 +19,7 @@ const HEATMAP_API = (eventId: string) =>
 
 interface HeatmapData {
   shifts: ShiftWithRelations[];
-  members: { id: string; alias: string; attributes?: Record<string, string> }[];
+  members: { id: string; alias: string; attributes?: Record<string, unknown> }[];
   assignments: { id: string; teamMemberId: string; shiftId: string }[];
   preferences: { teamMemberId: string; shiftId: string; wantLevel: string }[];
   config?: {
@@ -28,7 +28,7 @@ interface HeatmapData {
   };
   allocationRules?: import("@/lib/algorithm/types").AllocationRule[];
   crossEventAssignments?: { memberId: string; shift: { id: string; eventId: string; startTime: string; endTime: string } }[];
-  attributeDefinitions?: { id: string; name: string; type: string }[];
+  attributeDefinitions?: { id: string; name: string; type: string; options?: string[] }[];
 }
 
 interface Props {
@@ -186,18 +186,32 @@ export function DistributionHeatmap({
   const shiftTypes = [...new Set(shifts.map((s) => s.type))];
 
   const attributeKeys = [
-    ...new Set(members.flatMap((m) => Object.keys(m.attributes ?? {}))),
+    ...new Set([
+      ...members.flatMap((m) => Object.keys(m.attributes ?? {})),
+      ...(data.attributeDefinitions ?? []).map((d) => d.name),
+    ]),
   ];
+  const attributeDefsByName = new Map(
+    (data.attributeDefinitions ?? []).map((d) => [d.name, d]),
+  );
+  const selectedAttributeDef =
+    attributeKey === "all" ? undefined : attributeDefsByName.get(attributeKey);
   const attributeValues =
     attributeKey === "all"
       ? []
-      : [
-          ...new Set(
-            members
-              .map((m) => m.attributes?.[attributeKey])
-              .filter((v): v is string => v !== undefined),
-          ),
-        ];
+      : selectedAttributeDef?.type === "BOOLEAN"
+        ? ["true", "false"]
+        : selectedAttributeDef?.type === "SELECT" ||
+            selectedAttributeDef?.type === "MULTISELECT"
+          ? (selectedAttributeDef.options ?? [])
+          : [
+              ...new Set(
+                members
+                  .map((m) => m.attributes?.[attributeKey])
+                  .filter((v) => v !== undefined)
+                  .map((v) => String(v)),
+              ),
+            ];
 
   const visibleMembers = members.filter((m) => {
     if (
@@ -207,7 +221,14 @@ export function DistributionHeatmap({
       return false;
     }
     if (attributeKey !== "all" && attributeValue !== "all") {
-      if ((m.attributes ?? {})[attributeKey] !== attributeValue) return false;
+      const rawValue = (m.attributes ?? {})[attributeKey];
+      if (selectedAttributeDef?.type === "MULTISELECT") {
+        if (!Array.isArray(rawValue) || !rawValue.includes(attributeValue)) {
+          return false;
+        }
+      } else if (String(rawValue) !== attributeValue) {
+        return false;
+      }
     }
     return true;
   });
@@ -390,7 +411,7 @@ export function DistributionHeatmap({
                     );
                     const memberAttrs = new Map(
                       Object.entries(member.attributes ?? {}),
-                    );
+                    ) as Map<string, string>;
                     const { state: cellState, reason } = deriveCellState(
                       member.id,
                       shift,

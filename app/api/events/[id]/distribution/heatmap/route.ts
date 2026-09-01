@@ -72,7 +72,7 @@ export const GET = withAuth(withErrorHandling(async (
 
   const attributeDefinitions = await prisma.eventAttributeDefinition.findMany({
     where: { eventId },
-    select: { id: true, name: true, type: true },
+    select: { id: true, name: true, type: true, options: true },
   });
 
   return createSuccessResponse({

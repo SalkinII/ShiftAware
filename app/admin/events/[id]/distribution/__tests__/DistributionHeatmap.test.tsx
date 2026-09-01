@@ -202,6 +202,115 @@ describe("DistributionHeatmap", () => {
     expect(screen.queryByText(/blocked ·/)).not.toBeInTheDocument();
   });
 
+  it("offers True/False options for a BOOLEAN attribute even if no member has set it yet", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          members: [{ id: "m1", alias: "Alice", attributes: {} }],
+          attributeDefinitions: [
+            { id: "d1", name: "can_drive", type: "BOOLEAN", options: [] },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    await screen.findByText("Alice");
+    fireEvent.change(screen.getByLabelText("Attribute"), {
+      target: { value: "can_drive" },
+    });
+
+    const valueSelect = screen.getByLabelText("Attribute value") as HTMLSelectElement;
+    const optionValues = Array.from(valueSelect.options).map((o) => o.value);
+    expect(optionValues).toEqual(["all", "true", "false"]);
+  });
+
+  it("offers the attribute definition's full option list for a SELECT attribute, not just observed values", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          members: [{ id: "m1", alias: "Alice", attributes: { role: "medic" } }],
+          attributeDefinitions: [
+            {
+              id: "d1",
+              name: "role",
+              type: "SELECT",
+              options: ["medic", "driver", "security"],
+            },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    await screen.findByText("Alice");
+    fireEvent.change(screen.getByLabelText("Attribute"), {
+      target: { value: "role" },
+    });
+
+    const valueSelect = screen.getByLabelText("Attribute value") as HTMLSelectElement;
+    const optionValues = Array.from(valueSelect.options).map((o) => o.value);
+    expect(optionValues).toEqual(["all", "medic", "driver", "security"]);
+  });
+
+  it("filters members by a BOOLEAN attribute value", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...heatmapData,
+          members: [
+            { id: "m1", alias: "Alice", attributes: { can_drive: true } },
+            { id: "m2", alias: "Bob", attributes: { can_drive: false } },
+          ],
+          attributeDefinitions: [
+            { id: "d1", name: "can_drive", type: "BOOLEAN", options: [] },
+          ],
+        }),
+      ),
+    );
+
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    await screen.findByText("Alice");
+    fireEvent.change(screen.getByLabelText("Attribute"), {
+      target: { value: "can_drive" },
+    });
+    fireEvent.change(screen.getByLabelText("Attribute value"), {
+      target: { value: "true" },
+    });
+
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.queryByText("Bob")).not.toBeInTheDocument();
+  });
+
   it("does not disable a blocked cell (admin can still click it)", async () => {
     vi.stubGlobal(
       "fetch",
