@@ -70,4 +70,12 @@ describe("MarkerNode", () => {
     expect(span.className).not.toMatch(/\btext-xs\b/);
     expect(span.className).toMatch(/text-\[100px\]/);
   });
+
+  it("clips note text inside the card instead of letting it bleed out when narrow, matching shift cards", () => {
+    render(<MarkerNode {...({ id: "marker-m1", data: baseData, selected: false } as any)} />);
+    const span = screen.getByText("Lunch break");
+    const container = span.closest("div");
+    expect(container?.className).toMatch(/\boverflow-hidden\b/);
+    expect(span.className).toMatch(/\bmin-w-0\b/);
+  });
 });

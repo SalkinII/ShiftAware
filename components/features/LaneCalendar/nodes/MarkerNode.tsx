@@ -39,7 +39,7 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
       )}
       <div
         className={cn(
-          "w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col px-[16px] py-[8px] gap-[8px]",
+          "w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col px-[16px] py-[8px] gap-[8px] overflow-hidden",
           selected && "ring-2 ring-blue-400",
         )}
         onClick={() => {
@@ -49,13 +49,13 @@ function MarkerNodeComponent({ data, selected }: NodeProps) {
       {editing && !readOnly ? (
         <textarea
           autoFocus
-          className="flex-1 w-full resize-none bg-transparent text-[100px] leading-[1.15] text-gray-700 outline-none"
+          className="flex-1 w-full min-w-0 resize-none bg-transparent text-[100px] leading-[1.15] text-gray-700 outline-none"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
         />
       ) : (
-        <span className="text-[100px] leading-[1.15] text-gray-600 whitespace-pre-wrap break-words">
+        <span className="min-w-0 text-[100px] leading-[1.15] text-gray-600 whitespace-pre-wrap break-words">
           {text || "Click to add a note"}
         </span>
       )}
