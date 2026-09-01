@@ -10,6 +10,7 @@ import { canRunAlgorithm } from "@/lib/domain/event-status";
 import type { EventStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { AlgorithmResultsModal } from "@/components/features/AlgorithmResultsModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   getValidOperators,
   isBalanceModeAvailable,
@@ -47,6 +48,7 @@ export function DistributionSettings() {
   });
 
   const [, setShowAddRule] = useState(false);
+  const [showRunConfirm, setShowRunConfirm] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [running, setRunning] = useState(false);
   const [previewResult, setPreviewResult] = useState<any>(null);
@@ -267,10 +269,14 @@ export function DistributionSettings() {
     }
   };
 
-  const handleRunAlgorithm = async () => {
+  const handleRunAlgorithm = () => {
     if (!selectedEventId) return;
-    if (!confirm("This will replace all current assignments. Continue?"))
-      return;
+    setShowRunConfirm(true);
+  };
+
+  const confirmRunAlgorithm = async () => {
+    setShowRunConfirm(false);
+    if (!selectedEventId) return;
 
     setRunning(true);
     try {
@@ -821,6 +827,16 @@ export function DistributionSettings() {
           eventId={selectedEventId ?? undefined}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showRunConfirm}
+        onClose={() => setShowRunConfirm(false)}
+        onConfirm={confirmRunAlgorithm}
+        title="Replace assignments"
+        message="This will replace all current assignments. Continue?"
+        confirmText="Run"
+        variant="destructive"
+      />
     </div>
   );
 }

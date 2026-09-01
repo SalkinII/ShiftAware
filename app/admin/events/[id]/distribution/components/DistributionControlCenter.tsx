@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { DistributionHeatmap } from "./DistributionHeatmap";
 import { AnalysisTable } from "./AnalysisTable";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface Props {
   eventId: string;
@@ -18,6 +19,7 @@ export function DistributionControlCenter({
   const [previewData, setPreviewData] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [showRunConfirm, setShowRunConfirm] = useState(false);
 
   const handleDryRun = useCallback(async () => {
     setIsRunning(true);
@@ -32,13 +34,12 @@ export function DistributionControlCenter({
     }
   }, [eventId]);
 
-  const handleRun = useCallback(async () => {
-    if (
-      !confirm(
-        "Run algorithm and commit assignments? This will overwrite current assignments.",
-      )
-    )
-      return;
+  const handleRun = useCallback(() => {
+    setShowRunConfirm(true);
+  }, []);
+
+  const confirmRun = useCallback(async () => {
+    setShowRunConfirm(false);
     setIsRunning(true);
     try {
       const res = await fetch("/api/assignments", {
@@ -97,6 +98,16 @@ export function DistributionControlCenter({
           selectedMemberId={selectedMemberId}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={showRunConfirm}
+        onClose={() => setShowRunConfirm(false)}
+        onConfirm={confirmRun}
+        title="Run algorithm"
+        message="Run algorithm and commit assignments? This will overwrite current assignments."
+        confirmText="Run"
+        variant="destructive"
+      />
     </div>
   );
 }

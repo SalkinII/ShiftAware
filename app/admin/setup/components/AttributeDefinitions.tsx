@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useEventContext } from "@/lib/contexts/EventContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
@@ -32,6 +33,7 @@ export function AttributeDefinitions() {
     required: false,
   });
   const [optionsInput, setOptionsInput] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedEventId) {
@@ -132,14 +134,14 @@ export function AttributeDefinitions() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (
-      !confirm(
-        "Delete this attribute? This will remove it from all team members.",
-      )
-    ) {
-      return;
-    }
+  function handleDelete(id: string) {
+    setPendingDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = pendingDeleteId;
+    if (!id) return;
+    setPendingDeleteId(null);
 
     try {
       const res = await fetch(
@@ -322,6 +324,7 @@ export function AttributeDefinitions() {
                   size="sm"
                   onClick={() => handleDelete(attr.id)}
                   disabled={!!editingId}
+                  aria-label="Delete attribute"
                 >
                   <Trash2 className="w-4 h-4 text-error-600" />
                 </Button>
@@ -330,6 +333,16 @@ export function AttributeDefinitions() {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete attribute"
+        message="Delete this attribute? This will remove it from all team members."
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }

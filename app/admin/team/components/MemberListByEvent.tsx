@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 import { AttributeValueField } from "@/components/features/Identity/AttributeValueField";
@@ -44,6 +45,7 @@ export function MemberListByEvent({
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
   const [attributeDefinitions, setAttributeDefinitions] = useState<
     Array<{
       id: string;
@@ -196,14 +198,14 @@ export function MemberListByEvent({
     }
   }
 
-  async function handleRemoveMember(memberId: string) {
-    if (
-      !confirm(
-        "Remove this member from the event? Their shifts will be unassigned.",
-      )
-    ) {
-      return;
-    }
+  function handleRemoveMember(memberId: string) {
+    setPendingRemoveId(memberId);
+  }
+
+  async function confirmRemoveMember() {
+    const memberId = pendingRemoveId;
+    if (!memberId) return;
+    setPendingRemoveId(null);
 
     try {
       const res = await fetch(
@@ -377,6 +379,7 @@ export function MemberListByEvent({
                 size="sm"
                 onClick={() => handleRemoveMember(member.id)}
                 className="text-red-600 hover:bg-red-50"
+                aria-label="Remove member"
               >
                 <UserMinus className="w-4 h-4" />
               </Button>
@@ -512,6 +515,16 @@ export function MemberListByEvent({
         onUpdate={loadMembers}
         eventId={eventId}
         attributeDefinitions={attributeDefinitions}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingRemoveId !== null}
+        onClose={() => setPendingRemoveId(null)}
+        onConfirm={confirmRemoveMember}
+        title="Remove member"
+        message="Remove this member from the event? Their shifts will be unassigned."
+        confirmText="Remove"
+        variant="destructive"
       />
     </div>
   );

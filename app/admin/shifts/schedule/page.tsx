@@ -103,6 +103,8 @@ export default function ShiftsPage() {
     [selectedEvent?.endDate],
   );
 
+  const [pendingTransitionStatus, setPendingTransitionStatus] = useState<string | null>(null);
+
   const STATUS_ACTION_LABELS: Record<
     string,
     { label: string; icon: typeof Zap }
@@ -113,15 +115,15 @@ export default function ShiftsPage() {
     COMPLETED: { label: "Mark Complete", icon: Archive },
   };
 
-  const handleTransition = async (targetStatus: string) => {
+  const handleTransition = (targetStatus: string) => {
     if (!selectedEventId) return;
-    const label = STATUS_ACTION_LABELS[targetStatus]?.label || targetStatus;
-    if (
-      !confirm(
-        `Are you sure you want to ${label.toLowerCase()}? This will change the event workflow state.`,
-      )
-    )
-      return;
+    setPendingTransitionStatus(targetStatus);
+  };
+
+  const confirmTransition = async () => {
+    const targetStatus = pendingTransitionStatus;
+    if (!targetStatus || !selectedEventId) return;
+    setPendingTransitionStatus(null);
 
     const res = await fetch(`/api/events/${selectedEventId}/transition`, {
       method: "POST",
@@ -647,6 +649,23 @@ export default function ShiftsPage() {
         cancelText="Cancel"
         variant="destructive"
         isLoading={deleteDialog.isLoading}
+      />
+      <ConfirmDialog
+        isOpen={pendingTransitionStatus !== null}
+        onClose={() => setPendingTransitionStatus(null)}
+        onConfirm={confirmTransition}
+        title={
+          pendingTransitionStatus
+            ? STATUS_ACTION_LABELS[pendingTransitionStatus]?.label || pendingTransitionStatus
+            : ""
+        }
+        message={
+          pendingTransitionStatus
+            ? `Are you sure you want to ${(STATUS_ACTION_LABELS[pendingTransitionStatus]?.label || pendingTransitionStatus).toLowerCase()}? This will change the event workflow state.`
+            : ""
+        }
+        confirmText="Confirm"
+        variant="default"
       />
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
