@@ -3,7 +3,7 @@
 > Reference for coordinate system rules, component registry, reusability rules, and prop conventions.
 > Read this before adding a new component or modifying canvas rendering.
 >
-> Last updated: 2026-03-05
+> Last updated: 2026-09-01
 
 ---
 
@@ -100,7 +100,7 @@ For new panels, use the `GlassPanel` structure from DESIGN.md §8.
 | `AlgorithmResultsModal`                     | Display algorithm preview results | ✓            | —            |
 | `SwapInterface`                             | Swap request workflow             | —            | ✓            |
 | `ConflictWizard`                            | Conflict detection and resolution | ✓            | —            |
-| `Identity/ProfileDetailCard`                | Read-only member profile card     | ✓            | ✓            |
+| `Identity/ProfileDetailCard`                | Member profile card (editable for admins via `editable` prop — alias, avatar, event attributes incl. Availability Window) | ✓ | ✓ |
 | `ShiftPropertiesPanel/ShiftPreferencePanel` | Three-state preference toggle (Want/Neutral/Don't want); Neutral deletes the preference | — | ✓ |
 
 Distribution heatmap + analysis (`DistributionControlCenter`, `DistributionHeatmap`, `AnalysisTable`) lives under `app/admin/events/[id]/distribution/components/` — mounted event-scoped in the Team Management "Availability Heatmap" tab, and standalone at `/admin/events/[id]/distribution`. Superseded the old `components/features/AvailabilityHeatmap` (role-only eligibility, no click-to-assign) — that component and `GET /api/members/availability` were deleted.

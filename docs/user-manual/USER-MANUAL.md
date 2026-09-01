@@ -1,6 +1,6 @@
 # ShiftAware — User Manual
 
-> **Scope:** This manual is written for people who operate the ShiftAware UI — organizers (admins) and team members (volunteers). It is derived from the application as of 2026-03-29. If labels or steps differ from what you see, the UI is the authority; please open a documentation PR to sync this manual.
+> **Scope:** This manual is written for people who operate the ShiftAware UI — organizers (admins) and team members (volunteers). It is derived from the application as of 2026-09-01. If labels or steps differ from what you see, the UI is the authority; please open a documentation PR to sync this manual.
 >
 > For developer and deployment information see the root `README.md` and `docs/`.
 
@@ -90,8 +90,14 @@ Shift templates define the categories of work at your event (e.g. "Bar", "Gate",
 
 Attributes are extra properties you can collect from team members for this event (e.g. "Do you have a first-aid certificate?"). The algorithm can use these to enforce staffing constraints.
 
-1. Click **Add attribute** and give it a name and type (text, boolean, etc.).
-2. Members will be prompted to fill in any missing attributes when they select this event on the identity page.
+1. Click **Add attribute** and give it a name and choose a type: **Boolean (Yes/No)**, **Single Select**, **Multi Select**, **Free Text**, or **Availability Window**.
+2. Members will be prompted to fill in any missing attributes when they select this event on the identity page (or an organizer can fill them in — see **Event Members tab** below).
+
+> **Setting when a member arrives, leaves, or is unavailable.** This is not a separate feature — it is the **Availability Window** attribute type. Create one attribute of this type (e.g. named "Availability") and the allocation algorithm will hard-block any shift that falls outside it:
+> - **Availability windows** — one or more arrive/leave time ranges. If any are set, a member can only be assigned to shifts that fall *entirely inside* one of their windows.
+> - **Daily blackouts** — one or more per-date hour ranges (e.g. "no shifts July 12, 22:00–06:00"). A member is blocked from any shift that *overlaps* a blackout at all.
+>
+> Both lists are optional and independent; a member can have windows only, blackouts only, both, or neither (no constraint = available for everything). Values are set per member from the **Event Members tab**, not here — this tab only defines the attribute once per event.
 
 ---
 
@@ -154,11 +160,23 @@ In calendar view, click **Export** and choose **Export as PNG** (a snapshot imag
 
 ### 3.3 Team Management — `/admin/team`
 
-This page has two tabs: **Team Members** and **Allocation & Distribution**.
+This page has four tabs: **Member Directory**, **Event Members**, **Allocation & Distribution**, and **Availability Heatmap**.
 
-**Team Members tab**
+**Member Directory tab**
 
-Shows all members registered for the selected event. Click a member avatar to open their **Profile Detail** card, which shows attributes when present; from the card you can edit alias, avatar, and event attributes.
+All team members across every event are shown here (not scoped to the currently selected event). Each card displays the member's alias and avatar. Use the search box to filter by alias.
+
+- Click the avatar to open the **Profile Detail** card (read the profile, edit alias, avatar, and attributes).
+- Click the deactivate icon (user-X) to mark a member inactive. This removes their assignments, preferences, and registrations for events that are not yet completed (history on completed events is kept). Reactivating a member reverses the deactivation, but any removed assignments must be reassigned — they are not restored automatically.
+- Inactive members show a red "Inactive" badge and a reactivate button (user-check).
+- Click **Export Mapping** to download a PDF table with columns for avatar, alias, and a blank "Real Name" column. Fill this in locally to maintain a private record of who each alias belongs to. Keep the file off the system.
+
+**Event Members tab**
+
+Shows all members registered for the currently selected event. Click a member avatar to open their **Profile Detail** card, which shows attributes when present; from the card you can edit alias, avatar, and event attributes — including **Availability Window** attributes.
+
+- For an **Availability Window** attribute, use **Add availability window** to add an arrive/leave time range, or **Add blackout** to add a per-date blocked-hour range. Each row has its own **Remove** button.
+- Newly registered members are also prompted for any attributes immediately after registration; you can skip that prompt and fill it in later from the Profile Detail card.
 
 > Team members register themselves via the identity page. You do not need to create profiles for them — they self-onboard using their chosen alias and avatar.
 
@@ -177,31 +195,18 @@ Configure constraints for the allocation algorithm and trigger allocation here.
 
 > The algorithm buttons only appear when the event status is "Assigning".
 
----
+**Availability Heatmap tab**
 
-### 3.4 Team Members — `/admin/team/manage`
+A matrix of every registered member versus every shift in the event, for manual review and click-to-assign adjustments.
 
-A deeper member management view, separate from the event-scoped Team Management page.
-
-**List view**
-
-All team members across all events are shown here. Each card displays the member's alias and avatar. Use the search box to filter by alias.
-
-- Click the avatar to open the **Profile Detail** card (read the profile, edit alias, avatar, and attributes).
-- Click the deactivate icon (user-X) to mark a member inactive. Their preferences and assignments are preserved; they are hidden from active member lists. The action can be reversed.
-- Inactive members show a red "Inactive" badge and a reactivate button (user-check).
-
-**Heatmap view**
-
-Switch to **Heatmap** to see a matrix of all members versus all shifts with preference votes. Useful for spotting coverage gaps before running allocation.
-
-**Exporting the pseudonym mapping**
-
-Click **Export Mapping** to download a PDF table with columns for avatar, alias, and a blank "Real Name" column. Fill this in locally to maintain a private record of who each alias belongs to. Keep the file off the system.
+- Each cell shows a member's eligibility for a shift (eligible, preferred, assigned, conflicting, or blocked). Hover any cell to see the reason (e.g. blocked by max shifts, capacity, an overlapping shift, a filter rule, or an Availability Window constraint).
+- Click a cell to assign or unassign that member; clicking a blocked cell asks for confirmation before overriding the constraint.
+- Filter by shift type, member name, or a team attribute using the controls above the grid. The attribute value dropdown lists every value the attribute definition allows (e.g. both Yes/No for a Boolean attribute, or all defined choices for a Select/Multi Select attribute) — not just values already used by a member.
+- Select multiple members (checkboxes) and click **Redistribute** to preview and apply a rebalance across just those members.
 
 ---
 
-### 3.5 Audit Log — `/admin/audit`
+### 3.4 Audit Log — `/admin/audit`
 
 Every create, update, delete, and assignment action is logged here with a timestamp, the acting member's alias, and a before/after diff.
 
@@ -254,7 +259,7 @@ After logging in you land on the **Select Your Identity** screen.
 ![Identity — event selection](images/1-3-identity-events.png)
 *Event selection — pick the event you are attending.*
 
-3. If the event has required attributes (e.g. first-aid certificate), a prompt appears. Fill in the fields and submit.
+3. If the event has required attributes (e.g. a first-aid certificate, or an **Availability Window** stating when you can work), a prompt appears. Fill in the fields and submit.
 4. You are redirected to the **My Schedule** page.
 
 > Your identity choice is stored in the browser for the session. If you switch devices or clear the browser, you will need to select your identity again.
@@ -340,7 +345,7 @@ Each lane corresponds to a shift template assigned to the event. If a template h
 
 **The algorithm produced empty or very few assignments.**
 
-Two common causes: (1) not all team members have been registered for the event — the organizer should check Team Management; (2) the event is not in the Assigning stage — allocation requires that status. Check both before re-running.
+Common causes: (1) not all team members have been registered for the event — the organizer should check Team Management; (2) the event is not in the Assigning stage — allocation requires that status; (3) one or more members have an **Availability Window** attribute set that excludes most of the schedule (e.g. a blackout covering the whole event). Use the **Availability Heatmap tab** and hover a blocked cell to see the exact reason before re-running.
 
 **A shift shows as "Fully Staffed" but I see empty slots.**
 
