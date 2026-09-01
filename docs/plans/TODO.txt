@@ -1,8 +1,1 @@
- - I cannot see how I would set the new feature arrives / black out / leaves for a member. How is the intended flow?
-
- - The new glyphs in heatmap do not have a corresponding glyph in the legend. but also the legend can be scrapped as the info is already in a mouse over.
-
- - I do not understand how the attribute filter in the heatmap works. What do I select for? It doesn't show all possible values for an attribute. especially the boolean doesn't have any options. Very confusing.
-
- - The note in the canvas bleeds out of the canvas card if it becomes to narrow. this is not our standard behaviour for the shift cards in the canvas.
-
+UX for member time constraint.
