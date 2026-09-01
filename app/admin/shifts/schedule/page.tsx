@@ -51,6 +51,7 @@ import dynamic from "next/dynamic";
 import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
 import type { MarkerLike } from "@/components/features/LaneCalendar/hooks/useMarkerNodes";
 import { AddMarkerPill } from "@/components/features/LaneCalendar/AddMarkerPill";
+import { Pill } from "@/components/ui/Pill";
 
 // ssr:false prevents Next.js from server-rendering React Flow, which uses
 // browser-only APIs (ResizeObserver, window) unavailable in the Node.js runtime.
@@ -834,13 +835,14 @@ export default function ShiftsPage() {
                       canShowSwapPanel(
                         selectedEvent.status as import("@prisma/client").EventStatus,
                       ) ? (
-                        <button
+                        <Pill
+                          tone="amber"
                           onClick={() => setSwapDrawerOpen(true)}
-                          className="lg:hidden flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full px-3 py-1.5 text-xs font-bold shadow-sm"
+                          className="lg:hidden"
                         >
                           ⇄ {swapCount} swaps pending{" "}
                           <span className="text-[10px]">↑</span>
-                        </button>
+                        </Pill>
                       ) : undefined
                     }
                   />
