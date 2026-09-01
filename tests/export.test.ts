@@ -120,7 +120,14 @@ describe("exportScheduleToPDF", () => {
     expect(addPageMock).toHaveBeenCalledTimes(1);
     expect(autoTableMock.mock.calls.length).toBeGreaterThanOrEqual(2);
     const [, mappingCfg] = autoTableMock.mock.calls[1];
-    expect(mappingCfg.head[0]).toEqual(["Alias", "Avatar"]);
+    expect(mappingCfg.head[0]).toEqual(["Alias"]);
+  });
+
+  it("does not include the member's avatar emoji in the assignments column (jsPDF's default font can't render it)", () => {
+    exportScheduleToPDF(sampleShifts);
+    const [, tableCfg] = autoTableMock.mock.calls[0];
+    expect(tableCfg.body[0][3]).toBe("Alpha");
+    expect(tableCfg.body[1][3]).toBe("Bravo");
   });
 
   it("includes coverage summary text", () => {
@@ -165,9 +172,9 @@ describe("exportDistributionAnalysisToPDF", () => {
 
     const [, tableCfg] = autoTableMock.mock.calls[0];
     expect(tableCfg.body).toHaveLength(2);
-    expect(tableCfg.body[0]).toEqual(["A Alpha", 3, 2, 5, "None"]);
+    expect(tableCfg.body[0]).toEqual(["Alpha", 3, 2, 5, "None"]);
     expect(tableCfg.body[1]).toEqual([
-      "B Bravo",
+      "Bravo",
       1,
       2,
       5,

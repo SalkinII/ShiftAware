@@ -25,7 +25,7 @@ export function exportScheduleToPDF(
     let totalCapacity = 0;
     let totalFilled = 0;
     const filteredShifts: any[] = [];
-    const memberMap = new Map<string, { alias: string; avatarId?: string }>();
+    const memberMap = new Map<string, { alias: string }>();
     let memberAlias: string | undefined;
     let eventName: string | undefined;
 
@@ -61,10 +61,7 @@ export function exportScheduleToPDF(
           if (assignment.teamMember?.id) {
             const id = assignment.teamMember.id;
             if (!memberMap.has(id)) {
-              memberMap.set(id, {
-                alias: assignment.teamMember.alias,
-                avatarId: assignment.teamMember.avatarId,
-              });
+              memberMap.set(id, { alias: assignment.teamMember.alias });
             }
           }
         }
@@ -148,9 +145,8 @@ export function exportScheduleToPDF(
     const assignmentStrings: string[] = [];
     for (const assignment of shift.assignments) {
       const member = assignment.teamMember;
-      if (member) {
-        const str = `${member.avatarId || ""} ${member.alias || ""}`.trim();
-        if (str) assignmentStrings.push(str);
+      if (member?.alias) {
+        assignmentStrings.push(member.alias);
       }
     }
     const assignments =
@@ -204,14 +200,13 @@ export function exportScheduleToPDF(
   if (includePseudonymMap && processedData.memberMap.size > 0) {
     const rows = Array.from(processedData.memberMap.values()).map((entry) => [
       entry.alias || "Unknown",
-      entry.avatarId || "",
     ]);
     doc.addPage();
     doc.setFontSize(14);
     doc.text("Pseudonym Mapping", 40, 40);
     autoTable(doc, {
       startY: 54,
-      head: [["Alias", "Avatar"]],
+      head: [["Alias"]],
       body: rows,
       theme: "striped",
       styles: { fontSize: 9, cellPadding: 4 },
@@ -243,7 +238,6 @@ export function exportScheduleToPDF(
 
 interface DistributionAnalysisMember {
   alias: string;
-  avatarId?: string;
   assignedCount: number;
   minShifts: number;
   maxShifts: number;
@@ -277,7 +271,7 @@ export function exportDistributionAnalysisToPDF(
   doc.text(`Violations: ${totalViolations}`, 40, 72);
 
   const tableData = members.map((m) => [
-    `${m.avatarId ?? ""} ${m.alias}`.trim(),
+    m.alias,
     m.assignedCount,
     m.minShifts,
     m.maxShifts === Infinity ? "∞" : m.maxShifts,
