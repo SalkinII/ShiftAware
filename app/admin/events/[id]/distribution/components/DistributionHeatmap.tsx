@@ -297,9 +297,6 @@ export function DistributionHeatmap({
             Redistribute {selectedMembers.size} selected
           </button>
         )}
-        <span className="text-xs text-gray-400 ml-auto">
-          blocked · eligible · preferred · assigned · conflict
-        </span>
       </div>
       <div className="overflow-x-auto">
         <table className="text-xs">

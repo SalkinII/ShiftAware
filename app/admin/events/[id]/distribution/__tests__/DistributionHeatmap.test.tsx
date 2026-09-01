@@ -188,6 +188,20 @@ describe("DistributionHeatmap", () => {
     expect(screen.queryByText("Bob")).not.toBeInTheDocument();
   });
 
+  it("does not render a static text legend (state info is already in each cell's hover tooltip)", async () => {
+    render(
+      <DistributionHeatmap
+        eventId="evt-1"
+        previewData={null}
+        highlightMemberId={null}
+        onMemberSelect={vi.fn()}
+      />,
+    );
+
+    await screen.findByText("Alice");
+    expect(screen.queryByText(/blocked ·/)).not.toBeInTheDocument();
+  });
+
   it("does not disable a blocked cell (admin can still click it)", async () => {
     vi.stubGlobal(
       "fetch",
