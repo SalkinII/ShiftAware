@@ -169,7 +169,7 @@ All team members across every event are shown here (not scoped to the currently 
 - Click the avatar to open the **Profile Detail** card (read the profile, edit alias, avatar, and attributes).
 - Click the deactivate icon (user-X) to mark a member inactive. This removes their assignments, preferences, and registrations for events that are not yet completed (history on completed events is kept). Reactivating a member reverses the deactivation, but any removed assignments must be reassigned — they are not restored automatically.
 - Inactive members show a red "Inactive" badge and a reactivate button (user-check).
-- Click **Export Mapping** to download a PDF table with columns for avatar, alias, and a blank "Real Name" column. Fill this in locally to maintain a private record of who each alias belongs to. Keep the file off the system.
+- Click **Export Mapping** to download a PDF table with columns for alias and a blank "Real Name" column (the avatar emoji is left out — PDF fonts can't render it). Fill this in locally to maintain a private record of who each alias belongs to. Keep the file off the system.
 
 **Event Members tab**
 

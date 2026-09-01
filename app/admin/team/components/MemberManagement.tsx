@@ -268,14 +268,13 @@ export function MemberManagement() {
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
 
       const tableData = (members || []).map((m) => [
-        m.avatarId,
         m.alias,
         "____________________",
       ]);
 
       autoTable(doc, {
         startY: 40,
-        head: [["Avatar", "Alias (System Name)", "Real Name (Fill Manually)"]],
+        head: [["Alias (System Name)", "Real Name (Fill Manually)"]],
         body: tableData,
         headStyles: { fillColor: [30, 41, 59] },
         styles: { fontSize: 10, cellPadding: 5 },
