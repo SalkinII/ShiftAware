@@ -57,10 +57,19 @@ That is exactly the required semantics for a person working both Bar and Gate:
 no double-booking, rest time respected across environments, but Bar's shift cap
 counts only Bar shifts. Delivered by commit `b2b33b6`. **No algorithm changes.**
 
-Cross-environment conflict seeding (`lib/domain/allocation.ts`) currently
-queries assignments in all *other* events. It is left festival-agnostic: two
-festivals a year apart cannot overlap in time anyway, so the existing overlap
-check already handles it and narrowing the query buys nothing.
+Verified at the call site rather than assumed: `lib/domain/allocation.ts:82`
+seeds cross-environment conflicts with
+`where: { teamMemberId: { in: memberIds }, shift: { eventId: { not: eventId } } }`
+— a plain "all other events" predicate that the rename carries verbatim. It is
+left festival-agnostic: two festivals a year apart cannot overlap in time
+anyway, so the existing overlap check already handles it and narrowing the query
+buys nothing.
+
+**The shift cap lives in JSON, not in a column.** `maxShiftsPerPerson` is read
+from `EnvironmentConfig.balanceThresholds` (`allocation.ts:68`), defaulting to
+`Infinity`. The `minShiftsPerPerson` *column* is a different setting and does
+not drive the cap. Any test asserting cap behaviour must target
+`balanceThresholds.maxShiftsPerPerson`.
 
 ## 3. Decisions
 
@@ -225,10 +234,22 @@ on what is already known:
 must resolve two levels, not one. The rule: registrations are resolved across
 *all* festivals, and the routing counts above apply to the member's total
 environment registrations regardless of which festival they belong to. A member
-with one registration goes straight in even if three festivals exist. In the
-join flow and the switcher's "join another" section, environments are grouped
-under their festival heading; with only one festival present the heading is
-suppressed rather than shown as a redundant single group.
+with one registration goes straight in even if three festivals exist.
+
+A member may therefore be registered in environments belonging to *different*
+festivals, and the UI must answer that unambiguously:
+
+- **The breadcrumb shows the active environment's festival.** There is exactly
+  one active environment at a time, so the crumb is always
+  `<its festival> › <it>`. Switching to an environment in another festival
+  changes both halves of the crumb.
+- **`YOUR ENVIRONMENTS` spans festivals** and is grouped by festival, so a
+  member sees everything they are part of in one menu without hunting.
+- **`JOIN ANOTHER` is likewise grouped by festival.**
+- **In both lists the festival heading is suppressed when only one festival is
+  represented**, rather than rendered as a redundant single group.
+
+This is the rule the 0/1/N entry-routing tests assert against.
 
 **The member picker is unchanged and remains global.** Identity selection still
 lists all `TeamMember` rows, because auth is unchanged and `alias` stays
@@ -344,20 +365,34 @@ stays as-is; environment-level rights come from the registration row.
 
 ```
 0  Bug fixes — AttributeValueField.tsx        (4 fixes from docs/plans/TODO.txt)
-1  Rename Event → Environment                 (mechanical, atomic commit)
-2  Festival parent + EnvironmentStatus         (schema)
-3  Attribute library + requirements junction   (schema + admin UI + member flow)
-4  Repository chokepoint for member reads      (prerequisite for 5)
-5  Scoped environment admins                   (authorization + security review)
-6  Unified entry, routing, switcher            (UX)
-7  Seed rewrite: 1 festival, 3 environments    (proves the whole thing)
+1  Schema to final shape, in ONE migration:   (single commit)
+     - rename Event → Environment (+ Config, Registration, Template, Status)
+     - add Festival parent, Environment.festivalId
+     - hoist AttributeDefinition to festivalId, drop its `required`
+     - add EnvironmentAttributeRequirement, EnvironmentRole
+     - drop ShiftTemplate.eventId → festivalId (library)
+   then `prisma migrate reset` + `prisma generate`
+2  Code rename to match the schema             (mechanical, gated on tsc)
+3  Seed rewrite: 1 festival, 3 environments    (makes the app runnable again)
+4  Attribute library admin UI + member flow    (requirements picker, modal feed)
+5  Repository chokepoint for member reads      (prerequisite for 6)
+6  Scoped environment admins                   (authorization + security review)
+7  Unified entry, routing, switcher            (UX)
 8  Docs sync                                   (7 docs reference Event)
 ```
 
-Rationale for the ordering: the rename is first so nothing later is written in
-the old vocabulary; the UX is late because it is the only piece that wants the
-finished data model beneath it; the seed rewrite is what actually demonstrates a
-member in two environments with different questions.
+**Why the schema lands in one migration.** An earlier draft renamed in step 1
+and added `Festival` in step 2, but `Environment.festivalId` is non-nullable
+with `@@unique([festivalId, name])` — between those two steps there is no
+festival for existing rows to point at, and `prisma migrate dev` fails. Since
+the database is disposable, the schema goes to its final shape in a single
+migration followed by `prisma migrate reset`, and the code rename follows to
+match. The reset is an explicit scheduled step, not an implied one.
+
+The seed rewrite moves early (step 3) because after the reset the app has no
+data at all; nothing downstream can be exercised by hand until it exists. The
+UX stays last because it is the only piece that wants the finished data model
+beneath it.
 
 ## 9. Testing and verification
 
@@ -384,7 +419,7 @@ New tests, where they earn their keep:
 
 | Risk | Mitigation |
 |---|---|
-| Rename touches route folders and every `fetch` call site at once | Single atomic commit; `tsc --noEmit` gate; revert is one commit |
+| Rename touches route folders and every `fetch` call site at once | Single atomic commit; `tsc --noEmit` gate. Note: reverting the rename alone stops being meaningful once step 1's reset has run — before that point it is a clean revert, after it the schema and code must move together |
 | Scoped-admin guarantee silently false if a direct-Prisma site is missed | Step 4 is an explicit prerequisite listing all four sites; the scoped-visibility test asserts the response shape |
 | Independent per-environment statuses confuse members | Status is surfaced in the switcher for every environment, not just the active one |
 | Attribute library rots into near-duplicates | "Add new" is the last option and warns on similar names; usage counts make reuse visibly preferable |
