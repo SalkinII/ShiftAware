@@ -93,6 +93,23 @@ check already handles it and narrowing the query buys nothing.
   answers, `EntityType.EVENT` preservation.** All unnecessary given the reset.
   (Diagnostics confirmed it would have been safe anyway: only one event has
   definitions, and zero members answered a same-named question in two events.)
+- **URL-based scoping (`/app/[festivalId]/[environmentId]/…`).** Next 15
+  supports it cleanly — a nested `layout.tsx` receives `params` as a promise and
+  could scope the whole subtree. Rejected anyway: the entire app resolves its
+  current event through client context plus `localStorage`, so URL scoping would
+  rewrite every route folder and every `fetch` call site for no user-visible
+  gain. Context-based scoping is retained; deep-linking to a specific
+  environment is not a stated requirement.
+- **Festival ↔ environment date-range cross-validation.** `Festival` and
+  `Environment` both carry dates, and it is tempting to enforce that an
+  environment falls inside its festival's window. Nobody asked for it, festivals
+  get extended in practice, and it only creates a way for legitimate edits to be
+  blocked. The columns exist; the validation does not.
+- **Near-duplicate attribute-name detection (deferred, not cut).** The library
+  picker with usage and answer counts is what actually drives reuse, and it
+  ships. A similar-name warning on "add new" is belt-and-braces polish; it is
+  deferred until the library is observed to rot, and is marked with a
+  `ponytail:` comment at the creation site so the deferral stays visible.
 
 ## 4. Schema
 
