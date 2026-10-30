@@ -39,16 +39,18 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   const validated = attributeDefinitionSchema.parse(body);
   const { required, ...definitionData } = validated;
 
-  // Check for duplicate attribute name
+  // The festival already has this question: attach it when it matches, refuse it when it differs
   const existing = await definitionRepo.findByFestivalAndName(environment.festivalId, validated.name);
   if (existing) {
-    return createErrorResponse(
-      new Error(
-        `Attribute "${validated.name}" already exists for this festival`,
-      ),
-      `Attribute "${validated.name}" already exists for this festival`,
-      409,
-    );
+    const sameQuestion =
+      existing.type === validated.type &&
+      JSON.stringify(existing.options) === JSON.stringify(validated.options);
+    if (!sameQuestion) {
+      const message = `Attribute "${validated.name}" already exists for this festival with a different type or options`;
+      return createErrorResponse(new Error(message), message, 409);
+    }
+    await metadataRepo.setAttributeRequirement(environmentId, existing.id, required);
+    return createSuccessResponse({ ...existing, required }, 201);
   }
 
   const attribute = await definitionRepo.create(environment.festivalId, definitionData);

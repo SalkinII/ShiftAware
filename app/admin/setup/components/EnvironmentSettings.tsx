@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
@@ -184,13 +185,23 @@ export function EnvironmentSettings({ festivalId }: { festivalId: string }) {
             Create New Environment
           </h2>
         )}
-        <button
-          type="button"
-          onClick={() => setIsCreatingNew(!isCreatingNew)}
-          className="text-sm font-medium text-primary-600 hover:text-primary-700"
-        >
-          {isCreatingNew ? "Cancel" : "+ New Environment"}
-        </button>
+        <div className="flex items-center gap-4">
+          {selectedEnvironmentId && !isCreatingNew && (
+            <Link
+              href={`/admin/environments/${selectedEnvironmentId}/attributes`}
+              className="text-sm font-medium text-primary-600 hover:text-primary-700"
+            >
+              Manage attribute questions
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsCreatingNew(!isCreatingNew)}
+            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            {isCreatingNew ? "Cancel" : "+ New Environment"}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -254,7 +265,7 @@ export function EnvironmentSettings({ festivalId }: { festivalId: string }) {
           <Button onClick={handleSave} disabled={saving}>
             {saving
               ? "Saving..."
-              : selectedEnvironmentId === "new"
+              : isCreatingNew
                 ? "Create Environment"
                 : "Update Environment"}
           </Button>
