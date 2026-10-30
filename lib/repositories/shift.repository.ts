@@ -232,4 +232,34 @@ export class ShiftRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to fetch shift");
     }
   }
+
+  async findAllWithAssignments() {
+    try {
+      return await prisma.shift.findMany({
+        include: {
+          assignments: { include: { teamMember: true } },
+          requiredRoles: true,
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch shifts");
+    }
+  }
+
+  async findByEnvironmentWithDetails(environmentId: string) {
+    try {
+      return await prisma.shift.findMany({
+        where: { environmentId },
+        include: {
+          preferences: { include: { teamMember: true } },
+          assignments: { include: { teamMember: true } },
+          requiredRoles: true,
+          environment: { select: { id: true, startDate: true, endDate: true } },
+        },
+        orderBy: { startTime: "asc" },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch shifts");
+    }
+  }
 }

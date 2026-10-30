@@ -253,4 +253,60 @@ export class TeamMemberRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to upsert member attribute");
     }
   }
+
+  async findByAlias(alias: string) {
+    try {
+      return await prisma.teamMember.findUnique({ where: { alias } });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to find member by alias");
+    }
+  }
+
+  async findByIds(ids: string[]) {
+    try {
+      return await prisma.teamMember.findMany({ where: { id: { in: ids } } });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch members");
+    }
+  }
+
+  async findActiveWithAssignments() {
+    try {
+      return await prisma.teamMember.findMany({
+        where: { isActive: true },
+        include: { assignments: { include: { shift: true } } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch members");
+    }
+  }
+
+  async findForEnvironment(
+    environmentId: string,
+    options: { includeUnregistered: boolean; search: string | null },
+  ) {
+    const where: Prisma.TeamMemberWhereInput = { isActive: true };
+    if (options.search) {
+      where.alias = { contains: options.search, mode: "insensitive" };
+    }
+    if (!options.includeUnregistered) {
+      where.environmentRegistrations = { some: { environmentId } };
+    }
+    const include = {
+      environmentRegistrations: { where: { environmentId } },
+      attributes: {
+        where: { definition: { requirements: { some: { environmentId } } } },
+        include: { definition: true },
+      },
+    };
+    return this.findAllWithIncludes(where, include);
+  }
+
+  async findExistingById(id: string) {
+    try {
+      return await prisma.teamMember.findUnique({ where: { id } });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch member");
+    }
+  }
 }

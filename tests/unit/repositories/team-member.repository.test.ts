@@ -659,3 +659,21 @@ describe("TeamMemberRepository", () => {
     });
   });
 });
+
+describe("TeamMemberRepository lookups", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("findByAlias returns the member with that alias or null", async () => {
+    const repo = new TeamMemberRepository();
+    const { prisma } = await import("@/lib/db");
+    vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce({ id: "m1", alias: "unique-alias-test" } as any);
+
+    const found = await repo.findByAlias("unique-alias-test");
+
+    expect(found?.id).toBe("m1");
+    expect(prisma.teamMember.findUnique).toHaveBeenCalledWith({ where: { alias: "unique-alias-test" } });
+
+    vi.mocked(prisma.teamMember.findUnique).mockResolvedValueOnce(null);
+    expect(await repo.findByAlias("does-not-exist")).toBeNull();
+  });
+});

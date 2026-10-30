@@ -1,6 +1,5 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
-import { prisma } from "@/lib/db";
 import { updateTeamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/utils/audit";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
@@ -29,9 +28,7 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
   const body = await request.json();
   const validated = updateTeamMemberSchema.parse({ ...body, id: memberId });
 
-  const existing = await prisma.teamMember.findUnique({
-    where: { id: memberId },
-  });
+  const existing = await memberRepo.findExistingById(memberId);
 
   if (!existing) {
     return createNotFoundResponse("Team member");
@@ -39,9 +36,7 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
 
   // Check alias uniqueness if changing alias
   if (validated.alias && validated.alias !== existing.alias) {
-    const aliasExists = await prisma.teamMember.findUnique({
-      where: { alias: validated.alias },
-    });
+    const aliasExists = await memberRepo.findByAlias(validated.alias);
     if (aliasExists) {
       return createConflictResponse("Alias already exists");
     }

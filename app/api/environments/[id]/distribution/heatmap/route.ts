@@ -1,12 +1,21 @@
 import { withAuth } from "@/lib/api/withAuth";
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { createSuccessResponse } from "@/lib/api-errors";
-import { prisma } from "@/lib/db";
 import { EnvironmentRepository } from "@/lib/repositories/environment.repository";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
+import { ShiftRepository } from "@/lib/repositories/shift.repository";
+import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
+import { EnvironmentRegistrationRepository } from "@/lib/repositories/environment-registration.repository";
+import { PreferenceRepository } from "@/lib/repositories/preference.repository";
+import { AttributeDefinitionRepository } from "@/lib/repositories/attribute-definition.repository";
 
 const environmentRepo = new EnvironmentRepository();
 const memberRepo = new TeamMemberRepository();
+const shiftRepo = new ShiftRepository();
+const assignmentRepo = new AssignmentRepository();
+const registrationRepo = new EnvironmentRegistrationRepository();
+const preferenceRepo = new PreferenceRepository();
+const attributeDefinitionRepo = new AttributeDefinitionRepository();
 
 export const GET = withAuth(withErrorHandling(async (
   _req: Request,
@@ -17,22 +26,9 @@ export const GET = withAuth(withErrorHandling(async (
   const event = await environmentRepo.findById(environmentId);
   const config = event.config as Record<string, unknown> | null;
 
-  const shifts = await prisma.shift.findMany({
-    where: { environmentId },
-    include: {
-      preferences: { include: { teamMember: true } },
-      assignments: { include: { teamMember: true } },
-      requiredRoles: true,
-      environment: { select: { id: true, startDate: true, endDate: true } },
-    },
-    orderBy: { startTime: "asc" },
-  });
+  const shifts = await shiftRepo.findByEnvironmentWithDetails(environmentId);
 
-  const registrations = await prisma.environmentRegistration.findMany({
-    where: { environmentId },
-    include: { member: true },
-    orderBy: { member: { alias: "asc" } },
-  });
+  const registrations = await registrationRepo.findByEnvironmentWithMembers(environmentId);
 
   const members = await Promise.all(
     registrations.map(async (reg) => {
@@ -49,31 +45,18 @@ export const GET = withAuth(withErrorHandling(async (
     }),
   );
 
-  const assignments = await prisma.assignment.findMany({
-    where: { shift: { environmentId } },
-  });
+  const assignments = await assignmentRepo.findByEnvironment(environmentId);
 
-  const preferences = await prisma.shiftPreference.findMany({
-    where: { shift: { environmentId } },
-  });
+  const preferences = await preferenceRepo.findByEnvironment(environmentId);
 
   const allocationRules = Array.isArray(config?.allocationRules)
     ? config.allocationRules
     : [];
 
   const memberIds = registrations.map((r) => r.memberId);
-  const crossEventRows = await prisma.assignment.findMany({
-    where: { teamMemberId: { in: memberIds }, shift: { environmentId: { not: environmentId } } },
-    select: {
-      teamMemberId: true,
-      shift: { select: { id: true, environmentId: true, startTime: true, endTime: true } },
-    },
-  });
+  const crossEventRows = await assignmentRepo.findCrossEnvironment(memberIds, environmentId);
 
-  const attributeDefinitions = await prisma.attributeDefinition.findMany({
-    where: { requirements: { some: { environmentId } } },
-    select: { id: true, name: true, type: true, options: true },
-  });
+  const attributeDefinitions = await attributeDefinitionRepo.findRequiredByEnvironment(environmentId);
 
   return createSuccessResponse({
     shifts,

@@ -1,11 +1,9 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
-import { prisma } from "@/lib/db";
 import { teamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/utils/audit";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import { AuditAction, EntityType } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
 import {
   createSuccessResponse,
   createConflictResponse,
@@ -23,29 +21,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
   let members;
   if (environmentId) {
-    const where: Prisma.TeamMemberWhereInput = { isActive: true };
-    const include: Prisma.TeamMemberInclude = {};
-
-    if (search) {
-      where.alias = { contains: search, mode: "insensitive" };
-    }
-
-    if (includeUnregistered) {
-      include.environmentRegistrations = { where: { environmentId } };
-      include.attributes = {
-        where: { definition: { requirements: { some: { environmentId } } } },
-        include: { definition: true },
-      };
-    } else {
-      where.environmentRegistrations = { some: { environmentId } };
-      include.environmentRegistrations = { where: { environmentId } };
-      include.attributes = {
-        where: { definition: { requirements: { some: { environmentId } } } },
-        include: { definition: true },
-      };
-    }
-
-    members = await memberRepo.findAllWithIncludes(where, include);
+    members = await memberRepo.findForEnvironment(environmentId, { includeUnregistered, search });
   } else {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const where: any = includeInactive ? {} : { isActive: true };
@@ -64,9 +40,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const validated = teamMemberSchema.parse(body);
 
   // Check if alias already exists
-  const existing = await prisma.teamMember.findUnique({
-    where: { alias: validated.alias },
-  });
+  const existing = await memberRepo.findByAlias(validated.alias);
 
   if (existing) {
     return createConflictResponse("Alias already exists");

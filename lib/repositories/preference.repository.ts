@@ -125,4 +125,14 @@ export class PreferenceRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to fetch preferences");
     }
   }
+
+  async findByEnvironment(environmentId: string) {
+    try {
+      return await prisma.shiftPreference.findMany({
+        where: { shift: { environmentId } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch preferences");
+    }
+  }
 }

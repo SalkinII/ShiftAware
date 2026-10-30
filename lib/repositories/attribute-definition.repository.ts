@@ -53,4 +53,15 @@ export class AttributeDefinitionRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to update attribute");
     }
   }
+
+  async findRequiredByEnvironment(environmentId: string) {
+    try {
+      return await prisma.attributeDefinition.findMany({
+        where: { requirements: { some: { environmentId } } },
+        select: { id: true, name: true, type: true, options: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch attributes");
+    }
+  }
 }

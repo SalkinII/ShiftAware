@@ -212,4 +212,43 @@ export class AssignmentRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to swap assignments");
     }
   }
+
+  async findAllWithShiftAndMember() {
+    try {
+      return await prisma.assignment.findMany({
+        include: { shift: true, teamMember: true },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch assignments");
+    }
+  }
+
+  async findByEnvironment(environmentId: string) {
+    try {
+      return await prisma.assignment.findMany({
+        where: { shift: { environmentId } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch assignments");
+    }
+  }
+
+  async findCrossEnvironment(memberIds: string[], environmentId: string) {
+    try {
+      return await prisma.assignment.findMany({
+        where: {
+          teamMemberId: { in: memberIds },
+          shift: { environmentId: { not: environmentId } },
+        },
+        select: {
+          teamMemberId: true,
+          shift: {
+            select: { id: true, environmentId: true, startTime: true, endTime: true },
+          },
+        },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch cross-environment assignments");
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
-import { prisma } from "@/lib/db";
+import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
+import { ShiftRepository } from "@/lib/repositories/shift.repository";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import {
   validateShiftOverlap,
@@ -62,33 +63,17 @@ export interface ResolutionSuggestion {
 }
 
 export const GET = withAuth(withErrorHandling(async () => {
+  const assignmentRepo = new AssignmentRepository();
+  const shiftRepo = new ShiftRepository();
+
   // Fetch all assignments with shifts and members
-  const assignments = await prisma.assignment.findMany({
-    include: {
-      shift: true,
-      teamMember: true,
-    },
-  });
+  const assignments = await assignmentRepo.findAllWithShiftAndMember();
 
   // Fetch all shifts for overlap checking
-  const shifts = await prisma.shift.findMany({
-    include: {
-      assignments: {
-        include: { teamMember: true },
-      },
-      requiredRoles: true,
-    },
-  });
+  const shifts = await shiftRepo.findAllWithAssignments();
 
   // Fetch all members for minimum shifts checking
-  const members = await prisma.teamMember.findMany({
-    where: { isActive: true },
-    include: {
-      assignments: {
-        include: { shift: true },
-      },
-    },
-  });
+  const members = await memberRepo.findActiveWithAssignments();
 
   // Build assignment state for validator functions
   const assignmentState: AssignmentState = {

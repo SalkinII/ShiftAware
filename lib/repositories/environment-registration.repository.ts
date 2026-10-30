@@ -118,4 +118,16 @@ export class EnvironmentRegistrationRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to delete registration");
     }
   }
+
+  async findByEnvironmentWithMembers(environmentId: string) {
+    try {
+      return await prisma.environmentRegistration.findMany({
+        where: { environmentId },
+        include: { member: true },
+        orderBy: { member: { alias: "asc" } },
+      });
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch registrations");
+    }
+  }
 }
