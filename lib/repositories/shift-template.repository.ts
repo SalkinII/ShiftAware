@@ -59,10 +59,10 @@ export class ShiftTemplateRepository extends BaseRepository {
     }
   }
 
-  async findGlobal() {
+  async findGlobal(festivalId: string | null = null) {
     try {
       return await prisma.shiftTemplate.findMany({
-        where: { festivalId: null },
+        where: { festivalId },
         include: { requiredRoles: true },
         orderBy: { createdAt: "desc" },
       });
@@ -84,7 +84,7 @@ export class ShiftTemplateRepository extends BaseRepository {
 
   async updateWithRoles(
     id: string,
-    data: Record<string, unknown>,
+    data: Prisma.ShiftTemplateUpdateInput,
     requiredRoles: Array<{ role: string; count: number }>,
   ) {
     try {

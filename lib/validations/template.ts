@@ -22,10 +22,14 @@ export const shiftTemplateSchema = z.object({
   desirabilityScore: z.number().int().min(1).max(5).default(3),
   capacity: z.number().int().nonnegative().default(0),
   color: z.string().optional(),
-  environmentId: z.string().cuid().nullable().optional(), // NEW: for event-specific templates
   requiredRoles: z
     .array(templateRoleSchema)
     .min(1, "At least one required role is needed"),
+});
+
+// Creating a template also chooses the festival library it joins; updates never move a template
+export const shiftTemplateCreateSchema = shiftTemplateSchema.extend({
+  festivalId: z.string().cuid().nullable().optional(),
 });
 
 export const scheduleTemplateSchema = z.object({

@@ -71,7 +71,7 @@ import { TemplateManager } from "../TemplateManager";
 
 describe("TemplateManager – mobile layout", () => {
   it("global template metadata row has flex-wrap so it does not overflow narrow cards", async () => {
-    render(<TemplateManager />);
+    render(<TemplateManager festivalId="fest-1" />);
     await waitFor(() => screen.getByText("Morning Shift"));
 
     // The span containing "08:00" is inside the metadata div
@@ -81,7 +81,7 @@ describe("TemplateManager – mobile layout", () => {
   });
 
   it("global template middle block has min-w-0 so it can shrink below content width", async () => {
-    render(<TemplateManager />);
+    render(<TemplateManager festivalId="fest-1" />);
     await waitFor(() => screen.getByText("Morning Shift"));
 
     const nameEl = screen.getByText("Morning Shift");
@@ -90,7 +90,7 @@ describe("TemplateManager – mobile layout", () => {
   });
 
   it("edit form grid uses sm:grid-cols-3 for responsive stacking on narrow screens", async () => {
-    render(<TemplateManager />);
+    render(<TemplateManager festivalId="fest-1" />);
     // Open the new template form (wait for async loadTemplates to finish)
     const newBtn = await waitFor(() =>
       screen.getByRole("button", { name: /new template/i }),

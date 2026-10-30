@@ -67,7 +67,7 @@ export default function SetupPage() {
 
         {activeTab === "templates" && (
           <Card className="p-6">
-            <TemplateManager />
+            <TemplateManager festivalId={selectedFestivalId} />
           </Card>
         )}
 

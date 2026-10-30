@@ -20,21 +20,18 @@ interface ShiftTemplate {
   priority: string;
   capacity: number;
   color?: string;
-  environmentId?: string | null;
   isAssigned?: boolean;
 }
 
-export function TemplateManager() {
+export function TemplateManager({ festivalId }: { festivalId?: string | null }) {
   const toast = useToast();
   const { selectedEnvironmentId } = useEnvironmentContext(); // Admin mode
   const [globalTemplates, setGlobalTemplates] = useState<ShiftTemplate[]>([]);
-  const [eventTemplates, setEventTemplates] = useState<ShiftTemplate[]>([]);
   const [assignedTemplateIds, setAssignedTemplateIds] = useState<Set<string>>(
     new Set(),
   );
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
-  const [isEventSpecific, setIsEventSpecific] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     type: "MOBILE_TEAM",
@@ -45,36 +42,27 @@ export function TemplateManager() {
   });
 
   useEffect(() => {
-    if (selectedEnvironmentId) {
-      loadTemplates();
-    }
-  }, [selectedEnvironmentId]);
+    loadTemplates();
+  }, [selectedEnvironmentId, festivalId]);
 
   async function loadTemplates() {
-    if (!selectedEnvironmentId) return;
-
     try {
-      // Load global templates
-      const globalRes = await fetch("/api/shifts/templates");
-      if (globalRes.ok) {
-        const data = await globalRes.json();
-        setGlobalTemplates(unwrapApiResponse<ShiftTemplate[]>(data) || []);
+      // Load the festival's template library; without a festival there is no library to show
+      if (festivalId) {
+        const globalRes = await fetch(`/api/shifts/templates?festivalId=${festivalId}`);
+        if (globalRes.ok) {
+          const data = await globalRes.json();
+          setGlobalTemplates(unwrapApiResponse<ShiftTemplate[]>(data) || []);
+        }
+      } else {
+        setGlobalTemplates([]);
       }
 
-      // Load event-specific templates
-      const eventRes = await fetch(
-        `/api/shifts/templates?environmentId=${selectedEnvironmentId}&includeGlobal=false`,
-      );
-      if (eventRes.ok) {
-        const data = await eventRes.json();
-        setEventTemplates(unwrapApiResponse<ShiftTemplate[]>(data) || []);
-      }
-
-      // Load assigned templates for this event
-      const assignedRes = await fetch(
-        `/api/environments/${selectedEnvironmentId}/templates`,
-      );
-      if (assignedRes.ok) {
+      // Load assigned templates for this environment
+      const assignedRes = selectedEnvironmentId
+        ? await fetch(`/api/environments/${selectedEnvironmentId}/templates`)
+        : undefined;
+      if (assignedRes?.ok) {
         const data = await assignedRes.json();
         const response = unwrapApiResponse<{
           assigned: any[];
@@ -136,7 +124,6 @@ export function TemplateManager() {
 
   function handleStartNew() {
     setEditingId("new");
-    setIsEventSpecific(false);
     setFormData({
       name: "",
       type: "MOBILE_TEAM",
@@ -149,7 +136,6 @@ export function TemplateManager() {
 
   function handleStartEdit(template: ShiftTemplate) {
     setEditingId(template.id);
-    setIsEventSpecific(!!template.environmentId);
     setFormData({
       name: template.name,
       type: template.type,
@@ -173,7 +159,7 @@ export function TemplateManager() {
     const payload = {
       ...formData,
       requiredRoles: [{ role: "TEAM_MEMBER", count: formData.capacity }],
-      environmentId: isEventSpecific ? selectedEnvironmentId : null,
+      ...(editingId === "new" ? { festivalId: festivalId ?? null } : {}),
     };
 
     try {
@@ -244,10 +230,10 @@ export function TemplateManager() {
             Shift Templates
           </h3>
           <p className="text-sm text-gray-500">
-            Assign global templates or create event-specific templates
+            Assign templates from the festival library to this event, or add new ones to the library
           </p>
         </div>
-        {!editingId && (
+        {!editingId && festivalId && (
           <Button onClick={handleStartNew}>
             <Plus className="w-4 h-4 mr-2" />
             New Template
@@ -261,21 +247,6 @@ export function TemplateManager() {
             {editingId === "new" ? "Create Template" : "Edit Template"}
           </h4>
           <div className="space-y-4">
-            {editingId === "new" && (
-              <div>
-                <label className="flex items-center gap-3 mb-4">
-                  <input
-                    type="checkbox"
-                    checked={isEventSpecific}
-                    onChange={(e) => setIsEventSpecific(e.target.checked)}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Event-Specific (only for this event)
-                  </span>
-                </label>
-              </div>
-            )}
             <Input
               label="Template Name"
               placeholder="e.g., Mobile Team - Morning"
@@ -343,7 +314,9 @@ export function TemplateManager() {
         <div className="space-y-2">
           {globalTemplates.length === 0 ? (
             <Card className="p-4 text-center text-sm text-gray-500">
-              No global templates available
+              {festivalId
+                ? "No templates in this festival's library yet"
+                : "Select a festival to see its template library"}
             </Card>
           ) : (
             globalTemplates.map((template) => {
@@ -419,64 +392,6 @@ export function TemplateManager() {
         </div>
       </div>
 
-      {/* Event-Specific Templates */}
-      <div>
-        <h4 className="text-md font-semibold text-gray-900 mb-3">
-          Event-Specific Templates
-        </h4>
-        <p className="text-sm text-gray-500 mb-4">
-          Templates created specifically for this event
-        </p>
-        <div className="space-y-2">
-          {eventTemplates.length === 0 ? (
-            <Card className="p-4 text-center text-sm text-gray-500">
-              No event-specific templates yet
-            </Card>
-          ) : (
-            eventTemplates.map((template) => (
-              <Card
-                key={template.id}
-                className="p-4 flex items-center justify-between bg-blue-50 border-blue-200"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-gray-900 break-words">{template.name}</div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {template.startTime} ({template.durationMinutes / 60}h)
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {template.capacity} people
-                    </span>
-                    <span className="text-xs bg-blue-200 px-2 py-0.5 rounded font-semibold">
-                      EVENT-SPECIFIC
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleStartEdit(template)}
-                    disabled={!!editingId}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(template.id)}
-                    disabled={!!editingId}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))
-          )}
-        </div>
-      </div>
     </div>
   );
 }
