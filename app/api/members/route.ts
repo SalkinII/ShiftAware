@@ -1,7 +1,12 @@
 import { withErrorHandling } from "@/lib/api/withErrorHandling";
 import { withAuth } from "@/lib/api/withAuth";
+import { isAdmin } from "@/lib/auth";
 import { teamMemberSchema } from "@/lib/validations/team-member";
 import { createAuditLog } from "@/lib/utils/audit";
+import {
+  getEnvironmentRegistrantIds,
+  isEnvironmentAdmin,
+} from "@/lib/domain/environment-authorization";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import { AuditAction, EntityType } from "@prisma/client";
 import {
@@ -18,10 +23,21 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const search = searchParams.get("search");
   const includeUnregistered =
     searchParams.get("includeUnregistered") === "true";
+  const callerMemberId = request.headers.get("x-member-id");
 
   let members;
   if (environmentId) {
-    members = await memberRepo.findForEnvironment(environmentId, { includeUnregistered, search });
+    const festivalAdmin = await isAdmin();
+    if (
+      !festivalAdmin &&
+      callerMemberId &&
+      (await isEnvironmentAdmin(callerMemberId, environmentId))
+    ) {
+      const registrantIds = await getEnvironmentRegistrantIds(environmentId);
+      members = await memberRepo.findByIds(registrantIds);
+    } else {
+      members = await memberRepo.findForEnvironment(environmentId, { includeUnregistered, search });
+    }
   } else {
     const includeInactive = searchParams.get("includeInactive") === "true";
     const where: any = includeInactive ? {} : { isActive: true };
