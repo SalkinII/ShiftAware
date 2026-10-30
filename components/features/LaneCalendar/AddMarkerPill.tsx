@@ -3,6 +3,7 @@
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { DEFAULT_MARKER_DURATION_MINUTES } from "./utils/constants";
 
 export function AddMarkerPill() {
   const [isDragging, setIsDragging] = useState(false);
@@ -11,7 +12,7 @@ export function AddMarkerPill() {
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData("application/shiftaware-marker", JSON.stringify({ durationMinutes: 30 }));
+        e.dataTransfer.setData("application/shiftaware-marker", JSON.stringify({ durationMinutes: DEFAULT_MARKER_DURATION_MINUTES }));
         e.dataTransfer.effectAllowed = "copy";
         setIsDragging(true);
       }}

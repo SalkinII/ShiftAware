@@ -28,7 +28,7 @@ export function buildLaneNodes(
   }));
 }
 
-export function buildHourGridNodes(
+export function buildHourGridEntries(
   eventStart: Date,
   eventEnd: Date,
   canvasHeight: number,
@@ -67,7 +67,7 @@ export function useLaneNodes(
     const canvasHeight = lanes.length * LANE_HEIGHT;
 
     const laneNodes = buildLaneNodes(lanes, timelineWidth);
-    const gridNodes = buildHourGridNodes(eventStart, eventEnd, canvasHeight);
+    const gridNodes = buildHourGridEntries(eventStart, eventEnd, canvasHeight);
 
     return [...laneNodes, ...gridNodes];
   }, [lanes, eventStart, eventEnd]);

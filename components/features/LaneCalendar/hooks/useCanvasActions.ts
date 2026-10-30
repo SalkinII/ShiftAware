@@ -12,6 +12,7 @@ import {
 } from "../utils/coordinates";
 import {
   SNAP_INTERVAL_MINUTES,
+  DEFAULT_MARKER_DURATION_MINUTES,
   LANE_HEIGHT,
   SNAP_PIXELS,
 } from "../utils/constants";
@@ -68,7 +69,7 @@ export function useCanvasActions({
           const flowPos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
           const snappedX = Math.max(0, snapX(flowPos.x));
           const startTime = xToTime(snappedX, eventStart);
-          const endTime = new Date(startTime.getTime() + (marker.durationMinutes ?? 30) * 60000);
+          const endTime = new Date(startTime.getTime() + (marker.durationMinutes ?? DEFAULT_MARKER_DURATION_MINUTES) * 60000);
 
           const res = await fetch("/api/markers", {
             method: "POST",

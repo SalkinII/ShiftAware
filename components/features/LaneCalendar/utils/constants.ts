@@ -38,3 +38,6 @@ export const Z_HOUR_GRID = 0;
 export const Z_LANE_ZONE = 0;
 export const Z_DAY_SEPARATOR = 1;
 export const Z_SHIFT_BLOCK = 2;
+
+// Default span of a marker dragged onto the timeline (minutes)
+export const DEFAULT_MARKER_DURATION_MINUTES = 30;
