@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
@@ -8,19 +8,23 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
-export function FestivalSettings() {
+export function EnvironmentSettings({ festivalId }: { festivalId: string }) {
   const toast = useToast();
   const {
     selectedEnvironmentId,
     selectedEnvironment,
-    environments,
+    environments: allEnvironments,
     loading,
     refreshEnvironments,
     setSelectedEnvironmentId,
   } = useEnvironmentContext();
+  const environments = useMemo(
+    () => allEnvironments.filter((environment) => environment.festivalId === festivalId),
+    [allEnvironments, festivalId],
+  );
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleteEventDialog, setDeleteEventDialog] = useState<{
+  const [deleteEnvironmentDialog, setDeleteEnvironmentDialog] = useState<{
     isOpen: boolean;
     isLoading: boolean;
   }>({
@@ -44,13 +48,13 @@ export function FestivalSettings() {
         endDate: "",
       });
     } else {
-      const event = environments.find((e) => e.id === selectedEnvironmentId);
-      if (event) {
+      const environment = environments.find((e) => e.id === selectedEnvironmentId);
+      if (environment) {
         setFormData({
-          name: event.name,
-          status: event.status,
-          startDate: event.startDate.split("T")[0],
-          endDate: event.endDate.split("T")[0],
+          name: environment.name,
+          status: environment.status,
+          startDate: environment.startDate.split("T")[0],
+          endDate: environment.endDate.split("T")[0],
         });
       }
     }
@@ -68,6 +72,7 @@ export function FestivalSettings() {
         name: formData.name,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        ...(isCreatingNew ? { festivalId } : {}),
       };
 
       const url = isCreatingNew
@@ -85,7 +90,7 @@ export function FestivalSettings() {
       if (res.ok) {
         const resData = await res.json();
         const result = unwrapApiResponse<{ id: string }>(resData);
-        toast.success(isCreatingNew ? "Event created" : "Event updated");
+        toast.success(isCreatingNew ? "Environment created" : "Environment updated");
         await refreshEnvironments();
         if (isCreatingNew) {
           const newId = result?.id;
@@ -94,23 +99,23 @@ export function FestivalSettings() {
         }
       } else {
         const error = await res.json();
-        toast.error(error.message || "Failed to save event");
+        toast.error(error.message || "Failed to save environment");
       }
     } catch {
-      toast.error("Failed to save event");
+      toast.error("Failed to save environment");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDeleteEvent() {
-    setDeleteEventDialog({ isOpen: true, isLoading: false });
+  async function handleDeleteEnvironment() {
+    setDeleteEnvironmentDialog({ isOpen: true, isLoading: false });
   }
 
-  async function confirmDeleteEvent() {
+  async function confirmDeleteEnvironment() {
     if (!selectedEnvironmentId) return;
 
-    setDeleteEventDialog((prev) => ({ ...prev, isLoading: true }));
+    setDeleteEnvironmentDialog((prev) => ({ ...prev, isLoading: true }));
 
     try {
       const res = await fetch(`/api/environments/${selectedEnvironmentId}`, {
@@ -118,19 +123,19 @@ export function FestivalSettings() {
       });
 
       if (res.ok) {
-        toast.success("Event deleted");
+        toast.success("Environment deleted");
         localStorage.removeItem("adminSelectedEnvironmentId");
         setSelectedEnvironmentId("");
         await refreshEnvironments();
-        setDeleteEventDialog({ isOpen: false, isLoading: false });
+        setDeleteEnvironmentDialog({ isOpen: false, isLoading: false });
       } else {
         const errorData = await res.json();
-        toast.error(errorData.error || "Failed to delete event");
-        setDeleteEventDialog((prev) => ({ ...prev, isLoading: false }));
+        toast.error(errorData.error || "Failed to delete environment");
+        setDeleteEnvironmentDialog((prev) => ({ ...prev, isLoading: false }));
       }
     } catch {
-      toast.error("Failed to delete event. Please try again.");
-      setDeleteEventDialog((prev) => ({ ...prev, isLoading: false }));
+      toast.error("Failed to delete environment. Please try again.");
+      setDeleteEnvironmentDialog((prev) => ({ ...prev, isLoading: false }));
     }
   }
 
@@ -141,27 +146,27 @@ export function FestivalSettings() {
   return (
     <>
       <ConfirmDialog
-        isOpen={deleteEventDialog.isOpen}
+        isOpen={deleteEnvironmentDialog.isOpen}
         onClose={() => {
-          if (!deleteEventDialog.isLoading) {
-            setDeleteEventDialog({ isOpen: false, isLoading: false });
+          if (!deleteEnvironmentDialog.isLoading) {
+            setDeleteEnvironmentDialog({ isOpen: false, isLoading: false });
           }
         }}
-        onConfirm={confirmDeleteEvent}
-        title="Delete Event"
+        onConfirm={confirmDeleteEnvironment}
+        title="Delete Environment"
         message={`This will permanently delete "${selectedEnvironment?.name}" along with all its shifts, assignments, preferences, and registrations. This cannot be undone.`}
-        confirmText="Delete Event"
+        confirmText="Delete Environment"
         cancelText="Cancel"
         variant="destructive"
-        isLoading={deleteEventDialog.isLoading}
+        isLoading={deleteEnvironmentDialog.isLoading}
       />
       <div className="space-y-6">
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-2">
-          Event Configuration
+          Environment Configuration
         </h3>
         <p className="text-sm text-gray-500">
-          Create a new event or select an existing one to edit
+          Create a new environment or select an existing one to edit
         </p>
       </div>
 
@@ -172,11 +177,11 @@ export function FestivalSettings() {
           </h2>
         ) : !isCreatingNew ? (
           <p className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg">
-            Select an event from the header, or create a new one
+            Select an environment from the header, or create a new one
           </p>
         ) : (
           <h2 className="text-lg font-semibold text-gray-900">
-            Create New Event
+            Create New Environment
           </h2>
         )}
         <button
@@ -184,14 +189,14 @@ export function FestivalSettings() {
           onClick={() => setIsCreatingNew(!isCreatingNew)}
           className="text-sm font-medium text-primary-600 hover:text-primary-700"
         >
-          {isCreatingNew ? "Cancel" : "+ New Event"}
+          {isCreatingNew ? "Cancel" : "+ New Environment"}
         </button>
       </div>
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="Event Name"
+            label="Environment Name"
             placeholder="e.g., Summer Festival 2026"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -239,10 +244,10 @@ export function FestivalSettings() {
             selectedEnvironment?.status === "COMPLETED") && (
             <Button
               variant="destructive"
-              onClick={handleDeleteEvent}
-              disabled={saving || deleteEventDialog.isLoading}
+              onClick={handleDeleteEnvironment}
+              disabled={saving || deleteEnvironmentDialog.isLoading}
             >
-              Delete Event
+              Delete Environment
             </Button>
           )}
         <div className="ml-auto">
@@ -250,8 +255,8 @@ export function FestivalSettings() {
             {saving
               ? "Saving..."
               : selectedEnvironmentId === "new"
-                ? "Create Event"
-                : "Update Event"}
+                ? "Create Environment"
+                : "Update Environment"}
           </Button>
         </div>
       </div>

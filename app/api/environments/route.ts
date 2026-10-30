@@ -9,6 +9,7 @@ import {
 } from "@/lib/api-errors";
 import { createEnvironmentSchema } from "@/lib/validations/environment";
 import { EnvironmentRepository } from "@/lib/repositories/environment.repository";
+import { FestivalRepository } from "@/lib/repositories/festival.repository";
 
 export const GET = withAuth(withErrorHandling(async () => {
   const environmentRepo = new EnvironmentRepository();
@@ -35,6 +36,16 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   }
 
   const { name, startDate, endDate, festivalId } = validation.data;
+
+  const festivalRepo = new FestivalRepository();
+  const festival = await festivalRepo.findById(festivalId);
+  if (!festival) {
+    return createErrorResponse(
+      new Error("Festival not found"),
+      "Festival not found",
+      400,
+    );
+  }
 
   const environmentRepo = new EnvironmentRepository();
 

@@ -11,6 +11,7 @@ import { unwrapApiResponse } from "@/lib/api-errors";
 
 export interface EnvironmentSummary {
   id: string;
+  festivalId: string;
   name: string;
   startDate: string;
   endDate: string;

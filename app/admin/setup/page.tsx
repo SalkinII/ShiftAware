@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Settings, Calendar, Users } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { FestivalSettings } from "./components/FestivalSettings";
+import { EnvironmentSettings } from "./components/EnvironmentSettings";
+import { FestivalForm } from "./components/FestivalForm";
 import { TemplateManager } from "./components/TemplateManager";
 import { AttributeDefinitions } from "./components/AttributeDefinitions";
 
@@ -12,6 +13,7 @@ type TabType = "event" | "templates" | "attributes";
 
 export default function SetupPage() {
   const [activeTab, setActiveTab] = useState<TabType>("event");
+  const [selectedFestivalId, setSelectedFestivalId] = useState<string | null>(null);
 
   const tabs = [
     { id: "event" as TabType, label: "Event Settings", icon: Calendar },
@@ -57,8 +59,9 @@ export default function SetupPage() {
       {/* Tab Content */}
       <div className="py-6">
         {activeTab === "event" && (
-          <Card className="p-6">
-            <FestivalSettings />
+          <Card className="p-6 space-y-8">
+            <FestivalForm selectedFestivalId={selectedFestivalId} onSelect={setSelectedFestivalId} />
+            {selectedFestivalId && <EnvironmentSettings festivalId={selectedFestivalId} />}
           </Card>
         )}
 

@@ -21,7 +21,9 @@ const environmentBaseSchema = z.object({
 // Validation schema for creating an event
 export const createEnvironmentSchema = environmentBaseSchema
   .extend({
-    festivalId: z.string().min(1, "Festival is required"),
+    festivalId: z
+      .string({ required_error: "Festival is required" })
+      .min(1, "Festival is required"),
   })
   .refine(
     (data) => new Date(data.endDate) >= new Date(data.startDate),
