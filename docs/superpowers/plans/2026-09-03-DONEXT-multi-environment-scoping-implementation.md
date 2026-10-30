@@ -8,18 +8,32 @@
 
 **Tech Stack:** Next.js 15.5 App Router, React 19, Prisma 5.18, PostgreSQL, Tailwind v4, Zod, Vitest, Playwright.
 
-**Spec:** `docs/superpowers/specs/2026-09-03-multi-environment-scoping-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-03-multi-environment-scoping-design.md` (amended 2026-10-30)
+
+> **Amended 2026-10-30.** Production was wiped and starts empty on the final schema. Task 2 is already done on `main`. Task 3 adds `EntityType.FESTIVAL`. New **Task 4a** adds festival create/edit and the admin empty state (spec §5a). Task 9 adds the member "No festival yet" state. Task 10 adds the first-run e2e test. The runtime is Node 24.
 
 ## Global Constraints
+
+- **Production is never reset or seeded.** `prisma migrate reset` and `prisma db seed` run against local dev databases only. Production gets `prisma migrate deploy` on an empty database at container start (spec §3, amended).
+- Node 24 is the runtime (`node:24-slim`, CI `node-version: 24`). Every gate in this plan runs on Node 24.
+- Fixtures, seeds and e2e data are synthetic (animal aliases). Never copy production data into the repo or a dev database.
 
 - No algorithm changes. `lib/algorithm/*` and `lib/domain/allocation.ts` are renamed-through only; their logic is untouched (spec §2).
 - The shift cap is `EnvironmentConfig.balanceThresholds.maxShiftsPerPerson` (JSON), never `minShiftsPerPerson` (column). Any new test must assert against the JSON field.
 - One schema migration, not two. `Environment.festivalId` is non-nullable with `@@unique([festivalId, name])`, so the rename and the `Festival` parent must land together, followed by `prisma migrate reset` (spec §8).
-- The database holds only test data (`[[project_db_is_disposable]]` — confirm still true before running `migrate reset` against anything but local dev). Prefer clean reset + reseed over backfill migrations everywhere in this plan.
+- Local databases hold only test data. Prefer clean reset + reseed over backfill migrations everywhere in this plan.
 - `tsc --noEmit` (new `typecheck` script) is the rename's real correctness gate, not `npm test` — route handlers are thinly covered (105 test files concentrate on algorithm/lanes/export/components).
 - Filtering for scoped visibility happens server-side, in repository queries. The UI is never the security boundary (spec §7).
 - Attribute answers are stored once per member (`TeamMemberAttribute` keyed by `memberId + definitionId`) and reused across every environment that requires that definition — never re-asked.
 - No new npm dependency. Everything here uses what's already installed (Prisma, Zod, Tailwind).
+
+## Review Focus (amendment 2026-10-30)
+
+1. **An empty production database.** The admin must be able to create the first festival, and members must see "No festival yet", never an error. Covered by Task 4a `festival-form.test.tsx`, Task 9 `resolveEntryRoute([], 0)`, and Task 10 `first-run.spec.ts`.
+2. **An environment admin trying to create or edit a festival** must get 403. Covered by Task 4a `POST as environment admin is 403`.
+3. **Creating an environment with a missing or stale `festivalId`** (for example a festival selected in another tab) must give a clear 400, not a Prisma foreign-key 500. Covered by Task 4a `environments-create.test.ts`.
+4. **A whitespace-only festival name** must not save an invisible festival, and a one-day festival must be allowed. Covered by Task 4a `festival.test.ts`.
+5. **The first-run migration path:** `migrate deploy` on an empty database must leave nothing pending. Covered by the Task 10 Step 6 precondition.
 
 ---
 
@@ -195,6 +209,8 @@ git commit -m "fix: correct UTC/local time display, modal overflow, and missing 
 
 ## Task 2: Add the `typecheck` script
 
+> **DONE on `main` (2026-10-30).** The script already exists after the rebase. Skip to Task 3 and run only Step 2 to record the baseline.
+
 **Files:**
 - Modify: `package.json`
 
@@ -257,6 +273,7 @@ enum EntityType {
   PREFERENCE
   CONFIG
   ENVIRONMENT   // was EVENT
+  FESTIVAL      // new: audit entries for festival create/edit (Task 4a)
 }
 ```
 
@@ -468,7 +485,7 @@ Expected: both pass with no errors.
 
 - [ ] **Step 3: Generate the migration and reset the database**
 
-Confirm with the user before this step that the target database is still test data only (per `[[project_db_is_disposable]]`) — this drops and recreates it.
+Run this against the **local dev database only**: check that `DATABASE_URL` points at `localhost`. It drops and recreates the database. Production is never reset (Global Constraints).
 
 Run: `npx prisma migrate dev --name multi_environment_scoping`
 Then: `npx prisma migrate reset --force`
@@ -605,7 +622,131 @@ git commit -m "refactor: rename Event to Environment throughout the codebase, ho
 
 ---
 
+## Task 4a: Festival management and the admin empty state
+
+**Files:**
+- Create: `lib/validations/festival.ts`
+- Create: `lib/repositories/festival.repository.ts`
+- Create: `app/api/festivals/route.ts`
+- Create: `app/api/festivals/[id]/route.ts`
+- Modify: `lib/validations/environment.ts` (from Task 4)
+- Modify: `app/api/environments/route.ts` (from Task 4)
+- Create: `app/admin/setup/components/FestivalForm.tsx`
+- Move: `app/admin/setup/components/FestivalSettings.tsx` → `app/admin/setup/components/EnvironmentSettings.tsx`
+- Modify: `app/admin/setup/page.tsx`
+- Test: `tests/unit/validations/festival.test.ts`
+- Test: `tests/unit/api/festivals.test.ts`
+- Test: `tests/unit/api/environments-create.test.ts`
+- Test: `tests/unit/components/festival-form.test.tsx`
+
+**Interfaces:**
+- Consumes: `Festival` model and `EntityType.FESTIVAL` (Task 3); `EnvironmentRepository`, `createEnvironmentSchema`, `/api/environments` (Task 4); `isAdmin()` from `lib/auth`; `withAuth`, `withErrorHandling`; `createAuditLog` from `lib/utils/audit`; `createSuccessResponse`, `createErrorResponse`, `createForbiddenResponse`, `createNotFoundResponse` from `lib/api-errors`.
+- Produces:
+  - `createFestivalSchema` and `updateFestivalSchema` (Zod) in `lib/validations/festival.ts`.
+  - `type FestivalSummary = { id: string; name: string; startDate: Date; endDate: Date }`.
+  - `class FestivalRepository extends BaseRepository`, following `MarkerRepository`'s try/`handlePrismaError` pattern:
+    - `findAll(): Promise<FestivalSummary[]>`, ordered by `startDate` desc, with `select` limited to the four fields
+    - `findById(id: string): Promise<FestivalSummary | null>`
+    - `create(data: { name: string; startDate: Date; endDate: Date }): Promise<FestivalSummary>`
+    - `update(id: string, data: Partial<{ name: string; startDate: Date; endDate: Date }>): Promise<FestivalSummary>`
+  - Routes: `GET`/`POST /api/festivals` and `PUT /api/festivals/[id]`.
+  - `<FestivalForm selectedFestivalId={string | null} onSelect={(id: string) => void} />`.
+  - `<EnvironmentSettings festivalId={string} />`.
+
+Implements spec §5a. Global admin means `isAdmin()` is true (the shared admin password session). An environment admin has no admin session, so they get 403 through the same check, and no extra code is needed for that.
+
+- [ ] **Step 1: Write the failing validation test** `tests/unit/validations/festival.test.ts`
+
+```ts
+import { describe, it, expect } from "vitest";
+import { createFestivalSchema, updateFestivalSchema } from "@/lib/validations/festival";
+
+const ok = { name: "Starlight", startDate: "2026-06-20", endDate: "2026-06-24" };
+
+describe("createFestivalSchema", () => {
+  it("accepts a valid festival", () => expect(createFestivalSchema.safeParse(ok).success).toBe(true));
+  it("accepts a one-day festival", () =>
+    expect(createFestivalSchema.safeParse({ ...ok, endDate: ok.startDate }).success).toBe(true));
+  it.each(["", "   "])("rejects name %j", (name) => {
+    const r = createFestivalSchema.safeParse({ ...ok, name });
+    expect(r.success).toBe(false);
+    expect(r.error!.errors[0].message).toBe("Festival name is required");
+  });
+  it("trims the name", () =>
+    expect(createFestivalSchema.parse({ ...ok, name: "  Starlight  " }).name).toBe("Starlight"));
+  it("rejects end before start", () => {
+    const r = createFestivalSchema.safeParse({ ...ok, endDate: "2026-06-19" });
+    expect(r.error!.errors[0].message).toBe("End date must be after start date");
+  });
+  it("rejects an unparseable date", () =>
+    expect(createFestivalSchema.safeParse({ ...ok, startDate: "soon" }).success).toBe(false));
+});
+
+describe("updateFestivalSchema", () => {
+  it("accepts a name-only change", () => expect(updateFestivalSchema.safeParse({ name: "New" }).success).toBe(true));
+  it("rejects end before start when both are given", () =>
+    expect(updateFestivalSchema.safeParse({ startDate: "2026-06-20", endDate: "2026-06-19" }).success).toBe(false));
+});
+```
+
+- [ ] **Step 2: Run it.** `npx vitest run tests/unit/validations/festival.test.ts`. Expected: FAIL, module not found.
+
+- [ ] **Step 3: Implement `lib/validations/festival.ts`.** Mirror `lib/validations/environment.ts`: a base object, then `.refine` for create and `.partial().superRefine` for update. Name: `z.string().trim().min(1, "Festival name is required").max(100)`. Dates: the same `Date.parse` refine and the same `"End date must be after start date"` message, on `path: ["endDate"]`.
+
+- [ ] **Step 4: Run it.** Same command. Expected: PASS.
+
+- [ ] **Step 5: Write the failing route tests** `tests/unit/api/festivals.test.ts`. Use the `@vitest-environment node` header and the mocking style of `tests/unit/api/markers.test.ts`. Mock `@/lib/auth` (`isAuthenticated` → true, `isAdmin` → configurable), `@/lib/repositories/festival.repository`, and `@/lib/utils/audit`.
+
+| Test | Arrange | Assert |
+|---|---|---|
+| `GET returns only summary fields` | repo `findAll` → one festival | 200; `Object.keys(body.data[0]).sort()` equals `["endDate","id","name","startDate"]` |
+| `POST as member is 403` | `isAdmin` → false | 403; repo `create` not called |
+| `POST as environment admin is 403` | `isAdmin` → false (env admins hold no admin session) | 403; `createAuditLog` not called |
+| `POST as admin creates and audits` | `isAdmin` → true, valid body | 201; `createAuditLog` called with `expect.objectContaining({ action: "CREATE", entityType: "FESTIVAL", entityId: <id> })` |
+| `POST invalid body is 400` | admin, `endDate` < `startDate` | 400; message `"End date must be after start date"` |
+| `PUT unknown id is 404` | admin, repo `findById` → null | 404 |
+| `PUT as member is 403` | `isAdmin` → false | 403 |
+| `PUT as admin audits before and after` | admin, `findById` → old row | 200; `createAuditLog` called with `action: "UPDATE"`, `before` = old row, `after` = updated row |
+
+- [ ] **Step 6: Run it.** `npx vitest run tests/unit/api/festivals.test.ts`. Expected: FAIL, route modules not found.
+
+- [ ] **Step 7: Implement `FestivalRepository` and both route files.** Copy the structure of `app/api/environments/route.ts`: `withAuth(withErrorHandling(...))`, `isAdmin()` checked first with `createForbiddenResponse("Only admins can manage festivals")`, and on validation failure `createErrorResponse(..., firstMessage, 400)`. `POST` returns `createSuccessResponse(festival, 201)`. `PUT` returns `createNotFoundResponse("Festival")` when `findById` is null.
+
+- [ ] **Step 8: Run it.** Same command. Expected: PASS.
+
+- [ ] **Step 9: Write the failing environment-create test** `tests/unit/api/environments-create.test.ts` (same mocking style; admin session):
+  - `rejects a missing festivalId`: 400, message `"Festival is required"`.
+  - `rejects an unknown festivalId`: `FestivalRepository.findById` → null gives 400, message `"Festival not found"`.
+  - `creates inside the given festival`: the repository's create call receives `festivalId: "fest-1"`.
+
+- [ ] **Step 10: Run it.** Expected: FAIL. Then add `festivalId: z.string().min(1, "Festival is required")` to `createEnvironmentSchema`. In `POST /api/environments`, look the festival up before creating and pass `festivalId` through `createWithConfig`. Run again. Expected: PASS.
+
+- [ ] **Step 11: Write the failing component test** `tests/unit/components/festival-form.test.tsx` (jsdom, `global.fetch` mocked):
+  - `shows the first-festival empty state`: `GET /api/festivals` → `[]`. Renders the heading `"Create your first festival"` and the form is already in create mode (the name input is visible, with no "+ New Festival" toggle needed).
+  - `lists existing festivals`: `GET` → one festival named `"Starlight"`. The heading isn't shown; `"Starlight"` is selectable, and choosing it calls `onSelect("fest-1")`.
+  - `shows the server's validation message`: `POST` → 400 `{ error: "End date must be after start date" }`. That text appears in a toast or inline error; nothing crashes.
+
+- [ ] **Step 12: Run it.** Expected: FAIL.
+
+- [ ] **Step 13: Build the UI.**
+  - `git mv app/admin/setup/components/FestivalSettings.tsx app/admin/setup/components/EnvironmentSettings.tsx`. Rename the component, add the prop `festivalId: string`, include it in the create payload, and list only that festival's environments. Change its copy from "Event" to "Environment" (`"+ New Environment"`).
+  - Create `FestivalForm.tsx` with festival select/create/edit using the existing form styles.
+  - In `app/admin/setup/page.tsx`, hold `selectedFestivalId` in `useState<string | null>`. Render `<FestivalForm>`, and render `<EnvironmentSettings festivalId=...>` only once a festival is selected.
+
+- [ ] **Step 14: Run the task's tests, then the gates.** Run `npx vitest run tests/unit/validations/festival.test.ts tests/unit/api/festivals.test.ts tests/unit/api/environments-create.test.ts tests/unit/components/festival-form.test.tsx`, then `npm run typecheck` and `npm test`. Expected: all PASS.
+
+- [ ] **Step 15: Commit**
+
+```bash
+git add lib/validations/festival.ts lib/validations/environment.ts lib/repositories/festival.repository.ts app/api/festivals app/api/environments/route.ts app/admin/setup tests/unit/validations/festival.test.ts tests/unit/api/festivals.test.ts tests/unit/api/environments-create.test.ts tests/unit/components/festival-form.test.tsx
+git commit -m "feat: festival create/edit, environment creation scoped to a festival, first-festival empty state"
+```
+
+---
+
 ## Task 5: Seed rewrite — one festival, three environments
+
+> **Dev only.** The seed never runs against production (Global Constraints).
 
 **Files:**
 - Modify: `prisma/seed.ts`
@@ -1456,13 +1597,17 @@ import { describe, it, expect } from "vitest";
 import { resolveEntryRoute } from "@/app/(routes)/app/identity/components/EnvironmentSelectionStep";
 
 describe("entry routing", () => {
+  it("routes to 'none' when there are no registrations and nothing to join (empty production)", () => {
+    expect(resolveEntryRoute([], 0)).toEqual({ type: "none" });
+  });
+
   it("routes straight through with 0 registrations to the join flow", () => {
-    expect(resolveEntryRoute([])).toEqual({ type: "join" });
+    expect(resolveEntryRoute([], 1)).toEqual({ type: "join" });
   });
 
   it("routes straight to shifts with exactly 1 registration, regardless of festival count", () => {
     const registrations = [{ environmentId: "env-1", festivalId: "fest-1" }];
-    expect(resolveEntryRoute(registrations)).toEqual({ type: "direct", environmentId: "env-1" });
+    expect(resolveEntryRoute(registrations, 1)).toEqual({ type: "direct", environmentId: "env-1" });
   });
 
   it("routes to the picker with more than 1 registration, grouped by festival", () => {
@@ -1470,11 +1615,13 @@ describe("entry routing", () => {
       { environmentId: "env-1", festivalId: "fest-1" },
       { environmentId: "env-2", festivalId: "fest-2" },
     ];
-    const result = resolveEntryRoute(registrations);
+    const result = resolveEntryRoute(registrations, 2);
     expect(result.type).toBe("picker");
   });
 });
 ```
+
+Also add a render test in the same file: `EnvironmentSelectionStep`, with registrations `[]` and `useEnvironmentContext()` mocked to return `environments: []`, renders the text `"No festival yet"` and no join button.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -1491,14 +1638,16 @@ Add and export the routing function (pure, testable independent of the component
 
 ```ts
 export type EntryRoute =
+  | { type: "none" }
   | { type: "join" }
   | { type: "direct"; environmentId: string }
   | { type: "picker" };
 
 export function resolveEntryRoute(
   registrations: { environmentId: string; festivalId: string }[],
+  joinableCount: number,
 ): EntryRoute {
-  if (registrations.length === 0) return { type: "join" };
+  if (registrations.length === 0) return joinableCount === 0 ? { type: "none" } : { type: "join" };
   if (registrations.length === 1) return { type: "direct", environmentId: registrations[0].environmentId };
   return { type: "picker" };
 }
@@ -1508,7 +1657,9 @@ Rename the component itself (`EventSelectionStep` → `EnvironmentSelectionStep`
 
 ```ts
 const autoForwardKey = `shiftaware:environmentAutoForward:${memberId}`;
-const route = resolveEntryRoute(registrations);
+const { environments } = useEnvironmentContext(); // every environment across festivals (Task 4)
+const route = resolveEntryRoute(registrations, environments.length);
+// route.type === "none" renders the "No festival yet" message instead of the join flow
 if (route.type === "direct" && !sessionStorage.getItem(autoForwardKey)) {
   sessionStorage.setItem(autoForwardKey, "done");
   onEnvironmentSelected(route.environmentId);
@@ -1721,17 +1872,31 @@ For each, do a targeted find of `Event`/`eventId` and replace with `Environment`
 
 Update any screenshots-adjacent prose describing event selection/switching to describe the new environment switcher and join flow from Task 9. This is user-facing documentation — describe the actual UI (switcher location, join-flow copy) rather than the internal model names.
 
-- [ ] **Step 6: Final full verification pass**
+Step 3 also lists the Task 4a routes: `GET`/`POST /api/festivals` and `PUT /api/festivals/[id]`. Step 5 also describes creating the first festival in admin setup.
+
+- [ ] **Step 6: Write the first-run e2e test** `tests/e2e/first-run.spec.ts` (spec §9, "First run")
+
+Precondition: an empty, unseeded local database. Run `npx prisma migrate reset --force --skip-seed`, then `npx prisma migrate deploy`, which must print "No pending migrations". This mirrors production's `migrate deploy` on an empty database. Reuse the login helpers from `tests/e2e/auth.spec.ts`. Use only synthetic names.
+
+1. Admin logs in and opens `/admin/setup`. Expect the heading "Create your first festival".
+2. Create festival "Test Meadow" (2026-07-01 to 2026-07-03). Expect it to be selected.
+3. Create environment "Bar" in it.
+4. In Bar's attribute requirements, add a new library question `can_drive` (BOOLEAN) and mark it required.
+5. Log out. Log in as a member, create profile "Lynx", and join Bar. Expect exactly one question (`can_drive`). Answer it.
+6. Log in as admin again and open the Bar team list. Expect "Lynx".
+
+- [ ] **Step 7: Final full verification pass (on Node 24: `node -v` reports v24.x)**
 
 Run: `npm run typecheck`
 Run: `npm test`
 Run: `npm run lint`
+Run: `npm run test:e2e`
 
-Expected: all three pass with zero errors — this is the plan's final gate before considering the feature complete.
+Expected: all four pass with zero errors, including `first-run.spec.ts`. This is the plan's final gate before the feature counts as complete.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add docs/ARCHITECTURE.md docs/PROJECT-OVERVIEW.md docs/API.md docs/DESIGN.md docs/ALGORITHM.md docs/FRONTEND.md docs/ARCHITECTURE-LAYERS.md docs/user-manual/USER-MANUAL.md
-git commit -m "docs: sync architecture, API, and user manual with the Festival/Environment model"
+git add docs/ARCHITECTURE.md docs/PROJECT-OVERVIEW.md docs/API.md docs/DESIGN.md docs/ALGORITHM.md docs/FRONTEND.md docs/ARCHITECTURE-LAYERS.md docs/user-manual/USER-MANUAL.md tests/e2e/first-run.spec.ts
+git commit -m "docs: sync architecture, API, and user manual with the Festival/Environment model; add first-run e2e"
 ```
