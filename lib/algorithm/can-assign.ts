@@ -68,7 +68,7 @@ export function canAssign(
     const conflictingShift = overlapViolation.conflictingShiftId
       ? allShiftsMap.get(overlapViolation.conflictingShiftId)
       : undefined;
-    const isCrossEvent = conflictingShift && conflictingShift.eventId !== shift.eventId;
+    const isCrossEvent = conflictingShift && conflictingShift.environmentId !== shift.environmentId;
     return { eligible: false, reason: isCrossEvent ? "cross_event_conflict" : "time_conflict" };
   }
 

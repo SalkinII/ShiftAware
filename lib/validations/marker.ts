@@ -3,7 +3,7 @@ import { z } from "zod";
 const idSchema = z.string().min(1, "ID is required");
 
 export const markerSchemaBase = z.object({
-  eventId: idSchema,
+  environmentId: idSchema,
   text: z.string().max(500),
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),

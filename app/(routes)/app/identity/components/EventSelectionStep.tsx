@@ -16,7 +16,7 @@ interface Event {
 
 interface EventSelectionStepProps {
   memberId: string;
-  onEventSelected: (eventId: string) => void;
+  onEventSelected: (environmentId: string) => void;
   onBack: () => void;
 }
 
@@ -41,10 +41,10 @@ export function EventSelectionStep({
       if (res.ok) {
         const data = await res.json();
         const memberData = data.data;
-        const registrations = memberData?.eventRegistrations || [];
+        const registrations = memberData?.environmentRegistrations || [];
         const registeredEvents = registrations
-          .filter((r: any) => r.event)
-          .map((r: any) => r.event);
+          .filter((r: any) => r.environment)
+          .map((r: any) => r.environment);
         setEvents(registeredEvents);
 
         // Auto-forward only on first visit, not when user navigated back
@@ -68,7 +68,7 @@ export function EventSelectionStep({
 
   async function fetchAllEvents() {
     try {
-      const res = await fetch("/api/events");
+      const res = await fetch("/api/environments");
       if (res.ok) {
         const data = await res.json();
         setAllEvents(data.data || []);
@@ -78,16 +78,16 @@ export function EventSelectionStep({
     }
   }
 
-  const handleRegisterForEvent = async (eventId: string) => {
+  const handleRegisterForEvent = async (environmentId: string) => {
     try {
-      const res = await fetch(`/api/events/${eventId}/registrations`, {
+      const res = await fetch(`/api/environments/${environmentId}/registrations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
       });
 
       if (res.ok) {
-        onEventSelected(eventId);
+        onEventSelected(environmentId);
       } else {
         const error = await res.json();
         alert(error.message || "Failed to register for event");

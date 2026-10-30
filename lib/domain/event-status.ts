@@ -1,6 +1,6 @@
 // Merged from: lib/services/event-status-guard.ts + lib/services/event-status-permissions.ts
 import { prisma } from "@/lib/db";
-import type { EventStatus } from "@prisma/client";
+import type { EnvironmentStatus } from "@prisma/client";
 
 export type GuardAction =
   | "SHIFT_MUTATE"
@@ -18,7 +18,7 @@ export class StatusGuardError extends Error {
   }
 }
 
-export const PERMISSION_MAP: Record<EventStatus, Record<GuardAction, boolean>> = {
+export const PERMISSION_MAP: Record<EnvironmentStatus, Record<GuardAction, boolean>> = {
   PLANNING: {
     SHIFT_MUTATE: true, PREFERENCE_MUTATE: false, ASSIGNMENT_ALGORITHM: false,
     ASSIGNMENT_MANUAL: false, REGISTRATION_MUTATE: true, EVENT_MUTATE: true, EVENT_DELETE: true,
@@ -41,29 +41,29 @@ export const PERMISSION_MAP: Record<EventStatus, Record<GuardAction, boolean>> =
   },
 };
 
-export async function assertEventStatusAllows(eventId: string, action: GuardAction): Promise<void> {
-  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { status: true } });
+export async function assertEventStatusAllows(environmentId: string, action: GuardAction): Promise<void> {
+  const event = await prisma.environment.findUnique({ where: { id: environmentId }, select: { status: true } });
   if (!event) throw new StatusGuardError("Event not found");
   if (!PERMISSION_MAP[event.status]?.[action]) {
     throw new StatusGuardError(`Action not allowed: event status is ${event.status}`);
   }
 }
 
-export function canMutateShifts(status: EventStatus): boolean {
+export function canMutateShifts(status: EnvironmentStatus): boolean {
   return PERMISSION_MAP[status]?.SHIFT_MUTATE === true;
 }
-export function canRunAlgorithm(status: EventStatus): boolean {
+export function canRunAlgorithm(status: EnvironmentStatus): boolean {
   return PERMISSION_MAP[status]?.ASSIGNMENT_ALGORITHM === true;
 }
-export function canManuallyAssign(status: EventStatus): boolean {
+export function canManuallyAssign(status: EnvironmentStatus): boolean {
   return PERMISSION_MAP[status]?.ASSIGNMENT_MANUAL === true;
 }
-export function canMutateEvent(status: EventStatus): boolean {
+export function canMutateEvent(status: EnvironmentStatus): boolean {
   return PERMISSION_MAP[status]?.EVENT_MUTATE === true;
 }
-export function canShowSwapPanel(status: EventStatus): boolean {
+export function canShowSwapPanel(status: EnvironmentStatus): boolean {
   return status === "ASSIGNING" || status === "FINALIZED";
 }
-export function canDeleteEvent(status: EventStatus): boolean {
+export function canDeleteEvent(status: EnvironmentStatus): boolean {
   return PERMISSION_MAP[status]?.EVENT_DELETE === true;
 }

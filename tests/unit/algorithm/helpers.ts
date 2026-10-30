@@ -53,14 +53,14 @@ export function makeShift(
     priority: "CORE",
     desirabilityScore: 3,
     capacity: overrides.capacity ?? 2,
-    eventId: "event-1",
+    environmentId: "event-1",
     templateId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     requiredRoles: [],
     preferences: [],
     assignments: [],
-    event: { id: "event-1", startDate: new Date(), endDate: new Date() },
+    environment: { id: "event-1", startDate: new Date(), endDate: new Date() },
     ...overrides,
   } as ShiftWithRelations;
 }

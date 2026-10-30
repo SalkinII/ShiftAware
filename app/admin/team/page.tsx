@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Activity, Users, UserCog, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { DistributionSettings } from "./components/DistributionSettings";
 import { MemberListByEvent } from "./components/MemberListByEvent";
 import { MemberManagement } from "./components/MemberManagement";
@@ -14,7 +14,7 @@ type TabType = "directory" | "members" | "allocation" | "heatmap";
 
 export default function TeamPage() {
   const [activeTab, setActiveTab] = useState<TabType>("directory");
-  const { selectedEventId, selectedEvent } = useEventContext(true);
+  const { selectedEnvironmentId, selectedEnvironment } = useEnvironmentContext();
 
   const tabs = [
     { id: "directory" as TabType, label: "Member Directory", icon: UserCog },
@@ -68,10 +68,10 @@ export default function TeamPage() {
 
         {activeTab === "members" && (
           <Card className="p-6">
-            {selectedEventId ? (
+            {selectedEnvironmentId ? (
               <MemberListByEvent
-                eventId={selectedEventId}
-                eventName={selectedEvent?.name || ""}
+                environmentId={selectedEnvironmentId}
+                eventName={selectedEnvironment?.name || ""}
               />
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -88,11 +88,11 @@ export default function TeamPage() {
         {activeTab === "allocation" && <DistributionSettings />}
 
         {activeTab === "heatmap" && (
-          selectedEventId ? (
+          selectedEnvironmentId ? (
             <DistributionControlCenter
-              eventId={selectedEventId}
-              eventStatus={selectedEvent?.status ?? ""}
-              eventName={selectedEvent?.name ?? ""}
+              environmentId={selectedEnvironmentId}
+              eventStatus={selectedEnvironment?.status ?? ""}
+              eventName={selectedEnvironment?.name ?? ""}
             />
           ) : (
             <Card className="p-6">

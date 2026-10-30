@@ -22,7 +22,7 @@ const shift = {
   requiredRoles: [],
   preferences: [],
   assignments: [],
-  event: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
+  environment: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
 } as unknown as ShiftWithRelations;
 
 const config = { maxShiftsPerPerson: 3, minRestMs: 0 };

@@ -2,10 +2,10 @@ import { prisma } from "@/lib/db";
 import { BaseRepository } from "./base.repository";
 
 export class MarkerRepository extends BaseRepository {
-  async findByEvent(eventId: string) {
+  async findByEvent(environmentId: string) {
     try {
       return await prisma.planMarker.findMany({
-        where: { eventId },
+        where: { environmentId },
         orderBy: { startTime: "asc" },
       });
     } catch (error) {
@@ -13,7 +13,7 @@ export class MarkerRepository extends BaseRepository {
     }
   }
 
-  async create(data: { eventId: string; text: string; startTime: Date; endTime: Date }) {
+  async create(data: { environmentId: string; text: string; startTime: Date; endTime: Date }) {
     try {
       return await prisma.planMarker.create({ data });
     } catch (error) {

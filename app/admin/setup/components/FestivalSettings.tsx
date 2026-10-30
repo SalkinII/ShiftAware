@@ -5,19 +5,19 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
 export function FestivalSettings() {
   const toast = useToast();
   const {
-    selectedEventId,
-    selectedEvent,
-    events,
+    selectedEnvironmentId,
+    selectedEnvironment,
+    environments,
     loading,
-    refreshEvents,
-    setSelectedEventId,
-  } = useEventContext(true);
+    refreshEnvironments,
+    setSelectedEnvironmentId,
+  } = useEnvironmentContext();
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteEventDialog, setDeleteEventDialog] = useState<{
@@ -36,7 +36,7 @@ export function FestivalSettings() {
   });
 
   useEffect(() => {
-    if (isCreatingNew || !selectedEventId) {
+    if (isCreatingNew || !selectedEnvironmentId) {
       setFormData({
         name: "",
         status: "PLANNING",
@@ -44,7 +44,7 @@ export function FestivalSettings() {
         endDate: "",
       });
     } else {
-      const event = events.find((e) => e.id === selectedEventId);
+      const event = environments.find((e) => e.id === selectedEnvironmentId);
       if (event) {
         setFormData({
           name: event.name,
@@ -54,7 +54,7 @@ export function FestivalSettings() {
         });
       }
     }
-  }, [selectedEventId, events, isCreatingNew]);
+  }, [selectedEnvironmentId, environments, isCreatingNew]);
 
   async function handleSave() {
     if (!formData.name || !formData.startDate || !formData.endDate) {
@@ -71,8 +71,8 @@ export function FestivalSettings() {
       };
 
       const url = isCreatingNew
-        ? "/api/events"
-        : `/api/events/${selectedEventId}`;
+        ? "/api/environments"
+        : `/api/environments/${selectedEnvironmentId}`;
 
       const method = isCreatingNew ? "POST" : "PUT";
 
@@ -86,10 +86,10 @@ export function FestivalSettings() {
         const resData = await res.json();
         const result = unwrapApiResponse<{ id: string }>(resData);
         toast.success(isCreatingNew ? "Event created" : "Event updated");
-        await refreshEvents();
+        await refreshEnvironments();
         if (isCreatingNew) {
           const newId = result?.id;
-          if (newId) setSelectedEventId(newId);
+          if (newId) setSelectedEnvironmentId(newId);
           setIsCreatingNew(false);
         }
       } else {
@@ -108,20 +108,20 @@ export function FestivalSettings() {
   }
 
   async function confirmDeleteEvent() {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
 
     setDeleteEventDialog((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      const res = await fetch(`/api/events/${selectedEventId}`, {
+      const res = await fetch(`/api/environments/${selectedEnvironmentId}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
         toast.success("Event deleted");
-        localStorage.removeItem("adminSelectedEventId");
-        setSelectedEventId("");
-        await refreshEvents();
+        localStorage.removeItem("adminSelectedEnvironmentId");
+        setSelectedEnvironmentId("");
+        await refreshEnvironments();
         setDeleteEventDialog({ isOpen: false, isLoading: false });
       } else {
         const errorData = await res.json();
@@ -149,7 +149,7 @@ export function FestivalSettings() {
         }}
         onConfirm={confirmDeleteEvent}
         title="Delete Event"
-        message={`This will permanently delete "${selectedEvent?.name}" along with all its shifts, assignments, preferences, and registrations. This cannot be undone.`}
+        message={`This will permanently delete "${selectedEnvironment?.name}" along with all its shifts, assignments, preferences, and registrations. This cannot be undone.`}
         confirmText="Delete Event"
         cancelText="Cancel"
         variant="destructive"
@@ -166,9 +166,9 @@ export function FestivalSettings() {
       </div>
 
       <div className="mb-6 flex items-center justify-between">
-        {selectedEventId && !isCreatingNew ? (
+        {selectedEnvironmentId && !isCreatingNew ? (
           <h2 className="text-lg font-semibold text-gray-900">
-            Editing: {selectedEvent?.name || "Loading..."}
+            Editing: {selectedEnvironment?.name || "Loading..."}
           </h2>
         ) : !isCreatingNew ? (
           <p className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg">
@@ -234,9 +234,9 @@ export function FestivalSettings() {
 
       <div className="flex justify-between pt-4">
         {!isCreatingNew &&
-          selectedEventId &&
-          (selectedEvent?.status === "PLANNING" ||
-            selectedEvent?.status === "COMPLETED") && (
+          selectedEnvironmentId &&
+          (selectedEnvironment?.status === "PLANNING" ||
+            selectedEnvironment?.status === "COMPLETED") && (
             <Button
               variant="destructive"
               onClick={handleDeleteEvent}
@@ -249,7 +249,7 @@ export function FestivalSettings() {
           <Button onClick={handleSave} disabled={saving}>
             {saving
               ? "Saving..."
-              : selectedEventId === "new"
+              : selectedEnvironmentId === "new"
                 ? "Create Event"
                 : "Update Event"}
           </Button>

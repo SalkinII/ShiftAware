@@ -14,8 +14,8 @@ interface RedistributePreview {
   violations: Violation[];
 }
 
-const HEATMAP_API = (eventId: string) =>
-  `/api/events/${eventId}/distribution/heatmap`;
+const HEATMAP_API = (environmentId: string) =>
+  `/api/environments/${environmentId}/distribution/heatmap`;
 
 interface HeatmapData {
   shifts: ShiftWithRelations[];
@@ -27,19 +27,19 @@ interface HeatmapData {
     minRestHours?: number;
   };
   allocationRules?: import("@/lib/algorithm/types").AllocationRule[];
-  crossEventAssignments?: { memberId: string; shift: { id: string; eventId: string; startTime: string; endTime: string } }[];
+  crossEventAssignments?: { memberId: string; shift: { id: string; environmentId: string; startTime: string; endTime: string } }[];
   attributeDefinitions?: { id: string; name: string; type: string; options?: string[] }[];
 }
 
 interface Props {
-  eventId: string;
+  environmentId: string;
   previewData: unknown;
   highlightMemberId: string | null;
   onMemberSelect: (id: string | null) => void;
 }
 
 export function DistributionHeatmap({
-  eventId,
+  environmentId,
   previewData: _previewData,
   highlightMemberId,
   onMemberSelect,
@@ -56,10 +56,10 @@ export function DistributionHeatmap({
   const [attributeValue, setAttributeValue] = useState<string>("all");
 
   const refetch = useCallback(() => {
-    fetch(HEATMAP_API(eventId))
+    fetch(HEATMAP_API(environmentId))
       .then((r) => r.json())
       .then((json) => setData(unwrapApiResponse<HeatmapData>(json)));
-  }, [eventId]);
+  }, [environmentId]);
 
   useEffect(() => {
     refetch();
@@ -95,7 +95,7 @@ export function DistributionHeatmap({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            eventId,
+            environmentId,
             assignments: [
               {
                 shiftId,
@@ -110,7 +110,7 @@ export function DistributionHeatmap({
 
       refetch();
     },
-    [eventId, data?.assignments, refetch],
+    [environmentId, data?.assignments, refetch],
   );
 
   const toggleMemberSelection = useCallback(
@@ -127,7 +127,7 @@ export function DistributionHeatmap({
   );
 
   const handleRedistribute = useCallback(async () => {
-    const res = await fetch(`/api/events/${eventId}/assignments/redistribute`, {
+    const res = await fetch(`/api/environments/${environmentId}/assignments/redistribute`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -137,12 +137,12 @@ export function DistributionHeatmap({
     });
     const json = await res.json();
     setRedistributePreview(unwrapApiResponse<RedistributePreview>(json));
-  }, [eventId, selectedMembers]);
+  }, [environmentId, selectedMembers]);
 
   const handleConfirmRedistribute = useCallback(async () => {
     setIsCommitting(true);
     try {
-      await fetch(`/api/events/${eventId}/assignments/redistribute`, {
+      await fetch(`/api/environments/${environmentId}/assignments/redistribute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -156,7 +156,7 @@ export function DistributionHeatmap({
     } finally {
       setIsCommitting(false);
     }
-  }, [eventId, selectedMembers]);
+  }, [environmentId, selectedMembers]);
 
   if (!data) return <div className="text-sm text-gray-400">Loading heatmap...</div>;
 
@@ -174,7 +174,7 @@ export function DistributionHeatmap({
         preferences: [],
         assignments: [],
         requiredRoles: [],
-        event: { id: shift.eventId, startDate: shift.startTime, endDate: shift.endTime },
+        environment: { id: shift.environmentId, startDate: shift.startTime, endDate: shift.endTime },
       } as unknown as ShiftWithRelations,
     })),
   );

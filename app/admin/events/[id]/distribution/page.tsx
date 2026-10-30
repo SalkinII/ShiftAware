@@ -9,7 +9,7 @@ interface Props {
 
 export default async function DistributionPage({ params }: Props) {
   const { id } = await params;
-  const event = await prisma.event.findUnique({
+  const event = await prisma.environment.findUnique({
     where: { id },
     include: { config: true },
   });
@@ -23,7 +23,7 @@ export default async function DistributionPage({ params }: Props) {
       </div>
       <Suspense fallback={<div>Loading...</div>}>
         <DistributionControlCenter
-          eventId={id}
+          environmentId={id}
           eventStatus={event.status}
           eventName={event.name}
         />

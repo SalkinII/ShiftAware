@@ -40,7 +40,7 @@ describe("AssignmentRepository", () => {
         updatedAt: new Date(),
         shift: {
           id: "shift-1",
-          event: { id: "event-1" },
+          environment: { id: "event-1" },
           requiredRoles: [],
         },
         teamMember: { id: "member-1", alias: "john" },
@@ -57,7 +57,7 @@ describe("AssignmentRepository", () => {
       include: {
         shift: {
           include: {
-            event: true,
+            environment: true,
             requiredRoles: true,
           },
         },
@@ -78,7 +78,7 @@ describe("AssignmentRepository", () => {
     expect(result.count).toBe(5);
     expect(prisma.assignment.deleteMany).toHaveBeenCalledWith({
       where: {
-        shift: { eventId: "event-1" },
+        shift: { environmentId: "event-1" },
       },
     });
   });

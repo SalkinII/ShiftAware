@@ -39,7 +39,7 @@ function isShiftNodeData(data: unknown): data is ShiftNodeData {
 interface UseCanvasActionsOptions {
   lanes: LaneConfig[];
   eventStart: Date | null;
-  eventId: string | null;
+  environmentId: string | null;
   onShiftCreated?: () => void;
   onShiftUpdated?: () => void;
 }
@@ -47,7 +47,7 @@ interface UseCanvasActionsOptions {
 export function useCanvasActions({
   lanes,
   eventStart,
-  eventId,
+  environmentId,
   onShiftCreated,
   onShiftUpdated,
 }: UseCanvasActionsOptions) {
@@ -60,7 +60,7 @@ export function useCanvasActions({
   const handleDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
-      if (!eventStart || !eventId) return;
+      if (!eventStart || !environmentId) return;
 
       const markerData = event.dataTransfer.getData("application/shiftaware-marker");
       if (markerData) {
@@ -75,7 +75,7 @@ export function useCanvasActions({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              eventId,
+              environmentId,
               text: "",
               startTime: startTime.toISOString(),
               endTime: endTime.toISOString(),
@@ -120,7 +120,7 @@ export function useCanvasActions({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            eventId,
+            environmentId,
             type: template.type,
             templateId: template.id,
             startTime: startTime.toISOString(),
@@ -156,7 +156,7 @@ export function useCanvasActions({
         );
       }
     },
-    [eventStart, eventId, lanes, screenToFlowPosition, onShiftCreated, toast],
+    [eventStart, environmentId, lanes, screenToFlowPosition, onShiftCreated, toast],
   );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -263,7 +263,7 @@ export function useCanvasActions({
         }
         return;
       }
-      if (!eventStart || !eventId || !nodeId.startsWith("shift-")) return;
+      if (!eventStart || !environmentId || !nodeId.startsWith("shift-")) return;
 
       const shiftId = nodeId.replace("shift-", "");
       const node = getNode(nodeId);
@@ -338,7 +338,7 @@ export function useCanvasActions({
         toast.error(message || "Failed to update shift");
       }
     },
-    [eventStart, eventId, onShiftUpdated, toast, getNode],
+    [eventStart, environmentId, onShiftUpdated, toast, getNode],
   );
 
   const [alignmentGuides, setAlignmentGuides] = useState<number[]>([]);

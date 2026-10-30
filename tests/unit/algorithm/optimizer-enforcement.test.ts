@@ -14,7 +14,7 @@ function makeShift(id: string, overrides = {}): ShiftWithRelations {
     preferences: [],
     assignments: [],
     requiredRoles: [],
-    event: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
+    environment: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
     ...overrides,
   } as any;
 }
@@ -73,13 +73,13 @@ describe("optimizer enforcement", () => {
 
   it("skips a member whose cross-event assignment overlaps their only preferred shift", async () => {
     const crossEventShift = makeShift("other-event-shift", {
-      eventId: "evt-2",
+      environmentId: "evt-2",
       startTime: new Date("2026-08-01T08:00:00Z"),
       endTime: new Date("2026-08-01T16:00:00Z"),
     });
     const shifts = [
       makeShift("s1", {
-        eventId: "evt-1",
+        environmentId: "evt-1",
         startTime: new Date("2026-08-01T09:00:00Z"),
         endTime: new Date("2026-08-01T11:00:00Z"),
       }),
@@ -98,13 +98,13 @@ describe("optimizer enforcement", () => {
 
   it("does not count a non-conflicting cross-event assignment toward maxShiftsPerPerson", async () => {
     const crossEventShift = makeShift("other-event-shift", {
-      eventId: "evt-2",
+      environmentId: "evt-2",
       startTime: new Date("2026-08-02T08:00:00Z"),
       endTime: new Date("2026-08-02T16:00:00Z"),
     });
     const shifts = [
       makeShift("s1", {
-        eventId: "evt-1",
+        environmentId: "evt-1",
         startTime: new Date("2026-08-01T09:00:00Z"),
         endTime: new Date("2026-08-01T11:00:00Z"),
       }),

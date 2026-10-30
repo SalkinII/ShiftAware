@@ -1,6 +1,6 @@
 import {
   AttributeType,
-  EventStatus,
+  EnvironmentStatus,
   PreferenceLevel,
   PrismaClient,
   Role,
@@ -96,16 +96,16 @@ async function resetForSeed() {
   await prisma.assignment.deleteMany();
   await prisma.shiftPreference.deleteMany();
   await prisma.teamMemberAttribute.deleteMany();
-  await prisma.eventAttributeDefinition.deleteMany();
-  await prisma.eventRegistration.deleteMany();
+  await prisma.attributeDefinition.deleteMany();
+  await prisma.environmentRegistration.deleteMany();
   await prisma.shiftRole.deleteMany();
   await prisma.shift.deleteMany();
   await prisma.scheduledShift.deleteMany();
-  await prisma.eventTemplate.deleteMany();
+  await prisma.environmentTemplate.deleteMany();
   await prisma.shiftTemplateRole.deleteMany();
   await prisma.shiftTemplate.deleteMany();
-  await prisma.eventConfig.deleteMany();
-  await prisma.event.deleteMany();
+  await prisma.environmentConfig.deleteMany();
+  await prisma.environment.deleteMany();
   await prisma.teamMember.deleteMany();
 }
 
@@ -129,13 +129,19 @@ async function seedTeam() {
   }
 }
 
+
+
 async function seedEvent() {
-  const event = await prisma.event.create({
+  const festival = await prisma.festival.create({
+    data: { name: EVENT_NAME, startDate: EVENT_START, endDate: EVENT_END },
+  });
+  const event = await prisma.environment.create({
     data: {
+      festivalId: festival.id,
       name: EVENT_NAME,
       startDate: EVENT_START,
       endDate: EVENT_END,
-      status: EventStatus.OPEN_FOR_PREFERENCES,
+      status: EnvironmentStatus.OPEN_FOR_PREFERENCES,
       config: {
         create: {
           minShiftsPerPerson: 2,
@@ -154,27 +160,35 @@ async function seedEvent() {
   return event;
 }
 
-async function seedEventAttributeDefinitions(eventId: string) {
-  const genderDef = await prisma.eventAttributeDefinition.create({
+async function seedEventAttributeDefinitions(environmentId: string) {
+  const { festivalId } = await prisma.environment.findUniqueOrThrow({
+    where: { id: environmentId },
+  });
+
+  const genderDef = await prisma.attributeDefinition.create({
     data: {
-      eventId,
+      festivalId,
       name: "gender",
       label: "Gender",
       type: AttributeType.SELECT,
       options: ["FINTA", "M"],
-      required: true,
     },
   });
+  await prisma.environmentAttributeRequirement.create({
+    data: { environmentId, definitionId: genderDef.id, required: true },
+  });
 
-  const canDriveDef = await prisma.eventAttributeDefinition.create({
+  const canDriveDef = await prisma.attributeDefinition.create({
     data: {
-      eventId,
+      festivalId,
       name: "can_drive",
       label: "Can Drive",
       type: AttributeType.BOOLEAN,
       options: [],
-      required: false,
     },
+  });
+  await prisma.environmentAttributeRequirement.create({
+    data: { environmentId, definitionId: canDriveDef.id, required: false },
   });
 
   return { genderDef, canDriveDef };
@@ -238,10 +252,10 @@ async function seedShiftTemplates() {
   return created;
 }
 
-async function seedEventTemplates(eventId: string, templateIds: string[]) {
+async function seedEventTemplates(environmentId: string, templateIds: string[]) {
   for (const templateId of templateIds) {
-    await prisma.eventTemplate.create({
-      data: { eventId, templateId },
+    await prisma.environmentTemplate.create({
+      data: { environmentId, templateId },
     });
   }
 }
@@ -253,7 +267,7 @@ function parseTime(timeStr: string): { hours: number; minutes: number } {
 
 // 15 shifts — 3 templates x 5 days, each with templateId
 async function seedShifts(
-  eventId: string,
+  environmentId: string,
   templates: {
     id: string;
     startTime: string;
@@ -283,7 +297,7 @@ async function seedShifts(
 
       const shift = await prisma.shift.create({
         data: {
-          eventId,
+          environmentId,
           type: template.type,
           templateId: template.id,
           startTime,
@@ -308,17 +322,17 @@ async function seedShifts(
   return shifts;
 }
 
-async function seedEventRegistrations(eventId: string) {
+async function seedEventRegistrations(environmentId: string) {
   const members = await prisma.teamMember.findMany();
   for (const member of members) {
-    await prisma.eventRegistration.create({
-      data: { eventId, memberId: member.id, status: "REGISTERED" },
+    await prisma.environmentRegistration.create({
+      data: { environmentId, memberId: member.id, status: "REGISTERED" },
     });
   }
 }
 
 async function seedTeamMemberAttributes(
-  eventId: string,
+  environmentId: string,
   genderDefId: string,
   canDriveDefId: string,
 ) {
@@ -359,10 +373,10 @@ async function seedTeamMemberAttributes(
 }
 
 // 2-4 WANT preferences per member across core shifts
-async function seedPreferences(eventId: string) {
+async function seedPreferences(environmentId: string) {
   const members = await prisma.teamMember.findMany();
   const allShifts = await prisma.shift.findMany({
-    where: { eventId },
+    where: { environmentId },
     orderBy: { startTime: "asc" },
   });
   const coreShifts = allShifts.filter((s) => s.priority === ShiftPriority.CORE);
@@ -453,8 +467,8 @@ async function main() {
   console.log(`✓ Seeded ${shifts.length} shifts`);
 
   await seedEventRegistrations(event.id);
-  const regCount = await prisma.eventRegistration.count({
-    where: { eventId: event.id },
+  const regCount = await prisma.environmentRegistration.count({
+    where: { environmentId: event.id },
   });
   console.log(`✓ Seeded ${regCount} event registrations`);
 

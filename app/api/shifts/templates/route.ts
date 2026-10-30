@@ -12,11 +12,11 @@ const templateRepo = new ShiftTemplateRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("eventId") || undefined;
+  const environmentId = searchParams.get("environmentId") || undefined;
   const includeGlobal = searchParams.get("includeGlobal") !== "false";
 
-  const templates = eventId
-    ? await templateRepo.findForEvent(eventId, includeGlobal !== false)
+  const templates = environmentId
+    ? await templateRepo.findForEvent(environmentId, includeGlobal !== false)
     : await templateRepo.findGlobal();
 
   return createSuccessResponse(templates);
@@ -26,11 +26,11 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const body = await request.json();
   const validated = shiftTemplateSchema.parse(body);
 
-  const { requiredRoles, eventId, ...templateData } = validated;
+  const { requiredRoles, environmentId, ...templateData } = validated;
 
   const template = await templateRepo.create({
     ...templateData,
-    ...(eventId ? { event: { connect: { id: eventId } } } : {}),
+    ...(environmentId ? { environment: { connect: { id: environmentId } } } : {}),
     requiredRoles: {
       create: requiredRoles,
     },

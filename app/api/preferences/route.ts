@@ -33,10 +33,10 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
 
   const shift = await prisma.shift.findUnique({
     where: { id: validated.shiftId },
-    select: { eventId: true },
+    select: { environmentId: true },
   });
   if (shift) {
-    await assertEventStatusAllows(shift.eventId, "PREFERENCE_MUTATE");
+    await assertEventStatusAllows(shift.environmentId, "PREFERENCE_MUTATE");
   }
 
   const preference = await preferenceRepo.upsert({
@@ -79,10 +79,10 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request) => {
 
   const shift = await prisma.shift.findUnique({
     where: { id: shiftId },
-    select: { eventId: true },
+    select: { environmentId: true },
   });
   if (shift) {
-    await assertEventStatusAllows(shift.eventId, "PREFERENCE_MUTATE");
+    await assertEventStatusAllows(shift.environmentId, "PREFERENCE_MUTATE");
   }
 
   await preferenceRepo.deleteByCompoundKey(teamMemberId, shiftId);

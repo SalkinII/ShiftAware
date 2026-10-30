@@ -28,7 +28,7 @@ import { Popover } from "@/components/ui/Popover";
 import { TemplatePalette } from "@/components/features/TemplatePalette/TemplatePalette";
 import { useCache } from "@/lib/cache/useCache";
 import { useKeyboardShortcuts } from "@/lib/hooks/useKeyboardShortcuts";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import {
   canMutateShifts,
   canShowSwapPanel,
@@ -75,8 +75,8 @@ interface Shift {
   priority: ShiftPriority;
   desirabilityScore: number;
   capacity: number;
-  eventId: string;
-  event: { id: string; name: string };
+  environmentId: string;
+  environment: { id: string; name: string };
   template?: { id: string; name: string; color?: string } | null;
   requiredRoles: { role: Role; count: number }[];
   assignments?: Array<{ id: string; teamMember?: { alias: string } }>;
@@ -86,21 +86,21 @@ export default function ShiftsPage() {
   const toast = useToast();
   const calendarRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<LaneCalendarCanvasHandle>(null);
-  const { selectedEventId, selectedEvent, refreshEvents } =
-    useEventContext(true);
-  const shiftMutationLocked = selectedEvent
+  const { selectedEnvironmentId, selectedEnvironment, refreshEnvironments } =
+    useEnvironmentContext();
+  const shiftMutationLocked = selectedEnvironment
     ? !canMutateShifts(
-        selectedEvent.status as import("@prisma/client").EventStatus,
+        selectedEnvironment.status as import("@prisma/client").EnvironmentStatus,
       )
     : false;
 
   const eventStartDate = useMemo(
-    () => (selectedEvent ? new Date(selectedEvent.startDate) : null),
-    [selectedEvent?.startDate],
+    () => (selectedEnvironment ? new Date(selectedEnvironment.startDate) : null),
+    [selectedEnvironment?.startDate],
   );
   const eventEndDate = useMemo(
-    () => (selectedEvent ? new Date(selectedEvent.endDate) : null),
-    [selectedEvent?.endDate],
+    () => (selectedEnvironment ? new Date(selectedEnvironment.endDate) : null),
+    [selectedEnvironment?.endDate],
   );
 
   const [pendingTransitionStatus, setPendingTransitionStatus] = useState<string | null>(null);
@@ -116,16 +116,16 @@ export default function ShiftsPage() {
   };
 
   const handleTransition = (targetStatus: string) => {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
     setPendingTransitionStatus(targetStatus);
   };
 
   const confirmTransition = async () => {
     const targetStatus = pendingTransitionStatus;
-    if (!targetStatus || !selectedEventId) return;
+    if (!targetStatus || !selectedEnvironmentId) return;
     setPendingTransitionStatus(null);
 
-    const res = await fetch(`/api/events/${selectedEventId}/transition`, {
+    const res = await fetch(`/api/environments/${selectedEnvironmentId}/transition`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ targetStatus }),
@@ -135,7 +135,7 @@ export default function ShiftsPage() {
       toast.success(
         `Event status changed to ${targetStatus.replace(/_/g, " ").toLowerCase()}`,
       );
-      refreshEvents();
+      refreshEnvironments();
     } else {
       const json = await res.json().catch(() => ({}));
       toast.error(json.error || json.message || "Failed to change status");
@@ -161,7 +161,7 @@ export default function ShiftsPage() {
     isLoading: false,
   });
   const [formData, setFormData] = useState({
-    eventId: "",
+    environmentId: "",
     templateId: "",
     type: "MOBILE_TEAM" as ShiftType,
     startTime: "",
@@ -173,12 +173,12 @@ export default function ShiftsPage() {
     requiredRoles: [{ role: "TEAM_MEMBER", count: 1 }],
   });
 
-  // Sync formData.eventId with header event selection
+  // Sync formData.environmentId with header event selection
   useEffect(() => {
-    if (selectedEventId) {
-      setFormData((prev) => ({ ...prev, eventId: selectedEventId }));
+    if (selectedEnvironmentId) {
+      setFormData((prev) => ({ ...prev, environmentId: selectedEnvironmentId }));
     }
-  }, [selectedEventId]);
+  }, [selectedEnvironmentId]);
 
   // Use cache for shifts
   const {
@@ -187,10 +187,10 @@ export default function ShiftsPage() {
     error: shiftsError,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
-    key: selectedEventId ? getShiftsCacheKey(selectedEventId) : "shifts-none",
+    key: selectedEnvironmentId ? getShiftsCacheKey(selectedEnvironmentId) : "shifts-none",
     fetchFn: async () => {
-      if (!selectedEventId) return [];
-      const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
+      if (!selectedEnvironmentId) return [];
+      const res = await fetch(`/api/shifts?environmentId=${selectedEnvironmentId}`);
       if (!res.ok) {
         let errorMessage = "Failed to fetch shifts";
         try {
@@ -204,22 +204,22 @@ export default function ShiftsPage() {
       const json = await res.json();
       return unwrapApiResponse<Shift[]>(json);
     },
-    enabled: !!selectedEventId,
+    enabled: !!selectedEnvironmentId,
   });
 
   const {
     data: cachedMarkers,
     refetch: refetchMarkers,
   } = useCache<MarkerLike[]>({
-    key: selectedEventId ? `markers-${selectedEventId}` : "markers-none",
+    key: selectedEnvironmentId ? `markers-${selectedEnvironmentId}` : "markers-none",
     fetchFn: async () => {
-      if (!selectedEventId) return [];
-      const res = await fetch(`/api/markers?eventId=${selectedEventId}`);
+      if (!selectedEnvironmentId) return [];
+      const res = await fetch(`/api/markers?environmentId=${selectedEnvironmentId}`);
       if (!res.ok) return [];
       const json = await res.json();
       return unwrapApiResponse<MarkerLike[]>(json);
     },
-    enabled: !!selectedEventId,
+    enabled: !!selectedEnvironmentId,
   });
   const markers = Array.isArray(cachedMarkers) ? cachedMarkers : [];
 
@@ -235,12 +235,12 @@ export default function ShiftsPage() {
 
   // Fetch templates for the selected event to derive lanes
   const { data: eventTemplates } = useCache<any[]>({
-    key: selectedEventId
-      ? `event-templates-${selectedEventId}`
+    key: selectedEnvironmentId
+      ? `event-templates-${selectedEnvironmentId}`
       : "event-templates-none",
     fetchFn: async () => {
-      if (!selectedEventId) return [];
-      const res = await fetch(`/api/events/${selectedEventId}/templates`);
+      if (!selectedEnvironmentId) return [];
+      const res = await fetch(`/api/environments/${selectedEnvironmentId}/templates`);
       if (!res.ok) return [];
       const json = await res.json();
       const result = unwrapApiResponse<{
@@ -249,7 +249,7 @@ export default function ShiftsPage() {
       }>(json);
       return [...(result?.assigned || []), ...(result?.eventSpecific || [])];
     },
-    enabled: !!selectedEventId,
+    enabled: !!selectedEnvironmentId,
   });
 
   // Derive lanes from templates
@@ -333,8 +333,8 @@ export default function ShiftsPage() {
   function validateForm(): boolean {
     const errors: Record<string, string> = {};
 
-    if (!formData.eventId) {
-      errors.eventId = "Please select an event";
+    if (!formData.environmentId) {
+      errors.environmentId = "Please select an event";
     }
 
     if (eventTemplates && eventTemplates.length > 0 && !formData.templateId) {
@@ -372,7 +372,7 @@ export default function ShiftsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!selectedEventId) {
+    if (!selectedEnvironmentId) {
       toast.error("Please select an event first (use the menu on mobile)");
       return;
     }
@@ -413,12 +413,12 @@ export default function ShiftsPage() {
         setFormErrors({});
         // Notify schedule page to refresh
         window.dispatchEvent(new CustomEvent("shiftaware:refresh-schedule"));
-        if (selectedEventId) {
-          invalidateEventCache(selectedEventId, "shifts", "assignments");
+        if (selectedEnvironmentId) {
+          invalidateEventCache(selectedEnvironmentId, "shifts", "assignments");
         }
         // Reset form
         setFormData({
-          eventId: selectedEventId || "",
+          environmentId: selectedEnvironmentId || "",
           templateId: "",
           type: "MOBILE_TEAM" as ShiftType,
           startTime: "",
@@ -442,7 +442,7 @@ export default function ShiftsPage() {
                 : issue.path || "unknown";
               // Map common field names to user-friendly labels
               const fieldMap: Record<string, string> = {
-                eventId: "Event",
+                environmentId: "Event",
                 startTime: "Start Time",
                 endTime: "End Time",
                 durationMinutes: "Duration",
@@ -475,7 +475,7 @@ export default function ShiftsPage() {
     setDeleteDialog({
       isOpen: true,
       shiftId,
-      shiftName: `${shift.template?.name ?? shift.type.replace("_", " ")} - ${shift.event.name}`,
+      shiftName: `${shift.template?.name ?? shift.type.replace("_", " ")} - ${shift.environment.name}`,
       isLoading: false,
     });
   }
@@ -492,8 +492,8 @@ export default function ShiftsPage() {
 
       if (res.ok) {
         toast.success("Shift deleted successfully");
-        if (selectedEventId) {
-          invalidateEventCache(selectedEventId, "shifts", "assignments");
+        if (selectedEnvironmentId) {
+          invalidateEventCache(selectedEnvironmentId, "shifts", "assignments");
         }
         setDeleteDialog({
           isOpen: false,
@@ -525,7 +525,7 @@ export default function ShiftsPage() {
       return;
     }
     const link = document.createElement("a");
-    link.download = `schedule-${selectedEvent?.name ?? "export"}.png`;
+    link.download = `schedule-${selectedEnvironment?.name ?? "export"}.png`;
     link.href = dataUrl;
     link.click();
   }
@@ -578,7 +578,7 @@ export default function ShiftsPage() {
       printWindow.document.write(`
       <html><head><title>Schedule Export</title>
       <style>body{font-family:sans-serif;padding:20px}table{margin-bottom:20px}th{background:#f3f4f6}</style>
-      </head><body><h1>Schedule: ${selectedEvent?.name ?? "Export"}</h1>${html}</body></html>
+      </head><body><h1>Schedule: ${selectedEnvironment?.name ?? "Export"}</h1>${html}</body></html>
     `);
       printWindow.document.close();
       printWindow.print();
@@ -679,17 +679,17 @@ export default function ShiftsPage() {
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              {!selectedEventId && (
+              {!selectedEnvironmentId && (
                 <span className="text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-lg shrink-0">
                   Select an event (header or menu)
                 </span>
               )}
-              {selectedEvent && (
+              {selectedEnvironment && (
                 <span
                   className="text-sm font-bold text-gray-700 truncate max-w-[280px]"
-                  title={selectedEvent.name}
+                  title={selectedEnvironment.name}
                 >
-                  {selectedEvent.name}
+                  {selectedEnvironment.name}
                 </span>
               )}
               <div className="bg-gray-100 rounded-xl p-1 flex shrink-0">
@@ -749,10 +749,10 @@ export default function ShiftsPage() {
                   </Button>
                 </Popover>
               </div>
-              {selectedEvent &&
+              {selectedEnvironment &&
                 (() => {
-                  const nextStatus = getNextStatus(selectedEvent.status);
-                  const prevStatus = getPreviousStatus(selectedEvent.status);
+                  const nextStatus = getNextStatus(selectedEnvironment.status);
+                  const prevStatus = getPreviousStatus(selectedEnvironment.status);
                   const action = nextStatus
                     ? STATUS_ACTION_LABELS[nextStatus]
                     : null;
@@ -761,7 +761,7 @@ export default function ShiftsPage() {
                   return (
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 capitalize">
-                        {selectedEvent.status.replace(/_/g, " ").toLowerCase()}
+                        {selectedEnvironment.status.replace(/_/g, " ").toLowerCase()}
                       </span>
                       {action && nextStatus && (
                         <Button
@@ -810,7 +810,7 @@ export default function ShiftsPage() {
             {/* Template palette — above canvas, horizontal */}
             <div className="flex items-center gap-2">
               <TemplatePalette
-                eventId={selectedEventId ?? undefined}
+                environmentId={selectedEnvironmentId ?? undefined}
                 layout="horizontal"
               />
               {!shiftMutationLocked && <AddMarkerPill />}
@@ -819,7 +819,7 @@ export default function ShiftsPage() {
             {/* Canvas row: canvas + optional shift details panel */}
             <div
               className="flex flex-col lg:flex-row gap-0 rounded-xl shadow-sm overflow-hidden"
-              data-event-status={selectedEvent?.status}
+              data-event-status={selectedEnvironment?.status}
               style={{
                 backgroundColor: "var(--status-bg)",
                 transition: "background-color 500ms",
@@ -827,7 +827,7 @@ export default function ShiftsPage() {
             >
               {/* Canvas container */}
               <div ref={calendarRef} className="flex-1 min-w-0 relative">
-                {!selectedEvent ? (
+                {!selectedEnvironment ? (
                   <div className="p-12 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p className="font-medium">
@@ -842,17 +842,17 @@ export default function ShiftsPage() {
                     lanes={derivedLanes}
                     eventStart={eventStartDate}
                     eventEnd={eventEndDate}
-                    eventId={selectedEventId}
+                    environmentId={selectedEnvironmentId}
                     onShiftSelected={setSelectedShiftId}
                     onShiftCreated={handleShiftCreated}
                     onShiftUpdated={handleShiftUpdated}
                     shiftMutationLocked={shiftMutationLocked}
                     topRightOverlay={
                       hasSwapRequests &&
-                      selectedEventId &&
-                      selectedEvent &&
+                      selectedEnvironmentId &&
+                      selectedEnvironment &&
                       canShowSwapPanel(
-                        selectedEvent.status as import("@prisma/client").EventStatus,
+                        selectedEnvironment.status as import("@prisma/client").EnvironmentStatus,
                       ) ? (
                         <Pill
                           tone="amber"
@@ -873,20 +873,20 @@ export default function ShiftsPage() {
                 <div className="w-full lg:w-80 lg:flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
                   <ShiftPropertiesPanel
                     shiftId={selectedShiftId}
-                    eventStatus={selectedEvent?.status}
+                    eventStatus={selectedEnvironment?.status}
                     onClose={() => setSelectedShiftId(null)}
                     onUpdated={handleShiftUpdated}
                   />
                 </div>
               )}
               {/* Swap Requests panel — shown in calendar view when no shift is selected */}
-              {!selectedShiftId && !showForm && selectedEventId && (
+              {!selectedShiftId && !showForm && selectedEnvironmentId && (
                 <div
                   className={cn(
                     "hidden lg:flex flex-shrink-0 bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] transition-[width,padding] duration-300 ease-in-out",
-                    selectedEvent &&
+                    selectedEnvironment &&
                       canShowSwapPanel(
-                        selectedEvent.status as import("@prisma/client").EventStatus,
+                        selectedEnvironment.status as import("@prisma/client").EnvironmentStatus,
                       ) &&
                       hasSwapRequests
                       ? "w-80 p-4 overflow-y-auto border-l border-gray-200"
@@ -894,10 +894,10 @@ export default function ShiftsPage() {
                   )}
                 >
                   <SwapRequestsPanel
-                    eventId={selectedEventId}
+                    environmentId={selectedEnvironmentId}
                     eventStatus={
-                      selectedEvent?.status as
-                        | import("@prisma/client").EventStatus
+                      selectedEnvironment?.status as
+                        | import("@prisma/client").EnvironmentStatus
                         | undefined
                     }
                     onHasRequests={(has, count) => {
@@ -910,9 +910,9 @@ export default function ShiftsPage() {
               )}
               {/* Create shift form panel — when showForm in calendar view */}
               {showForm &&
-                selectedEvent &&
+                selectedEnvironment &&
                 canMutateShifts(
-                  selectedEvent.status as import("@prisma/client").EventStatus,
+                  selectedEnvironment.status as import("@prisma/client").EnvironmentStatus,
                 ) && (
                   <div className="w-96 flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-white p-6">
                     <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
@@ -925,7 +925,7 @@ export default function ShiftsPage() {
                     >
                       <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
                         Event:{" "}
-                        <span className="font-bold">{selectedEvent.name}</span>
+                        <span className="font-bold">{selectedEnvironment.name}</span>
                       </div>
                       {eventTemplates && eventTemplates.length > 0 ? (
                         <Select
@@ -1041,7 +1041,7 @@ export default function ShiftsPage() {
             </div>
 
             {/* Shift stats bar — below canvas */}
-            {selectedEvent && shifts.length > 0 && (
+            {selectedEnvironment && shifts.length > 0 && (
               <div className="flex flex-wrap items-center gap-4 px-4 py-2 bg-white rounded-lg border border-gray-100 text-xs text-gray-600">
                 <span className="text-gray-400 font-medium uppercase tracking-widest text-[10px]">
                   Coverage
@@ -1104,10 +1104,10 @@ export default function ShiftsPage() {
                 </div>
                 <div className="max-h-[60vh] overflow-y-auto px-4 pb-6">
                   <SwapRequestsPanel
-                    eventId={selectedEventId}
+                    environmentId={selectedEnvironmentId}
                     eventStatus={
-                      selectedEvent?.status as
-                        | import("@prisma/client").EventStatus
+                      selectedEnvironment?.status as
+                        | import("@prisma/client").EnvironmentStatus
                         | undefined
                     }
                     onRefresh={() => {
@@ -1147,7 +1147,7 @@ export default function ShiftsPage() {
                               </div>
                               <p className="text-sm text-gray-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
                                 <Tag className="w-3.5 h-3.5" />{" "}
-                                {shift.event.name}
+                                {shift.environment.name}
                               </p>
                             </div>
                             <div className="flex items-center gap-3">
@@ -1285,10 +1285,10 @@ export default function ShiftsPage() {
                     className="space-y-5"
                     aria-label="Create new shift form"
                   >
-                    {selectedEvent ? (
+                    {selectedEnvironment ? (
                       <div className="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-3 rounded-lg">
                         Event:{" "}
-                        <span className="font-bold">{selectedEvent.name}</span>
+                        <span className="font-bold">{selectedEnvironment.name}</span>
                       </div>
                     ) : (
                       <div className="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-lg">
@@ -1472,15 +1472,15 @@ export default function ShiftsPage() {
                 <div className="space-y-6">
                   {/* Swap Requests — shown when no form is open, only in ASSIGNING and FINALIZED */}
                   {!showForm &&
-                    selectedEventId &&
-                    selectedEvent &&
+                    selectedEnvironmentId &&
+                    selectedEnvironment &&
                     canShowSwapPanel(
-                      selectedEvent.status as import("@prisma/client").EventStatus,
+                      selectedEnvironment.status as import("@prisma/client").EnvironmentStatus,
                     ) && (
                       <SwapRequestsPanel
-                        eventId={selectedEventId}
+                        environmentId={selectedEnvironmentId}
                         eventStatus={
-                          selectedEvent.status as import("@prisma/client").EventStatus
+                          selectedEnvironment.status as import("@prisma/client").EnvironmentStatus
                         }
                         onRefresh={refetchShifts}
                       />

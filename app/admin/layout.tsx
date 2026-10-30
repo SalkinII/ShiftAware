@@ -6,7 +6,7 @@ import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CacheProvider } from "@/lib/cache/CacheProvider";
-import { EventContextProvider } from "@/lib/contexts/EventContext";
+import { EnvironmentContextProvider } from "@/lib/contexts/EnvironmentContext";
 
 export default function AdminLayout({
   children,
@@ -17,7 +17,7 @@ export default function AdminLayout({
     <ErrorBoundary>
       <CacheProvider>
         <ToastProvider>
-          <EventContextProvider isAdmin={true}>
+          <EnvironmentContextProvider isAdmin={true}>
             <div className="min-h-screen bg-gray-50 text-gray-900">
               <Header />
               <AdminSidebar />
@@ -25,7 +25,7 @@ export default function AdminLayout({
                 <div className="p-6 md:p-8 max-w-7xl mx-auto">{children}</div>
               </main>
             </div>
-          </EventContextProvider>
+          </EnvironmentContextProvider>
         </ToastProvider>
       </CacheProvider>
     </ErrorBoundary>

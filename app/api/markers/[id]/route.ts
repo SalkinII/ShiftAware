@@ -16,7 +16,7 @@ export const PATCH = withAuth(withErrorHandling(async (
   const validated = updateMarkerSchema.parse({ ...body, id });
 
   const existing = await markerRepo.findById(id);
-  await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
+  await assertEventStatusAllows(existing.environmentId, "SHIFT_MUTATE");
 
   const { id: _id, ...updateData } = validated;
   const marker = await markerRepo.update(id, {
@@ -34,7 +34,7 @@ export const DELETE = withAuth(withErrorHandling(async (
 ) => {
   const { id } = await params;
   const existing = await markerRepo.findById(id);
-  await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
+  await assertEventStatusAllows(existing.environmentId, "SHIFT_MUTATE");
   await markerRepo.delete(id);
   return createSuccessResponse({ success: true });
 }));

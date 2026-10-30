@@ -47,7 +47,7 @@ describe("AnalysisTable export", () => {
   it("exports the loaded analysis data to PDF when the export button is clicked", async () => {
     render(
       <AnalysisTable
-        eventId="evt-1"
+        environmentId="evt-1"
         eventName="Starlight"
         onMemberSelect={vi.fn()}
         selectedMemberId={null}

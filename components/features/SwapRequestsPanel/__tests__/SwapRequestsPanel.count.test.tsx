@@ -61,7 +61,7 @@ describe("SwapRequestsPanel – onHasRequests count", () => {
     const onHasRequests = vi.fn();
     render(
       <SwapRequestsPanel
-        eventId="evt-1"
+        environmentId="evt-1"
         eventStatus={"OPEN_FOR_PREFERENCES" as any}
         onHasRequests={onHasRequests}
       />,

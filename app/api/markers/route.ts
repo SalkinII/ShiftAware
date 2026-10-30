@@ -9,9 +9,9 @@ const markerRepo = new MarkerRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("eventId");
-  if (!eventId) return createSuccessResponse([]);
-  const markers = await markerRepo.findByEvent(eventId);
+  const environmentId = searchParams.get("environmentId");
+  if (!environmentId) return createSuccessResponse([]);
+  const markers = await markerRepo.findByEvent(environmentId);
   return createSuccessResponse(markers);
 }));
 
@@ -19,10 +19,10 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const body = await request.json();
   const validated = markerSchema.parse(body);
 
-  await assertEventStatusAllows(validated.eventId, "SHIFT_MUTATE");
+  await assertEventStatusAllows(validated.environmentId, "SHIFT_MUTATE");
 
   const marker = await markerRepo.create({
-    eventId: validated.eventId,
+    environmentId: validated.environmentId,
     text: validated.text,
     startTime: new Date(validated.startTime),
     endTime: new Date(validated.endTime),

@@ -14,7 +14,7 @@ const baseShift = {
   priority: "CORE",
   capacity: 4,
   assignments: [],
-  event: { name: "Fest", id: "e1" },
+  environment: { name: "Fest", id: "e1" },
 };
 
 const assignedShift = {

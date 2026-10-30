@@ -22,7 +22,7 @@ const baseShift = {
   requiredRoles: [],
   preferences: [],
   assignments: [],
-  event: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
+  environment: { id: "evt-1", startDate: new Date("2026-08-01"), endDate: new Date("2026-08-03") },
 } as unknown as ShiftWithRelations;
 
 const baseConfig = { maxShiftsPerPerson: 3, minRestMs: 15 * 60 * 1000 };
@@ -112,9 +112,9 @@ describe("canAssign", () => {
     const state = makeState();
     state.memberShifts.set("member-1", ["other-shift"]);
     state.shiftCoverage.set("shift-1", 0);
-    const otherShift = { ...baseShift, id: "other-shift", eventId: "evt-1" } as unknown as ShiftWithRelations;
+    const otherShift = { ...baseShift, id: "other-shift", environmentId: "evt-1" } as unknown as ShiftWithRelations;
     const allShiftsMap = new Map([[baseShift.id, baseShift], ["other-shift", otherShift]]);
-    const result = canAssign("member-1", { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations, state, baseConfig, noRules, allShiftsMap, new Map(), []);
+    const result = canAssign("member-1", { ...baseShift, environmentId: "evt-1" } as unknown as ShiftWithRelations, state, baseConfig, noRules, allShiftsMap, new Map(), []);
     expect(result.eligible).toBe(false);
     expect(result.reason).toBe("time_conflict");
   });
@@ -123,8 +123,8 @@ describe("canAssign", () => {
     const state = makeState();
     state.memberShifts.set("member-1", ["other-event-shift"]);
     state.shiftCoverage.set("shift-1", 0);
-    const otherEventShift = { ...baseShift, id: "other-event-shift", eventId: "evt-2" } as unknown as ShiftWithRelations;
-    const shiftInEventOne = { ...baseShift, eventId: "evt-1" } as unknown as ShiftWithRelations;
+    const otherEventShift = { ...baseShift, id: "other-event-shift", environmentId: "evt-2" } as unknown as ShiftWithRelations;
+    const shiftInEventOne = { ...baseShift, environmentId: "evt-1" } as unknown as ShiftWithRelations;
     const allShiftsMap = new Map([[baseShift.id, shiftInEventOne], ["other-event-shift", otherEventShift]]);
     const result = canAssign("member-1", shiftInEventOne, state, baseConfig, noRules, allShiftsMap, new Map(), []);
     expect(result.eligible).toBe(false);

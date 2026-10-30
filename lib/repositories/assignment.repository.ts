@@ -10,7 +10,7 @@ export class AssignmentRepository extends BaseRepository {
         include: {
           shift: {
             include: {
-              event: true,
+              environment: true,
               requiredRoles: true,
             },
           },
@@ -38,7 +38,7 @@ export class AssignmentRepository extends BaseRepository {
         include: {
           shift: {
             include: {
-              event: true,
+              environment: true,
               requiredRoles: true,
             },
           },
@@ -54,8 +54,8 @@ export class AssignmentRepository extends BaseRepository {
     }
   }
 
-  async findByEvent(eventId: string) {
-    return this.findAll({ shift: { eventId } });
+  async findByEvent(environmentId: string) {
+    return this.findAll({ shift: { environmentId } });
   }
 
   async delete(id: string) {
@@ -93,11 +93,11 @@ export class AssignmentRepository extends BaseRepository {
     }
   }
 
-  async deleteByEvent(eventId: string) {
+  async deleteByEvent(environmentId: string) {
     try {
       return await prisma.assignment.deleteMany({
         where: {
-          shift: { eventId },
+          shift: { environmentId },
         },
       });
     } catch (error) {

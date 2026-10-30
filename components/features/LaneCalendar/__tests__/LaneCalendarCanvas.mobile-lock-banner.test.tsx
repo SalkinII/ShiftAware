@@ -43,7 +43,7 @@ describe("LaneCalendarCanvas — mobile lock banner layout", () => {
           lanes={lanes}
           eventStart={new Date("2026-08-01T00:00:00.000Z")}
           eventEnd={new Date("2026-08-02T00:00:00.000Z")}
-          eventId="event-1"
+          environmentId="event-1"
           shiftMutationLocked
           shiftMutationLockedMessage="Shift editing is locked for the current event state"
         />
@@ -72,7 +72,7 @@ describe("LaneCalendarCanvas — mobile lock banner layout", () => {
           lanes={lanes}
           eventStart={new Date("2026-08-01T00:00:00.000Z")}
           eventEnd={new Date("2026-08-02T00:00:00.000Z")}
-          eventId="event-1"
+          environmentId="event-1"
           shiftMutationLocked
           shiftMutationLockedMessage="Shift editing is locked for the current event state"
           topRightOverlay={<button>2 swaps pending</button>}

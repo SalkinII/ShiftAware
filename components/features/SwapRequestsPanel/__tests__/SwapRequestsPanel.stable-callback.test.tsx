@@ -64,7 +64,7 @@ describe("SwapRequestsPanel – stable callback", () => {
   it("does not re-fetch when onHasRequests prop reference changes between renders", async () => {
     const { rerender } = render(
       <SwapRequestsPanel
-        eventId="evt-1"
+        environmentId="evt-1"
         eventStatus={"OPEN_FOR_PREFERENCES" as any}
         onHasRequests={() => {}}
       />,
@@ -78,7 +78,7 @@ describe("SwapRequestsPanel – stable callback", () => {
     // Re-render with a brand new onHasRequests arrow function (simulates unstable parent)
     rerender(
       <SwapRequestsPanel
-        eventId="evt-1"
+        environmentId="evt-1"
         eventStatus={"OPEN_FOR_PREFERENCES" as any}
         onHasRequests={() => {}}
       />,

@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
-import type { EventStatus } from "@prisma/client";
+import type { EnvironmentStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { canShowSwapPanel } from "@/lib/domain/event-status";
 import { cn } from "@/lib/utils";
@@ -36,8 +36,8 @@ interface SwapRequest {
 }
 
 interface SwapRequestsPanelProps {
-  eventId: string | null;
-  eventStatus?: EventStatus;
+  environmentId: string | null;
+  eventStatus?: EnvironmentStatus;
   onHasRequests?: (has: boolean, count?: number) => void;
   onRefresh?: () => void;
 }
@@ -51,7 +51,7 @@ function shiftTime(startTime: string, endTime: string) {
 }
 
 export function SwapRequestsPanel({
-  eventId,
+  environmentId,
   eventStatus,
   onHasRequests,
   onRefresh,
@@ -68,7 +68,7 @@ export function SwapRequestsPanel({
   });
 
   const fetchRequests = useCallback(() => {
-    if (!eventId) return;
+    if (!environmentId) return;
     if (eventStatus && !canShowSwapPanel(eventStatus)) {
       onHasRequestsRef.current?.(false);
       return;
@@ -76,7 +76,7 @@ export function SwapRequestsPanel({
     onHasRequestsRef.current?.(false);
     setLoading(true);
     setError(null);
-    fetch(`/api/swap-requests?eventId=${eventId}`)
+    fetch(`/api/swap-requests?environmentId=${environmentId}`)
       .then(async (res) => {
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
@@ -91,13 +91,13 @@ export function SwapRequestsPanel({
       })
       .catch(() => setError("Failed to load swap requests"))
       .finally(() => setLoading(false));
-  }, [eventId, eventStatus]);
+  }, [environmentId, eventStatus]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
-  if (!eventId) return null;
+  if (!environmentId) return null;
 
   if (eventStatus && !canShowSwapPanel(eventStatus)) return null;
 

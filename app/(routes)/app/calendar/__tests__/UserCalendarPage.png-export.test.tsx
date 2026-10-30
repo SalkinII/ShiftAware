@@ -18,8 +18,8 @@ vi.mock("next/dynamic", () => ({
       return <div data-testid="lane-canvas" />;
     }),
 }));
-vi.mock("@/lib/contexts/EventContext", () => {
-  const selectedEvent = {
+vi.mock("@/lib/contexts/EnvironmentContext", () => {
+  const selectedEnvironment = {
     id: "evt-1",
     name: "Test",
     status: "FINALIZED",
@@ -27,7 +27,7 @@ vi.mock("@/lib/contexts/EventContext", () => {
     endDate: "2026-06-05T00:00:00Z",
   };
   return {
-    useEventContext: () => ({ selectedEventId: "evt-1", selectedEvent }),
+    useEnvironmentContext: () => ({ selectedEnvironmentId: "evt-1", selectedEnvironment }),
   };
 });
 // Stable references prevent infinite render loops caused by effect deps on

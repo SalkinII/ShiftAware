@@ -33,7 +33,7 @@ describe("buildShiftNodes", () => {
       capacity: 4,
       assignments: [{ id: "a1" }, { id: "a2" }],
       _count: { assignments: 2, preferences: 3 },
-      event: { id: "e1", name: "Fest" },
+      environment: { id: "e1", name: "Fest" },
       requiredRoles: [],
       templateId: "tpl-1",
     },

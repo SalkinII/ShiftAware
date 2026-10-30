@@ -14,7 +14,7 @@ export interface ProfileData {
   alias: string;
   avatarId: string;
   capabilities: string[];
-  eventId?: string;
+  environmentId?: string;
   attributes?: Record<string, any>;
 }
 
@@ -41,7 +41,7 @@ export function CreateProfileForm({
     avatarId: "😊",
     capabilities: ["TEAM_MEMBER"],
     attributes: {},
-    eventId: defaultEventId,
+    environmentId: defaultEventId,
   });
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -55,17 +55,17 @@ export function CreateProfileForm({
   }, []);
 
   useEffect(() => {
-    if (formData.eventId) {
-      fetchEventAttributes(formData.eventId);
+    if (formData.environmentId) {
+      fetchEventAttributes(formData.environmentId);
     } else {
       setAttributeDefinitions([]);
       setFormData((prev) => ({ ...prev, attributes: {} }));
     }
-  }, [formData.eventId]);
+  }, [formData.environmentId]);
 
   async function fetchEvents() {
     try {
-      const res = await fetch("/api/events");
+      const res = await fetch("/api/environments");
       if (res.ok) {
         const data = await res.json();
         setEvents(data.data || []);
@@ -75,10 +75,10 @@ export function CreateProfileForm({
     }
   }
 
-  async function fetchEventAttributes(eventId: string) {
+  async function fetchEventAttributes(environmentId: string) {
     setLoadingAttributes(true);
     try {
-      const res = await fetch(`/api/events/${eventId}/attributes`);
+      const res = await fetch(`/api/environments/${environmentId}/attributes`);
       if (res.ok) {
         const data = await res.json();
         setAttributeDefinitions(data.data || []);
@@ -133,16 +133,16 @@ export function CreateProfileForm({
 
       <div>
         <label
-          htmlFor="eventId"
+          htmlFor="environmentId"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Register for Event
         </label>
         <select
-          id="eventId"
-          value={formData.eventId || ""}
+          id="environmentId"
+          value={formData.environmentId || ""}
           onChange={(e) =>
-            setFormData({ ...formData, eventId: e.target.value || undefined })
+            setFormData({ ...formData, environmentId: e.target.value || undefined })
           }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
@@ -155,7 +155,7 @@ export function CreateProfileForm({
         </select>
       </div>
 
-      {formData.eventId && attributeDefinitions.length > 0 && (
+      {formData.environmentId && attributeDefinitions.length > 0 && (
         <div className="space-y-4 pt-4 border-t border-gray-200">
           <h3 className="text-sm font-semibold text-gray-900">
             Event-Specific Attributes

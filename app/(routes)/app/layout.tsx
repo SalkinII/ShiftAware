@@ -6,14 +6,14 @@ import { UserSidebar } from "@/components/layout/UserSidebar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CacheProvider } from "@/lib/cache/CacheProvider";
-import { EventContextProvider } from "@/lib/contexts/EventContext";
+import { EnvironmentContextProvider } from "@/lib/contexts/EnvironmentContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <CacheProvider>
         <ToastProvider>
-          <EventContextProvider isAdmin={false}>
+          <EnvironmentContextProvider isAdmin={false}>
             <div className="min-h-screen bg-gray-50 text-gray-900">
               <Header />
               <UserSidebar />
@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="p-6 md:p-8 max-w-7xl mx-auto">{children}</div>
               </main>
             </div>
-          </EventContextProvider>
+          </EnvironmentContextProvider>
         </ToastProvider>
       </CacheProvider>
     </ErrorBoundary>

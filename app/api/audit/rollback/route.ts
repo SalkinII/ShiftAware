@@ -29,7 +29,7 @@ type TeamMemberBeforeAfter = {
 };
 
 type ShiftBeforeAfter = {
-  eventId?: string;
+  environmentId?: string;
   type?: ShiftType | string;
   startTime?: string | Date;
   endTime?: string | Date;
@@ -363,7 +363,7 @@ async function rollbackShift(
         const { requiredRoles: beforeRoles, ...beforeShiftData } = before;
 
         // Validate we have the required fields
-        if (!beforeShiftData.eventId || !beforeShiftData.type) {
+        if (!beforeShiftData.environmentId || !beforeShiftData.type) {
           throw new Error(
             "Cannot rollback: shift was deleted and missing data to recreate it",
           );
@@ -382,7 +382,7 @@ async function rollbackShift(
         // Recreate the shift
         const recreatedShift = await tx.shift.create({
           data: {
-            eventId: beforeShiftData.eventId,
+            environmentId: beforeShiftData.environmentId,
             type: isValidShiftType(beforeShiftData.type)
               ? beforeShiftData.type
               : ShiftType.STATIONARY,
@@ -492,7 +492,7 @@ async function rollbackShift(
 
       // Validate required fields
       if (
-        !deleteBeforeShiftData.eventId ||
+        !deleteBeforeShiftData.environmentId ||
         !deleteBeforeShiftData.type ||
         !deleteBeforeShiftData.startTime ||
         !deleteBeforeShiftData.endTime ||
@@ -505,7 +505,7 @@ async function rollbackShift(
       // Recreate shift (IDs are auto-generated, so we can't reuse the original ID)
       const recreatedShiftDelete = await tx.shift.create({
         data: {
-          eventId: deleteBeforeShiftData.eventId,
+          environmentId: deleteBeforeShiftData.environmentId,
           type: isValidShiftType(deleteBeforeShiftData.type)
             ? deleteBeforeShiftData.type
             : ShiftType.STATIONARY,

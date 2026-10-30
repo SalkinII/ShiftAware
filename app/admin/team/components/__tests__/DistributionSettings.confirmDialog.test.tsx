@@ -4,10 +4,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-vi.mock("@/lib/contexts/EventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "evt-1",
-    selectedEvent: { id: "evt-1", name: "Test Event", status: "ASSIGNING" },
+vi.mock("@/lib/contexts/EnvironmentContext", () => ({
+  useEnvironmentContext: () => ({
+    selectedEnvironmentId: "evt-1",
+    selectedEnvironment: { id: "evt-1", name: "Test Event", status: "ASSIGNING" },
   }),
 }));
 vi.mock("@/components/ui/Toast", () => ({

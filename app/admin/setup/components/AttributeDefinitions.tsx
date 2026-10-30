@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 
 interface AttributeDefinition {
@@ -22,7 +22,7 @@ interface AttributeDefinition {
 
 export function AttributeDefinitions() {
   const toast = useToast();
-  const { selectedEventId, selectedEvent } = useEventContext(true);
+  const { selectedEnvironmentId, selectedEnvironment } = useEnvironmentContext();
   const [attributes, setAttributes] = useState<AttributeDefinition[]>([]);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [formData, setFormData] = useState({
@@ -36,16 +36,16 @@ export function AttributeDefinitions() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (selectedEventId) {
+    if (selectedEnvironmentId) {
       loadAttributes();
     } else {
       setAttributes([]);
     }
-  }, [selectedEventId]);
+  }, [selectedEnvironmentId]);
 
   async function loadAttributes() {
     try {
-      const res = await fetch(`/api/events/${selectedEventId}/attributes`);
+      const res = await fetch(`/api/environments/${selectedEnvironmentId}/attributes`);
       if (res.ok) {
         const data = await res.json();
         setAttributes(unwrapApiResponse<AttributeDefinition[]>(data) || []);
@@ -108,8 +108,8 @@ export function AttributeDefinitions() {
     try {
       const url =
         editingId === "new"
-          ? `/api/events/${selectedEventId}/attributes`
-          : `/api/events/${selectedEventId}/attributes/${editingId}`;
+          ? `/api/environments/${selectedEnvironmentId}/attributes`
+          : `/api/environments/${selectedEnvironmentId}/attributes/${editingId}`;
 
       const method = editingId === "new" ? "POST" : "PUT";
 
@@ -145,7 +145,7 @@ export function AttributeDefinitions() {
 
     try {
       const res = await fetch(
-        `/api/events/${selectedEventId}/attributes/${id}`,
+        `/api/environments/${selectedEnvironmentId}/attributes/${id}`,
         {
           method: "DELETE",
         },
@@ -163,7 +163,7 @@ export function AttributeDefinitions() {
     }
   }
 
-  if (!selectedEventId) {
+  if (!selectedEnvironmentId) {
     return (
       <Card className="p-8 text-center">
         <p className="text-sm text-amber-600">
@@ -184,9 +184,9 @@ export function AttributeDefinitions() {
             Define custom attributes for team members for this event
           </p>
         </div>
-        {selectedEvent && (
+        {selectedEnvironment && (
           <span className="text-sm font-bold text-gray-700 bg-gray-50 px-4 py-2 rounded-lg">
-            {selectedEvent.name}
+            {selectedEnvironment.name}
           </span>
         )}
       </div>

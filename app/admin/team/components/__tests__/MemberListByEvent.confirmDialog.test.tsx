@@ -19,7 +19,7 @@ vi.mock("@/app/(routes)/app/identity/components/CreateProfileForm", () => ({
 }));
 
 const members = [
-  { id: "m1", alias: "Alice", avatarId: "🐨", eventRegistrations: [{ status: "REGISTERED" }] },
+  { id: "m1", alias: "Alice", avatarId: "🐨", environmentRegistrations: [{ status: "REGISTERED" }] },
 ];
 
 vi.spyOn(globalThis, "fetch").mockResolvedValue({
@@ -32,7 +32,7 @@ import { MemberListByEvent } from "../MemberListByEvent";
 describe("MemberListByEvent – remove member confirmation", () => {
   it("opens a ConfirmDialog instead of window.confirm when removing a member", async () => {
     const confirmSpy = vi.spyOn(window, "confirm");
-    render(<MemberListByEvent eventId="evt-1" eventName="Test Event" />);
+    render(<MemberListByEvent environmentId="evt-1" eventName="Test Event" />);
 
     const removeBtn = await screen.findByRole("button", { name: /remove member/i });
     fireEvent.click(removeBtn);

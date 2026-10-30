@@ -6,13 +6,13 @@ import { AnalysisTable } from "./AnalysisTable";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface Props {
-  eventId: string;
+  environmentId: string;
   eventStatus: string;
   eventName: string;
 }
 
 export function DistributionControlCenter({
-  eventId,
+  environmentId,
   eventStatus,
   eventName,
 }: Props) {
@@ -24,7 +24,7 @@ export function DistributionControlCenter({
   const handleDryRun = useCallback(async () => {
     setIsRunning(true);
     try {
-      const res = await fetch(`/api/events/${eventId}/assignments/preview`, {
+      const res = await fetch(`/api/environments/${environmentId}/assignments/preview`, {
         method: "POST",
       });
       const json = await res.json();
@@ -32,7 +32,7 @@ export function DistributionControlCenter({
     } finally {
       setIsRunning(false);
     }
-  }, [eventId]);
+  }, [environmentId]);
 
   const handleRun = useCallback(() => {
     setShowRunConfirm(true);
@@ -45,7 +45,7 @@ export function DistributionControlCenter({
       const res = await fetch("/api/assignments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId }),
+        body: JSON.stringify({ environmentId }),
       });
       if (res.ok) {
         setPreviewData(null);
@@ -54,7 +54,7 @@ export function DistributionControlCenter({
     } finally {
       setIsRunning(false);
     }
-  }, [eventId]);
+  }, [environmentId]);
 
   return (
     <div className="space-y-4">
@@ -86,13 +86,13 @@ export function DistributionControlCenter({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <DistributionHeatmap
-          eventId={eventId}
+          environmentId={environmentId}
           previewData={previewData}
           highlightMemberId={selectedMemberId}
           onMemberSelect={setSelectedMemberId}
         />
         <AnalysisTable
-          eventId={eventId}
+          environmentId={environmentId}
           eventName={eventName}
           onMemberSelect={setSelectedMemberId}
           selectedMemberId={selectedMemberId}

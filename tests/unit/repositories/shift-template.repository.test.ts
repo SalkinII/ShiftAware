@@ -12,7 +12,7 @@ vi.mock("@/lib/db", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    eventTemplate: {
+    environmentTemplate: {
       findMany: vi.fn(),
     },
     scheduledShift: {
@@ -37,7 +37,7 @@ describe("ShiftTemplateRepository", () => {
       id: "template-1",
       name: "Morning Shift",
       type: ShiftType.MOBILE_TEAM,
-      eventId: null,
+      festivalId: null,
       color: null,
       startTime: "08:00",
       capacity: 2,
@@ -75,7 +75,7 @@ describe("ShiftTemplateRepository", () => {
         id: "template-1",
         name: "Morning Shift",
         type: ShiftType.MOBILE_TEAM,
-        eventId: null,
+        festivalId: null,
         color: null,
         startTime: "08:00",
         capacity: 2,
@@ -91,11 +91,11 @@ describe("ShiftTemplateRepository", () => {
 
     vi.mocked(prisma.shiftTemplate.findMany).mockResolvedValue(mockTemplates);
 
-    const result = await repo.findAll({ eventId: null });
+    const result = await repo.findAll({ festivalId: null });
 
     expect(result).toEqual(mockTemplates);
     expect(prisma.shiftTemplate.findMany).toHaveBeenCalledWith({
-      where: { eventId: null },
+      where: { festivalId: null },
       include: { requiredRoles: true },
       orderBy: { createdAt: "desc" },
     });
@@ -107,7 +107,7 @@ describe("ShiftTemplateRepository", () => {
         id: "template-1",
         name: "Global Template",
         type: ShiftType.MOBILE_TEAM,
-        eventId: null,
+        festivalId: null,
         color: null,
         startTime: "08:00",
         capacity: 2,
@@ -127,7 +127,7 @@ describe("ShiftTemplateRepository", () => {
 
     expect(result).toEqual(mockTemplates);
     expect(prisma.shiftTemplate.findMany).toHaveBeenCalledWith({
-      where: { eventId: null },
+      where: { festivalId: null },
       include: { requiredRoles: true },
       orderBy: { createdAt: "desc" },
     });
@@ -139,7 +139,7 @@ describe("ShiftTemplateRepository", () => {
         id: "template-2",
         name: "Event-specific Template",
         type: ShiftType.MOBILE_TEAM,
-        eventId: "event-1",
+        festivalId: null,
         color: null,
         startTime: "08:00",
         capacity: 2,
@@ -159,7 +159,7 @@ describe("ShiftTemplateRepository", () => {
 
     expect(result).toEqual(mockTemplates);
     expect(prisma.shiftTemplate.findMany).toHaveBeenCalledWith({
-      where: { eventId: "event-1" },
+      where: { id: { in: [] } },
       include: { requiredRoles: true },
       orderBy: { createdAt: "desc" },
     });
@@ -169,14 +169,14 @@ describe("ShiftTemplateRepository", () => {
     const mockAssignments = [
       {
         id: "et-1",
-        eventId: "event-1",
+        environmentId: "event-1",
         templateId: "global-1",
         order: 0,
         createdAt: new Date(),
       },
       {
         id: "et-2",
-        eventId: "event-1",
+        environmentId: "event-1",
         templateId: "global-2",
         order: 1,
         createdAt: new Date(),
@@ -188,7 +188,7 @@ describe("ShiftTemplateRepository", () => {
         id: "global-1",
         name: "Assigned Global",
         type: ShiftType.MOBILE_TEAM,
-        eventId: null,
+        festivalId: null,
         color: null,
         startTime: "08:00",
         capacity: 2,
@@ -204,7 +204,7 @@ describe("ShiftTemplateRepository", () => {
         id: "template-2",
         name: "Event-specific",
         type: ShiftType.MOBILE_TEAM,
-        eventId: "event-1",
+        festivalId: null,
         color: null,
         startTime: "08:00",
         capacity: 2,
@@ -218,19 +218,19 @@ describe("ShiftTemplateRepository", () => {
       },
     ];
 
-    vi.mocked(prisma.eventTemplate.findMany).mockResolvedValue(mockAssignments);
+    vi.mocked(prisma.environmentTemplate.findMany).mockResolvedValue(mockAssignments);
     vi.mocked(prisma.shiftTemplate.findMany).mockResolvedValue(mockTemplates);
 
     const result = await repo.findForEvent("event-1", true);
 
     expect(result).toEqual(mockTemplates);
-    expect(prisma.eventTemplate.findMany).toHaveBeenCalledWith({
-      where: { eventId: "event-1" },
+    expect(prisma.environmentTemplate.findMany).toHaveBeenCalledWith({
+      where: { environmentId: "event-1" },
       select: { templateId: true },
     });
     expect(prisma.shiftTemplate.findMany).toHaveBeenCalledWith({
       where: {
-        OR: [{ id: { in: ["global-1", "global-2"] } }, { eventId: "event-1" }],
+          id: { in: ["global-1", "global-2"] },
       },
       include: { requiredRoles: true },
       orderBy: { createdAt: "desc" },
@@ -253,7 +253,7 @@ describe("ShiftTemplateRepository", () => {
       durationMinutes: input.durationMinutes,
       startTime: input.startTime,
       capacity: input.capacity,
-      eventId: null,
+      festivalId: null,
       color: null,
       desirabilityScore: 3,
       priority: ShiftPriority.CORE,
@@ -285,7 +285,7 @@ describe("ShiftTemplateRepository", () => {
       id: "template-1",
       name: "Updated Template",
       type: ShiftType.MOBILE_TEAM,
-      eventId: null,
+      festivalId: null,
       color: null,
       startTime: "08:00",
       capacity: 2,
@@ -325,7 +325,7 @@ describe("ShiftTemplateRepository", () => {
       id: "template-1",
       name: "Deleted Template",
       type: ShiftType.MOBILE_TEAM,
-      eventId: null,
+      festivalId: null,
       color: null,
       startTime: "08:00",
       capacity: 2,
@@ -351,7 +351,7 @@ describe("ShiftTemplateRepository", () => {
     const mockScheduledShift = {
       id: "scheduled-1",
       templateId: "template-1",
-      eventId: "event-1",
+      environmentId: "event-1",
       shiftId: null,
       date: new Date("2026-06-26"),
       createdAt: new Date(),
@@ -372,7 +372,7 @@ describe("ShiftTemplateRepository", () => {
     expect(prisma.scheduledShift.create).toHaveBeenCalledWith({
       data: {
         templateId: "template-1",
-        eventId: "event-1",
+        environmentId: "event-1",
         date: new Date("2026-06-26"),
       },
     });

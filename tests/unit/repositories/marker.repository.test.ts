@@ -24,20 +24,20 @@ describe("MarkerRepository", () => {
   });
 
   it("finds markers by event ordered by startTime", async () => {
-    const markers = [{ id: "m1", eventId: "evt-1", text: "Lunch", startTime: new Date(), endTime: new Date() }];
+    const markers = [{ id: "m1", environmentId: "evt-1", text: "Lunch", startTime: new Date(), endTime: new Date() }];
     vi.mocked(prisma.planMarker.findMany).mockResolvedValue(markers as any);
 
     const result = await repo.findByEvent("evt-1");
 
     expect(prisma.planMarker.findMany).toHaveBeenCalledWith({
-      where: { eventId: "evt-1" },
+      where: { environmentId: "evt-1" },
       orderBy: { startTime: "asc" },
     });
     expect(result).toEqual(markers);
   });
 
   it("creates a marker", async () => {
-    const data = { eventId: "evt-1", text: "Lunch", startTime: new Date(), endTime: new Date() };
+    const data = { environmentId: "evt-1", text: "Lunch", startTime: new Date(), endTime: new Date() };
     const created = { id: "m1", ...data };
     vi.mocked(prisma.planMarker.create).mockResolvedValue(created as any);
 

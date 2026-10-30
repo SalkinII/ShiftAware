@@ -17,12 +17,12 @@ const assignmentRepo = new AssignmentRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("eventId");
+  const environmentId = searchParams.get("environmentId");
   const teamMemberId = searchParams.get("teamMemberId");
 
   const where: any = {};
-  if (eventId) {
-    where.shift = { eventId };
+  if (environmentId) {
+    where.shift = { environmentId };
   }
   if (teamMemberId) {
     where.teamMemberId = teamMemberId;
@@ -35,14 +35,14 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
 export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const body = await request.json();
-  const { eventId, preview, dryRun: dryRunBody, assignments } = body;
+  const { environmentId, preview, dryRun: dryRunBody, assignments } = body;
 
   // Manual assignment creation
   if (assignments && Array.isArray(assignments) && assignments.length > 0) {
-    if (!eventId) {
+    if (!environmentId) {
       return createErrorResponse(
-        new Error("eventId is required"),
-        "eventId is required",
+        new Error("environmentId is required"),
+        "environmentId is required",
         400,
       );
     }
@@ -67,23 +67,23 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   }
 
   // Algorithm run
-  if (!eventId) {
+  if (!environmentId) {
     return createErrorResponse(
-      new Error("eventId is required"),
-      "eventId is required",
+      new Error("environmentId is required"),
+      "environmentId is required",
       400,
     );
   }
 
   const dryRun = !!(preview || dryRunBody);
-  const result = await runAllocation(eventId, dryRun);
+  const result = await runAllocation(environmentId, dryRun);
 
   // Only create audit log if not dry-run
   if (!dryRun) {
     await createAuditLog({
       action: AuditAction.ASSIGNMENT_RUN,
       entityType: EntityType.CONFIG,
-      entityId: eventId,
+      entityId: environmentId,
       after: {
         assignmentsCount: result.assignments.length,
         violations: result.violations,

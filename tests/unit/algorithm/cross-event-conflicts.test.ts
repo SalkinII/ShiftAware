@@ -2,16 +2,16 @@ import { describe, it, expect } from "vitest";
 import { seedCrossEventConflicts } from "@/lib/algorithm/cross-event-conflicts";
 import type { ShiftWithRelations } from "@/lib/algorithm/types";
 
-function makeShift(id: string, eventId: string): ShiftWithRelations {
+function makeShift(id: string, environmentId: string): ShiftWithRelations {
   return {
     id,
-    eventId,
+    environmentId,
     startTime: new Date("2026-08-01T08:00:00Z"),
     endTime: new Date("2026-08-01T16:00:00Z"),
     preferences: [],
     assignments: [],
     requiredRoles: [],
-    event: { id: eventId, startDate: new Date(), endDate: new Date() },
+    environment: { id: environmentId, startDate: new Date(), endDate: new Date() },
   } as unknown as ShiftWithRelations;
 }
 

@@ -7,15 +7,15 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 // Capture props passed to the Distribution Control Center
 let lastControlCenterProps: {
-  eventId?: string;
+  environmentId?: string;
   eventStatus?: string;
   eventName?: string;
 } = {};
 
-vi.mock("@/lib/contexts/EventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "event-1",
-    selectedEvent: { id: "event-1", name: "Test Event", status: "ASSIGNMENT" },
+vi.mock("@/lib/contexts/EnvironmentContext", () => ({
+  useEnvironmentContext: () => ({
+    selectedEnvironmentId: "event-1",
+    selectedEnvironment: { id: "event-1", name: "Test Event", status: "ASSIGNMENT" },
   }),
 }));
 
@@ -23,15 +23,15 @@ vi.mock(
   "../../events/[id]/distribution/components/DistributionControlCenter",
   () => ({
     DistributionControlCenter: ({
-      eventId,
+      environmentId,
       eventStatus,
       eventName,
     }: {
-      eventId?: string;
+      environmentId?: string;
       eventStatus?: string;
       eventName?: string;
     }) => {
-      lastControlCenterProps = { eventId, eventStatus, eventName };
+      lastControlCenterProps = { environmentId, eventStatus, eventName };
       return <div data-testid="distribution-control-center">Control Center</div>;
     },
   }),
@@ -77,11 +77,11 @@ describe("TeamPage – control center receives event context", () => {
     lastControlCenterProps = {};
   });
 
-  it("passes selectedEventId, selectedEvent.status, and selectedEvent.name to DistributionControlCenter", () => {
+  it("passes selectedEnvironmentId, selectedEnvironment.status, and selectedEnvironment.name to DistributionControlCenter", () => {
     render(<TeamPage />);
     fireEvent.click(screen.getByText("Availability Heatmap"));
     expect(lastControlCenterProps).toEqual({
-      eventId: "event-1",
+      environmentId: "event-1",
       eventStatus: "ASSIGNMENT",
       eventName: "Test Event",
     });

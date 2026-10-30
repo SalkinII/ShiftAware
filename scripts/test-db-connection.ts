@@ -20,12 +20,12 @@ async function testConnection() {
 
     const models: Array<keyof typeof prisma> = [
       "teamMember",
-      "event",
+      "environment",
       "shift",
       "shiftPreference",
       "assignment",
       "auditLog",
-      "eventConfig",
+      "environmentConfig",
       "systemConfig",
     ];
 

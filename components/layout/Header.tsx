@@ -7,9 +7,9 @@ import Link from "next/link";
 import { isAdminClient } from "@/lib/auth-client";
 import { EventSelector } from "@/components/ui/EventSelector";
 import {
-  useEventContext,
-  formatEventDateRange,
-} from "@/lib/contexts/EventContext";
+  useEnvironmentContext,
+  formatEnvironmentDateRange,
+} from "@/lib/contexts/EnvironmentContext";
 import { useMemberContext } from "@/lib/hooks/useMemberContext";
 import {
   EMOJI_ADMIN,
@@ -31,11 +31,11 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
   const { selectedMember } = useMemberContext();
   const isAdminRoute = pathname?.startsWith("/admin");
   const {
-    selectedEventId,
-    events,
-    setSelectedEventId,
+    selectedEnvironmentId,
+    environments,
+    setSelectedEnvironmentId,
     loading: eventsLoading,
-  } = useEventContext(isAdminRoute);
+  } = useEnvironmentContext();
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
@@ -56,8 +56,8 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (res.ok) {
         localStorage.removeItem("selectedMemberId");
-        localStorage.removeItem("selectedEventId");
-        localStorage.removeItem("adminSelectedEventId");
+        localStorage.removeItem("selectedEnvironmentId");
+        localStorage.removeItem("adminSelectedEnvironmentId");
         router.push("/login");
       }
     } catch (error) {
@@ -95,9 +95,9 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
         {isAdminRoute && !eventsLoading && (
           <div className="hidden md:flex items-center">
             <EventSelector
-              events={events}
-              selectedEventId={selectedEventId}
-              onSelect={setSelectedEventId}
+              environments={environments}
+              selectedEnvironmentId={selectedEnvironmentId}
+              onSelect={setSelectedEnvironmentId}
               placeholder="Select event..."
             />
           </div>
@@ -154,9 +154,9 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
       <MobileSidebar
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        events={events}
-        selectedEventId={selectedEventId}
-        onSelectEvent={setSelectedEventId}
+        environments={environments}
+        selectedEnvironmentId={selectedEnvironmentId}
+        onSelectEvent={setSelectedEnvironmentId}
       />
     </>
   );
@@ -166,20 +166,20 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
 function MobileSidebar({
   isOpen,
   onClose,
-  events,
-  selectedEventId,
+  environments,
+  selectedEnvironmentId,
   onSelectEvent,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  events: any[];
-  selectedEventId: string | null;
+  environments: any[];
+  selectedEnvironmentId: string | null;
   onSelectEvent: (id: string) => void;
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
-  const { selectedEvent: event, loading: eventLoading } =
-    useEventContext(false);
+  const { selectedEnvironment: event, loading: eventLoading } =
+    useEnvironmentContext();
 
   useEffect(() => {
     setIsAdmin(isAdminClient());
@@ -252,15 +252,15 @@ function MobileSidebar({
         </div>
 
         {/* Event selector — admin only */}
-        {isInAdminSection && events.length > 0 && (
+        {isInAdminSection && environments.length > 0 && (
           <div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-3">
               Active Event
             </p>
             <div className="px-4">
               <EventSelector
-                events={events}
-                selectedEventId={selectedEventId}
+                environments={environments}
+                selectedEnvironmentId={selectedEnvironmentId}
                 onSelect={(id) => {
                   if (id) onSelectEvent(id);
                 }}
@@ -330,7 +330,7 @@ function MobileSidebar({
                   {event.status.toLowerCase().replace("_", " ")}
                 </span>
                 <span className="text-[10px] opacity-80 italic">
-                  {formatEventDateRange(event.startDate, event.endDate)}
+                  {formatEnvironmentDateRange(event.startDate, event.endDate)}
                 </span>
               </div>
             </>

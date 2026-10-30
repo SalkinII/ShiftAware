@@ -126,7 +126,7 @@ interface LaneCalendarCanvasProps {
   lanes: LaneConfig[];
   eventStart: Date | null;
   eventEnd: Date | null;
-  eventId: string | null;
+  environmentId: string | null;
   onShiftSelected?: (shiftId: string | null) => void;
   onShiftCreated?: () => void;
   onShiftUpdated?: () => void;
@@ -156,7 +156,7 @@ function LaneCalendarCanvasInner(
     lanes,
     eventStart,
     eventEnd,
-    eventId,
+    environmentId,
     onShiftSelected,
     onShiftCreated,
     onShiftUpdated,
@@ -192,9 +192,9 @@ function LaneCalendarCanvasInner(
 
   // One-time cleanup of legacy localStorage lane order
   useEffect(() => {
-    if (!eventId) return;
-    localStorage.removeItem(`shiftaware:laneOrder:${eventId}`);
-  }, [eventId]);
+    if (!environmentId) return;
+    localStorage.removeItem(`shiftaware:laneOrder:${environmentId}`);
+  }, [environmentId]);
 
   const {
     handleDrop,
@@ -207,7 +207,7 @@ function LaneCalendarCanvasInner(
   } = useCanvasActions({
     lanes: orderedLanes,
     eventStart,
-    eventId,
+    environmentId,
     onShiftCreated,
     onShiftUpdated,
   });
@@ -242,12 +242,12 @@ function LaneCalendarCanvasInner(
     setOptimisticLanes(reordered);
 
     // Persist to database
-    if (eventId) {
+    if (environmentId) {
       const order = next.map((lane, i) => ({
         templateId: lane.templateId!,
         order: i,
       }));
-      fetch(`/api/events/${eventId}/templates/reorder`, {
+      fetch(`/api/environments/${environmentId}/templates/reorder`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order }),
@@ -306,14 +306,14 @@ function LaneCalendarCanvasInner(
   const fitViewDoneRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (shiftNodes.length > 0 && fitViewDoneRef.current !== eventId) {
-      fitViewDoneRef.current = eventId;
+    if (shiftNodes.length > 0 && fitViewDoneRef.current !== environmentId) {
+      fitViewDoneRef.current = environmentId;
       const timer = setTimeout(() => {
         fitView({ padding: 0.15, duration: 300 });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [shiftNodes.length, eventId, fitView]);
+  }, [shiftNodes.length, environmentId, fitView]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));

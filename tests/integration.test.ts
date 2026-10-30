@@ -378,10 +378,10 @@ describe("Integration Tests - Critical Flows", () => {
   });
 
   describe("Event permanent deletion flow", () => {
-    let eventId: string;
+    let environmentId: string;
 
     it("creates a PLANNING event", async () => {
-      const res = await authenticatedFetch(`${BASE_URL}/api/events`, {
+      const res = await authenticatedFetch(`${BASE_URL}/api/environments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -392,13 +392,13 @@ describe("Integration Tests - Critical Flows", () => {
       });
       expect(res.status).toBe(201);
       const data = await res.json();
-      eventId = data.data.id;
+      environmentId = data.data.id;
       expect(data.data.status).toBe("PLANNING");
     });
 
     it("returns 403 when trying to delete an ASSIGNING event", async () => {
       // Create a separate event and transition it
-      const createRes = await authenticatedFetch(`${BASE_URL}/api/events`, {
+      const createRes = await authenticatedFetch(`${BASE_URL}/api/environments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -415,7 +415,7 @@ describe("Integration Tests - Critical Flows", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          eventId: blockId,
+          environmentId: blockId,
           templateId: null,
           type: "STATIONARY",
           startTime: "2099-02-01T10:00:00.000Z",
@@ -430,7 +430,7 @@ describe("Integration Tests - Critical Flows", () => {
       if (shiftRes.ok) {
         // Transition to OPEN_FOR_PREFERENCES
         await authenticatedFetch(
-          `${BASE_URL}/api/events/${blockId}/transition`,
+          `${BASE_URL}/api/environments/${blockId}/transition`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -440,14 +440,14 @@ describe("Integration Tests - Critical Flows", () => {
 
         // Try to delete — should fail
         const delRes = await authenticatedFetch(
-          `${BASE_URL}/api/events/${blockId}`,
+          `${BASE_URL}/api/environments/${blockId}`,
           { method: "DELETE" },
         );
         expect(delRes.status).toBe(403);
 
         // Transition back to PLANNING and clean up
         await authenticatedFetch(
-          `${BASE_URL}/api/events/${blockId}/transition`,
+          `${BASE_URL}/api/environments/${blockId}/transition`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -456,14 +456,14 @@ describe("Integration Tests - Critical Flows", () => {
         );
       }
 
-      await authenticatedFetch(`${BASE_URL}/api/events/${blockId}`, {
+      await authenticatedFetch(`${BASE_URL}/api/environments/${blockId}`, {
         method: "DELETE",
       });
     });
 
     it("permanently deletes a PLANNING event", async () => {
       const res = await authenticatedFetch(
-        `${BASE_URL}/api/events/${eventId}`,
+        `${BASE_URL}/api/environments/${environmentId}`,
         { method: "DELETE" },
       );
       expect(res.status).toBe(200);
@@ -473,7 +473,7 @@ describe("Integration Tests - Critical Flows", () => {
 
     it("returns 404 after event deletion", async () => {
       const res = await authenticatedFetch(
-        `${BASE_URL}/api/events/${eventId}`,
+        `${BASE_URL}/api/environments/${environmentId}`,
       );
       expect(res.status).toBe(404);
     });

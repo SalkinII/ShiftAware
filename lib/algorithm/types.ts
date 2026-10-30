@@ -55,7 +55,7 @@ export type ShiftWithRelations = Shift & {
   preferences: (ShiftPreference & { teamMember: TeamMember })[];
   assignments: (Assignment & { teamMember: TeamMember })[];
   requiredRoles: { role: string; count: number }[];
-  event: { id: string; startDate: Date; endDate: Date };
+  environment: { id: string; startDate: Date; endDate: Date };
 };
 
 export interface Violation {

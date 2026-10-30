@@ -6,7 +6,7 @@ describe("API Error Response Integration", () => {
   describe("Shift Validation Schema", () => {
     it("should validate correct shift data", () => {
       const validShift = {
-        eventId: "clx1234567890123456789012",
+        environmentId: "clx1234567890123456789012",
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T10:00:00.000Z",
         endTime: "2026-06-26T16:00:00.000Z",
@@ -21,9 +21,9 @@ describe("API Error Response Integration", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should reject invalid eventId format", () => {
+    it("should reject invalid environmentId format", () => {
       const invalidShift = {
-        eventId: "short", // Too short (< 10 chars)
+        environmentId: "short", // Too short (< 10 chars)
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T10:00:00.000Z",
         endTime: "2026-06-26T16:00:00.000Z",
@@ -38,13 +38,13 @@ describe("API Error Response Integration", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toBeInstanceOf(ZodError);
-        expect(result.error.errors[0].path).toContain("eventId");
+        expect(result.error.errors[0].path).toContain("environmentId");
       }
     });
 
     it("should reject when endTime is before startTime", () => {
       const invalidShift = {
-        eventId: "clx1234567890123456789012",
+        environmentId: "clx1234567890123456789012",
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T16:00:00.000Z",
         endTime: "2026-06-26T10:00:00.000Z", // Before start
@@ -68,7 +68,7 @@ describe("API Error Response Integration", () => {
 
     it("should reject when duration doesn't match time difference", () => {
       const invalidShift = {
-        eventId: "clx1234567890123456789012",
+        environmentId: "clx1234567890123456789012",
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T10:00:00.000Z",
         endTime: "2026-06-26T16:00:00.000Z", // 6 hours = 360 minutes
@@ -92,7 +92,7 @@ describe("API Error Response Integration", () => {
 
     it("should reject invalid desirabilityScore", () => {
       const invalidShift = {
-        eventId: "clx1234567890123456789012",
+        environmentId: "clx1234567890123456789012",
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T10:00:00.000Z",
         endTime: "2026-06-26T16:00:00.000Z",
@@ -114,7 +114,7 @@ describe("API Error Response Integration", () => {
 
     it("should allow empty requiredRoles array (marker shifts)", () => {
       const markerShift = {
-        eventId: "clx1234567890123456789012",
+        environmentId: "clx1234567890123456789012",
         type: "MOBILE_TEAM",
         startTime: "2026-06-26T10:00:00.000Z",
         endTime: "2026-06-26T16:00:00.000Z",

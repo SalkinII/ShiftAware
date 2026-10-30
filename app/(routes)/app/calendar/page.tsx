@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useCache } from "@/lib/cache/useCache";
 import { invalidateEventCache } from "@/lib/cache/invalidateEventCache";
 import { ShiftPreferencePanel } from "@/components/features/ShiftPropertiesPanel/ShiftPreferencePanel";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { Skeleton, SkeletonList } from "@/components/ui/Skeleton";
 import type { LaneCalendarCanvasHandle } from "@/components/features/LaneCalendar/LaneCalendarCanvas";
@@ -52,7 +52,7 @@ interface Shift {
   desirabilityScore?: number;
   assignments: Assignment[];
   requiredRoles?: { role: string; count: number }[];
-  event: { name: string; id: string };
+  environment: { name: string; id: string };
 }
 
 const coverageLabels: Record<CoverageState, string> = {
@@ -65,7 +65,7 @@ const coverageLabels: Record<CoverageState, string> = {
 export default function UserCalendarPage() {
   const toast = useToast();
   const canvasRef = useRef<LaneCalendarCanvasHandle>(null);
-  const { selectedEventId, selectedEvent } = useEventContext(false);
+  const { selectedEnvironmentId, selectedEnvironment } = useEnvironmentContext();
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarView, setCalendarView] = useState<
@@ -95,22 +95,22 @@ export default function UserCalendarPage() {
   >([]);
 
   const eventStartDate = useMemo(
-    () => (selectedEvent ? new Date(selectedEvent.startDate) : null),
-    [selectedEvent?.startDate],
+    () => (selectedEnvironment ? new Date(selectedEnvironment.startDate) : null),
+    [selectedEnvironment?.startDate],
   );
   const eventEndDate = useMemo(
-    () => (selectedEvent ? new Date(selectedEvent.endDate) : null),
-    [selectedEvent?.endDate],
+    () => (selectedEnvironment ? new Date(selectedEnvironment.endDate) : null),
+    [selectedEnvironment?.endDate],
   );
 
   // Fetch templates for lane derivation
   const { data: eventTemplates } = useCache<any[]>({
-    key: selectedEventId
-      ? `event-templates-${selectedEventId}`
+    key: selectedEnvironmentId
+      ? `event-templates-${selectedEnvironmentId}`
       : "event-templates-none",
     fetchFn: async () => {
-      if (!selectedEventId) return [];
-      const res = await fetch(`/api/events/${selectedEventId}/templates`);
+      if (!selectedEnvironmentId) return [];
+      const res = await fetch(`/api/environments/${selectedEnvironmentId}/templates`);
       if (!res.ok) return [];
       const json = await res.json();
       const result = unwrapApiResponse<{
@@ -119,7 +119,7 @@ export default function UserCalendarPage() {
       }>(json);
       return [...(result?.assigned ?? []), ...(result?.eventSpecific ?? [])];
     },
-    enabled: !!selectedEventId,
+    enabled: !!selectedEnvironmentId,
   });
 
   const derivedLanes = useMemo(() => {
@@ -147,40 +147,40 @@ export default function UserCalendarPage() {
     loading: cacheLoading,
     refetch: refetchShifts,
   } = useCache<Shift[]>({
-    key: selectedEventId
-      ? `calendar-shifts-${selectedEventId}`
+    key: selectedEnvironmentId
+      ? `calendar-shifts-${selectedEnvironmentId}`
       : "calendar-shifts-none",
     fetchFn: async () => {
-      if (!selectedEventId) return [];
-      const res = await fetch(`/api/shifts?eventId=${selectedEventId}`);
+      if (!selectedEnvironmentId) return [];
+      const res = await fetch(`/api/shifts?environmentId=${selectedEnvironmentId}`);
       if (!res.ok) throw new Error("Failed to fetch shifts");
       const data = await res.json();
       return unwrapApiResponse<Shift[]>(data);
     },
-    enabled: !!selectedEventId,
+    enabled: !!selectedEnvironmentId,
   });
 
   const { data: cachedMarkers } = useCache<MarkerLike[]>({
-    key: selectedEventId ? `markers-${selectedEventId}` : "markers-none",
+    key: selectedEnvironmentId ? `markers-${selectedEnvironmentId}` : "markers-none",
     fetchFn: async () => {
-      if (!selectedEventId) return [];
-      const res = await fetch(`/api/markers?eventId=${selectedEventId}`);
+      if (!selectedEnvironmentId) return [];
+      const res = await fetch(`/api/markers?environmentId=${selectedEnvironmentId}`);
       if (!res.ok) return [];
       const json = await res.json();
       return unwrapApiResponse<MarkerLike[]>(json);
     },
-    enabled: !!selectedEventId,
+    enabled: !!selectedEnvironmentId,
   });
   const markers = Array.isArray(cachedMarkers) ? cachedMarkers : [];
 
   // Auto-refresh shift data every 30 seconds for live preference updates
   useEffect(() => {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
     const interval = setInterval(() => {
       refetchShifts();
     }, 30_000);
     return () => clearInterval(interval);
-  }, [selectedEventId, refetchShifts]);
+  }, [selectedEnvironmentId, refetchShifts]);
 
   // Update shifts when cache data changes
   useEffect(() => {
@@ -198,9 +198,9 @@ export default function UserCalendarPage() {
 
   // Set calendar anchor date based on selected event or fallback to earliest shift
   useEffect(() => {
-    if (selectedEvent?.startDate) {
+    if (selectedEnvironment?.startDate) {
       setCurrentEventDate(
-        format(new Date(selectedEvent.startDate), "yyyy-MM-dd"),
+        format(new Date(selectedEnvironment.startDate), "yyyy-MM-dd"),
       );
     } else if (shifts.length > 0) {
       const earliest = shifts.reduce(
@@ -215,7 +215,7 @@ export default function UserCalendarPage() {
       );
       setCurrentEventDate(earliest);
     }
-  }, [selectedEvent, shifts]);
+  }, [selectedEnvironment, shifts]);
 
   function coverageState(shift: Shift): CoverageState {
     const filled = shift.assignments?.length || 0;
@@ -277,8 +277,8 @@ export default function UserCalendarPage() {
       .then(async (res) => {
         if (res.ok) {
           toast.success("Preference saved: Want this shift");
-          if (selectedEventId) {
-            invalidateEventCache(selectedEventId, "preferences", "shifts");
+          if (selectedEnvironmentId) {
+            invalidateEventCache(selectedEnvironmentId, "preferences", "shifts");
           }
           refetchShifts();
           refetchPreferences();
@@ -315,8 +315,8 @@ export default function UserCalendarPage() {
       .then(async (res) => {
         if (res.ok) {
           toast.success("Preference saved: Don't want this shift");
-          if (selectedEventId) {
-            invalidateEventCache(selectedEventId, "preferences", "shifts");
+          if (selectedEnvironmentId) {
+            invalidateEventCache(selectedEnvironmentId, "preferences", "shifts");
           }
           refetchShifts();
           refetchPreferences();
@@ -348,8 +348,8 @@ export default function UserCalendarPage() {
       .then(async (res) => {
         if (res.ok) {
           toast.success("Preference removed");
-          if (selectedEventId) {
-            invalidateEventCache(selectedEventId, "preferences", "shifts");
+          if (selectedEnvironmentId) {
+            invalidateEventCache(selectedEnvironmentId, "preferences", "shifts");
           }
           refetchPreferences();
         } else {
@@ -369,7 +369,7 @@ export default function UserCalendarPage() {
         (s.assignments || []).map((a) => ({
           ...a,
           shiftId: s.id,
-          eventId: s.event.id,
+          environmentId: s.environment.id,
           shift: s,
         })),
       )
@@ -383,7 +383,7 @@ export default function UserCalendarPage() {
     setSwapFromShift(assignment.shift);
 
     // Fetch available shifts for swap (same event, different from current)
-    fetch(`/api/shifts?eventId=${assignment.eventId}`)
+    fetch(`/api/shifts?environmentId=${assignment.environmentId}`)
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
@@ -448,8 +448,8 @@ export default function UserCalendarPage() {
   }, []);
 
   function fetchSwapRequests() {
-    if (!userId || !selectedEventId) return;
-    fetch(`/api/swap-requests?memberId=${userId}&eventId=${selectedEventId}`)
+    if (!userId || !selectedEnvironmentId) return;
+    fetch(`/api/swap-requests?memberId=${userId}&environmentId=${selectedEnvironmentId}`)
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
@@ -477,7 +477,7 @@ export default function UserCalendarPage() {
   useEffect(() => {
     fetchSwapRequests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, selectedEventId]);
+  }, [userId, selectedEnvironmentId]);
 
   function handleCancelSwap(swapRequestId: string) {
     fetch(`/api/swap-requests/${swapRequestId}`, { method: "DELETE" })
@@ -504,18 +504,18 @@ export default function UserCalendarPage() {
       return;
     }
     const link = document.createElement("a");
-    link.download = `schedule-${selectedEvent?.name ?? "export"}.png`;
+    link.download = `schedule-${selectedEnvironment?.name ?? "export"}.png`;
     link.href = dataUrl;
     link.click();
   }
 
   // Fetch preferences for vote panel and My Preferences section
-  const shouldFetchPreferences = !!userId && !!selectedEventId;
+  const shouldFetchPreferences = !!userId && !!selectedEnvironmentId;
   const { data: preferences, refetch: refetchPreferences } = useCache<
     Array<{ shiftId: string; wantLevel?: "WANT" | "DONT_WANT" }>
   >({
     key: shouldFetchPreferences
-      ? `preferences-${userId}-${selectedEventId}`
+      ? `preferences-${userId}-${selectedEnvironmentId}`
       : "preferences-none",
     fetchFn: async () => {
       if (!userId) return [];
@@ -591,7 +591,7 @@ export default function UserCalendarPage() {
     }
   }, [shifts, userId]);
 
-  if (!selectedEventId) {
+  if (!selectedEnvironmentId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Calendar className="w-16 h-16 text-gray-400 mb-4" />
@@ -630,11 +630,11 @@ export default function UserCalendarPage() {
           <p className="text-gray-500 font-medium">
             View your shift assignments and team coverage
           </p>
-          {selectedEvent && (
+          {selectedEnvironment && (
             <p className="text-xs text-gray-400 mt-1">
               Event:{" "}
               <span className="font-medium text-gray-600">
-                {selectedEvent.name}
+                {selectedEnvironment.name}
               </span>
               {" · "}
               <a
@@ -708,7 +708,7 @@ export default function UserCalendarPage() {
           userId={userId}
           teamMemberId={userId ?? ""}
           preferences={preferencesWithShifts}
-          eventStatus={selectedEvent?.status ?? "PLANNING"}
+          eventStatus={selectedEnvironment?.status ?? "PLANNING"}
           onVoteWant={handleVoteWant}
           onVoteDontWant={handleVoteDontWant}
           onVoteNeutral={handleVoteNeutral}
@@ -782,7 +782,7 @@ export default function UserCalendarPage() {
               <span className="w-4 h-4 rounded bg-orange-400/30 inline-block" />
               4-5 = popular, harder to get
             </span>
-            {selectedEvent?.status !== "PLANNING" && (
+            {selectedEnvironment?.status !== "PLANNING" && (
               <>
                 <span className="text-gray-300">|</span>
                 <span className="inline-flex items-center gap-1">
@@ -793,9 +793,9 @@ export default function UserCalendarPage() {
                   <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
                   you don&apos;t want this shift
                 </span>
-                {(selectedEvent?.status === "ASSIGNING" ||
-                  selectedEvent?.status === "FINALIZED" ||
-                  selectedEvent?.status === "COMPLETED") && (
+                {(selectedEnvironment?.status === "ASSIGNING" ||
+                  selectedEnvironment?.status === "FINALIZED" ||
+                  selectedEnvironment?.status === "COMPLETED") && (
                   <span className="inline-flex items-center gap-1">
                     <span className="w-4 h-4 rounded-full border-2 border-green-500 inline-block" />
                     assigned to you
@@ -805,7 +805,7 @@ export default function UserCalendarPage() {
             )}
           </div>
 
-          {selectedEvent?.status === "PLANNING" && (
+          {selectedEnvironment?.status === "PLANNING" && (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <Calendar className="w-12 h-12 mb-4" />
               <p className="text-lg font-medium">Schedule is being prepared</p>
@@ -813,17 +813,17 @@ export default function UserCalendarPage() {
             </div>
           )}
 
-          {selectedEvent?.status === "ASSIGNING" && (
+          {selectedEnvironment?.status === "ASSIGNING" && (
             <div className="bg-amber-50 border border-amber-200 px-4 py-2 rounded-lg text-sm text-amber-800">
               Assignments are in progress. You&apos;ll be notified when the
               schedule is finalized.
             </div>
           )}
 
-          {selectedEvent?.status !== "PLANNING" && (
+          {selectedEnvironment?.status !== "PLANNING" && (
             <div
               className="flex flex-row rounded-2xl shadow-xl overflow-hidden"
-              data-event-status={selectedEvent?.status}
+              data-event-status={selectedEnvironment?.status}
               style={{
                 backgroundColor: "var(--status-bg)",
                 transition: "background-color 500ms",
@@ -838,7 +838,7 @@ export default function UserCalendarPage() {
                   lanes={derivedLanes}
                   eventStart={eventStartDate}
                   eventEnd={eventEndDate}
-                  eventId={selectedEventId}
+                  environmentId={selectedEnvironmentId}
                   readOnly
                   selectedMemberId={userId || null}
                   onShiftSelected={(id) => {
@@ -846,12 +846,12 @@ export default function UserCalendarPage() {
                     else setSelectedShift(null);
                   }}
                   onVoteWant={
-                    selectedEvent?.status === "OPEN_FOR_PREFERENCES"
+                    selectedEnvironment?.status === "OPEN_FOR_PREFERENCES"
                       ? handleVoteWant
                       : undefined
                   }
                   onVoteDontWant={
-                    selectedEvent?.status === "OPEN_FOR_PREFERENCES"
+                    selectedEnvironment?.status === "OPEN_FOR_PREFERENCES"
                       ? handleVoteDontWant
                       : undefined
                   }
@@ -860,7 +860,7 @@ export default function UserCalendarPage() {
               </div>
 
               {selectedShift &&
-              selectedEvent?.status === "OPEN_FOR_PREFERENCES" ? (
+              selectedEnvironment?.status === "OPEN_FOR_PREFERENCES" ? (
                 <div className="w-80 flex-shrink-0 overflow-y-auto">
                   <ShiftPreferencePanel
                     shift={{

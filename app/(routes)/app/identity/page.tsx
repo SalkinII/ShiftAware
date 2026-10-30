@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { User, Plus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { MemberList } from "./components/MemberList";
 import { CreateProfileForm } from "./components/CreateProfileForm";
 import { EventSelectionStep } from "./components/EventSelectionStep";
@@ -14,7 +14,7 @@ import { getMissingAttributes } from "@/lib/utils/attribute-check";
 
 export default function IdentityPage() {
   const router = useRouter();
-  const { setSelectedEventId: setContextEventId } = useEventContext();
+  const { setSelectedEnvironmentId: setContextEventId } = useEnvironmentContext();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showEventSelection, setShowEventSelection] = useState(false);
@@ -30,21 +30,21 @@ export default function IdentityPage() {
     setShowEventSelection(true);
   };
 
-  const proceedToCalendar = (eventId: string) => {
+  const proceedToCalendar = (environmentId: string) => {
     if (selectedMemberId) {
       localStorage.setItem("selectedMemberId", selectedMemberId);
-      setContextEventId(eventId);
+      setContextEventId(environmentId);
       router.push("/app/calendar");
     }
   };
 
-  const handleEventSelected = async (eventId: string) => {
+  const handleEventSelected = async (environmentId: string) => {
     if (!selectedMemberId) return;
 
     try {
       const [defRes, valuesRes] = await Promise.all([
-        fetch(`/api/events/${eventId}/attributes`),
-        fetch(`/api/members/${selectedMemberId}/attributes?eventId=${eventId}`),
+        fetch(`/api/environments/${environmentId}/attributes`),
+        fetch(`/api/members/${selectedMemberId}/attributes?environmentId=${environmentId}`),
       ]);
 
       const defData = defRes.ok ? await defRes.json() : { data: [] };
@@ -65,13 +65,13 @@ export default function IdentityPage() {
         }
         setMissingDefinitions(missing);
         setInitialAttributeValues(initial);
-        setPendingEventId(eventId);
+        setPendingEventId(environmentId);
         setShowAttributeModal(true);
       } else {
-        proceedToCalendar(eventId);
+        proceedToCalendar(environmentId);
       }
     } catch {
-      proceedToCalendar(eventId);
+      proceedToCalendar(environmentId);
     }
   };
 
@@ -83,7 +83,7 @@ export default function IdentityPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          eventId: pendingEventId,
+          environmentId: pendingEventId,
           key,
           value,
         }),
@@ -113,10 +113,10 @@ export default function IdentityPage() {
         const data = await res.json();
         const newMemberId = data.data.id;
 
-        // If eventId provided, create registration
-        if (profileData.eventId) {
+        // If environmentId provided, create registration
+        if (profileData.environmentId) {
           const regRes = await fetch(
-            `/api/events/${profileData.eventId}/registrations`,
+            `/api/environments/${profileData.environmentId}/registrations`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -138,7 +138,7 @@ export default function IdentityPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  eventId: profileData.eventId,
+                  environmentId: profileData.environmentId,
                   key,
                   value,
                 }),

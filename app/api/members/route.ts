@@ -16,13 +16,13 @@ const memberRepo = new TeamMemberRepository();
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
   const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("eventId");
+  const environmentId = searchParams.get("environmentId");
   const search = searchParams.get("search");
   const includeUnregistered =
     searchParams.get("includeUnregistered") === "true";
 
   let members;
-  if (eventId) {
+  if (environmentId) {
     const where: Prisma.TeamMemberWhereInput = { isActive: true };
     const include: Prisma.TeamMemberInclude = {};
 
@@ -31,16 +31,16 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
     }
 
     if (includeUnregistered) {
-      include.eventRegistrations = { where: { eventId } };
+      include.environmentRegistrations = { where: { environmentId } };
       include.attributes = {
-        where: { definition: { eventId } },
+        where: { definition: { requirements: { some: { environmentId } } } },
         include: { definition: true },
       };
     } else {
-      where.eventRegistrations = { some: { eventId } };
-      include.eventRegistrations = { where: { eventId } };
+      where.environmentRegistrations = { some: { environmentId } };
+      include.environmentRegistrations = { where: { environmentId } };
       include.attributes = {
-        where: { definition: { eventId } },
+        where: { definition: { requirements: { some: { environmentId } } } },
         include: { definition: true },
       };
     }

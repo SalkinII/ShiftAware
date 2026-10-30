@@ -15,7 +15,7 @@ vi.mock("@/lib/db", () => ({
       findMany: vi.fn(),
       upsert: vi.fn(),
     },
-    eventAttributeDefinition: {
+    attributeDefinition: {
       findFirst: vi.fn(),
     },
     auditLog: {
@@ -32,7 +32,7 @@ vi.mock("@/lib/db", () => ({
     shiftPreference: {
       deleteMany: vi.fn(),
     },
-    eventRegistration: {
+    environmentRegistration: {
       findMany: vi.fn(),
       delete: vi.fn(),
     },
@@ -207,9 +207,9 @@ describe("TeamMemberRepository", () => {
     expect(prisma.teamMember.findUnique).toHaveBeenCalledWith({
       where: { id: "member-1" },
       include: {
-        eventRegistrations: {
+        environmentRegistrations: {
           include: {
-            event: {
+            environment: {
               include: { config: true },
             },
           },
@@ -238,7 +238,7 @@ describe("TeamMemberRepository", () => {
         updatedAt: new Date(),
         definition: {
           id: "def-1",
-          eventId: "event-1",
+          environmentId: "event-1",
           name: "T-Shirt Size",
           type: "SELECT" as const,
         },
@@ -258,7 +258,7 @@ describe("TeamMemberRepository", () => {
     });
   });
 
-  it("should get member attributes filtered by eventId", async () => {
+  it("should get member attributes filtered by environmentId", async () => {
     const mockAttributes = [
       {
         id: "attr-1",
@@ -269,7 +269,7 @@ describe("TeamMemberRepository", () => {
         updatedAt: new Date(),
         definition: {
           id: "def-1",
-          eventId: "event-1",
+          environmentId: "event-1",
           name: "T-Shirt Size",
           type: "SELECT" as const,
         },
@@ -284,7 +284,7 @@ describe("TeamMemberRepository", () => {
 
     expect(result).toEqual(mockAttributes);
     expect(prisma.teamMemberAttribute.findMany).toHaveBeenCalledWith({
-      where: { memberId: "member-1", definition: { eventId: "event-1" } },
+      where: { memberId: "member-1", definition: { requirements: { some: { environmentId: "event-1" } } } },
       include: { definition: true },
     });
   });
@@ -292,17 +292,16 @@ describe("TeamMemberRepository", () => {
   it("should find attribute definition", async () => {
     const mockDefinition = {
       id: "def-1",
-      eventId: "event-1",
+      festivalId: "festival-1",
       name: "Dietary Requirements",
       type: "TEXT" as const,
       label: "Dietary Requirements",
       options: [],
-      required: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    vi.mocked(prisma.eventAttributeDefinition.findFirst).mockResolvedValue(
+    vi.mocked(prisma.attributeDefinition.findFirst).mockResolvedValue(
       mockDefinition,
     );
 
@@ -312,8 +311,8 @@ describe("TeamMemberRepository", () => {
     );
 
     expect(result).toEqual(mockDefinition);
-    expect(prisma.eventAttributeDefinition.findFirst).toHaveBeenCalledWith({
-      where: { eventId: "event-1", name: "Dietary Requirements" },
+    expect(prisma.attributeDefinition.findFirst).toHaveBeenCalledWith({
+      where: { name: "Dietary Requirements", festival: { environments: { some: { id: "event-1" } } } },
     });
   });
 
@@ -327,7 +326,7 @@ describe("TeamMemberRepository", () => {
       updatedAt: new Date(),
       definition: {
         id: "def-1",
-        eventId: "event-1",
+        environmentId: "event-1",
         name: "Dietary Requirements",
         type: "TEXT" as const,
       },
@@ -367,14 +366,14 @@ describe("TeamMemberRepository", () => {
 
     const result = await repo.findAll({
       isActive: true,
-      eventRegistrations: { some: { eventId: "event-1" } },
+      environmentRegistrations: { some: { environmentId: "event-1" } },
     });
 
     expect(vi.mocked(prisma.teamMember.findMany)).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           isActive: true,
-          eventRegistrations: { some: { eventId: "event-1" } },
+          environmentRegistrations: { some: { environmentId: "event-1" } },
         },
       }),
     );
@@ -382,15 +381,15 @@ describe("TeamMemberRepository", () => {
   });
 
   it("should find all members with includes", async () => {
-    const mockMembers = [{ id: "m1", alias: "alice", eventRegistrations: [] }];
+    const mockMembers = [{ id: "m1", alias: "alice", environmentRegistrations: [] }];
     vi.mocked(prisma.teamMember.findMany).mockResolvedValue(mockMembers as any);
 
     const result = await repo.findAllWithIncludes(
       { isActive: true },
       {
-        eventRegistrations: { where: { eventId: "event-1" } },
+        environmentRegistrations: { where: { environmentId: "event-1" } },
         attributes: {
-          where: { definition: { eventId: "event-1" } },
+          where: { definition: { environmentId: "event-1" } },
           include: { definition: true },
         },
       },
@@ -400,7 +399,7 @@ describe("TeamMemberRepository", () => {
       expect.objectContaining({
         where: { isActive: true },
         include: expect.objectContaining({
-          eventRegistrations: { where: { eventId: "event-1" } },
+          environmentRegistrations: { where: { environmentId: "event-1" } },
         }),
       }),
     );
@@ -542,8 +541,8 @@ describe("TeamMemberRepository", () => {
       };
 
       const mockTx = {
-        eventRegistration: {
-          findMany: vi.fn().mockResolvedValue([{ eventId: "event-1" }]),
+        environmentRegistration: {
+          findMany: vi.fn().mockResolvedValue([{ environmentId: "event-1" }]),
           delete: vi.fn().mockResolvedValue({}),
         },
         swapRequest: {
@@ -564,15 +563,15 @@ describe("TeamMemberRepository", () => {
 
       expect(result.isActive).toBe(false);
 
-      expect(mockTx.eventRegistration.findMany).toHaveBeenCalledWith({
-        where: { memberId, event: { status: { not: "COMPLETED" } } },
-        select: { eventId: true },
+      expect(mockTx.environmentRegistration.findMany).toHaveBeenCalledWith({
+        where: { memberId, environment: { status: { not: "COMPLETED" } } },
+        select: { environmentId: true },
       });
 
       expect(mockTx.swapRequest.findMany).toHaveBeenCalledWith({
         where: {
           requesterId: memberId,
-          fromAssignment: { shift: { eventId: "event-1" } },
+          fromAssignment: { shift: { environmentId: "event-1" } },
         },
         select: { id: true },
       });
@@ -585,13 +584,13 @@ describe("TeamMemberRepository", () => {
       });
 
       expect(mockTx.assignment.deleteMany).toHaveBeenCalledWith({
-        where: { teamMemberId: memberId, shift: { eventId: "event-1" } },
+        where: { teamMemberId: memberId, shift: { environmentId: "event-1" } },
       });
       expect(mockTx.shiftPreference.deleteMany).toHaveBeenCalledWith({
-        where: { teamMemberId: memberId, shift: { eventId: "event-1" } },
+        where: { teamMemberId: memberId, shift: { environmentId: "event-1" } },
       });
-      expect(mockTx.eventRegistration.delete).toHaveBeenCalledWith({
-        where: { memberId_eventId: { memberId, eventId: "event-1" } },
+      expect(mockTx.environmentRegistration.delete).toHaveBeenCalledWith({
+        where: { memberId_environmentId: { memberId, environmentId: "event-1" } },
       });
 
       expect(mockTx.teamMember.update).toHaveBeenCalledWith({
@@ -603,8 +602,8 @@ describe("TeamMemberRepository", () => {
     it("skips swap cleanup when member has no swaps in the event", async () => {
       const memberId = "member-no-swaps";
       const mockTx = {
-        eventRegistration: {
-          findMany: vi.fn().mockResolvedValue([{ eventId: "event-1" }]),
+        environmentRegistration: {
+          findMany: vi.fn().mockResolvedValue([{ environmentId: "event-1" }]),
           delete: vi.fn().mockResolvedValue({}),
         },
         swapRequest: {
@@ -632,7 +631,7 @@ describe("TeamMemberRepository", () => {
     it("skips all event cleanup when member has no non-COMPLETED registrations", async () => {
       const memberId = "member-no-events";
       const mockTx = {
-        eventRegistration: {
+        environmentRegistration: {
           findMany: vi.fn().mockResolvedValue([]),
           delete: vi.fn(),
         },
@@ -652,7 +651,7 @@ describe("TeamMemberRepository", () => {
 
       expect(mockTx.swapRequest.findMany).not.toHaveBeenCalled();
       expect(mockTx.assignment.deleteMany).not.toHaveBeenCalled();
-      expect(mockTx.eventRegistration.delete).not.toHaveBeenCalled();
+      expect(mockTx.environmentRegistration.delete).not.toHaveBeenCalled();
       expect(mockTx.teamMember.update).toHaveBeenCalledWith({
         where: { id: memberId },
         data: { isActive: false },

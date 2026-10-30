@@ -22,7 +22,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
           requiredRoles: true,
         },
       },
-      event: true,
+      environment: true,
     },
   });
 
@@ -53,7 +53,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   // Create actual shift
   const shift = await prisma.shift.create({
     data: {
-      eventId: scheduledShift.eventId,
+      environmentId: scheduledShift.environmentId,
       type: scheduledShift.template.type,
       startTime,
       endTime,
@@ -70,7 +70,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
     },
     include: {
       requiredRoles: true,
-      event: true,
+      environment: true,
     },
   });
 

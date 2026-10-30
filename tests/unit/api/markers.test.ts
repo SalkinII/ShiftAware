@@ -14,7 +14,7 @@ vi.mock("@/lib/repositories/marker.repository", () => ({
     create = vi.fn().mockImplementation((data: any) => Promise.resolve({ id: "m1", ...data }));
     update = vi.fn().mockImplementation((id: string, data: any) => Promise.resolve({ id, ...data }));
     delete = vi.fn().mockResolvedValue({ id: "m1" });
-    findById = vi.fn().mockResolvedValue({ id: "m1", eventId: "evt-1" });
+    findById = vi.fn().mockResolvedValue({ id: "m1", environmentId: "evt-1" });
   },
 }));
 
@@ -27,7 +27,7 @@ describe("POST /api/markers", () => {
     const { POST } = await import("@/app/api/markers/route");
     const req = new Request("http://localhost/api/markers", {
       method: "POST",
-      body: JSON.stringify({ eventId: "evt-1", text: "", startTime: "2026-08-01T08:00:00.000Z", endTime: "2026-08-01T08:30:00.000Z" }),
+      body: JSON.stringify({ environmentId: "evt-1", text: "", startTime: "2026-08-01T08:00:00.000Z", endTime: "2026-08-01T08:30:00.000Z" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(201);
@@ -41,7 +41,7 @@ describe("POST /api/markers", () => {
     const { POST } = await import("@/app/api/markers/route");
     const req = new Request("http://localhost/api/markers", {
       method: "POST",
-      body: JSON.stringify({ eventId: "evt-1", text: "x", startTime: "2026-08-01T08:00:00.000Z", endTime: "2026-08-01T08:30:00.000Z" }),
+      body: JSON.stringify({ environmentId: "evt-1", text: "x", startTime: "2026-08-01T08:00:00.000Z", endTime: "2026-08-01T08:30:00.000Z" }),
     });
     const res = await POST(req);
     expect(res.status).toBe(409);

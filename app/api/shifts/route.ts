@@ -14,14 +14,14 @@ const shiftRepo = new ShiftRepository();
 
 export const GET = withAuth(withErrorHandling(async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("eventId");
+  const environmentId = searchParams.get("environmentId");
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
 
   const where: Prisma.ShiftWhereInput = {};
 
-  if (eventId) {
-    where.eventId = eventId;
+  if (environmentId) {
+    where.environmentId = environmentId;
   }
 
   if (startDate || endDate) {
@@ -47,15 +47,15 @@ export const POST = withAuth(withErrorHandling(async (request: Request) => {
   const validated = shiftSchema.parse(body);
 
   // Create shift with required roles
-  const { requiredRoles, eventId, templateId, ...shiftData } = validated;
+  const { requiredRoles, environmentId, templateId, ...shiftData } = validated;
 
-  await assertEventStatusAllows(eventId, "SHIFT_MUTATE");
+  await assertEventStatusAllows(environmentId, "SHIFT_MUTATE");
 
   const shift = await shiftRepo.create({
     ...shiftData,
     startTime: new Date(validated.startTime),
     endTime: new Date(validated.endTime),
-    event: { connect: { id: eventId } },
+    environment: { connect: { id: environmentId } },
     ...(templateId ? { template: { connect: { id: templateId } } } : {}),
     requiredRoles: {
       create: requiredRoles,

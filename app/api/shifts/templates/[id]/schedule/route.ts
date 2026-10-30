@@ -26,7 +26,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
   // Create scheduled shift
   const scheduledShift = await templateRepo.createScheduledShift(
     templateId,
-    validated.eventId,
+    validated.environmentId,
     startTime,
   );
 

@@ -42,14 +42,14 @@ import { MemberListByEvent } from "../MemberListByEvent";
 
 describe("MemberListByEvent – mobile layout", () => {
   it("button group has flex-wrap so buttons reflow on narrow screens", async () => {
-    render(<MemberListByEvent eventId="evt-1" eventName="Test Event" />);
+    render(<MemberListByEvent environmentId="evt-1" eventName="Test Event" />);
     const createBtn = await screen.findByRole("button", { name: /Create New Member/i });
     const buttonGroup = createBtn.parentElement!;
     expect(buttonGroup.className).toContain("flex-wrap");
   });
 
   it("header has flex-wrap so button group can drop below the title", async () => {
-    render(<MemberListByEvent eventId="evt-1" eventName="Test Event" />);
+    render(<MemberListByEvent environmentId="evt-1" eventName="Test Event" />);
     const createBtn = await screen.findByRole("button", { name: /Create New Member/i });
     const header = createBtn.parentElement!.parentElement!;
     expect(header.className).toContain("flex-wrap");

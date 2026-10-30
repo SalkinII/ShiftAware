@@ -5,10 +5,10 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 
-vi.mock("@/lib/contexts/EventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "event-1",
-    selectedEvent: { id: "event-1", name: "Test Event" },
+vi.mock("@/lib/contexts/EnvironmentContext", () => ({
+  useEnvironmentContext: () => ({
+    selectedEnvironmentId: "event-1",
+    selectedEnvironment: { id: "event-1", name: "Test Event" },
   }),
 }));
 vi.mock("@/components/ui/Toast", () => ({

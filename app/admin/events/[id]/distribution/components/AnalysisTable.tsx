@@ -16,14 +16,14 @@ interface AnalysisMember {
 }
 
 interface Props {
-  eventId: string;
+  environmentId: string;
   eventName: string;
   onMemberSelect: (id: string | null) => void;
   selectedMemberId: string | null;
 }
 
 export function AnalysisTable({
-  eventId,
+  environmentId,
   eventName,
   onMemberSelect,
   selectedMemberId,
@@ -32,10 +32,10 @@ export function AnalysisTable({
   const [violationsOnly, setViolationsOnly] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/events/${eventId}/distribution/analysis`)
+    fetch(`/api/environments/${environmentId}/distribution/analysis`)
       .then((r) => r.json())
       .then((json) => setData(unwrapApiResponse(json)));
-  }, [eventId]);
+  }, [environmentId]);
 
   if (!data) return <div className="text-sm text-gray-400">Loading analysis...</div>;
 

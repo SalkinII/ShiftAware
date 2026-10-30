@@ -7,7 +7,7 @@
 SELECT 
   s.id,
   s.type,
-  s."eventId",
+  s."environmentId",
   (SELECT COUNT(*) FROM "Assignment" WHERE "shiftId" = s.id) as assignment_count,
   (SELECT COUNT(*) FROM "ShiftPreference" WHERE "shiftId" = s.id) as preference_count,
   (SELECT COUNT(*) FROM "ShiftRole" WHERE "shiftId" = s.id) as role_count

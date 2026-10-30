@@ -98,13 +98,13 @@ beforeEach(() => {
 
 describe("SwapRequestsPanel", () => {
   it("renders request cards with requester alias", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(screen.getByText("Bear")).toBeTruthy());
     expect(screen.getByText("Fox")).toBeTruthy();
   });
 
   it("renders from/to shift names", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() =>
       expect(
         screen.getAllByText("Mobile", { exact: false }).length,
@@ -116,29 +116,29 @@ describe("SwapRequestsPanel", () => {
   });
 
   it("does not show assignment role labels on request cards", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(screen.getByText("Bear")).toBeTruthy());
     expect(screen.queryByText(/^Role:/)).toBeNull();
   });
 
   it("shows PENDING badge on first request", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(screen.getByText(/pending/i)).toBeTruthy());
   });
 
   it("shows MATCHED badge on second request", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(screen.getByText(/matched/i)).toBeTruthy());
   });
 
   it("does NOT render the matchedBy side (req-3, Owl) — only canonical MATCHED cards", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(screen.getByText("Fox")).toBeTruthy());
     expect(screen.queryByText("Owl")).toBeNull();
   });
 
   it("PENDING request shows no Approve button", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(screen.getByText("Bear")).toBeTruthy());
     // Bear is PENDING — should have no Approve
     const approveButtons = screen.queryAllByRole("button", { name: /approve/i });
@@ -147,7 +147,7 @@ describe("SwapRequestsPanel", () => {
   });
 
   it("PENDING request shows 'Waiting for partner' label", async () => {
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() =>
       expect(screen.getByText(/waiting for partner/i)).toBeTruthy(),
     );
@@ -165,7 +165,7 @@ describe("SwapRequestsPanel", () => {
         json: async () => ({ data: [] }),
       });
 
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => screen.getAllByRole("button", { name: /approve/i }));
 
     fireEvent.click(screen.getByRole("button", { name: /approve/i }));
@@ -193,7 +193,7 @@ describe("SwapRequestsPanel", () => {
         json: async () => ({ data: [] }),
       });
 
-    render(<SwapRequestsPanel eventId="event-1" />);
+    render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => screen.getAllByText(/decline/i));
 
     fireEvent.click(screen.getAllByText(/decline/i)[0]);
@@ -214,14 +214,14 @@ describe("SwapRequestsPanel", () => {
       ok: true,
       json: async () => ({ data: [] }),
     });
-    const { container } = render(<SwapRequestsPanel eventId="event-1" />);
+    const { container } = render(<SwapRequestsPanel environmentId="event-1" />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     expect(container.firstChild).toBeNull();
   });
 
   it("renders nothing when eventStatus is PLANNING regardless of requests", async () => {
     const { container } = render(
-      <SwapRequestsPanel eventId="event-1" eventStatus="PLANNING" />,
+      <SwapRequestsPanel environmentId="event-1" eventStatus="PLANNING" />,
     );
     // No need to wait — early return fires before fetch
     expect(container.firstChild).toBeNull();
@@ -230,7 +230,7 @@ describe("SwapRequestsPanel", () => {
 
   it("calls onHasRequests(true) when requests are present", async () => {
     const onHasRequests = vi.fn();
-    render(<SwapRequestsPanel eventId="event-1" onHasRequests={onHasRequests} />);
+    render(<SwapRequestsPanel environmentId="event-1" onHasRequests={onHasRequests} />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     await waitFor(() => expect(onHasRequests).toHaveBeenLastCalledWith(true, 2));
   });
@@ -241,13 +241,13 @@ describe("SwapRequestsPanel", () => {
       json: async () => ({ data: [] }),
     });
     const onHasRequests = vi.fn();
-    render(<SwapRequestsPanel eventId="event-1" onHasRequests={onHasRequests} />);
+    render(<SwapRequestsPanel environmentId="event-1" onHasRequests={onHasRequests} />);
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     await waitFor(() => expect(onHasRequests).toHaveBeenLastCalledWith(false, 0));
   });
 
-  it("returns null when eventId is null", () => {
-    const { container } = render(<SwapRequestsPanel eventId={null} />);
+  it("returns null when environmentId is null", () => {
+    const { container } = render(<SwapRequestsPanel environmentId={null} />);
     expect(container.firstChild).toBeNull();
   });
 });

@@ -31,8 +31,8 @@ export function exportScheduleToPDF(
 
     // Single pass: filter shifts, calculate coverage, build member map
     for (const shift of shifts) {
-      if (!eventName && shift.event?.name) {
-        eventName = shift.event.name;
+      if (!eventName && shift.environment?.name) {
+        eventName = shift.environment.name;
       }
 
       let assignments = shift.assignments || [];

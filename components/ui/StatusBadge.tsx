@@ -1,11 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { EventStatus } from "@prisma/client";
+import type { EnvironmentStatus } from "@prisma/client";
 import { Pill } from "./Pill";
 
 const STATUS_CONFIG: Record<
-  EventStatus,
+  EnvironmentStatus,
   {
     label: string;
     tone: "gray" | "sky" | "orange" | "green" | "amber";
@@ -46,7 +46,7 @@ const STATUS_CONFIG: Record<
 };
 
 interface StatusBadgeProps {
-  status: EventStatus;
+  status: EnvironmentStatus;
   pulse?: boolean;
   className?: string;
 }

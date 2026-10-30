@@ -22,7 +22,7 @@ const baseShift = {
       teamMember: { id: "user-1", alias: "Bear", avatarId: "🐻" },
     },
   ],
-  event: { name: "Test Event", id: "event-1" },
+  environment: { name: "Test Event", id: "event-1" },
 };
 
 const baseProps = {

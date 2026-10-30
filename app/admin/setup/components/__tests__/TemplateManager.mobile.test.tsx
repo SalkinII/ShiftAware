@@ -5,10 +5,10 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-vi.mock("@/lib/contexts/EventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "event-1",
-    selectedEvent: { id: "event-1", name: "Test Event" },
+vi.mock("@/lib/contexts/EnvironmentContext", () => ({
+  useEnvironmentContext: () => ({
+    selectedEnvironmentId: "event-1",
+    selectedEnvironment: { id: "event-1", name: "Test Event" },
   }),
 }));
 
@@ -56,7 +56,7 @@ beforeEach(() => {
     if (urlStr.includes("includeGlobal=false")) {
       return { ok: true, json: async () => ({ data: [] }) } as any;
     }
-    if (urlStr.includes("/api/events/")) {
+    if (urlStr.includes("/api/environments/")) {
       return {
         ok: true,
         json: async () => ({ data: { assigned: [], eventSpecific: [] } }),

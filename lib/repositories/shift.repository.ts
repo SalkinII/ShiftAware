@@ -4,7 +4,7 @@ import { Role, type Prisma } from "@prisma/client";
 
 export class ShiftRepository extends BaseRepository {
   private readonly fullIncludes = {
-    event: true,
+    environment: true,
     requiredRoles: true,
     template: { select: { id: true, name: true, color: true } },
     assignments: {
@@ -111,7 +111,7 @@ export class ShiftRepository extends BaseRepository {
           data: shiftData,
           include: {
             requiredRoles: true,
-            event: true,
+            environment: true,
           },
         });
 
@@ -128,7 +128,7 @@ export class ShiftRepository extends BaseRepository {
           // Refetch to include new roles
           return tx.shift.findUniqueOrThrow({
             where: { id },
-            include: { requiredRoles: true, event: true },
+            include: { requiredRoles: true, environment: true },
           });
         }
 
@@ -180,10 +180,10 @@ export class ShiftRepository extends BaseRepository {
     }
   }
 
-  async findByEvent(eventId: string) {
+  async findByEvent(environmentId: string) {
     try {
       return await prisma.shift.findMany({
-        where: { eventId },
+        where: { environmentId },
         include: this.fullIncludes,
         orderBy: { startTime: "asc" },
       });
@@ -209,7 +209,7 @@ export class ShiftRepository extends BaseRepository {
       const shift = await prisma.shift.findUnique({
         where: { id },
         include: {
-          event: true,
+          environment: true,
           template: { select: { id: true, name: true, color: true } },
           requiredRoles: true,
           preferences: {

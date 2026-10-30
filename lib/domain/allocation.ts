@@ -1,24 +1,24 @@
 import { prisma } from "@/lib/db";
 import { AssignmentRepository } from "@/lib/repositories/assignment.repository";
-import { EventRepository } from "@/lib/repositories/event.repository";
+import { EnvironmentRepository } from "@/lib/repositories/environment.repository";
 import { TeamMemberRepository } from "@/lib/repositories/team-member.repository";
 import { assertEventStatusAllows } from "@/lib/domain/event-status";
 import { runAssignmentAlgorithm } from "@/lib/algorithm/optimizer";
 import type { CrossEventAssignment } from "@/lib/algorithm/cross-event-conflicts";
 
 const assignmentRepo = new AssignmentRepository();
-const eventRepo = new EventRepository();
+const environmentRepo = new EnvironmentRepository();
 const memberRepo = new TeamMemberRepository();
 
 async function loadAllocationContext(
-  eventId: string,
+  environmentId: string,
   scope?: { memberIds?: string[]; shiftIds?: string[] },
 ) {
-  const event = await eventRepo.findById(eventId);
+  const event = await environmentRepo.findById(environmentId);
 
-  const registrations = await prisma.eventRegistration.findMany({
+  const registrations = await prisma.environmentRegistration.findMany({
     where: {
-      eventId,
+      environmentId,
       ...(scope?.memberIds ? { memberId: { in: scope.memberIds } } : {}),
     },
     include: {
@@ -34,14 +34,14 @@ async function loadAllocationContext(
 
   const shifts = await prisma.shift.findMany({
     where: {
-      eventId,
+      environmentId,
       ...(scope?.shiftIds ? { id: { in: scope.shiftIds } } : {}),
     },
     include: {
       preferences: { include: { teamMember: true } },
       assignments: { include: { teamMember: true } },
       requiredRoles: true,
-      event: true,
+      environment: true,
     },
     orderBy: { startTime: "asc" },
   });
@@ -70,7 +70,7 @@ async function loadAllocationContext(
 
   const memberAttributes = new Map<string, Map<string, string>>();
   for (const member of members) {
-    const attrs = await memberRepo.getAttributes(member.id, eventId);
+    const attrs = await memberRepo.getAttributes(member.id, environmentId);
     const attrMap = new Map<string, string>();
     for (const attr of attrs) {
       attrMap.set(attr.definition.name, JSON.parse(attr.value));
@@ -80,7 +80,7 @@ async function loadAllocationContext(
 
   const memberIds = members.map((m) => m.id);
   const crossEventRows = await prisma.assignment.findMany({
-    where: { teamMemberId: { in: memberIds }, shift: { eventId: { not: eventId } } },
+    where: { teamMemberId: { in: memberIds }, shift: { environmentId: { not: environmentId } } },
     include: { shift: true },
   });
   const crossEventAssignments: CrossEventAssignment[] = crossEventRows.map((a) => ({
@@ -90,12 +90,12 @@ async function loadAllocationContext(
       preferences: [],
       assignments: [],
       requiredRoles: [],
-      event: { id: a.shift.eventId, startDate: a.shift.startTime, endDate: a.shift.endTime },
+      environment: { id: a.shift.environmentId, startDate: a.shift.startTime, endDate: a.shift.endTime },
     },
   })) as CrossEventAssignment[];
 
-  const attrDefs = await prisma.eventAttributeDefinition.findMany({
-    where: { eventId, type: "TIME_CONSTRAINT" },
+  const attrDefs = await prisma.attributeDefinition.findMany({
+    where: { type: "TIME_CONSTRAINT", requirements: { some: { environmentId } } },
     select: { name: true },
   });
   const timeConstraintAttrNames = attrDefs.map((d) => d.name);
@@ -115,8 +115,8 @@ async function loadAllocationContext(
   };
 }
 
-export async function runAllocation(eventId: string, dryRun = false) {
-  await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
+export async function runAllocation(environmentId: string, dryRun = false) {
+  await assertEventStatusAllows(environmentId, "ASSIGNMENT_ALGORITHM");
 
   const {
     members,
@@ -130,7 +130,7 @@ export async function runAllocation(eventId: string, dryRun = false) {
     memberAttributes,
     crossEventAssignments,
     timeConstraintAttrNames,
-  } = await loadAllocationContext(eventId);
+  } = await loadAllocationContext(environmentId);
 
   const result = await runAssignmentAlgorithm(
     members as any,
@@ -169,7 +169,7 @@ export async function runAllocation(eventId: string, dryRun = false) {
   }
 
   const saved = await prisma.$transaction(async (tx) => {
-    await tx.assignment.deleteMany({ where: { shift: { eventId } } });
+    await tx.assignment.deleteMany({ where: { shift: { environmentId } } });
     const created = [];
     for (const assignment of result.assignments) {
       const key = `${assignment.teamMemberId}-${assignment.shiftId}`;
@@ -199,11 +199,11 @@ export async function runAllocation(eventId: string, dryRun = false) {
 }
 
 export async function redistributeScoped(
-  eventId: string,
+  environmentId: string,
   scope: { memberIds?: string[]; shiftIds?: string[] },
   dryRun = false,
 ) {
-  await assertEventStatusAllows(eventId, "ASSIGNMENT_ALGORITHM");
+  await assertEventStatusAllows(environmentId, "ASSIGNMENT_ALGORITHM");
 
   const {
     members,
@@ -217,7 +217,7 @@ export async function redistributeScoped(
     memberAttributes,
     crossEventAssignments,
     timeConstraintAttrNames,
-  } = await loadAllocationContext(eventId, scope);
+  } = await loadAllocationContext(environmentId, scope);
 
   const result = await runAssignmentAlgorithm(
     members as any,
@@ -245,7 +245,7 @@ export async function redistributeScoped(
   }
 
   const saved = await prisma.$transaction(async (tx) => {
-    const deleteWhere: any = { shift: { eventId } };
+    const deleteWhere: any = { shift: { environmentId } };
     if (scope.memberIds) deleteWhere.teamMemberId = { in: scope.memberIds };
     if (scope.shiftIds) deleteWhere.shiftId = { in: scope.shiftIds };
     await tx.assignment.deleteMany({ where: deleteWhere });
@@ -280,15 +280,15 @@ export async function createManualAssignment(data: {
 }) {
   const shiftRecord = await prisma.shift.findUnique({
     where: { id: data.shiftId },
-    select: { eventId: true, capacity: true },
+    select: { environmentId: true, capacity: true },
   });
   if (!shiftRecord) throw new Error("Shift not found");
-  const registration = await prisma.eventRegistration.findUnique({
-    where: { memberId_eventId: { memberId: data.teamMemberId, eventId: shiftRecord.eventId } },
+  const registration = await prisma.environmentRegistration.findUnique({
+    where: { memberId_environmentId: { memberId: data.teamMemberId, environmentId: shiftRecord.environmentId } },
   });
   if (!registration) throw new Error("Member is not registered for this event");
   if (shiftRecord.capacity === 0) throw new Error("Cannot assign members to a marker shift (capacity is 0)");
-  await assertEventStatusAllows(shiftRecord.eventId, "ASSIGNMENT_MANUAL");
+  await assertEventStatusAllows(shiftRecord.environmentId, "ASSIGNMENT_MANUAL");
   return assignmentRepo.createManual({
     shiftId: data.shiftId,
     teamMemberId: data.teamMemberId,
@@ -299,7 +299,7 @@ export async function createManualAssignment(data: {
 
 export async function deleteAssignment(assignmentId: string) {
   const assignment = await assignmentRepo.findById(assignmentId);
-  await assertEventStatusAllows(assignment.shift.eventId, "ASSIGNMENT_MANUAL");
+  await assertEventStatusAllows(assignment.shift.environmentId, "ASSIGNMENT_MANUAL");
   const directRequests = await prisma.swapRequest.findMany({
     where: { fromAssignmentId: assignmentId },
     select: { matchedWithId: true },
@@ -317,14 +317,14 @@ export async function deleteAssignment(assignmentId: string) {
 export async function swapAssignments(assignment1Id: string, assignment2Id: string) {
   const a1 = await assignmentRepo.findById(assignment1Id);
   const a2 = await assignmentRepo.findById(assignment2Id);
-  const eventId = a1.shift.eventId;
-  await assertEventStatusAllows(eventId, "ASSIGNMENT_MANUAL");
+  const environmentId = a1.shift.environmentId;
+  await assertEventStatusAllows(environmentId, "ASSIGNMENT_MANUAL");
   if (a1.shiftId === a2.shiftId) {
     throw new Error(
       "Cannot swap assignments on the same shift. Assignments must be on different shifts.",
     );
   }
-  const allAssignments = await assignmentRepo.findAll({ shift: { eventId } });
+  const allAssignments = await assignmentRepo.findAll({ shift: { environmentId } });
   if (allAssignments.find((a) => a.shiftId === a1.shiftId && a.teamMemberId === a2.teamMemberId && a.id !== a1.id)) {
     throw new Error("Member is already assigned to this shift. Cannot swap.");
   }

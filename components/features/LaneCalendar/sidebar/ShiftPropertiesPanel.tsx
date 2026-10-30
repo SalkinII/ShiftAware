@@ -15,7 +15,7 @@ import {
   canManuallyAssign,
   canMutateShifts,
 } from "@/lib/domain/event-status";
-import type { EventStatus } from "@prisma/client";
+import type { EnvironmentStatus } from "@prisma/client";
 import { ProfileDetailCard } from "@/components/features/Identity/ProfileDetailCard";
 
 interface ShiftPropertiesPanelProps {
@@ -49,10 +49,10 @@ export function ShiftPropertiesPanel({
   } | null>(null);
 
   const canManualAssign = eventStatus
-    ? canManuallyAssign(eventStatus as EventStatus)
+    ? canManuallyAssign(eventStatus as EnvironmentStatus)
     : false;
   const canEditShift = eventStatus
-    ? canMutateShifts(eventStatus as EventStatus)
+    ? canMutateShifts(eventStatus as EnvironmentStatus)
     : false;
 
   async function fetchShift() {
@@ -105,8 +105,8 @@ export function ShiftPropertiesPanel({
   }, [shiftId]);
 
   useEffect(() => {
-    if (!shift?.eventId) return;
-    fetch(`/api/members?eventId=${shift.eventId}`)
+    if (!shift?.environmentId) return;
+    fetch(`/api/members?environmentId=${shift.environmentId}`)
       .then((r) => r.json())
       .then((json) => {
         const members = json.data || json;
@@ -177,7 +177,7 @@ export function ShiftPropertiesPanel({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        eventId: shift.eventId,
+        environmentId: shift.environmentId,
         assignments: [
           {
             shiftId: shiftId,

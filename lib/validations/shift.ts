@@ -20,7 +20,7 @@ export const shiftRoleSchema = z.object({
 });
 
 export const shiftSchemaBase = z.object({
-  eventId: idSchema,
+  environmentId: idSchema,
   type: z.nativeEnum(ShiftType),
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),

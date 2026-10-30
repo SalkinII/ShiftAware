@@ -116,7 +116,7 @@ export class PreferenceRepository extends BaseRepository {
         include: {
           teamMember: true,
           shift: {
-            include: { event: true },
+            include: { environment: true },
           },
         },
         orderBy: [{ teamMember: { alias: "asc" } }],

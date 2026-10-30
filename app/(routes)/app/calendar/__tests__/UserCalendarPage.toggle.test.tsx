@@ -7,8 +7,8 @@ import { render, screen } from "@testing-library/react";
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) => () => <div data-testid="lane-canvas" />,
 }));
-vi.mock("@/lib/contexts/EventContext", () => {
-  const selectedEvent = {
+vi.mock("@/lib/contexts/EnvironmentContext", () => {
+  const selectedEnvironment = {
     id: "evt-1",
     name: "Test",
     status: "OPEN_FOR_PREFERENCES",
@@ -16,7 +16,7 @@ vi.mock("@/lib/contexts/EventContext", () => {
     endDate: "2026-06-05T00:00:00Z",
   };
   return {
-    useEventContext: () => ({ selectedEventId: "evt-1", selectedEvent }),
+    useEnvironmentContext: () => ({ selectedEnvironmentId: "evt-1", selectedEnvironment }),
   };
 });
 vi.mock("@/lib/cache/useCache", () => {

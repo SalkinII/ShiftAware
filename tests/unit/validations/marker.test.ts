@@ -4,7 +4,7 @@ import { markerSchema, updateMarkerSchema } from "@/lib/validations/marker";
 describe("markerSchema", () => {
   it("accepts an empty text value", () => {
     const result = markerSchema.safeParse({
-      eventId: "clabc0000000000000000000",
+      environmentId: "clabc0000000000000000000",
       text: "",
       startTime: "2026-08-01T08:00:00.000Z",
       endTime: "2026-08-01T08:30:00.000Z",
@@ -14,7 +14,7 @@ describe("markerSchema", () => {
 
   it("rejects endTime before startTime", () => {
     const result = markerSchema.safeParse({
-      eventId: "clabc0000000000000000000",
+      environmentId: "clabc0000000000000000000",
       text: "Lunch break",
       startTime: "2026-08-01T08:30:00.000Z",
       endTime: "2026-08-01T08:00:00.000Z",

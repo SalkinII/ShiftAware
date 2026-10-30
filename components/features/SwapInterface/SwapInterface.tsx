@@ -54,7 +54,7 @@ interface Assignment {
     endTime: string;
     capacity?: number;
     priority?: string;
-    event: { name: string };
+    environment: { name: string };
   };
   teamMember: {
     id: string;
@@ -295,7 +295,7 @@ export function SwapInterface({
           durationMinutes,
           capacity: assignment.shift.capacity ?? fallbackCapacity,
           priority: assignment.shift.priority,
-          event: assignment.shift.event,
+          environment: assignment.shift.environment,
           assignments: [],
         });
       }
@@ -692,7 +692,7 @@ export function SwapInterface({
                 lanes={swapLanes}
                 eventStart={swapEventRange.start}
                 eventEnd={swapEventRange.end}
-                eventId={shiftsForCalendar[0]?.event?.id ?? null}
+                environmentId={shiftsForCalendar[0]?.environment?.id ?? null}
                 readOnly
                 onShiftSelected={(shiftId) => {
                   if (shiftId) {

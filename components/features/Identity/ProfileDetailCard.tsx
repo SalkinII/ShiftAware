@@ -31,7 +31,7 @@ interface ProfileDetailCardProps {
   onClose: () => void;
   editable?: boolean;
   onUpdate?: (updates: Partial<ProfileMember>) => Promise<void>;
-  eventId?: string;
+  environmentId?: string;
   attributeDefinitions?: AttributeDefinition[];
   variant?: "modal" | "inline";
 }
@@ -78,7 +78,7 @@ export function ProfileDetailCard({
   onClose,
   editable = false,
   onUpdate,
-  eventId,
+  environmentId,
   attributeDefinitions = [],
   variant = "modal",
 }: ProfileDetailCardProps) {
@@ -138,14 +138,14 @@ export function ProfileDetailCard({
         toast.error(data.message || data.error || "Failed to update member");
         return;
       }
-      if (eventId && attributeDefinitions.length > 0) {
+      if (environmentId && attributeDefinitions.length > 0) {
         for (const attr of attributeDefinitions) {
           const val = attributeValues[attr.name];
           if (val === undefined) continue;
           const attrRes = await fetch(`/api/members/${draft.id}/attributes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ eventId, key: attr.name, value: val }),
+            body: JSON.stringify({ environmentId, key: attr.name, value: val }),
           });
           if (!attrRes.ok) {
             const err = await attrRes.json().catch(() => ({}));

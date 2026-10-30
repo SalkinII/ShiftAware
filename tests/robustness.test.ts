@@ -16,7 +16,7 @@ describe("API Error Response Standardization", () => {
           code: "invalid_type",
           expected: "string",
           received: "number",
-          path: ["eventId"],
+          path: ["environmentId"],
           message: "Expected string, received number",
         },
       ]);

@@ -16,7 +16,7 @@ describe("DistributionControlCenter – run algorithm confirmation", () => {
   it("opens a ConfirmDialog instead of window.confirm when running the algorithm", () => {
     const confirmSpy = vi.spyOn(window, "confirm");
     render(
-      <DistributionControlCenter eventId="evt-1" eventStatus="ASSIGNING" eventName="Test Event" />,
+      <DistributionControlCenter environmentId="evt-1" eventStatus="ASSIGNING" eventName="Test Event" />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Run Algorithm" }));

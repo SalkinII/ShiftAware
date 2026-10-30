@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 
 import { useToast } from "@/components/ui/Toast";
 import { unwrapApiResponse } from "@/lib/api-errors";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { cn } from "@/lib/utils";
 
 interface ShiftTemplate {
@@ -20,13 +20,13 @@ interface ShiftTemplate {
   priority: string;
   capacity: number;
   color?: string;
-  eventId?: string | null;
+  environmentId?: string | null;
   isAssigned?: boolean;
 }
 
 export function TemplateManager() {
   const toast = useToast();
-  const { selectedEventId } = useEventContext(true); // Admin mode
+  const { selectedEnvironmentId } = useEnvironmentContext(); // Admin mode
   const [globalTemplates, setGlobalTemplates] = useState<ShiftTemplate[]>([]);
   const [eventTemplates, setEventTemplates] = useState<ShiftTemplate[]>([]);
   const [assignedTemplateIds, setAssignedTemplateIds] = useState<Set<string>>(
@@ -45,13 +45,13 @@ export function TemplateManager() {
   });
 
   useEffect(() => {
-    if (selectedEventId) {
+    if (selectedEnvironmentId) {
       loadTemplates();
     }
-  }, [selectedEventId]);
+  }, [selectedEnvironmentId]);
 
   async function loadTemplates() {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
 
     try {
       // Load global templates
@@ -63,7 +63,7 @@ export function TemplateManager() {
 
       // Load event-specific templates
       const eventRes = await fetch(
-        `/api/shifts/templates?eventId=${selectedEventId}&includeGlobal=false`,
+        `/api/shifts/templates?environmentId=${selectedEnvironmentId}&includeGlobal=false`,
       );
       if (eventRes.ok) {
         const data = await eventRes.json();
@@ -72,7 +72,7 @@ export function TemplateManager() {
 
       // Load assigned templates for this event
       const assignedRes = await fetch(
-        `/api/events/${selectedEventId}/templates`,
+        `/api/environments/${selectedEnvironmentId}/templates`,
       );
       if (assignedRes.ok) {
         const data = await assignedRes.json();
@@ -96,13 +96,13 @@ export function TemplateManager() {
     templateId: string,
     isCurrentlyAssigned: boolean,
   ) {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
 
     try {
       if (isCurrentlyAssigned) {
         // Unassign
         const res = await fetch(
-          `/api/events/${selectedEventId}/templates/${templateId}`,
+          `/api/environments/${selectedEnvironmentId}/templates/${templateId}`,
           {
             method: "DELETE",
           },
@@ -116,7 +116,7 @@ export function TemplateManager() {
         }
       } else {
         // Assign
-        const res = await fetch(`/api/events/${selectedEventId}/templates`, {
+        const res = await fetch(`/api/environments/${selectedEnvironmentId}/templates`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ templateId }),
@@ -149,7 +149,7 @@ export function TemplateManager() {
 
   function handleStartEdit(template: ShiftTemplate) {
     setEditingId(template.id);
-    setIsEventSpecific(!!template.eventId);
+    setIsEventSpecific(!!template.environmentId);
     setFormData({
       name: template.name,
       type: template.type,
@@ -173,7 +173,7 @@ export function TemplateManager() {
     const payload = {
       ...formData,
       requiredRoles: [{ role: "TEAM_MEMBER", count: formData.capacity }],
-      eventId: isEventSpecific ? selectedEventId : null,
+      environmentId: isEventSpecific ? selectedEnvironmentId : null,
     };
 
     try {
@@ -224,7 +224,7 @@ export function TemplateManager() {
     }
   }
 
-  if (!selectedEventId) {
+  if (!selectedEnvironmentId) {
     return (
       <div className="text-center py-8 text-gray-500">
         Please select an event from the header dropdown to manage templates.

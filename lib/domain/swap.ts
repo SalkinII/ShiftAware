@@ -11,7 +11,7 @@ export async function createSwapRequest(fromAssignmentId: string, toShiftId: str
   if (!assignment) throw new Error("Assignment not found");
   const toShift = await prisma.shift.findUnique({ where: { id: toShiftId } });
   if (!toShift) throw new Error("Target shift not found");
-  if (assignment.shift.eventId !== toShift.eventId) throw new Error("Cannot swap shifts between different events");
+  if (assignment.shift.environmentId !== toShift.environmentId) throw new Error("Cannot swap shifts between different events");
   const swapRequest = await swapRepo.create({
     requester: { connect: { id: assignment.teamMemberId } },
     fromAssignment: { connect: { id: fromAssignmentId } },

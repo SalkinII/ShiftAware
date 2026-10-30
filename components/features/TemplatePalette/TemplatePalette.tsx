@@ -91,26 +91,26 @@ function TemplateItem({ template, compact = false }: TemplateItemProps) {
 }
 
 interface TemplatePaletteProps {
-  eventId?: string;
+  environmentId?: string;
   layout?: "vertical" | "horizontal";
 }
 
 export function TemplatePalette({
-  eventId,
+  environmentId,
   layout = "vertical",
 }: TemplatePaletteProps) {
   const { data: templates, loading } = useCache<ShiftTemplate[]>({
-    key: eventId ? `shift-templates-${eventId}` : "shift-templates",
+    key: environmentId ? `shift-templates-${environmentId}` : "shift-templates",
     fetchFn: async () => {
-      const url = eventId
-        ? `/api/shifts/templates?eventId=${eventId}`
+      const url = environmentId
+        ? `/api/shifts/templates?environmentId=${environmentId}`
         : "/api/shifts/templates";
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch templates");
       const json = await res.json();
       return unwrapApiResponse<ShiftTemplate[]>(json);
     },
-    enabled: eventId ? true : undefined,
+    enabled: environmentId ? true : undefined,
   });
 
   if (loading) {

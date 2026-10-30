@@ -16,7 +16,7 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
 
   const { searchParams } = new URL(request.url);
   const memberId = searchParams.get("memberId");
-  const eventId = searchParams.get("eventId");
+  const environmentId = searchParams.get("environmentId");
   const status = searchParams.get("status");
 
   const where: any = {};
@@ -25,8 +25,8 @@ export const GET = withAuth(withErrorHandling(async (request: Request) => {
     where.requesterId = memberId;
   }
 
-  if (eventId) {
-    where.toShift = { eventId };
+  if (environmentId) {
+    where.toShift = { environmentId };
   }
 
   if (status) {

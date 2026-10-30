@@ -26,7 +26,7 @@ vi.mock("@/lib/db", () => {
         if (typeof fn === "function") return fn(txMock);
         return Promise.all(fn);
       }),
-      eventRegistration: {
+      environmentRegistration: {
         findMany: vi.fn(),
         findUnique: vi.fn(),
       },
@@ -35,9 +35,9 @@ vi.mock("@/lib/db", () => {
         findMany: vi.fn(),
       },
       teamMember: { findMany: vi.fn() },
-      event: { findUnique: vi.fn() },
+      environment: { findUnique: vi.fn() },
       assignment: { findMany: vi.fn().mockResolvedValue([]) },
-      eventAttributeDefinition: { findMany: vi.fn().mockResolvedValue([]) },
+      attributeDefinition: { findMany: vi.fn().mockResolvedValue([]) },
     },
   };
 });
@@ -55,8 +55,8 @@ vi.mock("@/lib/algorithm/optimizer", () => ({
   }),
 }));
 
-vi.mock("@/lib/repositories/event.repository", () => ({
-  EventRepository: class {
+vi.mock("@/lib/repositories/environment.repository", () => ({
+  EnvironmentRepository: class {
     findById = vi.fn().mockResolvedValue({ id: "ev1", config: null });
   },
 }));
@@ -106,16 +106,16 @@ describe("assignment scoping", () => {
         },
       ];
 
-      (prisma.eventRegistration.findMany as any).mockResolvedValue(
+      (prisma.environmentRegistration.findMany as any).mockResolvedValue(
         mockRegistrations,
       );
       (prisma.shift.findMany as any).mockResolvedValue([]);
 
       await runAllocation("ev1");
 
-      expect(prisma.eventRegistration.findMany).toHaveBeenCalledWith(
+      expect(prisma.environmentRegistration.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { eventId: "ev1" },
+          where: { environmentId: "ev1" },
         }),
       );
       expect(prisma.teamMember.findMany).not.toHaveBeenCalled();
@@ -123,12 +123,12 @@ describe("assignment scoping", () => {
 
     it("passes crossEventAssignments from other-event assignments into runAssignmentAlgorithm", async () => {
       const { runAssignmentAlgorithm } = await import("@/lib/algorithm/optimizer");
-      (prisma.eventRegistration.findMany as any).mockResolvedValue([
+      (prisma.environmentRegistration.findMany as any).mockResolvedValue([
         { member: { id: "member-1", preferences: [], assignments: [] } },
       ]);
       (prisma.shift.findMany as any).mockResolvedValue([]);
       (prisma.assignment.findMany as any).mockResolvedValue([
-        { teamMemberId: "member-1", shift: { id: "other-shift", eventId: "evt-2", startTime: new Date(), endTime: new Date() } },
+        { teamMemberId: "member-1", shift: { id: "other-shift", environmentId: "evt-2", startTime: new Date(), endTime: new Date() } },
       ]);
 
       await runAllocation("evt-1", true);
@@ -146,10 +146,10 @@ describe("assignment scoping", () => {
 
     it("passes timeConstraintAttrNames from TIME_CONSTRAINT attribute definitions", async () => {
       const { runAssignmentAlgorithm } = await import("@/lib/algorithm/optimizer");
-      (prisma.eventRegistration.findMany as any).mockResolvedValue([]);
+      (prisma.environmentRegistration.findMany as any).mockResolvedValue([]);
       (prisma.shift.findMany as any).mockResolvedValue([]);
       (prisma.assignment.findMany as any).mockResolvedValue([]);
-      (prisma.eventAttributeDefinition.findMany as any).mockResolvedValue([{ name: "availability" }]);
+      (prisma.attributeDefinition.findMany as any).mockResolvedValue([{ name: "availability" }]);
 
       await runAllocation("evt-1", true);
 
@@ -165,10 +165,10 @@ describe("assignment scoping", () => {
     it("rejects assignment for unregistered member", async () => {
       (prisma.shift.findUnique as any).mockResolvedValue({
         id: "s1",
-        eventId: "ev1",
+        environmentId: "ev1",
         capacity: 2,
       });
-      (prisma.eventRegistration.findUnique as any).mockResolvedValue(null);
+      (prisma.environmentRegistration.findUnique as any).mockResolvedValue(null);
 
       await expect(
         createManualAssignment({

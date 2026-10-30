@@ -18,7 +18,7 @@ export interface ShiftLike {
     teamMember?: { id?: string; alias?: string; avatarId?: string };
   }[];
   _count?: { assignments?: number; preferences?: number };
-  event?: { id: string; name: string };
+  environment?: { id: string; name: string };
   templateId?: string | null;
 }
 

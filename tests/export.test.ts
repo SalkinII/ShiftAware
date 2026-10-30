@@ -58,7 +58,7 @@ const sampleShifts = [
         role: "TEAM_MEMBER",
       },
     ],
-    event: { name: "Starlight" },
+    environment: { name: "Starlight" },
   },
   {
     id: "s2",
@@ -75,7 +75,7 @@ const sampleShifts = [
         role: "TEAM_MEMBER",
       },
     ],
-    event: { name: "Starlight" },
+    environment: { name: "Starlight" },
   },
 ];
 

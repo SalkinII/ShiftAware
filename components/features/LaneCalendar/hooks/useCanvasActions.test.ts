@@ -37,7 +37,7 @@ describe("useCanvasActions — markers", () => {
 
   it("handleDrop POSTs to /api/markers when the drop payload is a marker", async () => {
     const { result } = renderHook(
-      () => useCanvasActions({ lanes, eventStart: new Date("2026-08-01T00:00:00Z"), eventId: "evt-1" }),
+      () => useCanvasActions({ lanes, eventStart: new Date("2026-08-01T00:00:00Z"), environmentId: "evt-1" }),
       { wrapper },
     );
 
@@ -57,7 +57,7 @@ describe("useCanvasActions — markers", () => {
       "/api/markers",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"eventId":"evt-1"'),
+        body: expect.stringContaining('"environmentId":"evt-1"'),
       }),
     );
     const body = JSON.parse((fetch as any).mock.calls[0][1].body);
@@ -68,7 +68,7 @@ describe("useCanvasActions — markers", () => {
 
   it("handleNodeDragStop does not PATCH for a marker- node (visual snap-back only)", async () => {
     const { result } = renderHook(
-      () => useCanvasActions({ lanes, eventStart: new Date("2026-08-01T00:00:00Z"), eventId: "evt-1" }),
+      () => useCanvasActions({ lanes, eventStart: new Date("2026-08-01T00:00:00Z"), environmentId: "evt-1" }),
       { wrapper },
     );
 
@@ -81,7 +81,7 @@ describe("useCanvasActions — markers", () => {
   it("handleResizeEnd PATCHes /api/markers/[id] for a marker- nodeId", async () => {
     mockGetNode.mockReturnValue({ id: "marker-m1", position: { x: 100, y: 0 }, data: {} });
     const { result } = renderHook(
-      () => useCanvasActions({ lanes, eventStart: new Date("2026-08-01T00:00:00Z"), eventId: "evt-1" }),
+      () => useCanvasActions({ lanes, eventStart: new Date("2026-08-01T00:00:00Z"), environmentId: "evt-1" }),
       { wrapper },
     );
 

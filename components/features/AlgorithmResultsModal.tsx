@@ -32,13 +32,13 @@ interface PreviewResult {
 interface AlgorithmResultsModalProps {
   result: PreviewResult;
   onClose: () => void;
-  eventId?: string;
+  environmentId?: string;
 }
 
 export function AlgorithmResultsModal({
   result,
   onClose,
-  eventId,
+  environmentId,
 }: AlgorithmResultsModalProps) {
   const [exporting, setExporting] = useState(false);
   const totalAssignments = result.assignments.length;
@@ -63,10 +63,10 @@ export function AlgorithmResultsModal({
   const getMemberLabel = (id: string) => result.memberAliases?.[id] ?? id;
 
   async function handleExportPdf() {
-    if (!eventId) return;
+    if (!environmentId) return;
     setExporting(true);
     try {
-      const res = await fetch(`/api/shifts?eventId=${eventId}`);
+      const res = await fetch(`/api/shifts?environmentId=${environmentId}`);
       if (!res.ok) throw new Error("Failed to fetch shifts");
       const json = await res.json();
       const shifts: any[] = json.data ?? [];
@@ -383,7 +383,7 @@ export function AlgorithmResultsModal({
 
         {/* Footer */}
         <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-2">
-          {eventId && (
+          {environmentId && (
             <Button
               onClick={handleExportPdf}
               variant="secondary"
@@ -396,7 +396,7 @@ export function AlgorithmResultsModal({
           <Button
             onClick={onClose}
             variant="primary"
-            className={eventId ? "flex-1" : "w-full"}
+            className={environmentId ? "flex-1" : "w-full"}
           >
             Close Preview
           </Button>

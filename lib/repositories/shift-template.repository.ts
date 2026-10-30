@@ -32,21 +32,21 @@ export class ShiftTemplateRepository extends BaseRepository {
     }
   }
 
-  async findForEvent(eventId: string, includeGlobal: boolean) {
+  async findForEvent(environmentId: string, includeGlobal: boolean) {
     try {
       let where: Prisma.ShiftTemplateWhereInput;
 
       if (includeGlobal) {
-        const assignments = await prisma.eventTemplate.findMany({
-          where: { eventId },
+        const assignments = await prisma.environmentTemplate.findMany({
+          where: { environmentId },
           select: { templateId: true },
         });
         const assignedIds = assignments.map((a) => a.templateId);
         where = {
-          OR: [{ id: { in: assignedIds } }, { eventId }],
+          id: { in: assignedIds },
         };
       } else {
-        where = { eventId };
+        where = { id: { in: [] } };
       }
 
       return await prisma.shiftTemplate.findMany({
@@ -62,7 +62,7 @@ export class ShiftTemplateRepository extends BaseRepository {
   async findGlobal() {
     try {
       return await prisma.shiftTemplate.findMany({
-        where: { eventId: null },
+        where: { festivalId: null },
         include: { requiredRoles: true },
         orderBy: { createdAt: "desc" },
       });
@@ -112,10 +112,10 @@ export class ShiftTemplateRepository extends BaseRepository {
     }
   }
 
-  async createScheduledShift(templateId: string, eventId: string, date: Date) {
+  async createScheduledShift(templateId: string, environmentId: string, date: Date) {
     try {
       return await prisma.scheduledShift.create({
-        data: { templateId, eventId, date },
+        data: { templateId, environmentId, date },
       });
     } catch (error) {
       throw this.handlePrismaError(error, "Failed to create scheduled shift");

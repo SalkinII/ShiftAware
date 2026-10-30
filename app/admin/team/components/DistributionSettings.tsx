@@ -5,9 +5,9 @@ import { Plus, Trash2, Info } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { useEventContext } from "@/lib/contexts/EventContext";
+import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { canRunAlgorithm } from "@/lib/domain/event-status";
-import type { EventStatus } from "@prisma/client";
+import type { EnvironmentStatus } from "@prisma/client";
 import { unwrapApiResponse } from "@/lib/api-errors";
 import { AlgorithmResultsModal } from "@/components/features/AlgorithmResultsModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -38,7 +38,7 @@ interface DistributionConfig {
 
 export function DistributionSettings() {
   const toast = useToast();
-  const { selectedEventId, selectedEvent } = useEventContext(true);
+  const { selectedEnvironmentId, selectedEnvironment } = useEnvironmentContext();
   const [config, setConfig] = useState<DistributionConfig>({
     fairnessWeight: 50,
     preferenceWeight: 50,
@@ -67,15 +67,15 @@ export function DistributionSettings() {
 
   // Load config when event changes
   useEffect(() => {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
     const ac = new AbortController();
     const signal = ac.signal;
 
     (async () => {
       try {
         const [attrRes, tplRes] = await Promise.all([
-          fetch(`/api/events/${selectedEventId}/attributes`, { signal }),
-          fetch(`/api/events/${selectedEventId}/templates`, { signal }),
+          fetch(`/api/environments/${selectedEnvironmentId}/attributes`, { signal }),
+          fetch(`/api/environments/${selectedEnvironmentId}/templates`, { signal }),
         ]);
         if (signal.aborted) return;
         if (attrRes.ok) {
@@ -92,7 +92,7 @@ export function DistributionSettings() {
           setTemplates(all);
         }
 
-        const cfgRes = await fetch(`/api/events/${selectedEventId}/config`, {
+        const cfgRes = await fetch(`/api/environments/${selectedEnvironmentId}/config`, {
           signal,
         });
         if (signal.aborted) return;
@@ -138,13 +138,13 @@ export function DistributionSettings() {
     return () => {
       ac.abort();
     };
-  }, [selectedEventId]);
+  }, [selectedEnvironmentId]);
 
   async function loadConfig() {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
 
     try {
-      const res = await fetch(`/api/events/${selectedEventId}/config`);
+      const res = await fetch(`/api/environments/${selectedEnvironmentId}/config`);
       if (res.ok) {
         const data = await res.json();
         const cfg = unwrapApiResponse<any>(data);
@@ -237,7 +237,7 @@ export function DistributionSettings() {
   };
 
   const handlePreview = async () => {
-    if (!selectedEventId) {
+    if (!selectedEnvironmentId) {
       toast.error("Please select an event first");
       return;
     }
@@ -248,7 +248,7 @@ export function DistributionSettings() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          eventId: selectedEventId,
+          environmentId: selectedEnvironmentId,
           preview: true,
         }),
       });
@@ -270,20 +270,20 @@ export function DistributionSettings() {
   };
 
   const handleRunAlgorithm = () => {
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
     setShowRunConfirm(true);
   };
 
   const confirmRunAlgorithm = async () => {
     setShowRunConfirm(false);
-    if (!selectedEventId) return;
+    if (!selectedEnvironmentId) return;
 
     setRunning(true);
     try {
       const res = await fetch("/api/assignments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId: selectedEventId }),
+        body: JSON.stringify({ environmentId: selectedEnvironmentId }),
       });
 
       if (res.ok) {
@@ -310,7 +310,7 @@ export function DistributionSettings() {
   };
 
   const handleSave = async () => {
-    if (!selectedEventId) {
+    if (!selectedEnvironmentId) {
       toast.error("Please select an event first");
       return;
     }
@@ -321,7 +321,7 @@ export function DistributionSettings() {
       const fairnessNorm = config.fairnessWeight / total;
       const prefNorm = config.preferenceWeight / total;
 
-      const res = await fetch(`/api/events/${selectedEventId}/config`, {
+      const res = await fetch(`/api/environments/${selectedEnvironmentId}/config`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -350,7 +350,7 @@ export function DistributionSettings() {
     }
   };
 
-  if (!selectedEventId) {
+  if (!selectedEnvironmentId) {
     return (
       <div className="text-center py-8 text-gray-500">
         Please select an event from the header dropdown to configure allocation
@@ -790,8 +790,8 @@ export function DistributionSettings() {
           <Button onClick={handleSave} variant="primary">
             Save Configuration
           </Button>
-          {selectedEvent &&
-            canRunAlgorithm(selectedEvent.status as EventStatus) && (
+          {selectedEnvironment &&
+            canRunAlgorithm(selectedEnvironment.status as EnvironmentStatus) && (
               <>
                 <Button
                   variant="secondary"
@@ -810,12 +810,12 @@ export function DistributionSettings() {
               </>
             )}
         </div>
-        {selectedEvent &&
-          !canRunAlgorithm(selectedEvent.status as EventStatus) && (
+        {selectedEnvironment &&
+          !canRunAlgorithm(selectedEnvironment.status as EnvironmentStatus) && (
             <p className="text-sm text-gray-400 pt-4 border-t">
               Algorithm can only run when event status is &quot;Assigning&quot;.
               Current status:{" "}
-              {selectedEvent.status.replace(/_/g, " ").toLowerCase()}
+              {selectedEnvironment.status.replace(/_/g, " ").toLowerCase()}
             </p>
           )}
       </div>
@@ -824,7 +824,7 @@ export function DistributionSettings() {
         <AlgorithmResultsModal
           result={previewResult}
           onClose={() => setPreviewResult(null)}
-          eventId={selectedEventId ?? undefined}
+          environmentId={selectedEnvironmentId ?? undefined}
         />
       )}
 

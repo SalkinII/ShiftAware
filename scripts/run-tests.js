@@ -307,8 +307,8 @@ async function runTests() {
     if (!Array.isArray(data)) throw new Error("Expected array of shifts");
   })();
 
-  await test("GET /api/events returns events list", async () => {
-    const url = parseUrl(`${BASE_URL}/api/events`);
+  await test("GET /api/environments returns environments list", async () => {
+    const url = parseUrl(`${BASE_URL}/api/environments`);
     const res = await httpRequest({
       hostname: url.hostname,
       port: url.port,
@@ -318,7 +318,7 @@ async function runTests() {
     });
     if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`);
     const data = JSON.parse(res.body);
-    if (!Array.isArray(data)) throw new Error("Expected array of events");
+    if (!Array.isArray(data)) throw new Error("Expected array of environments");
   })();
 
   // UI Navigation Tests

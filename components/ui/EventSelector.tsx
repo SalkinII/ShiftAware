@@ -4,7 +4,7 @@
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface Event {
+interface Environment {
   id: string;
   name: string;
   startDate: string;
@@ -13,28 +13,28 @@ interface Event {
 }
 
 interface EventSelectorProps {
-  events: Event[];
-  selectedEventId: string | null;
-  onSelect: (eventId: string | null) => void;
+  environments: Environment[];
+  selectedEnvironmentId: string | null;
+  onSelect: (environmentId: string | null) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
 }
 
 export function EventSelector({
-  events,
-  selectedEventId,
+  environments,
+  selectedEnvironmentId,
   onSelect,
   placeholder = "Select an event",
   className,
   disabled = false,
 }: EventSelectorProps) {
-  const _selectedEvent = events.find((e) => e.id === selectedEventId);
+  const _selectedEnvironment = environments.find((e) => e.id === selectedEnvironmentId);
 
   return (
     <div className={cn("relative", className)}>
       <select
-        value={selectedEventId || ""}
+        value={selectedEnvironmentId || ""}
         onChange={(e) => onSelect(e.target.value || null)}
         disabled={disabled}
         className={cn(
@@ -48,7 +48,7 @@ export function EventSelector({
         <option value="" disabled>
           {placeholder}
         </option>
-        {events.map((event) => (
+        {environments.map((event) => (
           <option key={event.id} value={event.id}>
             {event.name}
           </option>

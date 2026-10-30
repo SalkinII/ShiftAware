@@ -82,9 +82,9 @@ export class TeamMemberRepository extends BaseRepository {
       const member = await prisma.teamMember.findUnique({
         where: { id },
         include: {
-          eventRegistrations: {
+          environmentRegistrations: {
             include: {
-              event: {
+              environment: {
                 include: { config: true },
               },
             },
@@ -119,17 +119,17 @@ export class TeamMemberRepository extends BaseRepository {
   async deactivate(id: string) {
     try {
       return await prisma.$transaction(async (tx) => {
-        const registrations = await tx.eventRegistration.findMany({
-          where: { memberId: id, event: { status: { not: "COMPLETED" } } },
-          select: { eventId: true },
+        const registrations = await tx.environmentRegistration.findMany({
+          where: { memberId: id, environment: { status: { not: "COMPLETED" } } },
+          select: { environmentId: true },
         });
-        const eventIds = registrations.map((r) => r.eventId);
+        const environmentIds = registrations.map((r) => r.environmentId);
 
-        for (const eventId of eventIds) {
+        for (const environmentId of environmentIds) {
           const memberSwaps = await tx.swapRequest.findMany({
             where: {
               requesterId: id,
-              fromAssignment: { shift: { eventId } },
+              fromAssignment: { shift: { environmentId } },
             },
             select: { id: true },
           });
@@ -146,15 +146,15 @@ export class TeamMemberRepository extends BaseRepository {
           }
 
           await tx.assignment.deleteMany({
-            where: { teamMemberId: id, shift: { eventId } },
+            where: { teamMemberId: id, shift: { environmentId } },
           });
 
           await tx.shiftPreference.deleteMany({
-            where: { teamMemberId: id, shift: { eventId } },
+            where: { teamMemberId: id, shift: { environmentId } },
           });
 
-          await tx.eventRegistration.delete({
-            where: { memberId_eventId: { memberId: id, eventId } },
+          await tx.environmentRegistration.delete({
+            where: { memberId_environmentId: { memberId: id, environmentId } },
           });
         }
 
@@ -211,11 +211,11 @@ export class TeamMemberRepository extends BaseRepository {
   }
 
   // --- TeamMemberAttribute methods ---
-  async getAttributes(memberId: string, eventId?: string) {
+  async getAttributes(memberId: string, environmentId?: string) {
     try {
       const where: any = { memberId };
-      if (eventId) {
-        where.definition = { eventId };
+      if (environmentId) {
+        where.definition = { requirements: { some: { environmentId } } };
       }
       return await prisma.teamMemberAttribute.findMany({
         where,
@@ -226,10 +226,10 @@ export class TeamMemberRepository extends BaseRepository {
     }
   }
 
-  async findAttributeDefinition(eventId: string, name: string) {
+  async findAttributeDefinition(environmentId: string, name: string) {
     try {
-      return await prisma.eventAttributeDefinition.findFirst({
-        where: { eventId, name },
+      return await prisma.attributeDefinition.findFirst({
+        where: { name, festival: { environments: { some: { id: environmentId } } } },
       });
     } catch (error) {
       throw this.handlePrismaError(

@@ -23,12 +23,12 @@ vi.mock("@/lib/db", () => {
         if (typeof fn === "function") return fn(txMock);
         return Promise.all(fn);
       }),
-      eventRegistration: { findMany: vi.fn().mockResolvedValue([]) },
+      environmentRegistration: { findMany: vi.fn().mockResolvedValue([]) },
       shift: { findMany: vi.fn().mockResolvedValue([]) },
-      event: { findUnique: vi.fn() },
+      environment: { findUnique: vi.fn() },
       teamMember: { findMany: vi.fn() },
       assignment: { findMany: vi.fn().mockResolvedValue([]) },
-      eventAttributeDefinition: { findMany: vi.fn().mockResolvedValue([]) },
+      attributeDefinition: { findMany: vi.fn().mockResolvedValue([]) },
     },
   };
 });
@@ -54,8 +54,8 @@ vi.mock("@/lib/algorithm/optimizer", () => ({
   }),
 }));
 
-vi.mock("@/lib/repositories/event.repository", () => ({
-  EventRepository: class {
+vi.mock("@/lib/repositories/environment.repository", () => ({
+  EnvironmentRepository: class {
     findById = vi.fn().mockResolvedValue({ id: "ev1", config: null });
   },
 }));
@@ -75,7 +75,7 @@ import { runAllocation } from "@/lib/domain/allocation";
 
 describe("runAllocation transaction safety", () => {
   it("wraps delete + create in a single $transaction", async () => {
-    (prisma.eventRegistration.findMany as any).mockResolvedValue([
+    (prisma.environmentRegistration.findMany as any).mockResolvedValue([
       {
         member: {
           id: "m1",
@@ -88,13 +88,13 @@ describe("runAllocation transaction safety", () => {
     (prisma.shift.findMany as any).mockResolvedValue([
       {
         id: "s1",
-        eventId: "ev1",
+        environmentId: "ev1",
         capacity: 2,
         priority: "CORE",
         preferences: [],
         assignments: [],
         requiredRoles: [],
-        event: {},
+        environment: {},
       },
     ]);
 

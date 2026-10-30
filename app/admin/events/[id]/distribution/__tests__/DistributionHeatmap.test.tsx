@@ -49,7 +49,7 @@ describe("DistributionHeatmap", () => {
     const onMemberSelect = vi.fn();
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={onMemberSelect}
@@ -94,7 +94,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -134,7 +134,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -168,7 +168,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -191,7 +191,7 @@ describe("DistributionHeatmap", () => {
   it("does not render a static text legend (state info is already in each cell's hover tooltip)", async () => {
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -218,7 +218,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -256,7 +256,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -292,7 +292,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -324,7 +324,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -347,7 +347,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -378,7 +378,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -398,7 +398,7 @@ describe("DistributionHeatmap", () => {
     const onMemberSelect = vi.fn();
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={onMemberSelect}
@@ -417,13 +417,13 @@ describe("DistributionHeatmap", () => {
       vi.fn().mockResolvedValue(
         jsonResponse({
           ...heatmapData,
-          shifts: [{ ...heatmapData.shifts[0], eventId: "evt-1" }],
+          shifts: [{ ...heatmapData.shifts[0], environmentId: "evt-1" }],
           crossEventAssignments: [
             {
               memberId: "m1",
               shift: {
                 id: "x",
-                eventId: "evt-2",
+                environmentId: "evt-2",
                 startTime: "2026-08-01T09:00:00.000Z",
                 endTime: "2026-08-01T12:00:00.000Z",
               },
@@ -435,7 +435,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -471,7 +471,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}
@@ -488,14 +488,14 @@ describe("DistributionHeatmap", () => {
       vi.fn().mockResolvedValue(
         jsonResponse({
           ...heatmapData,
-          shifts: [{ ...heatmapData.shifts[0], eventId: "evt-1" }],
+          shifts: [{ ...heatmapData.shifts[0], environmentId: "evt-1" }],
           config: { balanceThresholds: { maxShiftsPerPerson: 1 } },
           crossEventAssignments: [
             {
               memberId: "m1",
               shift: {
                 id: "x",
-                eventId: "evt-2",
+                environmentId: "evt-2",
                 startTime: "2026-08-02T09:00:00.000Z",
                 endTime: "2026-08-02T12:00:00.000Z",
               },
@@ -507,7 +507,7 @@ describe("DistributionHeatmap", () => {
 
     render(
       <DistributionHeatmap
-        eventId="evt-1"
+        environmentId="evt-1"
         previewData={null}
         highlightMemberId={null}
         onMemberSelect={vi.fn()}

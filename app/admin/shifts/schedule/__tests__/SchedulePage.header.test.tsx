@@ -11,17 +11,17 @@ vi.mock("next/dynamic", () => ({
     <div data-testid="lane-canvas">{props.topRightOverlay}</div>
   ),
 }));
-vi.mock("@/lib/contexts/EventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "evt-1",
-    selectedEvent: {
+vi.mock("@/lib/contexts/EnvironmentContext", () => ({
+  useEnvironmentContext: () => ({
+    selectedEnvironmentId: "evt-1",
+    selectedEnvironment: {
       id: "evt-1",
       name: "Test Event",
       status: "OPEN_FOR_PREFERENCES",
       startDate: "2026-06-01T00:00:00Z",
       endDate: "2026-06-05T00:00:00Z",
     },
-    refreshEvents: vi.fn(),
+    refreshEnvironments: vi.fn(),
   }),
 }));
 vi.mock("@/lib/cache/useCache", () => ({
@@ -75,7 +75,7 @@ let triggerHasRequests: ((has: boolean, count?: number) => void) | undefined;
 vi.mock("@/components/features/SwapRequestsPanel/SwapRequestsPanel", () => ({
   SwapRequestsPanel: (props: {
     onHasRequests?: (has: boolean, count?: number) => void;
-    eventId?: string;
+    environmentId?: string;
     eventStatus?: string;
     onRefresh?: () => void;
   }) => {

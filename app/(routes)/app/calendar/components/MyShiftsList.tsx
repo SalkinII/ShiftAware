@@ -36,7 +36,7 @@ interface Shift {
   priority: string;
   capacity: number;
   assignments: Assignment[];
-  event: { name: string; id: string };
+  environment: { name: string; id: string };
 }
 
 interface SwapRequestSummary {

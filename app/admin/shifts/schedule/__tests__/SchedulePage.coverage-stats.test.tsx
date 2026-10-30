@@ -8,17 +8,17 @@ import { render, screen, fireEvent } from "@testing-library/react";
 vi.mock("next/dynamic", () => ({
   default: (_fn: unknown) => () => <div data-testid="lane-canvas" />,
 }));
-vi.mock("@/lib/contexts/EventContext", () => ({
-  useEventContext: () => ({
-    selectedEventId: "evt-1",
-    selectedEvent: {
+vi.mock("@/lib/contexts/EnvironmentContext", () => ({
+  useEnvironmentContext: () => ({
+    selectedEnvironmentId: "evt-1",
+    selectedEnvironment: {
       id: "evt-1",
       name: "Test Event",
       status: "FINALIZED",
       startDate: "2026-06-01T00:00:00Z",
       endDate: "2026-06-05T00:00:00Z",
     },
-    refreshEvents: vi.fn(),
+    refreshEnvironments: vi.fn(),
   }),
 }));
 
@@ -31,8 +31,8 @@ const mockShift = {
   priority: "NORMAL",
   desirabilityScore: 3,
   capacity: 2,
-  eventId: "evt-1",
-  event: { id: "evt-1", name: "Test Event" },
+  environmentId: "evt-1",
+  environment: { id: "evt-1", name: "Test Event" },
   requiredRoles: [],
   assignments: [],
   template: null,

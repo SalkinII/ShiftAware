@@ -21,7 +21,7 @@ interface Member {
   avatarId: string;
   experienceLevel?: string;
   capabilities?: string[];
-  eventRegistrations?: { status: string }[];
+  environmentRegistrations?: { status: string }[];
   attributes?: Array<{
     definition?: { name?: string };
     name?: string;
@@ -30,12 +30,12 @@ interface Member {
 }
 
 interface MemberListByEventProps {
-  eventId: string;
+  environmentId: string;
   eventName: string;
 }
 
 export function MemberListByEvent({
-  eventId,
+  environmentId,
   eventName,
 }: MemberListByEventProps) {
   const toast = useToast();
@@ -78,14 +78,14 @@ export function MemberListByEvent({
     setLoading(true);
     (async () => {
       try {
-        const res = await fetch(`/api/members?eventId=${eventId}`);
+        const res = await fetch(`/api/members?environmentId=${environmentId}`);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
           setMembers(unwrapApiResponse<Member[]>(data) || []);
         }
         const allRes = await fetch(
-          `/api/members?eventId=${eventId}&includeUnregistered=true`,
+          `/api/members?environmentId=${environmentId}&includeUnregistered=true`,
         );
         if (cancelled) return;
         if (allRes.ok) {
@@ -101,13 +101,13 @@ export function MemberListByEvent({
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [environmentId]);
 
   useEffect(() => {
     let cancelled = false;
     (async function loadAttributeDefinitions() {
       try {
-        const res = await fetch(`/api/events/${eventId}/attributes`);
+        const res = await fetch(`/api/environments/${environmentId}/attributes`);
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
@@ -121,13 +121,13 @@ export function MemberListByEvent({
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [environmentId]);
 
   async function loadMembers() {
     setLoading(true);
     try {
       // Load registered members
-      const res = await fetch(`/api/members?eventId=${eventId}`);
+      const res = await fetch(`/api/members?environmentId=${environmentId}`);
       if (res.ok) {
         const data = await res.json();
         setMembers(unwrapApiResponse<Member[]>(data) || []);
@@ -135,7 +135,7 @@ export function MemberListByEvent({
 
       // Load all members for add picker
       const allRes = await fetch(
-        `/api/members?eventId=${eventId}&includeUnregistered=true`,
+        `/api/members?environmentId=${environmentId}&includeUnregistered=true`,
       );
       if (allRes.ok) {
         const data = await allRes.json();
@@ -150,7 +150,7 @@ export function MemberListByEvent({
 
   async function handleAddMember(memberId: string, memberAlias: string) {
     try {
-      const res = await fetch(`/api/events/${eventId}/registrations`, {
+      const res = await fetch(`/api/environments/${environmentId}/registrations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
@@ -183,7 +183,7 @@ export function MemberListByEvent({
           fetch(`/api/members/${pendingAttributeMember.memberId}/attributes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ eventId, key, value }),
+            body: JSON.stringify({ environmentId, key, value }),
           }),
         ),
       );
@@ -209,7 +209,7 @@ export function MemberListByEvent({
 
     try {
       const res = await fetch(
-        `/api/events/${eventId}/registrations/${memberId}`,
+        `/api/environments/${environmentId}/registrations/${memberId}`,
         {
           method: "DELETE",
         },
@@ -246,7 +246,7 @@ export function MemberListByEvent({
       const newMemberId = data.data.id;
 
       // Register for this event
-      const regRes = await fetch(`/api/events/${eventId}/registrations`, {
+      const regRes = await fetch(`/api/environments/${environmentId}/registrations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: newMemberId }),
@@ -266,7 +266,7 @@ export function MemberListByEvent({
             fetch(`/api/members/${newMemberId}/attributes`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ eventId, key, value }),
+              body: JSON.stringify({ environmentId, key, value }),
             }),
           ),
         );
@@ -282,7 +282,7 @@ export function MemberListByEvent({
   }
 
   const unregisteredMembers = allMembers.filter(
-    (m) => !m.eventRegistrations || m.eventRegistrations.length === 0,
+    (m) => !m.environmentRegistrations || m.environmentRegistrations.length === 0,
   );
 
   const filteredMembers = members.filter((m) =>
@@ -450,7 +450,7 @@ export function MemberListByEvent({
               </Button>
             </div>
             <CreateProfileForm
-              defaultEventId={eventId}
+              defaultEventId={environmentId}
               onSubmit={handleCreateMember}
             />
           </Card>
@@ -513,7 +513,7 @@ export function MemberListByEvent({
         onClose={() => setProfileCardMember(null)}
         editable
         onUpdate={loadMembers}
-        eventId={eventId}
+        environmentId={environmentId}
         attributeDefinitions={attributeDefinitions}
       />
 

@@ -186,7 +186,7 @@ describe("PreferenceRepository", () => {
         where: { teamMemberId: "m1" },
         include: expect.objectContaining({
           teamMember: true,
-          shift: expect.objectContaining({ include: { event: true } }),
+          shift: expect.objectContaining({ include: { environment: true } }),
         }),
       }),
     );

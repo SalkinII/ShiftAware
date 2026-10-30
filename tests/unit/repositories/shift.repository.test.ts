@@ -33,7 +33,7 @@ describe("ShiftRepository", () => {
   it("should find shift by ID with relations", async () => {
     const mockShift = {
       id: "shift-1",
-      eventId: "event-1",
+      environmentId: "event-1",
       templateId: null,
       type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
@@ -63,7 +63,7 @@ describe("ShiftRepository", () => {
     const mockShifts = [
       {
         id: "s1",
-        eventId: "event-1",
+        environmentId: "event-1",
         templateId: null,
         type: ShiftType.MOBILE_TEAM,
         startTime: new Date("2026-06-26T10:00:00Z"),
@@ -88,7 +88,7 @@ describe("ShiftRepository", () => {
 
   it("should create a new shift", async () => {
     const input = {
-      event: { connect: { id: "event-1" } },
+      environment: { connect: { id: "event-1" } },
       type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
       endTime: new Date("2026-06-26T16:00:00Z"),
@@ -97,7 +97,7 @@ describe("ShiftRepository", () => {
     };
     const mockShift = {
       id: "shift-3",
-      eventId: "event-1",
+      environmentId: "event-1",
       templateId: null,
       type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
@@ -123,7 +123,7 @@ describe("ShiftRepository", () => {
     const input = { capacity: 3 };
     const mockShift = {
       id: "shift-1",
-      eventId: "event-1",
+      environmentId: "event-1",
       templateId: null,
       type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
@@ -148,7 +148,7 @@ describe("ShiftRepository", () => {
   it("should delete a shift", async () => {
     const mockShift = {
       id: "shift-1",
-      eventId: "event-1",
+      environmentId: "event-1",
       templateId: null,
       type: ShiftType.MOBILE_TEAM,
       startTime: new Date("2026-06-26T10:00:00Z"),
@@ -179,11 +179,11 @@ describe("ShiftRepository", () => {
 
     const mockResult = {
       id: "shift-1",
-      eventId: "event-1",
+      environmentId: "event-1",
       type: "MOBILE_TEAM",
       capacity: 3,
       requiredRoles,
-      event: { id: "event-1", name: "Test Event" },
+      environment: { id: "event-1", name: "Test Event" },
     };
 
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => {
@@ -240,14 +240,14 @@ describe("ShiftRepository", () => {
   });
 
   it("should find shifts by event with full includes", async () => {
-    const mockShifts = [{ id: "s1", eventId: "e1" }];
+    const mockShifts = [{ id: "s1", environmentId: "e1" }];
     vi.mocked(prisma.shift.findMany).mockResolvedValue(mockShifts as any);
 
     const result = await repo.findByEvent("e1");
 
     expect(vi.mocked(prisma.shift.findMany)).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { eventId: "e1" },
+        where: { environmentId: "e1" },
         orderBy: { startTime: "asc" },
       }),
     );
@@ -263,7 +263,7 @@ describe("ShiftRepository", () => {
     expect(vi.mocked(prisma.shift.findMany)).toHaveBeenCalledWith(
       expect.objectContaining({
         include: expect.objectContaining({
-          event: true,
+          environment: true,
           requiredRoles: true,
         }),
       }),

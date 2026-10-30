@@ -48,7 +48,7 @@ export const PUT = withAuth(withErrorHandling(async (request: Request,
   };
 
   const existingShift = await shiftRepo.findById(id);
-  await assertEventStatusAllows(existingShift.eventId, "SHIFT_MUTATE");
+  await assertEventStatusAllows(existingShift.environmentId, "SHIFT_MUTATE");
   const shift = await shiftRepo.updateWithRoles(
     id,
     shiftData,
@@ -80,7 +80,7 @@ export const DELETE = withAuth(withErrorHandling(async (request: Request,
   }
 
   const existing = await shiftRepo.findById(shiftId);
-  await assertEventStatusAllows(existing.eventId, "SHIFT_MUTATE");
+  await assertEventStatusAllows(existing.environmentId, "SHIFT_MUTATE");
   await shiftRepo.cascadeDelete(shiftId);
 
   await createAuditLog({

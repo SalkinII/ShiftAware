@@ -15,9 +15,9 @@ export const GET = withAuth(withErrorHandling(async (request: Request,
 
   const { id: memberId } = await params;
   const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("eventId") || undefined;
+  const environmentId = searchParams.get("environmentId") || undefined;
 
-  const attributes = await memberRepo.getAttributes(memberId, eventId);
+  const attributes = await memberRepo.getAttributes(memberId, environmentId);
 
   return createSuccessResponse(attributes);
 }));
@@ -34,7 +34,7 @@ export const POST = withAuth(withErrorHandling(async (request: Request,
 
   // Find attribute definition
   const definition = await memberRepo.findAttributeDefinition(
-    validated.eventId,
+    validated.environmentId,
     validated.key,
   );
 
