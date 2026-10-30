@@ -37,7 +37,7 @@ export function AttributePromptModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           Complete Your Profile
         </h2>

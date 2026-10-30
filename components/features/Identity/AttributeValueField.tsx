@@ -1,9 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { format } from "date-fns";
 import type { TimeConstraintValue } from "@/lib/algorithm/time-constraint";
+
+export function toDatetimeLocalValue(isoUtc: string): string {
+  const date = new Date(isoUtc);
+  const localMs = date.getTime() - date.getTimezoneOffset() * 60000;
+  return new Date(localMs).toISOString().slice(0, 16);
+}
+
+export function fromDatetimeLocalValue(localValue: string): string {
+  return new Date(localValue).toISOString();
+}
 
 interface AttrLike {
   name: string;
@@ -56,9 +67,15 @@ function TimeConstraintDisplay({ value }: { value: unknown }) {
 
 function TimeConstraintEditor({ value, onChange }: { value: unknown; onChange: (v: unknown) => void }) {
   const parsed = parseTimeConstraint(value);
+  const [confirmedRow, setConfirmedRow] = useState<string | null>(null);
 
   function emit(next: TimeConstraintValue) {
     onChange(JSON.stringify(next));
+  }
+
+  function confirmRow(key: string) {
+    setConfirmedRow(key);
+    setTimeout(() => setConfirmedRow((current) => (current === key ? null : current)), 1200);
   }
 
   return (
@@ -66,35 +83,43 @@ function TimeConstraintEditor({ value, onChange }: { value: unknown; onChange: (
       <div>
         <div className="text-xs font-medium text-gray-500 mb-1">Availability windows</div>
         {parsed.availabilityWindows.map((w, i) => (
-          <div key={i} className="flex gap-2 mb-1">
+          <div key={i} className="flex flex-wrap gap-2 mb-1 items-center">
             <Input
               type="datetime-local"
-              value={w.arriveAfter.slice(0, 16)}
+              className="min-w-0 flex-1"
+              value={toDatetimeLocalValue(w.arriveAfter)}
               onChange={(e) => {
                 const next = { ...parsed, availabilityWindows: [...parsed.availabilityWindows] };
-                next.availabilityWindows[i] = { ...w, arriveAfter: new Date(e.target.value).toISOString() };
+                next.availabilityWindows[i] = { ...w, arriveAfter: fromDatetimeLocalValue(e.target.value) };
                 emit(next);
+                confirmRow(`w${i}`);
               }}
             />
             <Input
               type="datetime-local"
-              value={w.leaveBefore.slice(0, 16)}
+              className="min-w-0 flex-1"
+              value={toDatetimeLocalValue(w.leaveBefore)}
               onChange={(e) => {
                 const next = { ...parsed, availabilityWindows: [...parsed.availabilityWindows] };
-                next.availabilityWindows[i] = { ...w, leaveBefore: new Date(e.target.value).toISOString() };
+                next.availabilityWindows[i] = { ...w, leaveBefore: fromDatetimeLocalValue(e.target.value) };
                 emit(next);
+                confirmRow(`w${i}`);
               }}
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
+              className="flex-shrink-0"
               onClick={() =>
                 emit({ ...parsed, availabilityWindows: parsed.availabilityWindows.filter((_, j) => j !== i) })
               }
             >
               Remove
             </Button>
+            {confirmedRow === `w${i}` && (
+              <span className="text-success-600 text-xs flex-shrink-0" role="status">✓ Saved</span>
+            )}
           </div>
         ))}
         <Button
@@ -118,46 +143,56 @@ function TimeConstraintEditor({ value, onChange }: { value: unknown; onChange: (
       <div>
         <div className="text-xs font-medium text-gray-500 mb-1">Daily blackouts</div>
         {parsed.dailyBlackouts.map((b, i) => (
-          <div key={i} className="flex gap-2 mb-1">
+          <div key={i} className="flex flex-wrap gap-2 mb-1 items-center">
             <Input
               type="date"
+              className="min-w-0 flex-1"
               value={b.date}
               onChange={(e) => {
                 const next = { ...parsed, dailyBlackouts: [...parsed.dailyBlackouts] };
                 next.dailyBlackouts[i] = { ...b, date: e.target.value };
                 emit(next);
+                confirmRow(`b${i}`);
               }}
             />
             <Input
               type="number"
               min={0}
               max={23}
+              className="w-20 flex-shrink-0"
               value={b.startHour}
               onChange={(e) => {
                 const next = { ...parsed, dailyBlackouts: [...parsed.dailyBlackouts] };
                 next.dailyBlackouts[i] = { ...b, startHour: Number(e.target.value) };
                 emit(next);
+                confirmRow(`b${i}`);
               }}
             />
             <Input
               type="number"
               min={0}
               max={23}
+              className="w-20 flex-shrink-0"
               value={b.endHour}
               onChange={(e) => {
                 const next = { ...parsed, dailyBlackouts: [...parsed.dailyBlackouts] };
                 next.dailyBlackouts[i] = { ...b, endHour: Number(e.target.value) };
                 emit(next);
+                confirmRow(`b${i}`);
               }}
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
+              className="flex-shrink-0"
               onClick={() => emit({ ...parsed, dailyBlackouts: parsed.dailyBlackouts.filter((_, j) => j !== i) })}
             >
               Remove
             </Button>
+            {confirmedRow === `b${i}` && (
+              <span className="text-success-600 text-xs flex-shrink-0" role="status">✓ Saved</span>
+            )}
           </div>
         ))}
         <Button
