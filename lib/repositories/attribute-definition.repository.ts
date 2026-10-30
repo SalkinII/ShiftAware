@@ -64,4 +64,24 @@ export class AttributeDefinitionRepository extends BaseRepository {
       throw this.handlePrismaError(error, "Failed to fetch attributes");
     }
   }
+
+  async findByFestivalWithUsage(festivalId: string) {
+    try {
+      const definitions = await prisma.attributeDefinition.findMany({
+        where: { festivalId },
+        include: { requirements: { include: { environment: true } }, memberValues: true },
+      });
+      return definitions.map((d) => ({
+        id: d.id,
+        name: d.name,
+        label: d.label,
+        type: d.type,
+        options: d.options,
+        usedBy: d.requirements.map((r) => r.environment.name),
+        answeredCount: d.memberValues.length,
+      }));
+    } catch (error) {
+      throw this.handlePrismaError(error, "Failed to fetch attributes");
+    }
+  }
 }

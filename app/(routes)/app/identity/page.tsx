@@ -10,7 +10,6 @@ import { MemberList } from "./components/MemberList";
 import { CreateProfileForm } from "./components/CreateProfileForm";
 import { EventSelectionStep } from "./components/EventSelectionStep";
 import { AttributePromptModal } from "@/components/features/Identity/AttributePromptModal";
-import { getMissingAttributes } from "@/lib/utils/attribute-check";
 
 export default function IdentityPage() {
   const router = useRouter();
@@ -38,25 +37,20 @@ export default function IdentityPage() {
     }
   };
 
-  const handleEventSelected = async (environmentId: string) => {
+  const handleEnvironmentSelected = async (environmentId: string) => {
     if (!selectedMemberId) return;
 
     try {
-      const [defRes, valuesRes] = await Promise.all([
-        fetch(`/api/environments/${environmentId}/attributes`),
-        fetch(`/api/members/${selectedMemberId}/attributes?environmentId=${environmentId}`),
-      ]);
-
-      const defData = defRes.ok ? await defRes.json() : { data: [] };
-      const valuesData = valuesRes.ok ? await valuesRes.json() : { data: [] };
-      const definitions = defData.data || [];
-      const values = valuesData.data || [];
-
-      const missing = getMissingAttributes(definitions, values);
+      const res = await fetch(
+        `/api/environments/${environmentId}/members/${selectedMemberId}/missing-attributes`,
+      );
+      const { missing, answers } = res.ok
+        ? (await res.json()).data
+        : { missing: [], answers: [] };
 
       if (missing.length > 0) {
         const initial: Record<string, unknown> = {};
-        for (const v of values) {
+        for (const v of answers) {
           try {
             initial[v.definition.name] = JSON.parse(v.value);
           } catch {
@@ -75,20 +69,24 @@ export default function IdentityPage() {
     }
   };
 
+  const submitAttributeAnswers = async (
+    memberId: string,
+    environmentId: string,
+    values: Record<string, unknown>,
+  ) => {
+    for (const [key, value] of Object.entries(values)) {
+      await fetch(`/api/members/${memberId}/attributes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ environmentId, key, value }),
+      });
+    }
+  };
+
   const handleAttributeSubmit = async (attributes: Record<string, unknown>) => {
     if (!selectedMemberId || !pendingEventId) return;
 
-    for (const [key, value] of Object.entries(attributes)) {
-      await fetch(`/api/members/${selectedMemberId}/attributes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          environmentId: pendingEventId,
-          key,
-          value,
-        }),
-      });
-    }
+    await submitAttributeAnswers(selectedMemberId, pendingEventId, attributes);
 
     setShowAttributeModal(false);
     setPendingEventId(null);
@@ -133,17 +131,11 @@ export default function IdentityPage() {
             profileData.attributes &&
             Object.keys(profileData.attributes).length > 0
           ) {
-            for (const [key, value] of Object.entries(profileData.attributes)) {
-              await fetch(`/api/members/${newMemberId}/attributes`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  environmentId: profileData.environmentId,
-                  key,
-                  value,
-                }),
-              });
-            }
+            await submitAttributeAnswers(
+              newMemberId,
+              profileData.environmentId,
+              profileData.attributes,
+            );
           }
         }
 
@@ -217,7 +209,7 @@ export default function IdentityPage() {
           <>
             <EventSelectionStep
               memberId={selectedMemberId!}
-              onEventSelected={handleEventSelected}
+              onEventSelected={handleEnvironmentSelected}
               onBack={handleBackToMemberSelection}
             />
             {showAttributeModal && missingDefinitions.length > 0 && (
