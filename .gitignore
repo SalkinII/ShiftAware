@@ -60,3 +60,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database dumps (contain PII; never commit)
+backups/
+*.sql.gz
+*.dump
