@@ -3,6 +3,8 @@
 > Festival → Environment hierarchy, a shared attribute library, scoped
 > environment admins, and a unified entry flow.
 > Date: 2026-09-03 | Branch: `feature/multi-environment-scoping`
+> Amended: 2026-10-30. Production is wiped before release and starts empty,
+> so festivals need a create/edit path (§5a). The runtime moves to Node 24.
 
 ---
 
@@ -82,7 +84,9 @@ not drive the cap. Any test asserting cap behaviour must target
 | Per-environment | Which definitions apply (and whether they are required), config, weights, shifts, status, team. |
 | Attribute answers | Stored once per member, reused across environments. Asked only if an environment the member joined needs them. |
 | Admin | Festival admin sees all. Environment admin is scoped to their registrants and to the definitions their environment requires. |
-| Data migration | **None.** The database holds only test data and is reset; the seed is rewritten. |
+| Data migration | **None.** Local databases are reset and reseeded. Production was wiped on 2026-10-30 and starts empty on the final schema (`migrate deploy` at container start). The demo seed never runs in production. |
+| First festival | Created by a global admin in admin setup (§5a). No bootstrap script, no production seed. |
+| Runtime | Node 24 (`node:24-slim`, CI `node-version: 24`). Node 20 is end of life and no longer receives security fixes. |
 
 ### Explicitly rejected
 
@@ -302,6 +306,38 @@ Three choices, each load-bearing:
 `myEnvironments` separately from `allEnvironments`. `localStorage` keys are
 renamed freely (the data is disposable).
 
+## 5a. Festival management and the empty state
+
+Production starts with an empty database, and an `Environment` cannot exist
+without a `Festival`. A global admin therefore needs a way to create the first
+festival through the app.
+
+**API:**
+
+| Route | Who | Does |
+|---|---|---|
+| `GET /api/festivals` | any authenticated user | lists festivals: `id`, `name`, `startDate`, `endDate` only |
+| `POST /api/festivals` | global admin | creates a festival; audit-logged as `EntityType.FESTIVAL` |
+| `PUT /api/festivals/[id]` | global admin | edits name and dates; audit-logged |
+
+All three use the existing `withAuth` + `withErrorHandling` wrappers. A Zod
+`createFestivalSchema` requires `name` (non-empty, trimmed), `startDate` and
+`endDate`, and rejects `endDate < startDate`. An environment admin (§7) gets
+403 on `POST` and `PUT`, because festivals sit above their scope. There is no
+`DELETE`: cascading through environments, shifts and answers is risky and
+nobody asked for it.
+
+**UI.** Today's `FestivalSettings.tsx` actually edits an `Event`. It splits in two:
+
+- a **festival form**, where you pick an existing festival or create one and
+  edit its name and dates;
+- an **environment form** scoped to the selected festival, which posts to
+  `POST /api/environments` with that festival's `festivalId`.
+
+**Empty state.** With no festival in the database, admin setup opens directly
+on "Create your first festival", and members at `/app` see "No festival yet"
+rather than an error or an empty picker.
+
 ## 6. Attribute library
 
 **Admin — environment setup is picking, not creating:**
@@ -373,7 +409,8 @@ stays as-is; environment-level rights come from the registration row.
      - drop ShiftTemplate.eventId → festivalId (library)
    then `prisma migrate reset` + `prisma generate`
 2  Code rename to match the schema             (mechanical, gated on tsc)
-3  Seed rewrite: 1 festival, 3 environments    (makes the app runnable again)
+2a Festival create/edit + empty state (§5a)   (production starts empty)
+3  Seed rewrite: 1 festival, 3 environments    (makes the app runnable again, dev only)
 4  Attribute library admin UI + member flow    (requirements picker, modal feed)
 5  Repository chokepoint for member reads      (prerequisite for 6)
 6  Scoped environment admins                   (authorization + security review)
@@ -414,6 +451,10 @@ New tests, where they earn their keep:
 | Scoped visibility | an environment admin's member query excludes non-registrants, and excludes attribute values for definitions their environment does not require |
 | Entry routing | 0 / 1 / N registrations each route correctly; the back-navigation guard still suppresses re-forwarding |
 | Cross-environment allocation | a member in two environments is not double-booked, and each environment's shift cap counts only its own shifts (guards the existing behaviour through the rename) |
+| Festival validation | `createFestivalSchema` rejects an empty name and `endDate < startDate`, and accepts a one-day festival |
+| Festival authorization | `POST /api/festivals` returns 403 for a member and for an environment admin, and 201 plus an audit entry for a global admin |
+| Empty state | with zero festivals, admin setup renders "Create your first festival" and `/app` renders "No festival yet" |
+| First run (e2e) | on an empty database with no seed: the admin creates a festival and an environment, then a member joins and answers the required attributes, then the admin sees that member |
 
 ## 10. Risks
 
@@ -424,3 +465,10 @@ New tests, where they earn their keep:
 | Independent per-environment statuses confuse members | Status is surfaced in the switcher for every environment, not just the active one |
 | Attribute library rots into near-duplicates | "Add new" is the last option and warns on similar names; usage counts make reuse visibly preferable |
 | Docs drift (7 files say "Event") | Step 8 is explicit; `PROJECT-OVERVIEW.md` glossary and `ARCHITECTURE.md` are the load-bearing ones |
+| Empty production database can't create a festival, so no environment can exist | §5a festival form and empty state; the first-run e2e test runs without a seed |
+
+## 11. Deferred
+
+- **Audit-log PII retention.** `AuditLog.ipAddress` and the full `before`/`after`
+  snapshots are kept indefinitely. A retention period and pruning job are a
+  separate piece of work.
