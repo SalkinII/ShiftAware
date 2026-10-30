@@ -5,6 +5,8 @@
 > Date: 2026-09-03 | Branch: `feature/multi-environment-scoping`
 > Amended: 2026-10-30. Production is wiped before release and starts empty,
 > so festivals need a create/edit path (§5a). The runtime moves to Node 24.
+> Environment-admin scoping is a UX affordance, not an access control, until
+> members have per-member credentials (§7).
 
 ---
 
@@ -83,7 +85,7 @@ not drive the cap. Any test asserting cap behaviour must target
 | Shared at festival level | Attribute **definitions** and the shift-template **library**. |
 | Per-environment | Which definitions apply (and whether they are required), config, weights, shifts, status, team. |
 | Attribute answers | Stored once per member, reused across environments. Asked only if an environment the member joined needs them. |
-| Admin | Festival admin sees all. Environment admin is scoped to their registrants and to the definitions their environment requires. |
+| Admin | Festival admin sees all. Environment admin is scoped to their registrants and to the definitions their environment requires, as a UX affordance rather than an access control until per-member credentials exist (§7). |
 | Data migration | **None.** Local databases are reset and reseeded. Production was wiped on 2026-10-30 and starts empty on the final schema (`migrate deploy` at container start). The demo seed never runs in production. |
 | First festival | Created by a global admin in admin setup (§5a). No bootstrap script, no production seed. |
 | Runtime | Node 24 (`node:24-slim`, CI `node-version: 24`). Node 20 is end of life and no longer receives security fixes. |
@@ -96,7 +98,8 @@ not drive the cap. Any test asserting cap behaviour must target
   allocation engine. This is the option that breaks the basic logic, for a
   result structurally identical to the chosen one.
 - **Per-member credentials.** A separate project; the shared-password model is
-  retained deliberately.
+  retained deliberately. Without it, environment-admin scoping cannot be an
+  access control (§7).
 - **`ShiftTemplate.eventId` as "environment-specific template".** The field has
   zero usages outside the schema. A template used by one environment is just a
   library template assigned to one environment via the junction.
@@ -380,9 +383,12 @@ that way and would leak past any repository-level guard:
 - `app/api/events/[id]/distribution/heatmap/route.ts`
 
 These move to repository calls **before** scoping is implemented. Without this
-step the guarantee below is false.
+step the scoping below is incomplete.
 
 ### The rule
+
+What each actor's view shows. Read the caveat below before taking a row as
+access control.
 
 | Actor | Sees |
 |---|---|
@@ -390,12 +396,55 @@ step the guarantee below is false.
 | Environment admin (`registration.role = ADMIN`) | that environment's registrants only, and only definitions that environment requires |
 | Member | own data, plus their environments' shifts |
 
-Enforced in the repository query, so an environment admin never *receives*
-`gender` in an API response when their environment did not ask for it. Filtering
-is server-side; the UI is not a security boundary.
+The requirement filter runs in the repository query, so a view built for an
+environment never includes a question that environment does not require. That
+shapes responses; it does not decide who may ask for them.
 
 The shared admin password remains the festival-level key. `TeamMember.isAdmin`
 stays as-is; environment-level rights come from the registration row.
+
+### What the scoping does not protect
+
+Sign-in and festival-admin checks read signed cookies set at sign-in, so they
+are server-side. Neither establishes which member is calling. Environment-admin
+scoping is therefore a **UX affordance, not an access control**, until members
+have per-member credentials (out of scope, §3):
+
+- The shared password authenticates a session, not a member. A caller with a
+  member session can name any member id in a request.
+- The registrant-only view applies only when the request carries `X-Member-Id`
+  naming an environment admin. Clients send that header, and can omit it or name
+  another member. It is a claim, not authentication.
+- The requirement filter applies whenever a request names an environment, and any
+  caller can name any environment.
+
+So the rule above describes what the app shows, not what a caller may read. These
+endpoints return answer values to any authenticated caller. The header changes only
+the registrant-only view of the member list, which returns no answers, and a caller
+can simply omit it:
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/members/[id]/attributes` | every answer the member has given when `environmentId` is omitted; only the environment's required questions when it is given |
+| `GET /api/members?environmentId=…` | the listed members with their answers to the environment's required questions; the registrant-only view returns no answers |
+| `GET /api/environments/[id]/registrations` | each registrant with their answers to the environment's required questions |
+| `GET /api/environments/[id]/distribution/heatmap` | each registrant's answers to the environment's required questions |
+| `GET /api/environments/[id]/members/[memberId]/missing-attributes` | the answers for any member to that environment's required questions |
+| `GET /api/conflicts` | every member's answers, with no environment scope, used to derive gender-balance suggestions; the response carries the derived conflicts and suggestions, not the answer values |
+
+Writes are open in the same way. `POST /api/members/[id]/attributes` sets an
+answer for any member, for any question in the named environment's festival (not
+only the ones that environment requires). `POST /api/environments/[id]/registrations`
+registers any `memberId`.
+
+Three reads return no answer values: `GET /api/members/[id]` (registrations,
+preferences and assignments), `GET /api/members/[id]/joinable-environments` (counts
+of missing questions) and `GET /api/festivals/[id]/attribute-definitions` (the
+question catalog with usage and answer counts).
+
+Until per-member credentials exist, do not describe any of this as access
+control. Making it one needs a caller identity the server resolves itself, which
+is the per-member credentials project.
 
 ## 8. Execution order
 
@@ -448,7 +497,7 @@ New tests, where they earn their keep:
 | Area | Test |
 |---|---|
 | Requirement resolution | given environment requirements + a member's existing answers, the correct missing set is returned (including "nothing missing" on second join) |
-| Scoped visibility | an environment admin's member query excludes non-registrants, and excludes attribute values for definitions their environment does not require |
+| Scoped visibility | an environment admin's member query excludes non-registrants, and excludes attribute values for definitions their environment does not require. It asserts the response shape for a request that names an admin; it does not prove access control (§7) |
 | Entry routing | 0 / 1 / N registrations each route correctly; the back-navigation guard still suppresses re-forwarding |
 | Cross-environment allocation | a member in two environments is not double-booked, and each environment's shift cap counts only its own shifts (guards the existing behaviour through the rename) |
 | Festival validation | `createFestivalSchema` rejects an empty name and `endDate < startDate`, and accepts a one-day festival |
@@ -461,7 +510,7 @@ New tests, where they earn their keep:
 | Risk | Mitigation |
 |---|---|
 | Rename touches route folders and every `fetch` call site at once | Single atomic commit; `tsc --noEmit` gate. Note: reverting the rename alone stops being meaningful once step 1's reset has run — before that point it is a clean revert, after it the schema and code must move together |
-| Scoped-admin guarantee silently false if a direct-Prisma site is missed | Step 4 is an explicit prerequisite listing all four sites; the scoped-visibility test asserts the response shape |
+| Scoped-admin view silently incomplete if a direct-Prisma site is missed | Step 4 is an explicit prerequisite listing all four sites; the scoped-visibility test asserts the response shape |
 | Independent per-environment statuses confuse members | Status is surfaced in the switcher for every environment, not just the active one |
 | Attribute library rots into near-duplicates | "Add new" is the last option and warns on similar names; usage counts make reuse visibly preferable |
 | Docs drift (7 files say "Event") | Step 8 is explicit; `PROJECT-OVERVIEW.md` glossary and `ARCHITECTURE.md` are the load-bearing ones |

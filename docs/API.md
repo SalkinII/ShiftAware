@@ -125,7 +125,9 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 `GET /api/members/{id}/joinable-environments` lists the environments a member has not joined, with the number of questions each still needs. Environment question requirements live at `/api/environments/{id}/attribute-requirements` (GET; POST and DELETE for global admins).
 
-> **Environment scope header.** Member lists scoped to an environment (`GET /api/members?environmentId=…`) accept an `X-Member-Id` request header. An environment admin (registration role `ADMIN`) who sends their own member id receives only that environment's registrants. The header is a client claim, not authentication: the sign-in model is the shared password plus the member picker.
+> **Environment scope header.** Member lists scoped to an environment (`GET /api/members?environmentId=…`) accept an `X-Member-Id` request header. An environment admin (registration role `ADMIN`) who sends their own member id receives only that environment's registrants, without answer values. This is a UX affordance, not an access control. The header is a client claim, not authentication: the sign-in model is the shared password plus the member picker, so a caller can omit the header or name another member.
+>
+> **Who can read answers.** Any signed-in caller can read answer values from these endpoints: `GET /api/members/{id}/attributes`, `GET /api/members?environmentId=…` (outside the registrant-only view above), `GET /api/environments/{id}/registrations`, `GET /api/environments/{id}/distribution/heatmap`, and `GET /api/environments/{id}/members/{memberId}/missing-attributes`. `GET /api/conflicts` reads every member's answers and returns derived conflicts and suggestions, not the values. `POST /api/members/{id}/attributes` and `POST /api/environments/{id}/registrations` accept writes for any member. A request that names an environment gets only that environment's required questions, but any caller can name any environment. Spec §7 (`docs/superpowers/specs/2026-09-03-multi-environment-scoping-design.md`) has the full list.
 
 ## Environments
 
