@@ -20,7 +20,7 @@
 | ------------------------ | --------------------------------------------------------------- |
 | Semantic Color Coding    | Every lane type has persistent color identity                   |
 | Progressive Disclosure   | Dense admin data reveals progressively; user views stay minimal |
-| Status-Driven Chromatics | Event lifecycle stages have distinct ambient color shifts       |
+| Status-Driven Chromatics | Environment lifecycle stages have distinct ambient color shifts       |
 | Motion as Feedback       | State changes have purposeful animation (500ms transitions)     |
 
 ---

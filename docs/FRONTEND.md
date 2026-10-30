@@ -83,7 +83,7 @@ Before building a new visual element, check this table. If something fits, use i
 | `ColorStripe`       | Vertical lane color bar          | Any element showing lane or template color identity |
 | `AvatarStack`       | Overlapping gradient avatars     | Displaying multiple assigned members                |
 | `DesirabilityBadge` | Score pill with star icon        | Showing shift desirability score                    |
-| `StatusBadge`       | Event lifecycle status indicator | Header or status display; pulses on active statuses |
+| `StatusBadge`       | Environment lifecycle status indicator | Header or status display; pulses on active statuses |
 | `GlassPanel`        | Frosted glass container          | Sidebars, overlays, property panels                 |
 | `SectionLabel`      | Uppercase section header         | Grouping content within a panel                     |
 | `ProgressBar`       | Horizontal fill bar              | Staffing coverage, preference satisfaction          |
@@ -147,8 +147,8 @@ These prop patterns must be consistent across all shared and feature components.
 | `color`       | `string`      | Always a resolved hex string. Never a CSS class, Tailwind token, or enum value.                                 |
 | `readOnly`    | `boolean?`    | Standard gate for disabling interactions in shared components (e.g. `LaneCalendarCanvas`, `ShiftBlockNode`).    |
 | `onClose`     | `() => void`  | Panels always receive this. Never manage close state internally inside a panel.                                 |
-| `eventStatus` | `EventStatus` | Passed down from page level. Components never fetch event status themselves.                                    |
-| `eventId`     | `string`      | Always explicit. Only use `useEventContext` (from `@/lib/contexts/EventContext`) when a component is deeply nested and prop-drilling is impractical. |
+| `eventStatus` | `EnvironmentStatus` | Passed down from page level. Components never fetch event status themselves.                                    |
+| `environmentId`     | `string`      | Always explicit. Only use `useEnvironmentContext` (from `@/lib/contexts/EnvironmentContext`) when a component is deeply nested and prop-drilling is impractical. |
 
 ---
 

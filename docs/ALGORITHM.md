@@ -110,7 +110,7 @@ interface AlgorithmWeights {
 
 ### Allocation Rules
 
-Rules are stored in `EventConfig.allocationRules` (JSON array). Each rule:
+Rules are stored in `EnvironmentConfig.allocationRules` (JSON array). Each rule:
 
 ```typescript
 interface AllocationRule {
@@ -133,7 +133,7 @@ interface AllocationRule {
 
 ## Configuration Mapping
 
-Config stored in `EventConfig.algorithmWeights` (JSON) and `EventConfig.balanceThresholds` (JSON).
+Config stored in `EnvironmentConfig.algorithmWeights` (JSON) and `EnvironmentConfig.balanceThresholds` (JSON).
 
 **UI sliders → algorithm weights:**
 
@@ -157,8 +157,8 @@ coreShiftCoverage: fixed at 0.05
 
 ```
 UI sliders (DistributionSettings.tsx)
-  → handleSave() → PUT /api/events/{id}/config
-  → EventConfig.algorithmWeights (DB, canonical 4-factor format)
+  → handleSave() → PUT /api/environments/{id}/config
+  → EnvironmentConfig.algorithmWeights (DB, canonical 4-factor format)
   → loadConfig() → reverse-maps to slider values for display
   → AssignmentsService.runAllocation() → extracts weights + thresholds
   → runAssignmentAlgorithm() → optimizer
@@ -168,7 +168,7 @@ UI sliders (DistributionSettings.tsx)
 
 ## Preview Mode
 
-`POST /api/assignments` with `{ "eventId": "...", "preview": true }`:
+`POST /api/assignments` with `{ "environmentId": "...", "preview": true }`:
 
 - Runs all 3 phases identically
 - Does NOT write to database
@@ -186,9 +186,9 @@ UI sliders (DistributionSettings.tsx)
 ## Data Flow Diagram
 
 ```
-EventConfig (DB)
-  └─► AssignmentsService.runAllocation(eventId, preview)
-        ├─ EventRepository.findById(eventId) → config
+EnvironmentConfig (DB)
+  └─► AssignmentsService.runAllocation(environmentId, preview)
+        ├─ EnvironmentRepository.findById(environmentId) → config
         ├─ Load members + shifts (with preferences, attributes)
         ├─ Parse: weights, minRestMs, maxShiftsPerPerson, allocationRules
         └─► runAssignmentAlgorithm(members, shifts, eventConfig)

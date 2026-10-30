@@ -57,8 +57,8 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 **Auth required:** Yes
 **Query params:**
 
-- `eventId` (string, optional) — filter to members registered for this event
-- `includeUnregistered` (boolean, optional) — when combined with eventId, also return unregistered members
+- `environmentId` (string, optional) — filter to members registered for this environment
+- `includeUnregistered` (boolean, optional) — when combined with environmentId, also return unregistered members
 - `search` (string, optional) — filter by alias
   **Response:** `{ "data": TeamMember[] }`
 
@@ -84,13 +84,13 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 **Auth required:** Yes
 **Response:** `{ "data": TeamMember }` — sets `isActive: false` (soft delete / deactivate)
-**Notes:** Does not remove the record. Also removes the member's assignments, preferences, swap requests, and event registrations for all non-COMPLETED events. Completed event history is preserved. Use `DELETE /api/members/[id]/permanent` to permanently remove.
+**Notes:** Does not remove the record. Also removes the member's assignments, preferences, swap requests, and environment registrations for all non-COMPLETED environments. Completed event history is preserved. Use `DELETE /api/members/[id]/permanent` to permanently remove.
 
 ### `DELETE /api/members/[id]/permanent`
 
 **Auth required:** Yes (admin only)
 **Response:** `{ "data": { "success": true } }`
-**Notes:** Permanently deletes the member and all their shift preferences, assignments, swap requests, and event registrations. Member must be deactivated (`isActive: false`) first — returns 409 otherwise.
+**Notes:** Permanently deletes the member and all their shift preferences, assignments, swap requests, and environment registrations. Member must be deactivated (`isActive: false`) first — returns 409 otherwise.
 
 | Status | Meaning |
 | --- | --- |
@@ -113,132 +113,146 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 ---
 
-## Events
+## Festivals
 
-### `GET /api/events`
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| GET | `/api/festivals` | any signed-in user | List festivals (id, name, startDate, endDate) |
+| POST | `/api/festivals` | global admin | Create a festival (audit-logged) |
+| PUT | `/api/festivals/{id}` | global admin | Edit a festival name and dates (audit-logged) |
+| GET | `/api/festivals/{id}/attribute-definitions` | any signed-in user | Festival question library with usage and answer counts |
+| POST | `/api/festivals/{id}/attribute-definitions` | global admin | Add a question to the festival library |
+
+`GET /api/members/{id}/joinable-environments` lists the environments a member has not joined, with the number of questions each still needs. Environment question requirements live at `/api/environments/{id}/attribute-requirements` (GET; POST and DELETE for global admins).
+
+> **Environment scope header.** Member lists scoped to an environment (`GET /api/members?environmentId=…`) accept an `X-Member-Id` request header. An environment admin (registration role `ADMIN`) who sends their own member id receives only that environment's registrants. The header is a client claim, not authentication: the sign-in model is the shared password plus the member picker.
+
+## Environments
+
+### `GET /api/environments`
 
 **Auth required:** Yes
-**Response:** `{ "data": Event[] }`
+**Response:** `{ "data": Environment[] }`
 
-### `POST /api/events`
+### `POST /api/environments`
 
 **Auth required:** Yes
 **Body:** `{ "name": string, "startDate": string (ISO), "endDate": string (ISO), ... }`
-**Response:** `{ "data": Event }` (201)
+**Response:** `{ "data": Environment }` (201)
 
-### `GET /api/events/current`
-
-**Auth required:** Yes
-**Response:** `{ "data": Event | null }` — the most recent non-COMPLETED event
-
-### `GET /api/events/[id]`
+### `GET /api/environments/current`
 
 **Auth required:** Yes
-**Response:** `{ "data": Event }`
+**Response:** `{ "data": Environment | null }` — the most recent non-COMPLETED environment
 
-### `PUT /api/events/[id]`
+### `GET /api/environments/[id]`
 
 **Auth required:** Yes
-**Body:** Partial Event fields
-**Response:** `{ "data": Event }`
+**Response:** `{ "data": Environment }`
 
-### `DELETE /api/events/[id]`
+### `PUT /api/environments/[id]`
+
+**Auth required:** Yes
+**Body:** Partial Environment fields
+**Response:** `{ "data": Environment }`
+
+### `DELETE /api/environments/[id]`
 
 **Auth required:** Yes (admin only)
 **Response:** `{ "data": { "success": true } }`
-**Notes:** Permanently deletes the event and all dependent data: shifts, shift roles, assignments, shift preferences, swap requests targeting those shifts, scheduled shifts, event config, event-specific shift templates, event registrations, template assignments, and attribute definitions. Only allowed when event status is `PLANNING` or `COMPLETED`.
+**Notes:** Permanently deletes the environment and all dependent data: shifts, shift roles, assignments, shift preferences, swap requests targeting those shifts, scheduled shifts, event config, event-specific shift templates, event registrations, template assignments, and attribute definitions. Only allowed when event status is `PLANNING` or `COMPLETED`.
 
 | Status | Meaning |
 | --- | --- |
 | 200 | Deleted |
 | 401 | Not authenticated or not admin |
-| 403 | Event status is not PLANNING or COMPLETED |
-| 404 | Event not found |
+| 403 | Environment status is not PLANNING or COMPLETED |
+| 404 | Environment not found |
 | 500 | Unexpected error |
 
-### `GET /api/events/[id]/config`
+### `GET /api/environments/[id]/config`
 
 **Auth required:** Yes
-**Response:** `{ "data": EventConfig }` — includes algorithmWeights, balanceThresholds, allocationRules JSON fields
+**Response:** `{ "data": EnvironmentConfig }` — includes algorithmWeights, balanceThresholds, allocationRules JSON fields
 
-### `PUT /api/events/[id]/config`
-
-**Auth required:** Yes
-**Body:** Partial EventConfig (algorithmWeights, balanceThresholds, allocationRules)
-**Response:** `{ "data": EventConfig }`
-
-### `GET /api/events/[id]/registrations`
+### `PUT /api/environments/[id]/config`
 
 **Auth required:** Yes
-**Response:** `{ "data": EventRegistration[] }`
+**Body:** Partial EnvironmentConfig (algorithmWeights, balanceThresholds, allocationRules)
+**Response:** `{ "data": EnvironmentConfig }`
 
-### `POST /api/events/[id]/registrations`
+### `GET /api/environments/[id]/registrations`
+
+**Auth required:** Yes
+**Response:** `{ "data": EnvironmentRegistration[] }`
+
+### `POST /api/environments/[id]/registrations`
 
 **Auth required:** Yes
 **Body:** `{ "teamMemberId": string }`
-**Response:** `{ "data": EventRegistration }` (201)
+**Response:** `{ "data": EnvironmentRegistration }` (201)
 
-### `GET /api/events/[id]/registrations/[memberId]`
-
-**Auth required:** Yes
-**Response:** `{ "data": EventRegistration }`
-
-### `PUT /api/events/[id]/registrations/[memberId]`
+### `GET /api/environments/[id]/registrations/[memberId]`
 
 **Auth required:** Yes
-**Body:** Partial EventRegistration
-**Response:** `{ "data": EventRegistration }`
+**Response:** `{ "data": EnvironmentRegistration }`
 
-### `DELETE /api/events/[id]/registrations/[memberId]`
+### `PUT /api/environments/[id]/registrations/[memberId]`
+
+**Auth required:** Yes
+**Body:** Partial EnvironmentRegistration
+**Response:** `{ "data": EnvironmentRegistration }`
+
+### `DELETE /api/environments/[id]/registrations/[memberId]`
 
 **Auth required:** Yes
 **Response:** `{ "data": { "success": true } }`
-**Notes:** Also removes the member's assignments, preferences, and swap requests scoped to this event.
+**Notes:** Also removes the member's assignments, preferences, and swap requests scoped to this environment.
 
-### `GET /api/events/[id]/templates`
+### `GET /api/environments/[id]/templates`
 
 **Auth required:** Yes
-**Response:** `{ "data": { "assigned": EventTemplate[], "eventSpecific": ShiftTemplate[] } }`
+**Response:** `{ "data": { "assigned": EnvironmentTemplate[], "eventSpecific": ShiftTemplate[] } }`
 **Notes:** Use `assigned` to derive lanes with `deriveLanesFromTemplates()`.
 
-### `POST /api/events/[id]/templates`
+### `POST /api/environments/[id]/templates`
 
 **Auth required:** Yes
 **Body:** `{ "templateId": string }`
-**Response:** `{ "data": EventTemplate }` (201)
+**Response:** `{ "data": EnvironmentTemplate }` (201)
 
-### `DELETE /api/events/[id]/templates/[templateId]`
+### `DELETE /api/environments/[id]/templates/[templateId]`
 
 **Auth required:** Yes
 **Response:** `{ "data": { "success": true } }`
 
-### `GET /api/events/[id]/attributes`
+### `GET /api/environments/[id]/attributes`
 
 **Auth required:** Yes
-**Response:** `{ "data": EventAttributeDefinition[] }`
+**Response:** `{ "data": AttributeDefinition[] }`
 
-### `POST /api/events/[id]/attributes`
+### `POST /api/environments/[id]/attributes`
 
 **Auth required:** Yes
 **Body:** `{ "name": string, "type": string, "options": string[] }`
-**Response:** `{ "data": EventAttributeDefinition }` (201)
+**Response:** `{ "data": AttributeDefinition }` (201)
 
-### `PUT /api/events/[id]/attributes/[attrId]`
+### `PUT /api/environments/[id]/attributes/[attrId]`
 
 **Auth required:** Yes
-**Body:** Partial EventAttributeDefinition
-**Response:** `{ "data": EventAttributeDefinition }`
+**Body:** Partial AttributeDefinition
+**Response:** `{ "data": AttributeDefinition }`
 
-### `DELETE /api/events/[id]/attributes/[attrId]`
+### `DELETE /api/environments/[id]/attributes/[attrId]`
 
 **Auth required:** Yes
 **Response:** `{ "data": { "success": true } }`
 
-### `POST /api/events/[id]/transition`
+### `POST /api/environments/[id]/transition`
 
 **Auth required:** Yes
 **Body:** `{ "targetStatus": "PLANNING"|"OPEN_FOR_PREFERENCES"|"ASSIGNING"|"FINALIZED"|"COMPLETED" }`
-**Response:** `{ "data": Event }`
+**Response:** `{ "data": Environment }`
 **Notes:** Only one-step transitions allowed (forward or backward). Validates prerequisites (e.g. at least 1 shift to publish). Returns 400 for invalid transition.
 
 ---
@@ -250,7 +264,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 **Auth required:** Yes
 **Query params:**
 
-- `eventId` (string, required) — filter by event
+- `environmentId` (string, required) — filter by environment
 - `startDate`, `endDate` (string, ISO, optional) — date range filter
   **Response:** `{ "data": ShiftWithRelations[] }` — includes template, assignments, preferences
 
@@ -258,7 +272,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 **Auth required:** Yes
 **Status guard:** Requires PLANNING
-**Body:** `{ "eventId": string, "templateId": string, "startTime": string (ISO), "endTime": string (ISO), "capacity": number, "desirabilityScore": number }`
+**Body:** `{ "environmentId": string, "templateId": string, "startTime": string (ISO), "endTime": string (ISO), "capacity": number, "desirabilityScore": number }`
 **Response:** `{ "data": Shift }` (201)
 
 ### `GET /api/shifts/[id]`
@@ -283,7 +297,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 
 **Auth required:** Yes
 **Response:** `{ "data": { "success": true } }`
-**Notes:** Force-deletes orphaned/problematic shifts regardless of event status. Maintenance tool — bypasses status guard.
+**Notes:** Force-deletes orphaned/problematic shifts regardless of environment status. Maintenance tool — bypasses status guard.
 
 ### `GET /api/shifts/templates`
 
@@ -315,7 +329,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 ### `POST /api/shifts/templates/[id]/schedule`
 
 **Auth required:** Yes
-**Body:** `{ "eventId": string, "dates": string[] (ISO dates) }`
+**Body:** `{ "environmentId": string, "dates": string[] (ISO dates) }`
 **Response:** `{ "data": Shift[] }` — bulk-creates shifts from template
 
 ### `POST /api/shifts/from-scheduled/[scheduledId]`
@@ -330,7 +344,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 ### `GET /api/preferences`
 
 **Auth required:** Yes
-**Query params:** `eventId` (string), `teamMemberId` (string), `shiftId` (string) — any combination
+**Query params:** `environmentId` (string), `teamMemberId` (string), `shiftId` (string) — any combination
 **Response:** `{ "data": ShiftPreference[] }`
 
 ### `POST /api/preferences`
@@ -353,15 +367,15 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 ### `GET /api/assignments`
 
 **Auth required:** Yes
-**Query params:** `eventId` (string, optional), `teamMemberId` (string, optional)
+**Query params:** `environmentId` (string, optional), `teamMemberId` (string, optional)
 **Response:** `{ "data": Assignment[] }`
 
 ### `POST /api/assignments`
 
 **Auth required:** Yes
 **Status guard:** ASSIGNMENT_ALGORITHM (bulk run) or ASSIGNMENT_MANUAL (single)
-**Body (algorithm run):** `{ "eventId": string, "preview"?: boolean }` — runs full allocation; `preview: true` returns proposed assignments without DB writes
-**Body (manual):** `{ "eventId": string, "assignments": [{ "shiftId": string, "teamMemberId": string, "role": "TEAM_MEMBER"|"SHIFT_LEAD"|"SUPER", "assignmentType": "MANUAL" }] }`
+**Body (algorithm run):** `{ "environmentId": string, "preview"?: boolean }` — runs full allocation; `preview: true` returns proposed assignments without DB writes
+**Body (manual):** `{ "environmentId": string, "assignments": [{ "shiftId": string, "teamMemberId": string, "role": "TEAM_MEMBER"|"SHIFT_LEAD"|"SUPER", "assignmentType": "MANUAL" }] }`
 **Response:** `{ "data": AlgorithmResult }` for algorithm run; `{ "data": { "assignments": Assignment[] } }` (201) for manual
 **Notes:** `preview: true` returns proposed assignments without saving. AlgorithmResult includes assignments, violations array, scores map, explanations map.
 
@@ -385,7 +399,7 @@ Login attempts are rate-limited per IP address. After 5 failed attempts within 1
 ### `GET /api/swap-requests`
 
 **Auth required:** Yes
-**Query params:** `eventId` (string, optional), `memberId` (string, optional)
+**Query params:** `environmentId` (string, optional), `memberId` (string, optional)
 **Response:** `{ "data": SwapRequest[] }`
 
 ### `POST /api/swap-requests`
@@ -444,10 +458,10 @@ These routes contain embedded business logic with direct Prisma access (not back
 
 ### `GET /api/conflicts`
 
-Detect constraint violations across all assignments for an event.
-**Query params:** `eventId` (string, required)
+Detect constraint violations across all assignments for an environment.
+**Query params:** `environmentId` (string, required)
 
 ### `POST /api/conflicts/resolve`
 
 Apply conflict resolution actions.
-**Body:** `{ "conflictId": string, "action": string, "eventId": string }`
+**Body:** `{ "conflictId": string, "action": string, "environmentId": string }`

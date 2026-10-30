@@ -11,10 +11,10 @@ Festival shift planning tool for small teams. Admins build schedules and run all
 | Document                             | Purpose                      | Key Sections                                                                                   |
 | ------------------------------------ | ---------------------------- | ---------------------------------------------------------------------------------------------- |
 | [README.md](../README.md)            | Setup & quick start          | Features, Quick Start, Commands                                                                |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design reference      | [Three-Layer Pattern](#), [Event Lifecycle](#), [File Structure](#), [Error Handling](#)       |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design reference      | [Three-Layer Pattern](#), [Environment Lifecycle](#), [File Structure](#), [Error Handling](#)       |
 | [DESIGN.md](./DESIGN.md)             | Visual language & components | [Token System](#), [Coordinate System](#), [Component Patterns](#)                             |
 | [FRONTEND.md](./FRONTEND.md)         | Frontend patterns reference  | [Coordinate System](#), [Component Registry](#), [Reusability Rules](#), [Prop Conventions](#) |
-| [API.md](./API.md)                   | Endpoint reference           | [Auth](./API.md#authentication), [Members](#), [Events](#), [Shifts](#), [Algorithm](#)        |
+| [API.md](./API.md)                   | Endpoint reference           | [Auth](./API.md#authentication), [Members](#), [Festivals and environments](#), [Shifts](#), [Algorithm](#)        |
 | [ALGORITHM.md](./ALGORITHM.md)       | Allocation engine            | [Phases](#), [Scoring](#), [Rules](#), [Config Mapping](#)                                     |
 
 ---
@@ -23,19 +23,20 @@ Festival shift planning tool for small teams. Admins build schedules and run all
 
 | Term                | Meaning                                                                                  |
 | ------------------- | ---------------------------------------------------------------------------------------- |
-| **Event**           | A festival or event instance. All data is scoped to an Event.                            |
+| **Festival**        | A whole event (e.g. "Starlight Meadow 2026"). Owns the question library and the template library.       |
+| **Environment**     | A working area inside a festival (e.g. Bar, Gate, Stage). Shifts, config, team and allocation are scoped to an Environment. |
 | **ShiftTemplate**   | Reusable pattern defining lane type, color, capacity. Global (not event-scoped).         |
-| **Shift**           | An actual scheduled shift for a specific Event, derived from a template.                 |
+| **Shift**           | An actual scheduled shift for a specific Environment, derived from a template.                 |
 | **Lane**            | Vertical column on the calendar, derived from ShiftTemplate.name.                        |
 | **Assignment**      | A TeamMember assigned to a Shift (by algorithm or manually).                             |
 | **ShiftPreference** | A member's vote on a shift: `WANT` or `DONT_WANT`.                                       |
-| **EventStatus**     | Lifecycle stage of an event. Determines what operations are permitted.                   |
+| **EnvironmentStatus**     | Lifecycle stage of an event. Determines what operations are permitted.                   |
 | **AllocationRule**  | Attribute-based constraint for the algorithm (e.g. "all mobile shifts need first aid").  |
 | **RepositoryError** | Typed error from the Repository layer with code: NOT_FOUND / DUPLICATE / DATABASE_ERROR. |
 
 ---
 
-## Event Lifecycle Quick Reference
+## Environment Lifecycle Quick Reference
 
 ```
 PLANNING ──► OPEN_FOR_PREFERENCES ──► ASSIGNING ──► FINALIZED ──► COMPLETED
@@ -50,7 +51,7 @@ PLANNING ──► OPEN_FOR_PREFERENCES ──► ASSIGNING ──► FINALIZED 
 | FINALIZED            | Admin    | Manual reassignment only (dropouts)       |
 | COMPLETED            | Nobody   | Read-only (revert to FINALIZED if needed) |
 
-→ Full permission matrix: [ARCHITECTURE.md — Event Lifecycle](./ARCHITECTURE.md)
+→ Full permission matrix: [ARCHITECTURE.md — Environment Lifecycle](./ARCHITECTURE.md)
 
 ---
 
@@ -72,9 +73,9 @@ PLANNING ──► OPEN_FOR_PREFERENCES ──► ASSIGNING ──► FINALIZED 
 
 ## Quick Debugging Index
 
-**"Lanes not showing"** → Check templates assigned to event via EventTemplate junction. See [ARCHITECTURE.md](./ARCHITECTURE.md).
+**"Lanes not showing"** → Check templates assigned to the environment via EnvironmentTemplate junction. See [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-**"Algorithm returns empty assignments"** → Check EventRegistration exists for members. Event must be in ASSIGNING status.
+**"Algorithm returns empty assignments"** → Check EnvironmentRegistration exists for members. The environment must be in ASSIGNING status.
 
 **"RepositoryError not caught in route"** → Add `instanceof RepositoryError` check in catch block. See [ARCHITECTURE.md — Error Handling](./ARCHITECTURE.md).
 

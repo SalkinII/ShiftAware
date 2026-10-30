@@ -38,13 +38,13 @@
 ┌──────────────────────────────────────────────────────────────────────┐
 │                  REPOSITORIES (lib/repositories/)                     │
 │  Data Access | Prisma Abstraction | Error Handling                   │
-│  TeamMemberRepository | EventRepository | EventConfigRepository | …  │
+│  TeamMemberRepository | EnvironmentRepository | EnvironmentConfigRepository | …  │
 └──────────────────────────────────────────────────────────────────────┘
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    DATABASE (PostgreSQL + Prisma)                     │
-│  TeamMember | Event | Shift | ShiftTemplate | Assignment | ...       │
+│  TeamMember | Environment | Shift | ShiftTemplate | Assignment | ...       │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -106,7 +106,7 @@ Key files: `lib/crypto.ts` (signing), `lib/rate-limit.ts` (throttling), `lib/aut
 │ • Prisma client calls                                       │
 │ • Consistent error handling (RepositoryError)               │
 │ • Query construction                                        │
-│ • Focused repos (Event* split into 4 classes in v2.5-A)     │
+│ • Focused repos (Environment* split into 4 classes in v2.5-A)     │
 └─────────────────────────────────────────────────────────────┘
 │
 ▼ calls
@@ -156,30 +156,33 @@ export class TeamMemberRepository extends BaseRepository {
 
 ## 3. Core Concepts
 
-### Event-Scoped Data
+### Environment-Scoped Data
 
-Everything in ShiftAware is **scoped to an Event**:
+A **festival** is the parent of one or more **environments** (for example Bar, Gate and Stage). The attribute library and the shift-template library belong to the festival, so a question is written once and reused. Which questions an environment asks (and whether they are required), its shifts, configuration, team and allocation belong to the environment. The full rationale is in [the multi-environment scoping design](superpowers/specs/2026-09-03-multi-environment-scoping-design.md).
 
-| Global (shared across events) | Event-Scoped             |
+Everything in ShiftAware is **scoped to an Environment**:
+
+| Global (shared across environments) | Environment-Scoped |
 | ----------------------------- | ------------------------ |
 | TeamMember                    | Shift                    |
 | ShiftTemplate (global)        | Assignment               |
-| -                             | EventRegistration        |
+| -                             | EnvironmentRegistration        |
 | -                             | ShiftPreference          |
-| -                             | EventConfig              |
-| -                             | EventAttributeDefinition |
+| -                             | EnvironmentConfig              |
+| -                             | AttributeDefinition |
 
 ### Key Relationships
 
 ```
-Event
-  ├── EventConfig (1:1) - algorithm weights, thresholds
-  ├── EventRegistration (1:N) - which members participate
+Festival (shared attribute and template library)
+  └── Environment (one per working area)
+  ├── EnvironmentConfig (1:1) - algorithm weights, thresholds
+  ├── EnvironmentRegistration (1:N) - which members participate
   ├── Shift (1:N) - actual shifts for this event
   │     ├── Assignment (1:N) - who works this shift
   │     └── ShiftPreference (1:N) - voting (WANT/DONT_WANT)
-  ├── EventTemplate (1:N) - which templates are assigned
-  └── EventAttributeDefinition (1:N) - custom fields for this event
+  ├── EnvironmentTemplate (1:N) - which templates are assigned
+  └── AttributeDefinition (1:N) - custom fields for this event
 
 ShiftTemplate (Global)
   ├── name → defines calendar LANE
@@ -192,13 +195,13 @@ TeamMember (Global)
   ├── avatarId, experienceLevel
   ├── capabilities (TEAM_MEMBER | SHIFT_LEAD | SUPER)
   └── attributes (via TeamMemberAttribute) - dynamic properties like gender
-  ├── EventRegistration → which events they're registered for
+  ├── EnvironmentRegistration → which events they're registered for
   └── ShiftPreference → their shift votes
 ```
 
 ---
 
-## 4. Event Lifecycle
+## 4. Environment Lifecycle
 
 ShiftAware's workflow is driven by the event status. Each status unlocks specific capabilities and locks others.
 
@@ -221,11 +224,11 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 | **FINALIZED**            | Published schedule, operational      | Admin         | Manual reassignment (dropouts/late adds), registration |
 | **COMPLETED**            | Archive / read-only                  | Nobody        | Nothing — revertible to FINALIZED if needed            |
 
-**Deletion policy:** Only `PLANNING` and `COMPLETED` events can be permanently deleted. Events in `OPEN_FOR_PREFERENCES`, `ASSIGNING`, or `FINALIZED` states must be transitioned before deletion is permitted — this prevents accidental removal of events that have active team participation or live assignments.
+**Deletion policy:** Only `PLANNING` and `COMPLETED` environments can be permanently deleted. Environments in `OPEN_FOR_PREFERENCES`, `ASSIGNING`, or `FINALIZED` states must be transitioned before deletion is permitted — this prevents accidental removal of events that have active team participation or live assignments.
 
 ### Permission Matrix
 
-| EventStatus          | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
+| EnvironmentStatus          | SHIFT_MUTATE | PREFERENCE_MUTATE | ASSIGNMENT_ALGORITHM | ASSIGNMENT_MANUAL | REGISTRATION_MUTATE |
 | -------------------- | ------------ | ----------------- | -------------------- | ----------------- | ------------------- |
 | PLANNING             | **yes**      | no                | no                   | no                | **yes**             |
 | OPEN_FOR_PREFERENCES | no           | **yes**           | no                   | no                | **yes**             |
@@ -235,7 +238,7 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 
 **Key design decision:** FINALIZED allows manual assignment changes and new registrations. This handles real-world scenarios: dropouts, late additions, and last-minute reassignments. Only COMPLETED locks everything — and even COMPLETED can revert to FINALIZED.
 
-**Status transitions via:** `POST /api/events/{id}/transition` → EventsService.transitionStatus()
+**Status transitions via:** `POST /api/environments/{id}/transition` → EventsService.transitionStatus()
 
 **Validation in:** lib/validations/event-transition.ts
 
@@ -259,15 +262,15 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
      │
      ├─[2]─ Select member ─────────────► localStorage: selectedMemberId
      │      │
-     │      └─[3]─ GET /api/events ────► Show events user can register for
+     │      └─[3]─ GET /api/environments ────► Show events user can register for
      │             │
-     │             └─[4]─ Select event ► localStorage: selectedEventId
+     │             └─[4]─ Select event ► localStorage: selectedEnvironmentId
      │
      └─[5]─ Create new profile
             │
             ├── POST /api/members ─────► Create TeamMember
             │   (Route → TeamMemberRepository → Prisma)
-            ├── POST /api/events/{id}/registrations ► Register for event
+            ├── POST /api/environments/{id}/registrations ► Register for event
             └── POST /api/members/{id}/attributes ► Save custom attributes
 ```
 
@@ -276,28 +279,28 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 ```
 /admin/shifts/schedule
      │
-     ├─[1]─ useEventContext() ─────────► Get selectedEventId from header
-     │      (from @/lib/contexts/EventContext)
+     ├─[1]─ useEnvironmentContext() ─────────► Get selectedEnvironmentId from header
+     │      (from @/lib/contexts/EnvironmentContext)
      │
-     ├─[2]─ GET /api/shifts?eventId ───► Load existing shifts
+     ├─[2]─ GET /api/shifts?environmentId ───► Load existing shifts
      │      (Route → ShiftRepository → Prisma with relations)
      │
-     ├─[3]─ GET /api/events/{id}/templates ► Load templates → derive lanes
+     ├─[3]─ GET /api/environments/{id}/templates ► Load templates → derive lanes
      │
      ├─[4]─ LaneCalendarCanvas displays lanes from template names
      │
      ├─[5]─ Admin drags template to calendar
      │      │
-     │      ├── POST /api/shifts ──────► { eventId, templateId, startTime, ... }
+     │      ├── POST /api/shifts ──────► { environmentId, templateId, startTime, ... }
      │      │   (Route → ShiftRepository → Prisma)
      │      │
      │      └── Shift appears in correct lane (by templateId)
      │
      └─[6]─ Admin clicks "Publish Shifts"
             │
-            └── POST /api/events/{id}/transition
+            └── POST /api/environments/{id}/transition
                 └── { targetStatus: "OPEN_FOR_PREFERENCES" }
-                └── Route validates via lib/domain/event-status + EventRepository
+                └── Route validates via lib/domain/event-status + EnvironmentRepository
 ```
 
 ### Journey C: Team Votes on Preferences (OPEN_FOR_PREFERENCES)
@@ -305,12 +308,12 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 ```
 /app/calendar
      │
-     ├─[1]─ useEventContext() ─────────► Get selectedEventId, selectedMemberId
-     │      (from @/lib/contexts/EventContext)
+     ├─[1]─ useEnvironmentContext() ─────────► Get selectedEnvironmentId, selectedMemberId
+     │      (from @/lib/contexts/EnvironmentContext)
      │
-     ├─[2]─ GET /api/shifts?eventId ───► Load all shifts with assignments
+     ├─[2]─ GET /api/shifts?environmentId ───► Load all shifts with assignments
      │
-     ├─[3]─ GET /api/events/{id}/templates ► Derive lanes from templates
+     ├─[3]─ GET /api/environments/{id}/templates ► Derive lanes from templates
      │
      ├─[4]─ Canvas shows shifts with desirability score (1-5 badge)
      │      + thumbs up/down voting buttons
@@ -328,26 +331,26 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 ```
 /admin/team (Allocation tab)
      │
-     ├─[1]─ GET /api/events/{id}/config ► Load algorithm weights
+     ├─[1]─ GET /api/environments/{id}/config ► Load algorithm weights
      │
      ├─[2]─ Admin adjusts weights + attribute-aware balance rules
-     │      (dropdowns populated from EventAttributeDefinition options)
+     │      (dropdowns populated from AttributeDefinition options)
      │
-     ├─[3]─ PUT /api/events/{id}/config ► Save weights
+     ├─[3]─ PUT /api/environments/{id}/config ► Save weights
      │
      ├─[4]─ Click "Preview Assignment"
      │      │
-     │      └── POST /api/assignments?preview=true&eventId=X
+     │      └── POST /api/assignments?preview=true&environmentId=X
      │          └── Returns proposed assignments WITHOUT saving
      │
      ├─[5]─ Click "Run Assignment"
      │      │
-     │      └── POST /api/assignments?eventId=X
+     │      └── POST /api/assignments?environmentId=X
      │          └── lib/domain/allocation.runAllocation() saves to DB
      │
      └─[6]─ Admin clicks "Finalize Schedule"
             │
-            └── POST /api/events/{id}/transition
+            └── POST /api/environments/{id}/transition
                 └── { targetStatus: "FINALIZED" }
 ```
 
@@ -362,11 +365,11 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
      │      └── DELETE /api/assignments?id=X
      │
      ├─[3]─ Add member to shift
-     │      └── POST /api/assignments { eventId, assignments: [{ shiftId, teamMemberId, role, assignmentType: "MANUAL" }] }
+     │      └── POST /api/assignments { environmentId, assignments: [{ shiftId, teamMemberId, role, assignmentType: "MANUAL" }] }
      │
      └─[4]─ Handle dropout
             ├── Remove old member's assignment
-            ├── Register new member: POST /api/events/{id}/registrations
+            ├── Register new member: POST /api/environments/{id}/registrations
             └── Assign new member to open shift
 ```
 
@@ -392,15 +395,15 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 | Component          | User Action  | API Call                            | Service        | Repository           | DB Table          |
 | ------------------ | ------------ | ----------------------------------- | -------------- | -------------------- | ----------------- |
 | MemberList         | Click member | -                                   | -              | -                    | localStorage      |
-| EventSelectionStep | Select event | -                                   | -              | -                    | localStorage      |
+| EnvironmentSelectionStep | Select event | -                                   | -              | -                    | localStorage      |
 | CreateProfileForm  | Submit       | POST /api/members                   | MembersService | TeamMemberRepository | TeamMember        |
-| CreateProfileForm  | Register     | POST /api/events/{id}/registrations | -              | -                    | EventRegistration |
+| CreateProfileForm  | Register     | POST /api/environments/{id}/registrations | -              | -                    | EnvironmentRegistration |
 
 ### Calendar (User)
 
 | Component                 | User Action     | API Call                | Service             | Repository            | DB Table        |
 | ------------------------- | --------------- | ----------------------- | ------------------- | --------------------- | --------------- |
-| LaneCalendarCanvas        | Load            | GET /api/shifts?eventId | ShiftsService       | ShiftRepository       | Shift           |
+| LaneCalendarCanvas        | Load            | GET /api/shifts?environmentId | ShiftsService       | ShiftRepository       | Shift           |
 | ShiftBlockNode (readOnly) | Vote Want       | POST /api/preferences   | PreferencesService  | PreferenceRepository  | ShiftPreference |
 | ShiftBlockNode (readOnly) | Vote Don't Want | POST /api/preferences   | PreferencesService  | PreferenceRepository  | ShiftPreference |
 | MyShiftsList (swap badge) | Cancel swap          | DELETE /api/swap-requests/{id}      | SwapRequestsService | SwapRequestRepository | SwapRequest |
@@ -411,12 +414,12 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 
 | Component            | User Action       | API Call                         | Service            | Repository           | DB Table      |
 | -------------------- | ----------------- | -------------------------------- | ------------------ | -------------------- | ------------- |
-| LaneCalendarCanvas   | Load              | GET /api/shifts?eventId          | ShiftsService      | ShiftRepository      | Shift         |
+| LaneCalendarCanvas   | Load              | GET /api/shifts?environmentId          | ShiftsService      | ShiftRepository      | Shift         |
 | TemplatePalette      | Load              | GET /api/shifts/templates        | -                  | -                    | ShiftTemplate |
 | LaneCalendarCanvas   | Drop template     | POST /api/shifts                 | ShiftsService      | ShiftRepository      | Shift         |
 | ShiftPropertiesPanel | Delete            | DELETE /api/shifts/{id}          | ShiftsService      | ShiftRepository      | Shift         |
 | ShiftBlockNode       | Resize            | PUT /api/shifts/{id}             | ShiftsService      | ShiftRepository      | Shift         |
-| Header buttons       | Transition status | POST /api/events/{id}/transition | EventsService      | EventRepository      | Event         |
+| Header buttons       | Transition status | POST /api/environments/{id}/transition | EventsService      | EnvironmentRepository      | Event         |
 | ShiftPropertiesPanel | Add assignment    | POST /api/assignments            | AssignmentsService | AssignmentRepository | Assignment    |
 | ShiftPropertiesPanel | Remove assignment | DELETE /api/assignments          | AssignmentsService | AssignmentRepository | Assignment    |
 | Header               | Export            | (client-side)                    | -                  | -                    | -             |
@@ -425,21 +428,21 @@ Every status can step backward one step. COMPLETED → FINALIZED is always allow
 
 | Component            | User Action | API Call                         | Service       | Repository      | DB Table                 |
 | -------------------- | ----------- | -------------------------------- | ------------- | --------------- | ------------------------ |
-| FestivalSettings     | Save        | POST /api/events                 | EventsService | EventRepository | Event                    |
-| FestivalSettings     | Update      | PUT /api/events/{id}             | EventsService | EventRepository | Event                    |
+| EnvironmentSettings  | Save        | POST /api/environments                 | EventsService | EnvironmentRepository | Event                    |
+| EnvironmentSettings  | Update      | PUT /api/environments/{id}             | EventsService | EnvironmentRepository | Event                    |
 | TemplateManager      | Create      | POST /api/shifts/templates       | -             | -               | ShiftTemplate            |
-| TemplateManager      | Assign      | POST /api/events/{id}/templates  | -             | -               | EventTemplate            |
-| AttributeDefinitions | Create      | POST /api/events/{id}/attributes | -             | -               | EventAttributeDefinition |
+| TemplateManager      | Assign      | POST /api/environments/{id}/templates  | -             | -               | EnvironmentTemplate            |
+| AttributeDefinitions | Create      | POST /api/environments/{id}/attributes | -             | -               | AttributeDefinition |
 
 ### Team (Admin)
 
 | Component             | User Action     | API Call                                | Service            | Repository           | DB Table                       |
 | --------------------- | --------------- | --------------------------------------- | ------------------ | -------------------- | ------------------------------ |
-| MemberListByEvent     | Load            | GET /api/members?eventId                | MembersService     | TeamMemberRepository | TeamMember + EventRegistration |
-| MemberListByEvent     | Add member      | POST /api/events/{id}/registrations     | EventsService      | EventRepository      | EventRegistration              |
-| DistributionSettings  | Load config     | GET /api/events/{id}/config             | EventsService      | EventRepository      | EventConfig                    |
-| DistributionSettings  | Save config     | PUT /api/events/{id}/config             | EventsService      | EventRepository      | EventConfig                    |
-| DistributionSettings  | Load attributes | GET /api/events/{id}/attributes         | EventsService      | EventRepository      | EventAttributeDefinition       |
+| MemberListByEvent     | Load            | GET /api/members?environmentId                | MembersService     | TeamMemberRepository | TeamMember + EnvironmentRegistration |
+| MemberListByEvent     | Add member      | POST /api/environments/{id}/registrations     | EventsService      | EnvironmentRepository      | EnvironmentRegistration              |
+| DistributionSettings  | Load config     | GET /api/environments/{id}/config             | EventsService      | EnvironmentRepository      | EnvironmentConfig                    |
+| DistributionSettings  | Save config     | PUT /api/environments/{id}/config             | EventsService      | EnvironmentRepository      | EnvironmentConfig                    |
+| DistributionSettings  | Load attributes | GET /api/environments/{id}/attributes         | EventsService      | EnvironmentRepository      | AttributeDefinition       |
 | DistributionSettings  | Preview         | POST /api/assignments?preview=true      | AssignmentsService | AssignmentRepository | -                              |
 | DistributionSettings  | Run Algorithm   | POST /api/assignments                   | AssignmentsService | AssignmentRepository | Assignment                     |
 | AlgorithmResultsModal | Display results | (receives AlgorithmResult from preview) | -                  | -                    | -                              |
@@ -518,7 +521,7 @@ lib/
 │   ├── assignment.repository.ts
 │   └── swap-request.repository.ts
 ├── contexts/
-│   └── EventContext.tsx       # useEventContext lives here (wrapper hook deleted in v2.5-A)
+│   └── EnvironmentContext.tsx       # useEnvironmentContext lives here (wrapper hook deleted in v2.5-A)
 ├── hooks/
 │   └── useMemberContext.ts
 ├── utils/
@@ -635,12 +638,12 @@ Run tests: `npm test` | `npx vitest run --reporter=verbose` | `npx vitest run te
 
 ## 11. Context Management
 
-### useEventContext
+### useEnvironmentContext
 
-- Import from `@/lib/contexts/EventContext` (the old `lib/hooks/useEventContext` re-export was deleted in v2.5-A)
-- Admin: localStorage key = 'adminSelectedEventId'
-- User: localStorage key = 'selectedEventId'
-- Returns: { selectedEventId, selectedEvent, events, setSelectedEventId, refreshEvents, loading }
+- Import from `@/lib/contexts/EnvironmentContext` (the old `lib/hooks/useEnvironmentContext` re-export was deleted in v2.5-A)
+- Admin: localStorage key = 'adminSelectedEnvironmentId'
+- User: localStorage key = 'selectedEnvironmentId'
+- Returns: { selectedEnvironmentId, selectedEvent, events, setSelectedEventId, refreshEvents, loading }
 
 ### useMemberContext
 
@@ -655,11 +658,11 @@ User calendar auto-refreshes shifts every 30 seconds (setInterval in useEffect).
 
 ## 12. Quick Debugging
 
-**"Lanes not showing"** → Check templates assigned to event via EventTemplate junction table.
+**"Lanes not showing"** → Check templates assigned to event via EnvironmentTemplate junction table.
 
 **"Shifts in wrong lane"** → Verify Shift.templateId matches a template assigned to the event.
 
-**"Algorithm returns empty"** → Check EventRegistration exists for members + event is ASSIGNING status.
+**"Algorithm returns empty"** → Check EnvironmentRegistration exists for members + event is ASSIGNING status.
 
 **"Can't vote on shifts"** → Verify selectedMemberId in localStorage.
 

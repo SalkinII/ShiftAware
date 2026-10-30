@@ -31,17 +31,18 @@ This guide walks through every screen in plain language. You do not need to read
 
 | Term | What it means in plain language |
 | ---- | ------------------------------- |
-| **Event** | One festival or event instance (e.g. "Summer Fest 2026"). All shifts, members, and assignments belong to a specific event. |
+| **Festival** | One whole event (e.g. "Summer Fest 2026"). It holds the question library and the shift-template library. |
+| **Environment** | A working area inside a festival, such as Bar, Gate or Stage. Shifts, members and assignments belong to one environment. |
 | **Shift template** | A reusable recipe for a type of shift — its name, color, and default capacity. Templates are created once and reused across events. |
 | **Shift** | A concrete slot in the schedule: a specific start/end time on a specific day, tied to a template. |
 | **Lane** | A horizontal section on the schedule calendar, derived from the template name. Each template type gets its own lane. |
 | **Preference** | A vote a team member casts on a shift: **Want** or **Don't want**. Visible to the organizer; used by the allocation engine. |
 | **Assignment** | A team member confirmed for a specific shift, either by the algorithm or by manual organizer action. |
-| **Event status** | The lifecycle stage of an event. It controls what actions are available at any given time (see table below). |
+| **Environment status** | The lifecycle stage of an environment. It controls what actions are available at any given time (see table below). |
 
-### Event lifecycle
+### Environment lifecycle
 
-Events move through five stages in order. Organizers advance (or revert) the status from the Shift Schedule page.
+Environments move through five stages in order. Organizers advance (or revert) the status from the Shift Schedule page.
 
 ```
 PLANNING → OPEN FOR PREFERENCES → ASSIGNING → FINALIZED → COMPLETED
@@ -63,7 +64,7 @@ PLANNING → OPEN FOR PREFERENCES → ASSIGNING → FINALIZED → COMPLETED
 
 Organizers access the admin area via the left sidebar (desktop) or the slide-out menu (mobile). The sidebar contains four sections: **Event Setup**, **Shift Schedule**, **Team Management**, and **Audit Log**.
 
-Before starting, select the event you are working on using the event selector in the top header (desktop) or the mobile menu.
+Before starting, choose the environment you are working on with the environment switcher in the top header (desktop) or the mobile menu. The switcher lists the environments you have joined, grouped by festival, and lets you join another one.
 
 ---
 
@@ -73,7 +74,7 @@ Use this page to configure the event, define shift templates, and set team attri
 
 **Event Settings tab**
 
-1. Set the event name, start date, and end date.
+1. Choose or create the festival, then set its name, start date and end date. Then add the environments (for example Bar, Gate and Stage) inside it.
 2. Set the event password that team members will use to log in.
 3. Save your changes.
 
@@ -254,10 +255,10 @@ After logging in you land on the **Select Your Identity** screen.
 
 1. Find your alias (avatar + name) in the list and click it.
    - If this is your first time: click **Create New Profile**, enter an alias and choose an avatar emoji, then submit. Your organizer can link your alias to your real name using the pseudonym mapping export.
-2. After selecting your alias, choose the **event** you are participating in.
+2. After selecting your alias, choose the **environment** you are working in (for example Bar, Gate or Stage).
 
 ![Identity — event selection](images/1-3-identity-events.png)
-*Event selection — pick the event you are attending.*
+*Environment selection — pick the environment you are working in.*
 
 3. If the event has required attributes (e.g. a first-aid certificate, or an **Availability Window** stating when you can work), a prompt appears. Fill in the fields and submit.
 4. You are redirected to the **My Schedule** page.
