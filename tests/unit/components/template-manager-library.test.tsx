@@ -18,21 +18,41 @@ vi.mock("@/components/ui/Toast", () => ({
 }));
 
 vi.mock("@/lib/api-errors", () => ({
-  unwrapApiResponse: (data: any) => (data?.data !== undefined ? data.data : data),
+  unwrapApiResponse: (data: { data?: unknown } | undefined) => (data?.data !== undefined ? data.data : data),
 }));
 
 vi.mock("@/components/ui/Card", () => ({
-  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
 }));
 vi.mock("@/components/ui/Button", () => ({
-  Button: ({ children, onClick, disabled, className }: any) => (
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    className,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    className?: string;
+  }) => (
     <button onClick={onClick} disabled={disabled} className={className}>
       {children}
     </button>
   ),
 }));
 vi.mock("@/components/ui/Input", () => ({
-  Input: ({ label, value, onChange }: any) => (
+  Input: ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string | number;
+    onChange: React.ChangeEventHandler<HTMLInputElement>;
+  }) => (
     <div>
       <label>{label}</label>
       <input aria-label={label} value={value} onChange={onChange} />
@@ -42,7 +62,7 @@ vi.mock("@/components/ui/Input", () => ({
 
 describe("TemplateManager festival library", () => {
   beforeEach(() => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) }) as any;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) }) as unknown as typeof fetch;
   });
 
   it("loads the template library of the festival it is shown for", async () => {
