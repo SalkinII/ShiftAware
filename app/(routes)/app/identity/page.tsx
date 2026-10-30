@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useEnvironmentContext } from "@/lib/contexts/EnvironmentContext";
 import { MemberList } from "./components/MemberList";
 import { CreateProfileForm } from "./components/CreateProfileForm";
-import { EventSelectionStep } from "./components/EventSelectionStep";
+import { EnvironmentSelectionStep } from "./components/EnvironmentSelectionStep";
 import { AttributePromptModal } from "@/components/features/Identity/AttributePromptModal";
 
 export default function IdentityPage() {
@@ -207,9 +207,9 @@ export default function IdentityPage() {
           </>
         ) : (
           <>
-            <EventSelectionStep
+            <EnvironmentSelectionStep
               memberId={selectedMemberId!}
-              onEventSelected={handleEnvironmentSelected}
+              onEnvironmentSelected={handleEnvironmentSelected}
               onBack={handleBackToMemberSelection}
             />
             {showAttributeModal && missingDefinitions.length > 0 && (

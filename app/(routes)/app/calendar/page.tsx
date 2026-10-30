@@ -641,7 +641,7 @@ export default function UserCalendarPage() {
                 href="/app/identity"
                 className="text-primary-500 hover:underline"
                 onClick={() => {
-                  // Ensure EventSelectionStep shows list instead of auto-forwarding
+                  // Ensure EnvironmentSelectionStep shows list instead of auto-forwarding
                   const memberId = localStorage.getItem("selectedMemberId");
                   if (memberId) {
                     sessionStorage.setItem(

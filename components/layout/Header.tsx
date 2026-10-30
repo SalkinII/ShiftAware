@@ -5,7 +5,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { isAdminClient } from "@/lib/auth-client";
-import { EventSelector } from "@/components/ui/EventSelector";
+import { MemberEnvironmentSwitcher } from "@/components/layout/MemberEnvironmentSwitcher";
 import {
   useEnvironmentContext,
   formatEnvironmentDateRange,
@@ -29,11 +29,8 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const { selectedMember } = useMemberContext();
-  const isAdminRoute = pathname?.startsWith("/admin");
   const {
-    selectedEnvironmentId,
     environments,
-    setSelectedEnvironmentId,
     loading: eventsLoading,
   } = useEnvironmentContext();
 
@@ -91,15 +88,10 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
           </h1>
         </div>
 
-        {/* Center: Event Selector (admin only) */}
-        {isAdminRoute && !eventsLoading && (
+        {/* Center: environment switcher */}
+        {!eventsLoading && (
           <div className="hidden md:flex items-center">
-            <EventSelector
-              environments={environments}
-              selectedEnvironmentId={selectedEnvironmentId}
-              onSelect={setSelectedEnvironmentId}
-              placeholder="Select event..."
-            />
+            <MemberEnvironmentSwitcher />
           </div>
         )}
 
@@ -155,8 +147,6 @@ export function Header({ alias, avatarEmoji }: HeaderProps) {
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         environments={environments}
-        selectedEnvironmentId={selectedEnvironmentId}
-        onSelectEvent={setSelectedEnvironmentId}
       />
     </>
   );
@@ -167,14 +157,10 @@ function MobileSidebar({
   isOpen,
   onClose,
   environments,
-  selectedEnvironmentId,
-  onSelectEvent,
 }: {
   isOpen: boolean;
   onClose: () => void;
   environments: any[];
-  selectedEnvironmentId: string | null;
-  onSelectEvent: (id: string) => void;
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -251,22 +237,14 @@ function MobileSidebar({
           </div>
         </div>
 
-        {/* Event selector — admin only */}
-        {isInAdminSection && environments.length > 0 && (
+        {/* Environment switcher */}
+        {environments.length > 0 && (
           <div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4 mb-3">
-              Active Event
+              Active environment
             </p>
             <div className="px-4">
-              <EventSelector
-                environments={environments}
-                selectedEnvironmentId={selectedEnvironmentId}
-                onSelect={(id) => {
-                  if (id) onSelectEvent(id);
-                }}
-                placeholder="Select event..."
-                className="w-full"
-              />
+              <MemberEnvironmentSwitcher />
             </div>
           </div>
         )}
