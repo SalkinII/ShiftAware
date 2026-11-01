@@ -1,0 +1,7 @@
+Open items for feature/multi-environment-scoping are tracked in:
+  docs/superpowers/reviews/2026-11-01-multi-env-todo-findings.md (F1-F10)
+
+Earlier time-constraint UI items (targeted by 2c6afc5c, not yet re-verified in the browser):
+- Availability time selection bleeds out of the modal to the right.
+- Time selection off by 2 hours when clicked; no confirmation on time selection.
+- Blackout up/down fields don't show anything; "Remove" bleeds out. (Blackout redesign: see F6.)
